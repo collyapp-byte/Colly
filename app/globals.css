@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Colly design tokens (Tailwind v4 CSS-first theme).
+   Anything declared here becomes a utility, e.g. --color-colly => bg-colly,
+   text-colly, border-colly; --font-display => font-display.
+--------------------------------------------------------------------------- */
+@theme {
+  /* Brand */
+  --color-colly: #ff6600;
+  --color-colly-hover: #e65c00;
+  --color-colly-light: #fff0e6;
+
+  /* Neutral surfaces */
+  --color-background: #f9fafb;
+  --color-surface: #ffffff;
+  --color-border: #e5e7eb;
+  --color-border-subtle: #f3f4f6;
+  --color-sidebar-active: #2563eb;
+  --color-panel: #FAF7F2;
+  --color-panel-border: #F0EBE3;
+
+  /* Layout tokens (Paystack-style floating cards) */
+  --background-page: #f5f5f5;
+  --card-surface: #ffffff;
+  --card-radius: 14px;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --card-gap: 16px;
+  --outline-subtle: #f5d5b8;
+
+  /* Semantic states */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  /* Typography */
+  --font-display: "Arial Black", Impact, sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--color-background);
+  color: #111827;
+}
+
+/* ---------------------------------------------------------------------------
+   Branded loading animation
+---------------------------------------------------------------------------- */
+@keyframes colly-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes colly-glow {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.35);
+  }
+}
+
+.animate-colly-breathe {
+  animation: colly-breathe 1.4s ease-in-out infinite;
+}
+
+.animate-colly-glow {
+  animation: colly-glow 1.4s ease-in-out infinite;
+}
+
+/* Minimal fade-in used by the loading logo label (no animate plugin present). */
+@keyframes colly-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation: colly-fade-in 0.3s ease-out both;
+}
+
+/* Subtle dot texture for active nav item — mirrors the scattered dots on the
+   Colly logo's cream circle. Two radial gradients at different sizes/opacities
+   create a non-grid, organic pattern. */
+.nav-active-texture {
+  background-image:
+    radial-gradient(circle at 4px 4px, rgba(255, 102, 0, 0.12) 1px, transparent 1.5px),
+    radial-gradient(circle at 12px 12px, rgba(255, 102, 0, 0.08) 1px, transparent 1.5px);
+  background-size: 16px 16px, 20px 20px;
+  background-position: 0 0, 4px 6px;
+}
+
+/* ---------------------------------------------------------------------------
+   Agent lesson markdown.
+   Tailwind's preflight strips the default element styles, so the lesson body
+   (react-markdown output) is styled explicitly. react-markdown v10 no longer
+   accepts a className, so this targets the wrapper element instead.
+--------------------------------------------------------------------------- */
+.agent-markdown {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: #374151;
+}
+
+.agent-markdown > * + * {
+  margin-top: 1rem;
+}
+
+.agent-markdown h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.agent-markdown h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 1.75rem;
+}
+
+.agent-markdown h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #111827;
+  margin-top: 1.5rem;
+}
+
+.agent-markdown ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+
+.agent-markdown ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+}
+
+.agent-markdown li + li {
+  margin-top: 0.25rem;
+}
+
+.agent-markdown a {
+  color: #ff6600;
+  text-decoration: underline;
+}
+
+.agent-markdown strong {
+  font-weight: 600;
+  color: #111827;
+}
+
+.agent-markdown code {
+  background-color: #f3f4f6;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+}
+
+.agent-markdown pre {
+  background-color: #111827;
+  color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.agent-markdown pre code {
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.agent-markdown blockquote {
+  border-left: 3px solid #e5e7eb;
+  padding-left: 1rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+.agent-markdown img {
+  max-width: 100%;
+  border-radius: 0.5rem;
+}
+
+.agent-markdown hr {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.agent-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.agent-markdown th,
+.agent-markdown td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.agent-markdown th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+/* Instant click feedback — orange outline on mousedown */
+button:active:not(:disabled),
+a[role="menuitem"]:active,
+a[role="button"]:active {
+  outline: 2px solid #FF6600;
+  outline-offset: 2px;
+  transition: outline 0ms;
+}
+
+/* Subtle press-scale for buttons */
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}

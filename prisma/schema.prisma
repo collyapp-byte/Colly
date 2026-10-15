@@ -1,0 +1,441 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Multi-tenant core: every model except Business carries a `businessId`
+// foreign key so rows are always scoped to a single tenant.
+// ---------------------------------------------------------------------------
+
+model Business {
+  id             String   @id @default(cuid())
+  name           String
+  phone          String
+  whatsappNumber String
+  createdAt      DateTime @default(now())
+
+  /// AI writing style. One of "formal", "friendly" or "pidgin_friendly";
+  /// stored as text so adding a tone is not a migration.
+  tone String @default("friendly")
+  /// Free text such as "Mon-Fri 9am-6pm, Sat 10am-4pm". Shown to the AI and
+  /// displayed on the Settings page.
+  businessHours String?
+  /// Street address, used on invoices/receipts (optional).
+  address String?
+  /// Short description of what the business sells, given to the AI as context.
+  description String?
+
+  /// NRS (National Revenue Service) e-invoicing compliance. `nrsTaxId` is the
+  /// NRS Tax ID (the CAC number); `nrsRegistrationDate` is when it was saved
+  /// here. `nrsTier` is reserved for future tiering, `nrsExemptReason` marks
+  /// businesses that handed compliance to their accountant, and
+  /// `nrsLastDismissedAt` gates the "Get NRS-compliant" banner for 7 days.
+  nrsTaxId            String?
+  nrsRegistrationDate DateTime?
+  nrsTier             String?
+  nrsExemptReason     String?
+  nrsLastDismissedAt  DateTime?
+
+  /// Billing. `plan` is "free" | "trial" | "starter" | "business" | "pro";
+  /// `planInterval` is "monthly" | "yearly" (or "trial"); `planStatus` is
+  /// "trialing" | "active" | "past_due" | "cancelled" | "expired".
+  /// `creditsBalance` is the number of unused credit replies the business has.
+  /// `paystackCustomerCode` / `paystackSubscriptionCode` / `paystackEmailToken`
+  /// identify the business in Paystack; `paystackEmailToken` is needed to
+  /// pause/resume a Paystack subscription. `billingEmail` receives receipts.
+  plan                      String   @default("free")
+  planInterval              String   @default("monthly")
+  planStatus                String   @default("trialing")
+  planStartedAt             DateTime @default(now())
+  planExpiresAt             DateTime?
+  onboardingEndsAt         DateTime?
+  creditsBalance            Int      @default(0)
+  paystackCustomerCode      String?
+  paystackSubscriptionCode  String?
+  paystackEmailToken        String?
+  billingEmail              String?
+
+  /// Message tracking for plan caps. `messagesUsedThisMonth` counts AI replies
+  /// sent this billing month. `messagesResetAt` is when the counter resets
+  /// (next billing anniversary). `aiEnabled` gates auto-replies when cap is
+  /// hit or plan expires — can be toggled by owner if they buy credits.
+  messagesUsedThisMonth Int      @default(0)
+  messagesResetAt       DateTime @default(now())
+  aiEnabled             Boolean  @default(true)
+
+  /// Referral tracking. Set at signup when the owner enters a certified
+  /// agent's ID ("AG-0001"). Colly never pays the agent or takes a cut; this
+  /// only records who set the business up.
+  referredByAgentId String?
+
+  users         User[]
+  customers     Customer[]
+  products      Product[]
+  sales         Sale[]
+  conversations Conversation[]
+  messages      Message[]
+  faqs          Faq[]
+  invoices      Invoice[]
+  transactions  Transaction[]
+
+  referredByAgent Agent? @relation(fields: [referredByAgentId], references: [id])
+}
+
+model Faq {
+  id         String   @id @default(cuid())
+  businessId String
+  question   String
+  answer     String
+  category   String?
+  createdAt  DateTime @default(now())
+
+  /// pgvector embedding of question + answer + category, used for semantic
+  /// search. 1024 dimensions from jina-embeddings-v3. Unsupported by
+  /// Prisma Client; read/written with raw SQL in lib/embedding-pipeline.ts.
+  embedding Unsupported("vector(1024)")?
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+}
+
+model User {
+  id         String   @id @default(cuid())
+  businessId String
+  email      String   @unique
+  name       String?
+  password   String
+  role       String
+  createdAt  DateTime @default(now())
+
+  /// Supabase Auth user id (auth.users.id). Kept nullable so the rows that
+  /// already exist stay valid; lib/auth.ts links an unclaimed row to an auth
+  /// user by email the first time that owner signs in.
+  supabaseUserId String? @unique
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  businessId String
+  name       String
+  phone      String
+  createdAt  DateTime @default(now())
+
+  business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sales         Sale[]
+  conversations Conversation[]
+  invoices      Invoice[]
+
+  @@index([businessId])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  businessId  String
+  name        String
+  description String?
+  /// Extra customer-facing details (specs, condition, sizes) the owner adds for
+  /// the AI to draw on. Free text; null means none provided.
+  details     String?
+  price       Decimal  @db.Decimal(10, 2)
+  /// The lowest price the AI may offer when negotiating. null means the AI
+  /// never goes below the list price.
+  floorPrice  Decimal? @db.Decimal(10, 2)
+  /// When false the AI refuses every offer for this product.
+  negotiable  Boolean  @default(true)
+  /// null means the owner has not tracked stock; treat the product as available.
+  stock       Int?
+  /// Public URLs of the product's images in Supabase Storage.
+  images      String[] @default([])
+  createdAt   DateTime @default(now())
+
+  /// pgvector embedding of name + description + category, used for semantic
+  /// search. 1024 dimensions from jina-embeddings-v3. Unsupported by
+  /// Prisma Client; read/written with raw SQL in lib/embedding-pipeline.ts.
+  embedding Unsupported("vector(1024)")?
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sales    Sale[]
+
+  @@index([businessId])
+}
+
+model Sale {
+  id          String   @id @default(cuid())
+  businessId  String
+  customerId  String
+  /// null when the sale is a productless "custom amount" line (Quick Sale).
+  productId   String?
+  /// Human-readable label for productless lines, e.g. "Delivery charge".
+  customLabel String?
+  quantity    Int
+  totalAmount Decimal  @db.Decimal(10, 2)
+  status      String
+  /// How the sale was paid: "cash" | "transfer" | "pos" | "credit". Null on rows created before this field existed.
+  paymentMethod String?
+  createdAt   DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id])
+  product  Product? @relation(fields: [productId], references: [id])
+  invoices Invoice[]
+
+  @@index([businessId])
+  @@index([customerId])
+  @@index([productId])
+}
+
+model Conversation {
+  id         String   @id @default(cuid())
+  businessId String
+  customerId String
+  status     String
+  createdAt  DateTime @default(now())
+
+  /// Human takeover. null means the AI answers automatically; a future
+  /// timestamp means an agent has taken over and the AI stays quiet until then.
+  /// An expired timestamp counts as active again, so the AI resumes on its own.
+  pausedUntil DateTime?
+
+  /// Live negotiation state (listPrice, floorPrice, currentOffer, round, ...).
+  /// null means no negotiation is in progress. Reset when the product in play
+  /// changes or after 24 hours of inactivity.
+  negotiationState Json?
+
+  business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer  @relation(fields: [customerId], references: [id])
+  messages Message[]
+
+  @@index([businessId])
+  @@index([customerId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  businessId     String
+  conversationId String
+  /// Who wrote it: "customer", "ai" (Colly) or "agent" (a human on the team).
+  /// Stored as text so a new sender kind is not a migration.
+  sender         String
+  content        String
+  createdAt      DateTime @default(now())
+
+  /// Voice note fields. `audioUrl` is the public URL of the audio in Supabase
+  /// Storage; `audioDuration` is the clip length in seconds; `transcript` is the
+  /// speech-to-text output. For a voice note `content` mirrors `transcript` so
+  /// the existing chat UI and history keep working unchanged.
+  audioUrl      String?
+  audioDuration Int?
+  transcript    String?
+  /// Image fields. `imageUrl` is the public URL of the photo in Supabase
+  /// Storage; `imageDescription` is the vision model's short description. For an
+  /// image message `content` mirrors `imageDescription` so the existing chat UI
+  /// and history keep working unchanged.
+  imageUrl         String?
+  imageDescription String?
+  /// "text" | "voice" | "image". Stored as text so a new kind is not a migration.
+  messageType   String   @default("text")
+
+  business     Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([conversationId])
+}
+
+// ---------------------------------------------------------------------------
+// NRS e-invoicing groundwork. Every paid sale gets an Invoice; manual invoices
+// (not tied to a sale) can also be created. The NRS fields are populated when
+// the invoice is transmitted to the National Revenue Service via an Access
+// Point Provider.
+// ---------------------------------------------------------------------------
+
+model Invoice {
+  id         String  @id @default(cuid())
+  businessId String
+  /// The sale this invoice was generated from. null for a manual invoice.
+  saleId     String?
+  customerId String?
+
+  /// Human-readable, unique per business, e.g. "INV-2026-0001".
+  invoiceNumber String
+  /// "draft" | "sent" | "failed" | "cancelled".
+  status        String @default("draft")
+
+  subtotal Decimal @db.Decimal(10, 2)
+  vat      Decimal @default(0) @db.Decimal(10, 2)
+  total    Decimal @db.Decimal(10, 2)
+  /// Line items: `[{ name, quantity, unitPrice, total }]`.
+  items    Json
+
+  /// Invoice Reference Number returned by the NRS.
+  irn       String?
+  /// QR code payload or URL returned by the NRS.
+  qrCode    String?
+  nrsSentAt DateTime?
+  nrsError  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sale     Sale?     @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@unique([businessId, invoiceNumber])
+  @@index([businessId, status])
+}
+
+model Transaction {
+  id         String @id @default(cuid())
+  businessId String
+
+  /// Paystack transaction reference (unique so a webhook can be processed once).
+  reference String @unique
+  /// Amount actually charged, in Naira (kept as Decimal for exact math).
+  amount    Decimal @db.Decimal(10, 2)
+  /// "success" | "failed" | "pending".
+  status    String
+  /// "subscription" | "credits".
+  type      String
+  /// For subscription payments: the plan the customer is on. Missing for
+  /// standalone credit purchases.
+  plan         String?
+  planInterval String?
+  /// For credit purchases: how many replies were bought.
+  creditsPurchased Int?
+  /// Paystack funding channel, e.g. "card", "bank", "ussd".
+  channel String?
+  paidAt  DateTime?
+  createdAt DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, status])
+  @@index([businessId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Agent section. Agents are certified people who sell Colly setup services to
+// businesses. They have their own auth, dashboard and training, and never see
+// business features. Colly does not pay agents or take a cut; the optional
+// referral link (Business.referredByAgentId) is the only connection.
+// ---------------------------------------------------------------------------
+
+model Agent {
+  id             String    @id @default(cuid())
+  /// Human-readable agent id, e.g. "AG-0001".
+  agentNumber    String    @unique
+  supabaseUserId String?   @unique
+  email          String    @unique
+  fullName       String
+  phone          String?
+  /// Nigerian state the agent operates in.
+  state          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  certifiedAt    DateTime?
+
+  progress          AgentLessonProgress[]
+  quizAttempts      AgentQuizAttempt[]
+  certificate       AgentCertificate?
+  referredBusinesses Business[]
+}
+
+model AgentCourse {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  order       Int      @default(0)
+  published   Boolean  @default(true)
+  /// Only courses flagged here gate certification. Adding a non-certification course does not revoke anyone's certificate.
+  isCertificationCourse Boolean @default(false)
+  createdAt   DateTime @default(now())
+
+  lessons   AgentLesson[]
+  questions AgentQuizQuestion[]
+  attempts  AgentQuizAttempt[]
+}
+
+model AgentLesson {
+  id           String   @id @default(cuid())
+  courseId     String
+  slug         String
+  title        String
+  order        Int      @default(0)
+  bodyMarkdown String   @db.Text
+  youtubeUrl   String?
+  durationMin  Int?
+  createdAt    DateTime @default(now())
+
+  course   AgentCourse            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress AgentLessonProgress[]
+
+  @@unique([courseId, slug])
+}
+
+model AgentLessonProgress {
+  id          String   @id @default(cuid())
+  agentId     String
+  lessonId    String
+  completedAt DateTime @default(now())
+
+  agent  Agent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  lesson AgentLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, lessonId])
+}
+
+model AgentQuizQuestion {
+  id           String @id @default(cuid())
+  courseId     String
+  order        Int    @default(0)
+  question     String @db.Text
+  /// Answer options, e.g. ["A", "B", "C", "D"].
+  options      Json
+  correctIndex Int
+
+  course AgentCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model AgentQuizAttempt {
+  id          String   @id @default(cuid())
+  agentId     String
+  courseId    String
+  /// 0-100.
+  score       Int
+  passed      Boolean
+  /// Array of chosen option indices.
+  answers     Json
+  attemptedAt DateTime @default(now())
+
+  agent  Agent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  course AgentCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model AgentCertificate {
+  id            String   @id @default(cuid())
+  agentId       String   @unique
+  /// Human-readable certificate id, e.g. "CERT-AG-0001-2026".
+  certificateId String   @unique
+  issuedAt      DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
