@@ -48,6 +48,11 @@ export type AgentQuizQuestion = {
   order: number;
   question: string;
   options: string[];
+  /// Index of the correct option. Sent to the client so the quiz can give
+  /// immediate per-question feedback before the final submission.
+  correctIndex: number;
+  /// Optional explanation shown after a wrong answer. Null when not provided.
+  explanation: string | null;
 };
 
 export type AgentCourseResponse = {

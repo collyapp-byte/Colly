@@ -13,6 +13,11 @@ export const metadata: Metadata = {
     template: "%s · Colly",
   },
   description: "Colly is an AI business assistant for Nigerian SMEs.",
+  icons: {
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

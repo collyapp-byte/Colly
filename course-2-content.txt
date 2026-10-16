@@ -1,0 +1,393 @@
+﻿=== LESSON 1: before-you-start ===
+You do not walk into a shop and start tapping on your laptop. You walk in with a plan.
+
+**Before you meet the business owner, get these 5 things:**
+
+**1. All their products.**
+
+Not "some products." All. Or at least the top 30 that make up 90% of their sales.
+
+Ask them for a list. If they do not have one, sit with them and write it out. You will need:
+
+- Product name (as customers call it)
+- Price (what they sell it for today)
+- A description of what it is and what makes it good
+- A photo (more on this below)
+
+**2. Photos of each product.**
+
+Every product needs a photo. WhatsApp customers buy with their eyes.
+
+Ask the owner: "Do you have photos on your phone?" Most do. They already sent them to customers.
+
+Copy them to your laptop. If a product does not have a photo, take one on your phone. Stand near a window. Use a plain background. Take 2-3 shots. Done.
+
+**3. Their most-asked questions.**
+
+Ask: "What do customers ask you again and again?"
+
+Every owner has a list. Where are you located? Do you deliver? How much for delivery? Do you accept returns? What time do you close?
+
+Write down every question they say. Then write down their answer. This becomes the FAQ list.
+
+**4. Their WhatsApp number.**
+
+The one they use for business. If they use a personal number, note that — the AI will still answer on it.
+
+Ask: "Is this the number your customers message you on? Or a different one?"
+
+**5. Their CAC number (if they have one).**
+
+Nigerian regulation requires business registration for some things. If the shop is registered, get the CAC number. If not, no problem — Colly works without it. Meta verification comes later.
+
+**What you do NOT need:**
+
+- Their bank details
+- Their BVN
+- Any payment from you
+- Any physical paperwork to scan
+
+**Do this now:**
+
+Write out a checklist on paper. 5 items. Before every setup visit, go through it. If any item is missing, do not start the setup. Come back with the missing pieces.
+
+An incomplete setup wastes both your time and theirs.
+
+=== LESSON 2: creating-the-account ===
+You are creating an account for the business owner. They will own it forever. Do not use your own details.
+
+**Step by step:**
+
+1. Open the Colly website. Click **Sign up**.
+2. Fill in:
+   - **Business name** — exactly what customers know them as. "Mama Chidi's Provision Store" is better than "Mama Chidi Ventures Ltd."
+   - **Your name** — the owner's name. Not yours.
+   - **Email** — the owner's email. If they do not have one, help them create a Gmail. **Do not use your own email.** The owner needs password reset access.
+   - **Phone number** — the WhatsApp number from Lesson 1.
+   - **Password** — pick something strong. Write it down on paper for the owner. Show them how to change it later.
+
+3. Click Sign up.
+
+**What happens next:**
+
+The owner has 5 days of free trial. That means for 5 days, everything works — AI replies, dashboard, sales. No payment needed.
+
+After 5 days, the trial ends. The account is not deleted. The owner can still log in, see their dashboard, chat with customers manually. But the AI stops replying until they subscribe.
+
+**Tell the owner this clearly:**
+
+> "For the first 5 days, everything is free. On day 6, if you like it, you pay ₦15,000 to keep the AI working. If you do not like it, the account stays but the AI stops. No charge."
+
+This removes the fear of "being locked in."
+
+**Test the login:**
+
+Before you leave, log in together. Enter the email and password. Make sure they can do it themselves.
+
+Write the password on a piece of paper. Give it to them. Not just saved in your phone.
+
+**Do this now:**
+
+Create the account on Colly. Use the owner's real details. Do not shortcut this by using your own email — it will cause pain later when the owner needs to reset the password.
+
+=== LESSON 3: adding-products ===
+This is the biggest work. Do not rush it.
+
+**Open Products in the sidebar. Click Add Product.**
+
+For each product, fill in:
+
+**Name**
+
+What customers call it. Not the SKU. Not the manufacturer's full name. "iPhone 12 128GB" is what customers search for. "Apple Inc. iPhone 12 128GB Model A2403" is noise.
+
+Keep names short. Under 40 characters. The AI and the customer both read faster.
+
+**Price**
+
+The current selling price in Naira. Include VAT if there is any.
+
+**Floor Price (Optional)**
+
+This is the lowest price the AI can offer if the customer negotiates.
+
+Say the phone is ₦180,000. The owner accepts ₦165,000 at the end of a hard negotiation. Floor price = ₦165,000.
+
+If the owner does not negotiate, leave floor price blank and uncheck "Allow AI to negotiate."
+
+**Negotiable**
+
+Check the box if the owner allows the AI to counteroffer when a customer asks "can you reduce?"
+
+Most Nigerian businesses negotiate. Enable this by default unless the owner says no.
+
+**Stock (Optional)**
+
+How many do they have? If they track stock, enter the number. If they do not, leave it blank — the AI will say "Available" instead of a number.
+
+**Description**
+
+This is the most important field. See the next lesson for how to write it.
+
+**Images**
+
+Add at least 1. Up to 10. See the next lesson for how to take them.
+
+**A real example — Mama Chidi's Provision Store:**
+
+| Field | Value |
+|---|---|
+| Name | Golden Penny Semovita 1kg |
+| Price | 1,800 |
+| Floor Price | 1,700 |
+| Negotiable | Yes |
+| Stock | 24 |
+| Description | Premium semovita flour. 1kg pack. Makes smooth, stretchy swallow. Good for eba, fufu, and semo. Sealed, fresh from distributor. |
+| Images | (2 photos of the pack) |
+
+**What to do for 30 products:**
+
+Do not type 30 products one at a time from scratch. Get the list from the owner, then enter them in batches. Take breaks. Do not rush into mistakes.
+
+**Time estimate:**
+
+If you have photos and info ready: 2-3 minutes per product. 30 products = 90 minutes. Add another 30 minutes for the owner's interruptions. **Block 2 hours.**
+
+**Common mistakes:**
+
+1. Naming products in English when customers use Pidgin or local names. "Garri" not "Cassava flour."
+2. Forgetting floor prices — AI rejects all negotiations — customers leave.
+3. Skipping stock — AI says "Available" every time — customer is disappointed when it is out.
+
+**Do this now:**
+
+Pick 3 products. Add them fully. Show the owner the product grid. Let them see how it looks. Then continue with the rest.
+
+=== LESSON 4: writing-descriptions ===
+The AI will only answer with what you give it. If descriptions are empty or vague, the AI sounds stupid.
+
+Bad description = bad answers = the owner loses trust in Colly.
+
+**What makes a good description:**
+
+**1. What it is.**
+
+Plain language. Not marketing fluff.
+
+Bad: "Premium quality household staple food item"
+Good: "Golden Penny Semovita. 1kg. White flour for making swallow."
+
+**2. What it is good for.**
+
+The customer's use case.
+
+Bad: "Great for cooking"
+Good: "Makes eba and fufu. Smooth, stretchy texture when cooked."
+
+**3. What is in the pack.**
+
+Quantity, size, variants.
+
+Good: "1kg sealed pack."
+Good: "Comes in 3 colours: black, white, silver."
+Good: "Includes charger and USB cable."
+
+**4. What makes it different.**
+
+Only if the owner told you something real.
+
+Good: "Imported from Turkey. Tighter stitching than local brands."
+Bad: "Best quality in the market." (Every seller says this. Meaningless.)
+
+**5. Honest limits.**
+
+What it is NOT. This protects the owner.
+
+Good: "Does not fit iPhone 14 or newer. Only fits iPhone 12 and 13."
+Good: "Cash on delivery only for Lagos. Other states require transfer."
+
+**What NOT to write:**
+
+- Marketing words: "premium," "amazing," "best," "highest quality"
+- Facts you made up
+- Made-up specifications
+- Rules the AI invents
+
+**The rule:** If the owner did not tell you, do not write it. Missing information is fine — invented information is not.
+
+**Photos:**
+
+Take photos the same way every time:
+
+- Natural light (near a window, not direct sunlight)
+- Plain background (white cloth, table, or wall)
+- Focus on the product, not the surroundings
+- 2-3 angles if possible (front, side, opened)
+
+If the owner has old photos, use them. If not, take them on your phone. Send them to your WhatsApp, download, upload to Colly.
+
+**Do this now:**
+
+Pick one product from the shop. Write a description that includes all 5 elements above. Show the owner. Ask: "Is this correct? Is anything wrong?" Fix it. Then use that same pattern for the rest.
+
+=== LESSON 5: adding-faqs ===
+FAQs are the 5-7 questions every customer asks. If the AI knows them, it answers instantly. If not, it escalates to the owner.
+
+**The 5 FAQ categories every business needs:**
+
+**1. Delivery**
+
+- Do you deliver?
+- Where do you deliver? (Lagos only? Nationwide? Specific areas?)
+- How much is delivery?
+- How long does it take?
+
+**2. Payment**
+
+- What payment methods do you accept? (Transfer, Cash, POS?)
+- Do you accept payment on delivery?
+- What is your account number? (yes, put it here)
+
+**3. Returns**
+
+- Can I return a product?
+- Within how many days?
+- Is there a refund or exchange?
+- What if the product is damaged on arrival?
+
+**4. Opening hours**
+
+- What time do you open?
+- What time do you close?
+- Do you open on Sundays?
+- Public holidays?
+
+**5. Warranty**
+
+- Is there a warranty?
+- How long?
+- What does it cover?
+- How does the customer claim it?
+
+**Extra FAQs to add if relevant:**
+
+- Do you do wholesale?
+- Do you have a physical shop?
+- Can I pay in installments?
+- Do you offer discounts for bulk?
+- Are you on Instagram or TikTok?
+
+**Format for each FAQ:**
+
+Question: as the customer would type it
+Answer: short, direct, no fluff
+
+Bad Question: "What is the business policy on product returns?"
+Good Question: "Can I return a product?"
+
+Bad Answer: "Our return policy is designed to ensure customer satisfaction..."
+Good Answer: "Yes, within 7 days if it is not damaged. Bring it back to the shop with the receipt."
+
+**Do this now:**
+
+Sit with the owner and go through the 5 categories. Ask each question. Write down their answers. Enter them in Colly.
+
+Target: 6-10 FAQs minimum. Every business has different answers, but the categories are the same.
+
+=== LESSON 6: setting-tone-and-testing ===
+Now that the AI has data, you teach it how to talk and confirm it works.
+
+**AI Tone (in Settings):**
+
+Two options:
+
+- **Formal** — "Good day. How may I assist you today?"
+- **Friendly** — "Hey! How can I help?"
+
+**Which to pick:**
+
+- Boutiques, electronics shops, service businesses — **Friendly**
+- Pharmacies, financial services, professional services — **Formal**
+
+Ask the owner: "How do you reply to your customers today?"
+
+If they say "Hi babe, how are you?" — Friendly.
+If they say "Good afternoon ma, how can I help?" — Formal.
+
+Match the AI's tone to the owner's tone. That is what customers expect.
+
+**Language:**
+
+Colly auto-detects English, Pidgin, and mixed. You do not pick a language. The AI matches the customer.
+
+Test this. Send a message in Pidgin. The reply should be in Pidgin.
+
+**Testing — do these 5 messages:**
+
+Send from your own WhatsApp to the business's number:
+
+1. **Product query** — "How much is [one product]?"
+   - Pass: AI replies with the exact price from the catalogue
+   - Fail: AI does not know — product entry has an issue
+
+2. **FAQ query** — "Do you deliver to [area]?"
+   - Pass: AI answers with the FAQ answer
+   - Fail: AI does not know — FAQ entry has an issue
+
+3. **Negotiation** — "Can you do [lower price]?"
+   - Pass: AI counters within the range and never goes below floor
+   - Fail: AI accepts too low — floor price not set correctly
+
+4. **Unknown question** — "Do you sell garden hoses?"
+   - Pass: AI says it cannot help and escalates (or offers similar products)
+   - Fail: AI invents an answer — product descriptions have issues
+
+5. **Pidgin** — "How much be this thing?"
+   - Pass: AI replies correctly in Pidgin
+   - Fail: AI responds in stiff English — report to Colly support
+
+**If any test fails, fix it BEFORE you leave.**
+
+The customer experience will be exactly this. If you catch the problem now, the owner never sees it.
+
+**Do this now:**
+
+Send all 5 test messages. Screenshot the AI replies. Show the owner. If the owner smiles, you know you are done.
+
+=== LESSON 7: handoff-to-colly ===
+This is a short lesson. There is almost nothing for you to do here.
+
+**The truth:** You do not connect the WhatsApp Business API. That is Colly's job.
+
+The reason: The WhatsApp Cloud API requires a Meta Business Account, a WABA setup, phone number verification, and template approval. This is technical, risky, and one mistake can get the number banned.
+
+Colly's team handles this for every business. You do not.
+
+**What you do:**
+
+1. Make sure all products, FAQs, and tone are set up correctly.
+2. Tell the owner: "Everything is ready. Colly will connect your WhatsApp in the next 24 hours."
+3. Share the owner's name, business name, and WhatsApp number with Colly support.
+4. Notify Colly via WhatsApp or email that the business is ready for connection.
+
+**What Colly does:**
+
+1. Registers the business's WhatsApp number with the Meta Cloud API.
+2. Verifies the connection.
+3. Notifies you when live.
+4. You go back to the owner with the news.
+
+**What to tell the owner while waiting:**
+
+> "In the next day or so, Colly's team will connect your WhatsApp. You will not need to do anything. When it is ready, your customers can message you as usual and the AI will reply. I will come back and show you."
+
+**Timeline expectations:**
+
+- Day 1: You finish setup. Send handoff to Colly.
+- Day 1-2: Colly connects the number.
+- Day 2: You visit or call the owner to confirm the connection works.
+- Day 3 onward: Owner uses the system. You are on standby for the first week.
+
+**Do this now:**
+
+Write down Colly's support contact. Save it in your phone. When the business is ready for handoff, you send one message. Colly handles the rest.

@@ -12,7 +12,7 @@ type DashboardShellProps = {
   children: ReactNode;
 };
 
-export function DashboardShell({ businessName, children }: DashboardShellProps) {
+export function DashboardShell({ children }: DashboardShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
   const segment = pathname === "/" ? "Dashboard" : (pathname.split("/")[1] || "Dashboard");
@@ -54,9 +54,6 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
               >
                 <PanelLeft className="h-[18px] w-[18px]" />
               </button>
-              {businessName && (
-                <span className="text-[13px] font-medium text-gray-700">{businessName}</span>
-              )}
               <span className="text-[13px] font-medium text-gray-500">{title}</span>
             </div>
             <div className="flex items-center gap-3 px-3 md:px-0">

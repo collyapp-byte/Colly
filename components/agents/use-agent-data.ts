@@ -36,7 +36,7 @@ export function useAgentData<T>(url: string): AgentDataState<T> {
     fetch(url)
       .then(async (response) => {
         if (response.status === 401) {
-          router.replace("/agents/login");
+          router.replace("/login?role=agent");
           // Skip the error render: keep `loading` true until the route changes.
           return REDIRECTING;
         }

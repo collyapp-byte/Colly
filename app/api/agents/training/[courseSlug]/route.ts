@@ -27,7 +27,14 @@ export async function GET(
         },
         questions: {
           orderBy: { order: "asc" },
-          select: { id: true, order: true, question: true, options: true },
+          select: {
+            id: true,
+            order: true,
+            question: true,
+            options: true,
+            correctIndex: true,
+            explanation: true,
+          },
         },
       },
     });
@@ -65,12 +72,14 @@ export async function GET(
       allLessonsComplete,
       quizAvailable,
       questions: quizAvailable
-        ? course.questions.map((question) => ({
-            id: question.id,
-            order: question.order,
-            question: question.question,
-            options: question.options,
-          }))
+          ? course.questions.map((question) => ({
+              id: question.id,
+              order: question.order,
+              question: question.question,
+              options: question.options,
+              correctIndex: question.correctIndex,
+              explanation: question.explanation,
+            }))
         : [],
     });
   } catch (error) {

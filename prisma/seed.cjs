@@ -701,108 +701,880 @@ Before your first sales pitch, memorize these 6 limits. When a business owner as
     ],
   },
   {
-    slug: "nigerian-sme-sales",
-    title: "Understanding Nigerian SME Sales",
+    slug: "setting-up-a-business",
+    title: "Setting Up a Business",
     description:
-      "How small businesses buy, how to qualify them, and how to follow up.",
-    order: 2,
+      "The hands-on setup. From first meeting to final handoff. Every step an agent takes to onboard a new business.",
+    order: 1,
     isCertificationCourse: false,
     lessons: [
       {
-        slug: "how-smes-buy",
-        title: "How Nigerian SMEs Buy",
+        slug: "before-you-start",
+        title: "Before You Start",
+        order: 0,
+        durationMin: 5,
+        bodyMarkdown: `You do not walk into a shop and start tapping on your laptop. You walk in with a plan.
+
+**Before you meet the business owner, get these 5 things:**
+
+**1. All their products.**
+
+Not "some products." All. Or at least the top 30 that make up 90% of their sales.
+
+Ask them for a list. If they do not have one, sit with them and write it out. You will need:
+
+- Product name (as customers call it)
+- Price (what they sell it for today)
+- A description of what it is and what makes it good
+- A photo (more on this below)
+
+**2. Photos of each product.**
+
+Every product needs a photo. WhatsApp customers buy with their eyes.
+
+Ask the owner: "Do you have photos on your phone?" Most do. They already sent them to customers.
+
+Copy them to your laptop. If a product does not have a photo, take one on your phone. Stand near a window. Use a plain background. Take 2-3 shots. Done.
+
+**3. Their most-asked questions.**
+
+Ask: "What do customers ask you again and again?"
+
+Every owner has a list. Where are you located? Do you deliver? How much for delivery? Do you accept returns? What time do you close?
+
+Write down every question they say. Then write down their answer. This becomes the FAQ list.
+
+**4. Their WhatsApp number.**
+
+The one they use for business. If they use a personal number, note that — the AI will still answer on it.
+
+Ask: "Is this the number your customers message you on? Or a different one?"
+
+**5. Their CAC number (if they have one).**
+
+Nigerian regulation requires business registration for some things. If the shop is registered, get the CAC number. If not, no problem — Colly works without it. Meta verification comes later.
+
+**What you do NOT need:**
+
+- Their bank details
+- Their BVN
+- Any payment from you
+- Any physical paperwork to scan
+
+**Do this now:**
+
+Write out a checklist on paper. 5 items. Before every setup visit, go through it. If any item is missing, do not start the setup. Come back with the missing pieces.
+
+An incomplete setup wastes both your time and theirs.`,
+      },
+      {
+        slug: "creating-the-account",
+        title: "Creating the Account",
         order: 1,
         durationMin: 5,
-        bodyMarkdown: `## How Nigerian SMEs buy
+        bodyMarkdown: `You are creating an account for the business owner. They will own it forever. Do not use your own details.
 
-Small businesses buy what solves a pressing problem today.
+**Step by step:**
 
-- They trust people and referrals more than adverts
-- They care about price and payment flexibility
-- They value speed, delivery and a number they can call
-- They often decide quickly when the value is clear
+1. Open the Colly website. Click **Sign up**.
+2. Fill in:
+   - **Business name** — exactly what customers know them as. "Mama Chidi's Provision Store" is better than "Mama Chidi Ventures Ltd."
+   - **Your name** — the owner's name. Not yours.
+   - **Email** — the owner's email. If they do not have one, help them create a Gmail. **Do not use your own email.** The owner needs password reset access.
+   - **Phone number** — the WhatsApp number from Lesson 1.
+   - **Password** — pick something strong. Write it down on paper for the owner. Show them how to change it later.
 
-Keep this in mind when you pitch Colly: lead with the problem it removes, not the technology.`,
+3. Click Sign up.
+
+**What happens next:**
+
+The owner has 5 days of free trial. That means for 5 days, everything works — AI replies, dashboard, sales. No payment needed.
+
+After 5 days, the trial ends. The account is not deleted. The owner can still log in, see their dashboard, chat with customers manually. But the AI stops replying until they subscribe.
+
+**Tell the owner this clearly:**
+
+> "For the first 5 days, everything is free. On day 6, if you like it, you pay ₦15,000 to keep the AI working. If you do not like it, the account stays but the AI stops. No charge."
+
+This removes the fear of "being locked in."
+
+**Test the login:**
+
+Before you leave, log in together. Enter the email and password. Make sure they can do it themselves.
+
+Write the password on a piece of paper. Give it to them. Not just saved in your phone.
+
+**Do this now:**
+
+Create the account on Colly. Use the owner's real details. Do not shortcut this by using your own email — it will cause pain later when the owner needs to reset the password.`,
       },
       {
-        slug: "qualifying-a-business",
-        title: "Qualifying a Business",
+        slug: "adding-products",
+        title: "Adding Products",
         order: 2,
         durationMin: 5,
-        bodyMarkdown: `## Qualifying a business
+        bodyMarkdown: `This is the biggest work. Do not rush it.
 
-Not every business is a good fit for an AI assistant.
+**Open Products in the sidebar. Click Add Product.**
 
-Signs it's a good fit:
-- Many repeat questions on WhatsApp
-- The owner is often too busy to reply
-- A clear product list or service menu
+For each product, fill in:
 
-Signs to wait:
-- The business has no steady message volume
-- The owner won't share product details
-- Everything is custom-quoted per order`,
+**Name**
+
+What customers call it. Not the SKU. Not the manufacturer's full name. "iPhone 12 128GB" is what customers search for. "Apple Inc. iPhone 12 128GB Model A2403" is noise.
+
+Keep names short. Under 40 characters. The AI and the customer both read faster.
+
+**Price**
+
+The current selling price in Naira. Include VAT if there is any.
+
+**Floor Price (Optional)**
+
+This is the lowest price the AI can offer if the customer negotiates.
+
+Say the phone is ₦180,000. The owner accepts ₦165,000 at the end of a hard negotiation. Floor price = ₦165,000.
+
+If the owner does not negotiate, leave floor price blank and uncheck "Allow AI to negotiate."
+
+**Negotiable**
+
+Check the box if the owner allows the AI to counteroffer when a customer asks "can you reduce?"
+
+Most Nigerian businesses negotiate. Enable this by default unless the owner says no.
+
+**Stock (Optional)**
+
+How many do they have? If they track stock, enter the number. If they do not, leave it blank — the AI will say "Available" instead of a number.
+
+**Description**
+
+This is the most important field. See the next lesson for how to write it.
+
+**Images**
+
+Add at least 1. Up to 10. See the next lesson for how to take them.
+
+**A real example — Mama Chidi's Provision Store:**
+
+| Field | Value |
+|---|---|
+| Name | Golden Penny Semovita 1kg |
+| Price | 1,800 |
+| Floor Price | 1,700 |
+| Negotiable | Yes |
+| Stock | 24 |
+| Description | Premium semovita flour. 1kg pack. Makes smooth, stretchy swallow. Good for eba, fufu, and semo. Sealed, fresh from distributor. |
+| Images | (2 photos of the pack) |
+
+**What to do for 30 products:**
+
+Do not type 30 products one at a time from scratch. Get the list from the owner, then enter them in batches. Take breaks. Do not rush into mistakes.
+
+**Time estimate:**
+
+If you have photos and info ready: 2-3 minutes per product. 30 products = 90 minutes. Add another 30 minutes for the owner's interruptions. **Block 2 hours.**
+
+**Common mistakes:**
+
+1. Naming products in English when customers use Pidgin or local names. "Garri" not "Cassava flour."
+2. Forgetting floor prices — AI rejects all negotiations — customers leave.
+3. Skipping stock — AI says "Available" every time — customer is disappointed when it is out.
+
+**Do this now:**
+
+Pick 3 products. Add them fully. Show the owner the product grid. Let them see how it looks. Then continue with the rest.`,
       },
       {
-        slug: "following-up",
-        title: "Following Up Without Pressure",
+        slug: "writing-descriptions",
+        title: "Writing Descriptions",
         order: 3,
         durationMin: 5,
-        bodyMarkdown: `## Following up without pressure
+        bodyMarkdown: `The AI will only answer with what you give it. If descriptions are empty or vague, the AI sounds stupid.
 
-Most sales happen after a few gentle follow-ups.
+Bad description = bad answers = the owner loses trust in Colly.
 
-- Follow up within a day
-- Lead with a useful tip or a relevant example
-- Ask one clear question at a time
-- Never spam; space your messages out
+**What makes a good description:**
 
-Record what each business needs so your next follow-up is specific.`,
+**1. What it is.**
+
+Plain language. Not marketing fluff.
+
+Bad: "Premium quality household staple food item"
+Good: "Golden Penny Semovita. 1kg. White flour for making swallow."
+
+**2. What it is good for.**
+
+The customer's use case.
+
+Bad: "Great for cooking"
+Good: "Makes eba and fufu. Smooth, stretchy texture when cooked."
+
+**3. What is in the pack.**
+
+Quantity, size, variants.
+
+Good: "1kg sealed pack."
+Good: "Comes in 3 colours: black, white, silver."
+Good: "Includes charger and USB cable."
+
+**4. What makes it different.**
+
+Only if the owner told you something real.
+
+Good: "Imported from Turkey. Tighter stitching than local brands."
+Bad: "Best quality in the market." (Every seller says this. Meaningless.)
+
+**5. Honest limits.**
+
+What it is NOT. This protects the owner.
+
+Good: "Does not fit iPhone 14 or newer. Only fits iPhone 12 and 13."
+Good: "Cash on delivery only for Lagos. Other states require transfer."
+
+**What NOT to write:**
+
+- Marketing words: "premium," "amazing," "best," "highest quality"
+- Facts you made up
+- Made-up specifications
+- Rules the AI invents
+
+**The rule:** If the owner did not tell you, do not write it. Missing information is fine — invented information is not.
+
+**Photos:**
+
+Take photos the same way every time:
+
+- Natural light (near a window, not direct sunlight)
+- Plain background (white cloth, table, or wall)
+- Focus on the product, not the surroundings
+- 2-3 angles if possible (front, side, opened)
+
+If the owner has old photos, use them. If not, take them on your phone. Send them to your WhatsApp, download, upload to Colly.
+
+**Do this now:**
+
+Pick one product from the shop. Write a description that includes all 5 elements above. Show the owner. Ask: "Is this correct? Is anything wrong?" Fix it. Then use that same pattern for the rest.`,
+      },
+      {
+        slug: "adding-faqs",
+        title: "Adding FAQs",
+        order: 4,
+        durationMin: 5,
+        bodyMarkdown: `FAQs are the 5-7 questions every customer asks. If the AI knows them, it answers instantly. If not, it escalates to the owner.
+
+**The 5 FAQ categories every business needs:**
+
+**1. Delivery**
+
+- Do you deliver?
+- Where do you deliver? (Lagos only? Nationwide? Specific areas?)
+- How much is delivery?
+- How long does it take?
+
+**2. Payment**
+
+- What payment methods do you accept? (Transfer, Cash, POS?)
+- Do you accept payment on delivery?
+- What is your account number? (yes, put it here)
+
+**3. Returns**
+
+- Can I return a product?
+- Within how many days?
+- Is there a refund or exchange?
+- What if the product is damaged on arrival?
+
+**4. Opening hours**
+
+- What time do you open?
+- What time do you close?
+- Do you open on Sundays?
+- Public holidays?
+
+**5. Warranty**
+
+- Is there a warranty?
+- How long?
+- What does it cover?
+- How does the customer claim it?
+
+**Extra FAQs to add if relevant:**
+
+- Do you do wholesale?
+- Do you have a physical shop?
+- Can I pay in installments?
+- Do you offer discounts for bulk?
+- Are you on Instagram or TikTok?
+
+**Format for each FAQ:**
+
+Question: as the customer would type it
+Answer: short, direct, no fluff
+
+Bad Question: "What is the business policy on product returns?"
+Good Question: "Can I return a product?"
+
+Bad Answer: "Our return policy is designed to ensure customer satisfaction..."
+Good Answer: "Yes, within 7 days if it is not damaged. Bring it back to the shop with the receipt."
+
+**Do this now:**
+
+Sit with the owner and go through the 5 categories. Ask each question. Write down their answers. Enter them in Colly.
+
+Target: 6-10 FAQs minimum. Every business has different answers, but the categories are the same.`,
+      },
+      {
+        slug: "setting-tone-and-testing",
+        title: "Setting Tone and Testing",
+        order: 5,
+        durationMin: 5,
+        bodyMarkdown: `Now that the AI has data, you teach it how to talk and confirm it works.
+
+**AI Tone (in Settings):**
+
+Two options:
+
+- **Formal** — "Good day. How may I assist you today?"
+- **Friendly** — "Hey! How can I help?"
+
+**Which to pick:**
+
+- Boutiques, electronics shops, service businesses — **Friendly**
+- Pharmacies, financial services, professional services — **Formal**
+
+Ask the owner: "How do you reply to your customers today?"
+
+If they say "Hi babe, how are you?" — Friendly.
+If they say "Good afternoon ma, how can I help?" — Formal.
+
+Match the AI's tone to the owner's tone. That is what customers expect.
+
+**Language:**
+
+Colly auto-detects English, Pidgin, and mixed. You do not pick a language. The AI matches the customer.
+
+Test this. Send a message in Pidgin. The reply should be in Pidgin.
+
+**Testing — do these 5 messages:**
+
+Send from your own WhatsApp to the business's number:
+
+1. **Product query** — "How much is [one product]?"
+   - Pass: AI replies with the exact price from the catalogue
+   - Fail: AI does not know — product entry has an issue
+
+2. **FAQ query** — "Do you deliver to [area]?"
+   - Pass: AI answers with the FAQ answer
+   - Fail: AI does not know — FAQ entry has an issue
+
+3. **Negotiation** — "Can you do [lower price]?"
+   - Pass: AI counters within the range and never goes below floor
+   - Fail: AI accepts too low — floor price not set correctly
+
+4. **Unknown question** — "Do you sell garden hoses?"
+   - Pass: AI says it cannot help and escalates (or offers similar products)
+   - Fail: AI invents an answer — product descriptions have issues
+
+5. **Pidgin** — "How much be this thing?"
+   - Pass: AI replies correctly in Pidgin
+   - Fail: AI responds in stiff English — report to Colly support
+
+**If any test fails, fix it BEFORE you leave.**
+
+The customer experience will be exactly this. If you catch the problem now, the owner never sees it.
+
+**Do this now:**
+
+Send all 5 test messages. Screenshot the AI replies. Show the owner. If the owner smiles, you know you are done.`,
+      },
+      {
+        slug: "handoff-to-colly",
+        title: "Handoff to Colly",
+        order: 6,
+        durationMin: 5,
+        bodyMarkdown: `This is a short lesson. There is almost nothing for you to do here.
+
+**The truth:** You do not connect the WhatsApp Business API. That is Colly's job.
+
+The reason: The WhatsApp Cloud API requires a Meta Business Account, a WABA setup, phone number verification, and template approval. This is technical, risky, and one mistake can get the number banned.
+
+Colly's team handles this for every business. You do not.
+
+**What you do:**
+
+1. Make sure all products, FAQs, and tone are set up correctly.
+2. Tell the owner: "Everything is ready. Colly will connect your WhatsApp in the next 24 hours."
+3. Share the owner's name, business name, and WhatsApp number with Colly support.
+4. Notify Colly via WhatsApp or email that the business is ready for connection.
+
+**What Colly does:**
+
+1. Registers the business's WhatsApp number with the Meta Cloud API.
+2. Verifies the connection.
+3. Notifies you when live.
+4. You go back to the owner with the news.
+
+**What to tell the owner while waiting:**
+
+> "In the next day or so, Colly's team will connect your WhatsApp. You will not need to do anything. When it is ready, your customers can message you as usual and the AI will reply. I will come back and show you."
+
+**Timeline expectations:**
+
+- Day 1: You finish setup. Send handoff to Colly.
+- Day 1-2: Colly connects the number.
+- Day 2: You visit or call the owner to confirm the connection works.
+- Day 3 onward: Owner uses the system. You are on standby for the first week.
+
+**Do this now:**
+
+Write down Colly's support contact. Save it in your phone. When the business is ready for handoff, you send one message. Colly handles the rest.`,
       },
     ],
     questions: [
       {
-        question: "What do Nigerian SMEs trust most?",
-        options: ["Adverts", "People and referrals", "Cold calls", "Billboards"],
+        question: "Before a setup visit, which of these is NOT required?",
+        options: ["Product list and photos","The owner's bank details","Common customer questions","The owner's WhatsApp number"],
         correctIndex: 1,
       },
       {
-        question: "Which is a sign a business is a good fit?",
-        options: [
-          "Many repeat questions on WhatsApp",
-          "No messages at all",
-          "No product list",
-          "Owner replies instantly all day",
-        ],
+        question: "Whose details should you use when creating the business account?",
+        options: ["Your own email and phone","The owner's real details","A shared Colly account","The customer's details"],
+        correctIndex: 1,
+      },
+      {
+        question: "What happens when the free trial ends?",
+        options: ["The account is deleted","The owner is charged automatically","The AI stops replying until they subscribe, but the account stays","Nothing changes"],
+        correctIndex: 2,
+      },
+      {
+        question: "What is the floor price?",
+        options: ["The highest price the AI can offer","The lowest price the AI can offer during negotiation","The price after VAT","The cost price"],
+        correctIndex: 1,
+      },
+      {
+        question: "How many photos can a product have?",
+        options: ["1","3","5","Up to 10"],
+        correctIndex: 3,
+      },
+      {
+        question: "Which product name is best?",
+        options: ["Apple Inc. iPhone 12 128GB Model A2403","iPhone 12 128GB","The latest Apple smartphone","Phone"],
+        correctIndex: 1,
+      },
+      {
+        question: "A good product description should include:",
+        options: ["What it is, what it is good for, and honest limits","Only the price","Marketing words like 'premium' and 'best'","Made-up facts to sound professional"],
         correctIndex: 0,
       },
       {
-        question: "When should you follow up?",
-        options: ["Within a day", "After a month", "Never", "Only after they complain"],
-        correctIndex: 0,
+        question: "Which is NOT one of the 5 must-have FAQ categories?",
+        options: ["Delivery","Payment","Returns","Instagram followers"],
+        correctIndex: 3,
       },
       {
-        question: "How should you follow up?",
-        options: [
-          "Spam daily",
-          "Lead with a useful tip and one clear question",
-          "Send many questions at once",
-          "Stop after one message",
-        ],
+        question: "The AI tone should match:",
+        options: ["Your preference","The owner's existing reply style","Always formal","Always friendly"],
         correctIndex: 1,
       },
       {
-        question: "What should you record about each business?",
-        options: [
-          "Nothing",
-          "What they need for a specific next follow-up",
-          "Their competitor's prices",
-          "Their staff birthdays",
-        ],
-        correctIndex: 1,
+        question: "When testing before handoff, you should send:",
+        options: ["One message","Only product queries","Product, FAQ, negotiation, unknown, and Pidgin messages","Nothing - Colly tests automatically"],
+        correctIndex: 2,
+      },
+      {
+        question: "Who connects the WhatsApp Business API?",
+        options: ["The agent","The business owner","Colly's team","Meta"],
+        correctIndex: 2,
+      },
+      {
+        question: "What should you tell the owner after setup?",
+        options: ["You are all set, goodbye","Wait 3 weeks for approval","Everything is ready. Colly will connect your WhatsApp within 24 hours.","You need to buy another SIM card"],
+        correctIndex: 2,
       },
     ],
   },
+  {
+    slug: "training-the-owner",
+    title: "Training the Owner",
+    description: "After setup, teach the owner to use the dashboard, handle takeover, and fix common AI mistakes.",
+    order: 2,
+    published: true,
+    isCertificationCourse: false,
+    lessons: [
+      {
+        slug: "dashboard-tour",
+        title: "Dashboard Tour",
+        order: 0,
+        durationMin: 5,
+        bodyMarkdown: `You have set everything up. Now the owner needs to know what they are looking at.
+
+**Do not hand them the laptop and walk away.** Sit with them. Walk through each section in order. 10 minutes.
+
+**Say this first:**
+
+> "Every message your customers send goes to this dashboard. The AI answers automatically. You can see every conversation, every customer, every sale. Let me show you where everything is."
+
+**Section 1 — Overview (2 minutes)**
+
+Point at the top of the page.
+
+> "This is your home screen. Today's sales show here. Messages handled. Active conversations. Pending invoices. Every morning when you open Colly, this is the first thing you see."
+
+Have them click **Overview** in the sidebar. Then let them read the numbers themselves.
+
+**Section 2 — Conversations (2 minutes)**
+
+Click **Conversations** in the sidebar.
+
+> "Every chat your business has with a customer is here. The AI replies to most of them. You can open any chat and see what was said."
+
+Open one conversation. Let them read it. This is the moment they realize the AI is actually working.
+
+**Section 3 — Products (2 minutes)**
+
+Click **Products**.
+
+> "This is your catalogue. Everything you sell is here. When a customer asks about a product, the AI looks here and answers. If you change a price, change it here."
+
+Show them one product. Point at the price.
+
+> "The AI always quotes this price. So if you change the price of rice tomorrow, change it here first. Otherwise the AI will quote the old price."
+
+**Section 4 — Sales (2 minutes)**
+
+Click **Sales**.
+
+> "Every sale is here. Whether it came from the AI or from you tapping it yourself. Today's total is at the top. Yesterday, last week — scroll down to see history."
+
+Click into one sale. Show them the details.
+
+**Section 5 — Settings (1 minute)**
+
+Click **Settings**.
+
+> "Your business name, AI tone, negotiation settings — all here. We already set it up together. You will not need to touch this often. But if you want the AI to sound more formal or friendly, this is where you change it."
+
+**Section 6 — Takeover (1 minute)**
+
+Back to Conversations. Open one. Point at the takeover button.
+
+> "See this? If you ever want to reply to a customer yourself, tap here. The AI stops for this one chat. When you finish, tap Resume. The AI takes over again."
+
+**Close the tour:**
+
+> "Any questions?"
+
+Then wait. Let them ask. Let them poke around. This is where they build confidence.
+
+**Do this now:**
+
+Before you leave the shop, have the owner click through all 5 sections on their own device. Not yours. Theirs. Watch them do it. If they hesitate, walk them through again.`,
+      },
+      {
+        slug: "human-takeover",
+        title: "Human Takeover",
+        order: 1,
+        durationMin: 5,
+        bodyMarkdown: `The AI handles 90% of conversations. The other 10% need a human. Your job is to teach the owner when to step in and how.
+
+**When to take over:**
+
+- Customer is angry or complaining
+- Customer asks for a custom quote or bulk discount
+- Customer wants to negotiate beyond the AI's range
+- Customer asks something the AI cannot answer
+- Customer is a big buyer and the owner wants to handle personally
+
+**How to take over:**
+
+1. Open **Conversations**
+2. Click the conversation with the customer
+3. Click **Take Over** at the top
+4. The AI pauses for this chat
+5. Type your reply in the text box at the bottom
+6. Click **Send**
+
+**How the customer sees it:**
+
+The customer does not know they are talking to a human now. As far as they know, it is the same business replying. Smooth transition.
+
+**How to resume AI:**
+
+1. Click the conversation
+2. Click **Resume AI**
+3. The AI picks up the next message
+
+**Auto-resume:**
+
+If the owner takes over and forgets to resume, the AI automatically resumes after **1 hour**. This prevents the AI from being paused forever.
+
+**What the owner should NOT do:**
+
+- Do not take over every conversation. Let the AI do its job.
+- Do not reply to messages that the AI already answered well.
+- Do not pause the AI on multiple conversations at once. It gets confusing.
+
+**Do this now:**
+
+Find a real conversation in the owner's dashboard. Walk them through taking over. Let them reply to one message. Then have them resume the AI. Show them it works.`,
+      },
+      {
+        slug: "quick-sale",
+        title: "Quick Sale",
+        order: 2,
+        durationMin: 5,
+        bodyMarkdown: `Not every sale comes from WhatsApp. Sometimes a customer walks into the shop and buys something on the spot.
+
+The Quick Sale feature lets the owner record that sale in 10 seconds.
+
+**When to use Quick Sale:**
+
+- Customer is physically in the shop
+- Customer pays in cash, transfer, or POS
+- The sale is not coming through WhatsApp
+- The owner wants the sale recorded in Colly
+
+**How it works:**
+
+1. Click **Sales** in the sidebar
+2. Click **Add from catalog** (button on the Sales page)
+3. You land on Quick Sale page
+4. See all products in a grid
+5. Tap the **+ Add** button on each product the customer is buying
+6. Set the quantity using minus / plus
+7. Click **Proceed**
+8. Back on Sales page — cart is filled
+9. Choose payment method (Cash / Transfer / POS / Credit)
+10. Click **Complete Sale**
+
+That is it. Sale recorded. Stock updated. Customer recorded (as "Walk-in Customer" if not tied to a specific customer).
+
+**What happens automatically:**
+
+- Stock decreases by the quantity sold
+- Today's Sales updates on the Overview page
+- The sale appears in the Sales history
+
+**When to use Custom Amount instead:**
+
+If the owner sells something not in the catalogue (a one-off item, a service, anything not listed):
+
+1. Click **+ Custom Amount** in the cart
+2. Enter the amount
+3. Complete Sale
+
+This is useful for:
+
+- Services (delivery, repairs)
+- Items the owner forgot to add to the catalogue
+- Discounts or adjustments
+
+**Do this now:**
+
+Simulate a walk-in sale. Pick one product. Add it to the cart. Choose Cash. Complete Sale. Show the owner it appears in the Sales list.`,
+      },
+      {
+        slug: "daily-checks",
+        title: "Daily Checks",
+        order: 3,
+        durationMin: 5,
+        bodyMarkdown: `The owner does not need to open Colly every hour. But 5 minutes a day keeps the business healthy.
+
+**The morning check (2 minutes):**
+
+Open Colly. Click **Overview**.
+
+Look at these numbers:
+
+- **Messages Handled** — how many conversations did the AI answer overnight?
+- **Active Conversations** — any customer waiting on a reply?
+- **Today's Sales** — did anything come in overnight?
+
+If Active Conversations is above 0, open Conversations and check if the AI handled it correctly.
+
+**The evening check (2 minutes):**
+
+Open **Conversations**. Scroll through today's chats.
+
+Look for:
+
+- Any conversation with a red flag (customer complaining)
+- Any conversation where the AI escalated to you
+- Any customer who asked for a custom quote
+
+Reply to anything urgent. Let the AI handle the rest.
+
+**The weekly check (5 minutes):**
+
+Open **Sales**. Look at the week's total.
+
+Ask:
+
+- Are sales up or down from last week?
+- Which products are selling well?
+- Which products are not moving?
+
+Open **Products**. Look at any product with low stock (yellow/red badge). Restock or update.
+
+**The monthly check (10 minutes):**
+
+Open **Settings → Billing**.
+
+- How many messages did you use this month?
+- Are you under or over your plan cap?
+- Do you need more credits?
+
+If consistently over the cap, upgrade the plan. It is usually cheaper than buying credits.
+
+**What NOT to do:**
+
+- Do not check every 5 minutes. It wastes time.
+- Do not reply to conversations the AI already handled well.
+- Do not worry about "Messages Handled" — the AI handles it.
+
+**Do this now:**
+
+Set a daily alarm on the owner's phone. "Colly check-in — 8am." Simple. That is the habit.`,
+      },
+      {
+        slug: "ai-mistakes",
+        title: "AI Mistakes",
+        order: 4,
+        durationMin: 5,
+        bodyMarkdown: `The AI will make mistakes. Not often. But when it does, the owner needs to know how to fix it.
+
+**Common mistakes and how to fix them:**
+
+**Mistake 1 — AI quoted the wrong price**
+
+Cause: The product price in the catalogue is out of date.
+
+Fix:
+
+1. Click **Products**
+2. Find the product
+3. Click **Edit**
+4. Update the price
+5. Save
+
+The AI will quote the new price on the next message. No need to restart anything.
+
+**Mistake 2 — AI said "we do not sell that" when the shop does**
+
+Cause: The product is not in the catalogue.
+
+Fix:
+
+1. Click **Products**
+2. Click **Add Product**
+3. Add the missing product with name, price, description, and photo
+4. Save
+
+The AI will now recognize the product.
+
+**Mistake 3 — AI refused to negotiate when it should have**
+
+Cause: The product does not have a floor price set, or "Negotiable" is unchecked.
+
+Fix:
+
+1. Click **Products**
+2. Find the product
+3. Click **Edit**
+4. Set a floor price (the lowest acceptable)
+5. Check "Allow AI to negotiate this price"
+6. Save
+
+**Mistake 4 — AI answered a FAQ wrong**
+
+Cause: The FAQ answer in the system does not match reality.
+
+Fix:
+
+1. Click **FAQs**
+2. Find the FAQ
+3. Click **Edit**
+4. Update the answer
+5. Save
+
+**Mistake 5 — AI said something that does not exist**
+
+Cause: The product description has inaccurate information, or the AI invented something.
+
+Fix:
+
+1. Click **Products** or **FAQs**
+2. Find the entry
+3. Edit the description to match reality
+4. Save
+
+**If the AI keeps making the same mistake:**
+
+Report it to Colly support. Send:
+
+- Screenshot of the conversation
+- Which product or FAQ was involved
+- What the AI said vs what it should have said
+
+Colly's team will investigate. Usually it is a data problem, not an AI problem.
+
+**How to prevent mistakes:**
+
+- Keep product descriptions accurate
+- Update prices when they change
+- Review FAQs monthly
+- If a product is discontinued, delete it or set stock to 0
+- If a product is temporary, do not add it to the catalogue
+
+**Do this now:**
+
+Review the owner's product list. Look for anything out of date. Fix it before it causes a wrong AI reply.`,
+      },
+    ],
+    questions: [
+      {
+        question: "How long should the initial dashboard tour take?",
+        options: ["1 minute","10 minutes","1 hour","All day"],
+        correctIndex: 1,
+      },
+      {
+        question: "When should the owner take over a conversation?",
+        options: ["Every conversation","Only when the AI fails or the customer is angry","Never - let the AI handle everything","Randomly"],
+        correctIndex: 1,
+      },
+      {
+        question: "What happens when the owner forgets to resume the AI after taking over?",
+        options: ["The AI stays paused forever","The AI auto-resumes after 1 hour","The customer gets an error","The conversation ends"],
+        correctIndex: 1,
+      },
+      {
+        question: "What is the Quick Sale feature for?",
+        options: ["Online customers","Walk-in customers who pay in cash, transfer, or POS","Wholesale customers","Only for delivery"],
+        correctIndex: 1,
+      },
+      {
+        question: "During the evening check, what should the owner look for in Conversations?",
+        options: ["Every message the AI sent today","Complaints, escalations, and custom quote requests","Only unread conversations","The total number of messages sent"],
+        correctIndex: 1,
+      },
+      {
+        question: "The AI quoted the wrong price. What should the owner do?",
+        options: ["Turn off the AI","Update the price in the Products page","Wait for it to fix itself","Call the customer"],
+        correctIndex: 1,
+      },
+      {
+        question: "The AI refused to negotiate when it should have. Likely cause?",
+        options: ["The AI is broken","The floor price is not set or 'Negotiable' is unchecked","The customer blocked it","The internet is down"],
+        correctIndex: 1,
+      },
+      {
+        question: "The AI keeps making the same mistake. What should the owner do?",
+        options: ["Give up","Wait - it will fix itself","Report it to Colly support with a screenshot","Delete the catalog"],
+        correctIndex: 2,
+      },
+    ],
+  }
 ];
 
 async function main() {
@@ -1043,6 +1815,13 @@ async function main() {
   // businesses, users and agent progress on other courses are left alone.
   await prisma.agentCourse.deleteMany({
     where: { slug: "setting-up-whatsapp-ai" },
+  });
+
+  // Remove the retired Course 2 placeholder (slug "nigerian-sme-sales") so its
+  // lessons and quiz questions (both cascade from the course) do not linger as
+  // an orphan after the course was replaced by "setting-up-a-business".
+  await prisma.agentCourse.deleteMany({
+    where: { slug: "nigerian-sme-sales" },
   });
 
   for (const course of AGENT_COURSES) {

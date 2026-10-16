@@ -121,5 +121,5 @@ function agentLoginErrorMessage(message: string): string {
 export async function agentLogout(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/agents/login");
+  redirect("/login?role=agent");
 }

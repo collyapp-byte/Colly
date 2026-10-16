@@ -411,6 +411,8 @@ model AgentQuizQuestion {
   /// Answer options, e.g. ["A", "B", "C", "D"].
   options      Json
   correctIndex Int
+  /// Optional explanation shown after a wrong answer. Null when not provided.
+  explanation  String? @db.Text
 
   course AgentCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }

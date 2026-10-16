@@ -1,0 +1,308 @@
+=== LESSON 1: dashboard-tour ===
+You have set everything up. Now the owner needs to know what they are looking at.
+
+**Do not hand them the laptop and walk away.** Sit with them. Walk through each section in order. 10 minutes.
+
+**Say this first:**
+
+> "Every message your customers send goes to this dashboard. The AI answers automatically. You can see every conversation, every customer, every sale. Let me show you where everything is."
+
+**Section 1 — Overview (2 minutes)**
+
+Point at the top of the page.
+
+> "This is your home screen. Today's sales show here. Messages handled. Active conversations. Pending invoices. Every morning when you open Colly, this is the first thing you see."
+
+Have them click **Overview** in the sidebar. Then let them read the numbers themselves.
+
+**Section 2 — Conversations (2 minutes)**
+
+Click **Conversations** in the sidebar.
+
+> "Every chat your business has with a customer is here. The AI replies to most of them. You can open any chat and see what was said."
+
+Open one conversation. Let them read it. This is the moment they realize the AI is actually working.
+
+**Section 3 — Products (2 minutes)**
+
+Click **Products**.
+
+> "This is your catalogue. Everything you sell is here. When a customer asks about a product, the AI looks here and answers. If you change a price, change it here."
+
+Show them one product. Point at the price.
+
+> "The AI always quotes this price. So if you change the price of rice tomorrow, change it here first. Otherwise the AI will quote the old price."
+
+**Section 4 — Sales (2 minutes)**
+
+Click **Sales**.
+
+> "Every sale is here. Whether it came from the AI or from you tapping it yourself. Today's total is at the top. Yesterday, last week — scroll down to see history."
+
+Click into one sale. Show them the details.
+
+**Section 5 — Settings (1 minute)**
+
+Click **Settings**.
+
+> "Your business name, AI tone, negotiation settings — all here. We already set it up together. You will not need to touch this often. But if you want the AI to sound more formal or friendly, this is where you change it."
+
+**Section 6 — Takeover (1 minute)**
+
+Back to Conversations. Open one. Point at the takeover button.
+
+> "See this? If you ever want to reply to a customer yourself, tap here. The AI stops for this one chat. When you finish, tap Resume. The AI takes over again."
+
+**Close the tour:**
+
+> "Any questions?"
+
+Then wait. Let them ask. Let them poke around. This is where they build confidence.
+
+**Do this now:**
+
+Before you leave the shop, have the owner click through all 5 sections on their own device. Not yours. Theirs. Watch them do it. If they hesitate, walk them through again.
+
+=== LESSON 2: human-takeover ===
+The AI handles 90% of conversations. The other 10% need a human. Your job is to teach the owner when to step in and how.
+
+**When to take over:**
+
+- Customer is angry or complaining
+- Customer asks for a custom quote or bulk discount
+- Customer wants to negotiate beyond the AI's range
+- Customer asks something the AI cannot answer
+- Customer is a big buyer and the owner wants to handle personally
+
+**How to take over:**
+
+1. Open **Conversations**
+2. Click the conversation with the customer
+3. Click **Take Over** at the top
+4. The AI pauses for this chat
+5. Type your reply in the text box at the bottom
+6. Click **Send**
+
+**How the customer sees it:**
+
+The customer does not know they are talking to a human now. As far as they know, it is the same business replying. Smooth transition.
+
+**How to resume AI:**
+
+1. Click the conversation
+2. Click **Resume AI**
+3. The AI picks up the next message
+
+**Auto-resume:**
+
+If the owner takes over and forgets to resume, the AI automatically resumes after **1 hour**. This prevents the AI from being paused forever.
+
+**What the owner should NOT do:**
+
+- Do not take over every conversation. Let the AI do its job.
+- Do not reply to messages that the AI already answered well.
+- Do not pause the AI on multiple conversations at once. It gets confusing.
+
+**Do this now:**
+
+Find a real conversation in the owner's dashboard. Walk them through taking over. Let them reply to one message. Then have them resume the AI. Show them it works.
+
+=== LESSON 3: quick-sale ===
+Not every sale comes from WhatsApp. Sometimes a customer walks into the shop and buys something on the spot.
+
+The Quick Sale feature lets the owner record that sale in 10 seconds.
+
+**When to use Quick Sale:**
+
+- Customer is physically in the shop
+- Customer pays in cash, transfer, or POS
+- The sale is not coming through WhatsApp
+- The owner wants the sale recorded in Colly
+
+**How it works:**
+
+1. Click **Sales** in the sidebar
+2. Click **Add from catalog** (button on the Sales page)
+3. You land on Quick Sale page
+4. See all products in a grid
+5. Tap the **+ Add** button on each product the customer is buying
+6. Set the quantity using minus / plus
+7. Click **Proceed**
+8. Back on Sales page — cart is filled
+9. Choose payment method (Cash / Transfer / POS / Credit)
+10. Click **Complete Sale**
+
+That is it. Sale recorded. Stock updated. Customer recorded (as "Walk-in Customer" if not tied to a specific customer).
+
+**What happens automatically:**
+
+- Stock decreases by the quantity sold
+- Today's Sales updates on the Overview page
+- The sale appears in the Sales history
+
+**When to use Custom Amount instead:**
+
+If the owner sells something not in the catalogue (a one-off item, a service, anything not listed):
+
+1. Click **+ Custom Amount** in the cart
+2. Enter the amount
+3. Complete Sale
+
+This is useful for:
+
+- Services (delivery, repairs)
+- Items the owner forgot to add to the catalogue
+- Discounts or adjustments
+
+**Do this now:**
+
+Simulate a walk-in sale. Pick one product. Add it to the cart. Choose Cash. Complete Sale. Show the owner it appears in the Sales list.
+
+=== LESSON 4: daily-checks ===
+The owner does not need to open Colly every hour. But 5 minutes a day keeps the business healthy.
+
+**The morning check (2 minutes):**
+
+Open Colly. Click **Overview**.
+
+Look at these numbers:
+
+- **Messages Handled** — how many conversations did the AI answer overnight?
+- **Active Conversations** — any customer waiting on a reply?
+- **Today's Sales** — did anything come in overnight?
+
+If Active Conversations is above 0, open Conversations and check if the AI handled it correctly.
+
+**The evening check (2 minutes):**
+
+Open **Conversations**. Scroll through today's chats.
+
+Look for:
+
+- Any conversation with a red flag (customer complaining)
+- Any conversation where the AI escalated to you
+- Any customer who asked for a custom quote
+
+Reply to anything urgent. Let the AI handle the rest.
+
+**The weekly check (5 minutes):**
+
+Open **Sales**. Look at the week's total.
+
+Ask:
+
+- Are sales up or down from last week?
+- Which products are selling well?
+- Which products are not moving?
+
+Open **Products**. Look at any product with low stock (yellow/red badge). Restock or update.
+
+**The monthly check (10 minutes):**
+
+Open **Settings → Billing**.
+
+- How many messages did you use this month?
+- Are you under or over your plan cap?
+- Do you need more credits?
+
+If consistently over the cap, upgrade the plan. It is usually cheaper than buying credits.
+
+**What NOT to do:**
+
+- Do not check every 5 minutes. It wastes time.
+- Do not reply to conversations the AI already handled well.
+- Do not worry about "Messages Handled" — the AI handles it.
+
+**Do this now:**
+
+Set a daily alarm on the owner's phone. "Colly check-in — 8am." Simple. That is the habit.
+
+=== LESSON 5: ai-mistakes ===
+The AI will make mistakes. Not often. But when it does, the owner needs to know how to fix it.
+
+**Common mistakes and how to fix them:**
+
+**Mistake 1 — AI quoted the wrong price**
+
+Cause: The product price in the catalogue is out of date.
+
+Fix:
+
+1. Click **Products**
+2. Find the product
+3. Click **Edit**
+4. Update the price
+5. Save
+
+The AI will quote the new price on the next message. No need to restart anything.
+
+**Mistake 2 — AI said "we do not sell that" when the shop does**
+
+Cause: The product is not in the catalogue.
+
+Fix:
+
+1. Click **Products**
+2. Click **Add Product**
+3. Add the missing product with name, price, description, and photo
+4. Save
+
+The AI will now recognize the product.
+
+**Mistake 3 — AI refused to negotiate when it should have**
+
+Cause: The product does not have a floor price set, or "Negotiable" is unchecked.
+
+Fix:
+
+1. Click **Products**
+2. Find the product
+3. Click **Edit**
+4. Set a floor price (the lowest acceptable)
+5. Check "Allow AI to negotiate this price"
+6. Save
+
+**Mistake 4 — AI answered a FAQ wrong**
+
+Cause: The FAQ answer in the system does not match reality.
+
+Fix:
+
+1. Click **FAQs**
+2. Find the FAQ
+3. Click **Edit**
+4. Update the answer
+5. Save
+
+**Mistake 5 — AI said something that does not exist**
+
+Cause: The product description has inaccurate information, or the AI invented something.
+
+Fix:
+
+1. Click **Products** or **FAQs**
+2. Find the entry
+3. Edit the description to match reality
+4. Save
+
+**If the AI keeps making the same mistake:**
+
+Report it to Colly support. Send:
+
+- Screenshot of the conversation
+- Which product or FAQ was involved
+- What the AI said vs what it should have said
+
+Colly's team will investigate. Usually it is a data problem, not an AI problem.
+
+**How to prevent mistakes:**
+
+- Keep product descriptions accurate
+- Update prices when they change
+- Review FAQs monthly
+- If a product is discontinued, delete it or set stock to 0
+- If a product is temporary, do not add it to the catalogue
+
+**Do this now:**
+
+Review the owner's product list. Look for anything out of date. Fix it before it causes a wrong AI reply.
