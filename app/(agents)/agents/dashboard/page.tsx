@@ -3,12 +3,16 @@
 import Link from "next/link";
 import { Award, BookOpen, Share2, TriangleAlert } from "lucide-react";
 import { useAgentData } from "@/components/agents/use-agent-data";
-import type { AgentMeResponse } from "@/lib/agents-types";
+import { CourseBadge } from "@/components/agents/course-badge";
+import type { AgentBadgesResponse, AgentMeResponse } from "@/lib/agents-types";
 import { formatRelativeTime } from "@/lib/format";
 
 export default function AgentDashboardPage() {
   const { data, error, loading } = useAgentData<AgentMeResponse>(
     "/api/agents/me",
+  );
+  const { data: badgesData } = useAgentData<AgentBadgesResponse>(
+    "/api/agents/badges",
   );
 
   if (loading) return <DashboardSkeleton />;
@@ -22,6 +26,10 @@ export default function AgentDashboardPage() {
     progress.totalLessons > 0
       ? Math.round((progress.completedLessons / progress.totalLessons) * 100)
       : 0;
+  const earnedBadgeCount = badgesData
+    ? badgesData.badges.filter((badge) => badge.earned).length
+    : 0;
+  const totalBadges = badgesData?.badges.length ?? 4;
 
   return (
     <div className="flex flex-col gap-5">
@@ -43,13 +51,24 @@ export default function AgentDashboardPage() {
             <span className="text-[13px] font-medium">Training progress</span>
           </div>
 
-          <p className="mt-4 text-3xl font-semibold text-gray-900">
-            {progress.completedLessons}
-            <span className="text-lg font-normal text-gray-400">
-              {" "}
-              / {progress.totalLessons} lessons
-            </span>
-          </p>
+          <div className="mt-4 flex flex-wrap items-end gap-x-10 gap-y-3">
+            <p className="text-3xl font-semibold text-gray-900">
+              {progress.completedLessons}
+              <span className="text-lg font-normal text-gray-400">
+                {" "}
+                / {progress.totalLessons} lessons
+              </span>
+            </p>
+            {badgesData && (
+              <p className="text-3xl font-semibold text-gray-900">
+                {earnedBadgeCount}
+                <span className="text-lg font-normal text-gray-400">
+                  {" "}
+                  / {totalBadges} badges earned
+                </span>
+              </p>
+            )}
+          </div>
 
           <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-gray-100">
             <div
@@ -102,6 +121,49 @@ export default function AgentDashboardPage() {
           )}
         </section>
       </div>
+
+      {/* Course badges */}
+      {badgesData && (
+        <section className="rounded-lg border border-gray-200 bg-white p-6">
+          <h3 className="mb-4 text-sm font-semibold text-gray-900">
+            Course badges
+          </h3>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {badgesData.badges.map((badge) => (
+              <div
+                key={badge.courseSlug}
+                className="flex flex-col items-center gap-2"
+              >
+                <CourseBadge
+                  courseSlug={badge.courseSlug}
+                  earned={badge.earned}
+                  size="md"
+                />
+                <p className="text-xs text-gray-500">
+                  {badge.earned && badge.earnedAt
+                    ? formatRelativeTime(badge.earnedAt)
+                    : "Not yet earned"}
+                </p>
+              </div>
+            ))}
+          </div>
+          {badgesData.allEarned && (
+            <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3">
+              <p className="text-sm text-green-800">
+                🎉 All 4 badges earned! The Final Certification Exam is coming
+                soon.
+              </p>
+              <button
+                type="button"
+                disabled
+                className="mt-2 cursor-not-allowed rounded-lg bg-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600"
+              >
+                Final Exam — Coming Soon
+              </button>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Referrals */}
       <section className="rounded-xl border border-[color:var(--outline-subtle)] bg-white p-5">

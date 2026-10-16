@@ -3,11 +3,22 @@
 import Link from "next/link";
 import { ArrowRight, TriangleAlert } from "lucide-react";
 import { useAgentData } from "@/components/agents/use-agent-data";
-import type { AgentTrainingResponse } from "@/lib/agents-types";
+import { CourseBadge } from "@/components/agents/course-badge";
+import { isCourseSlug } from "@/lib/course-badge-meta";
+import type { AgentBadgesResponse, AgentTrainingResponse } from "@/lib/agents-types";
 
 export default function AgentTrainingPage() {
   const { data, error, loading } = useAgentData<AgentTrainingResponse>(
     "/api/agents/training",
+  );
+  const { data: badgesData } = useAgentData<AgentBadgesResponse>(
+    "/api/agents/badges",
+  );
+
+  const earnedBadges = new Set(
+    (badgesData?.badges ?? [])
+      .filter((badge) => badge.earned)
+      .map((badge) => badge.courseSlug),
   );
 
   if (loading) {
@@ -67,10 +78,25 @@ export default function AgentTrainingPage() {
                       {course.description}
                     </p>
                   </div>
-                  <ArrowRight
-                    className="mt-1 h-4 w-4 shrink-0 text-gray-300 transition-colors group-hover:text-colly"
-                    aria-hidden
-                  />
+                  <div className="flex shrink-0 items-start gap-3">
+                    {isCourseSlug(course.slug) &&
+                      earnedBadges.has(course.slug) && (
+                        <span className="flex flex-col items-center gap-1">
+                          <CourseBadge
+                            courseSlug={course.slug}
+                            earned
+                            size="sm"
+                          />
+                          <span className="text-[11px] font-medium text-success">
+                            Certified
+                          </span>
+                        </span>
+                      )}
+                    <ArrowRight
+                      className="mt-1 h-4 w-4 shrink-0 text-gray-300 transition-colors group-hover:text-colly"
+                      aria-hidden
+                    />
+                  </div>
                 </div>
 
                 <div className="mt-4 flex items-center gap-3">

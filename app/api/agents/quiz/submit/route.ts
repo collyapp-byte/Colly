@@ -2,6 +2,7 @@ import type { Agent } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentAgent } from "@/lib/agent-auth";
 import { generateCertificateId } from "@/lib/agent-id";
+import { awardBadgeIfEligible } from "@/lib/badges";
 
 /** A quiz passes at 80% or above. */
 const PASS_MARK = 80;
@@ -102,6 +103,19 @@ export async function POST(request: Request) {
         answers,
       },
     });
+
+    if (passed) {
+      // Award the course badge when every lesson is done and the quiz passed.
+      // Never fail the submission: the badge can be awarded on the next pass.
+      try {
+        await awardBadgeIfEligible(agent.id, course.slug);
+      } catch (error) {
+        console.error(
+          "[POST /api/agents/quiz/submit] badge award failed",
+          error,
+        );
+      }
+    }
 
     const certified = passed ? await ensureCertified(agent) : agent.certifiedAt !== null;
 

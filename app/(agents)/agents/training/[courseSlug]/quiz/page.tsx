@@ -11,7 +11,7 @@ import {
   CircleX,
   LoaderCircle,
 } from "lucide-react";
-import { useAgentData } from "@/components/agents/use-agent-data";
+import { useAgentData, revalidateAgentData } from "@/components/agents/use-agent-data";
 import type {
   AgentCourseResponse,
   AgentQuizQuestion,
@@ -170,6 +170,11 @@ function QuizRunner({
       }
 
       setResult(payload);
+      if (payload.passed) {
+        // A pass may have just awarded the course badge server-side. Refresh
+        // any mounted badge/progress views so it appears without a page reload.
+        revalidateAgentData();
+      }
     } catch (cause) {
       setSubmitError(
         cause instanceof Error ? cause.message : "Something went wrong.",

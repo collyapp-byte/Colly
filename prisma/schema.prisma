@@ -355,6 +355,7 @@ model Agent {
   progress          AgentLessonProgress[]
   quizAttempts      AgentQuizAttempt[]
   certificate       AgentCertificate?
+  badges            AgentBadge[]
   referredBusinesses Business[]
 }
 
@@ -440,4 +441,19 @@ model AgentCertificate {
   issuedAt      DateTime @default(now())
 
   agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+/// Awarded when an agent completes every lesson in a course and passes its
+/// quiz. Displayed on the agent dashboard and training pages.
+model AgentBadge {
+  id         String   @id @default(cuid())
+  agentId    String
+  /// Matches AgentCourse.slug for the four badge-eligible courses.
+  courseSlug String
+  earnedAt   DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, courseSlug])
+  @@index([agentId])
 }

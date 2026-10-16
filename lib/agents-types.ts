@@ -1,5 +1,7 @@
 /** Response shapes shared between the agent API routes and their client pages. */
 
+import type { CourseSlug } from "@/lib/course-badge-meta";
+
 export type AgentReferral = {
   id: string;
   name: string;
@@ -103,4 +105,15 @@ export type AgentCertificateResponse = {
 export type AgentReferralsResponse = {
   agentNumber: string;
   referrals: AgentReferral[];
+};
+
+export type AgentBadgeSummary = {
+  courseSlug: CourseSlug;
+  earned: boolean;
+  earnedAt: string | null;
+};
+
+export type AgentBadgesResponse = {
+  badges: AgentBadgeSummary[];
+  allEarned: boolean;
 };
