@@ -6,6 +6,7 @@ import {
   COURSE_BADGE_LABEL_LINES,
   type CourseSlug,
 } from "@/lib/course-badge-meta";
+import { COLLY_LOGO_PATHS, collyLogoTransform } from "@/lib/colly-logo-mark";
 
 /** Hexagonal course badge. Earned badges show in the course accent colour;
  * unearned ones are greyed out with a lock overlay. */
@@ -31,7 +32,10 @@ const CERTIFIED_COLOR = "#111827";
 const LABEL_COLOR = "#6B7280";
 
 const HEX_PATH = "M50 3 L93 28 L93 72 L50 97 L7 72 L7 28 Z";
-const CHEVRON_PATH = "M50 12 L58 23 L42 23 Z";
+/** Bounding box the old top chevron occupied; the logo mark is sized to it. */
+const LOGO_SIZE = 16;
+const LOGO_CENTER_X = 50;
+const LOGO_CENTER_Y = 17.5;
 
 export function CourseBadge({
   courseSlug,
@@ -72,8 +76,12 @@ export function CourseBadge({
           strokeWidth={2}
           strokeLinejoin="round"
         />
-        {/* Top chevron */}
-        <path d={CHEVRON_PATH} fill={accent} />
+        {/* Colly logo mark, in the footprint the chevron used to occupy */}
+        <g transform={collyLogoTransform(LOGO_SIZE, LOGO_CENTER_X, LOGO_CENTER_Y)}>
+          {COLLY_LOGO_PATHS.map((logoPath) => (
+            <path key={logoPath.id} d={logoPath.d} fill={logoPath.fill} />
+          ))}
+        </g>
 
         <text
           x="50"

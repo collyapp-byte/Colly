@@ -124,12 +124,18 @@ async function VerifyDetail({
           </p>
           <div className="grid grid-cols-4 gap-3">
             {badges.map((badge) => (
-              <CourseBadge
+              <Link
                 key={badge.courseSlug}
-                courseSlug={badge.courseSlug}
-                earned={badge.earned}
-                size="sm"
-              />
+                href={`/verify/${agent.agentNumber}/${badge.courseSlug}`}
+                aria-label={`View ${badge.courseSlug} badge detail`}
+                className="inline-flex justify-center rounded-lg transition-opacity hover:opacity-80"
+              >
+                <CourseBadge
+                  courseSlug={badge.courseSlug}
+                  earned={badge.earned}
+                  size="sm"
+                />
+              </Link>
             ))}
           </div>
         </div>

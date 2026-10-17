@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
   Award,
   Check,
-  ChevronDown,
   Copy,
   Download,
   Image as ImageIcon,
@@ -21,21 +20,6 @@ export default function AgentCertificatePage() {
     "/api/agents/certificate",
   );
   const [copied, setCopied] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-
-    function handlePointerDown(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [menuOpen]);
 
   if (loading) {
     return (
@@ -110,45 +94,14 @@ export default function AgentCertificatePage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Download badge (dropdown: PNG / SVG) */}
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setMenuOpen((open) => !open)}
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              <ImageIcon className="h-4 w-4" aria-hidden />
-              Download badge
-              <ChevronDown className="h-4 w-4" aria-hidden />
-            </button>
-            {menuOpen && (
-              <div
-                role="menu"
-                className="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
-              >
-                <a
-                  role="menuitem"
-                  href="/api/agents/certificate/badge"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  PNG
-                  <span className="text-xs text-gray-400">500×500</span>
-                </a>
-                <a
-                  role="menuitem"
-                  href="/api/agents/certificate/badge?format=svg"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  SVG
-                  <span className="text-xs text-gray-400">vector</span>
-                </a>
-              </div>
-            )}
-          </div>
+          {/* Download badge (PNG) */}
+          <a
+            href="/api/agents/certificate/badge"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            <ImageIcon className="h-4 w-4" aria-hidden />
+            Download badge
+          </a>
 
           {/* Download certificate (PDF) */}
           <a
@@ -192,8 +145,7 @@ export default function AgentCertificatePage() {
             Your certified badge
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            Use the PNG for LinkedIn and social profiles, or grab the SVG for
-            print and high-resolution use.
+            Use the PNG on LinkedIn and your social profiles.
           </p>
           <a
             href="/api/agents/certificate/badge"

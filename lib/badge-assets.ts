@@ -42,14 +42,13 @@ export async function collyLogoDataUri(): Promise<string> {
   }
 }
 
-/** Download headers for the certified-agent badge image. */
+/** Download headers for the certified-agent badge PNG. */
 export function certificationBadgeHeaders(
   agentNumber: string,
-  ext: "png" | "svg",
 ): Record<string, string> {
   return {
-    "Content-Type": ext === "png" ? "image/png" : "image/svg+xml",
-    "Content-Disposition": `attachment; filename="colly-agent-${agentNumber}-badge.${ext}"`,
+    "Content-Type": "image/png",
+    "Content-Disposition": `attachment; filename="colly-agent-${agentNumber}-badge.png"`,
     "Cache-Control": "private, max-age=3600",
   };
 }

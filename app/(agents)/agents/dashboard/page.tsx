@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Award, BookOpen, Share2, TriangleAlert } from "lucide-react";
+import {
+  Award,
+  BookOpen,
+  ChevronDown,
+  Download,
+  Share2,
+  TriangleAlert,
+} from "lucide-react";
 import { useAgentData } from "@/components/agents/use-agent-data";
 import { CourseBadge } from "@/components/agents/course-badge";
 import type { AgentBadgesResponse, AgentMeResponse } from "@/lib/agents-types";
@@ -16,6 +23,34 @@ export default function AgentDashboardPage() {
     "/api/agents/badges",
   );
   const [copied, setCopied] = useState(false);
+  // Which badge's Download menu is open (by course slug), and which badge's
+  // share link was just copied (drives the "Copied!" tooltip).
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close the open download menu on click outside or Escape, matching the
+  // sidebar switcher pattern.
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function handleMouseDown(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(null);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(null);
+    }
+
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [menuOpen]);
 
   if (loading) return <DashboardSkeleton />;
 
@@ -34,6 +69,21 @@ export default function AgentDashboardPage() {
     } catch {
       // Clipboard access can be blocked; fall back to a prompt so the agent can
       // still copy the link manually.
+      window.prompt("Copy this link:", url);
+    }
+  }
+
+  /** Copies this agent's per-badge verification link for a course. */
+  async function copyShareLink(courseSlug: string) {
+    const url = `${window.location.origin}/verify/${agent.agentNumber}/${courseSlug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedSlug(courseSlug);
+      window.setTimeout(() => {
+        setCopiedSlug((current) => (current === courseSlug ? null : current));
+      }, 2000);
+    } catch {
+      // Clipboard access can be blocked; fall back to a prompt.
       window.prompt("Copy this link:", url);
     }
   }
@@ -179,20 +229,71 @@ export default function AgentDashboardPage() {
                     : "Not yet earned"}
                 </p>
                 {badge.earned && (
-                  <div className="mt-1 flex items-center justify-center gap-2 text-[11px]">
-                    <a
-                      href={`/api/agents/badges/${badge.courseSlug}/png`}
-                      className="text-gray-500 hover:text-colly"
+                  <div
+                    ref={menuOpen === badge.courseSlug ? menuRef : undefined}
+                    className="relative flex items-center gap-1"
+                  >
+                    <button
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={menuOpen === badge.courseSlug}
+                      onClick={() =>
+                        setMenuOpen((open) =>
+                          open === badge.courseSlug ? null : badge.courseSlug,
+                        )
+                      }
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-50"
                     >
-                      PNG
-                    </a>
-                    <span className="text-gray-300">·</span>
-                    <a
-                      href={`/api/agents/badges/${badge.courseSlug}/svg`}
-                      className="text-gray-500 hover:text-colly"
-                    >
-                      SVG
-                    </a>
+                      <Download className="h-3.5 w-3.5" aria-hidden />
+                      Download
+                      <ChevronDown
+                        className={`h-3.5 w-3.5 transition-transform duration-150 ${
+                          menuOpen === badge.courseSlug ? "rotate-180" : ""
+                        }`}
+                        aria-hidden
+                      />
+                    </button>
+
+                    <span className="relative">
+                      <button
+                        type="button"
+                        onClick={() => copyShareLink(badge.courseSlug)}
+                        title="Copy share link"
+                        aria-label="Copy share link"
+                        className="inline-flex items-center rounded-md p-1 text-gray-600 transition-colors hover:bg-gray-50"
+                      >
+                        <Share2 className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                      {copiedSlug === badge.courseSlug && (
+                        <span className="absolute bottom-[calc(100%+4px)] left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-2 py-0.5 text-[10px] font-medium text-white">
+                          Copied!
+                        </span>
+                      )}
+                    </span>
+
+                    {menuOpen === badge.courseSlug && (
+                      <div
+                        role="menu"
+                        className="absolute left-1/2 top-[calc(100%+4px)] z-50 w-36 -translate-x-1/2 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                      >
+                        <a
+                          role="menuitem"
+                          href={`/api/agents/badges/${badge.courseSlug}/png`}
+                          onClick={() => setMenuOpen(null)}
+                          className="block px-3 py-2 text-xs text-gray-700 transition-colors hover:bg-gray-50"
+                        >
+                          Download PNG
+                        </a>
+                        <a
+                          role="menuitem"
+                          href={`/api/agents/badges/${badge.courseSlug}/svg`}
+                          onClick={() => setMenuOpen(null)}
+                          className="block px-3 py-2 text-xs text-gray-700 transition-colors hover:bg-gray-50"
+                        >
+                          Download SVG
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

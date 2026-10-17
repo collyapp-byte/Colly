@@ -6,13 +6,13 @@ import {
 } from "@/lib/badge-assets";
 
 /**
- * Downloads the signed-in agent's "Certified Agent" badge for sharing (e.g. on
- * LinkedIn). Defaults to a 500x500 PNG; pass `?format=svg` for the vector.
+ * Downloads the signed-in agent's "Certified Agent" badge as a 500x500 PNG for
+ * sharing (e.g. on LinkedIn).
  *
  * Gated on certification: a signed-in agent who has not passed the final exam
  * gets a 403, so only certified agents can download the badge.
  */
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const agent = await getCurrentAgent();
     if (!agent) {
@@ -25,9 +25,6 @@ export async function GET(request: Request) {
       );
     }
 
-    const format =
-      new URL(request.url).searchParams.get("format") === "svg" ? "svg" : "png";
-
     const logoSrc = await collyLogoDataUri();
     const svg = renderAgentCertificationBadgeSvg({
       fullName: agent.fullName,
@@ -35,26 +32,16 @@ export async function GET(request: Request) {
       logoSrc,
     });
 
-    if (format === "svg") {
-      return new Response(svg, {
-        headers: certificationBadgeHeaders(agent.agentNumber, "svg"),
-      });
-    }
-
     const png = await svgToPng(svg);
     if (!png) {
-      // Neither rasteriser is available; let the client fall back to the SVG.
       return Response.json(
-        {
-          error: "PNG generation is unavailable on this deployment.",
-          svg: "/api/agents/certificate/badge?format=svg",
-        },
+        { error: "PNG generation is unavailable on this deployment." },
         { status: 501 },
       );
     }
 
     return new Response(new Uint8Array(png), {
-      headers: certificationBadgeHeaders(agent.agentNumber, "png"),
+      headers: certificationBadgeHeaders(agent.agentNumber),
     });
   } catch (error) {
     console.error("[GET /api/agents/certificate/badge]", error);
