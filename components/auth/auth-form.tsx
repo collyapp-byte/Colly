@@ -18,6 +18,7 @@ type AuthFieldProps = {
   placeholder?: string;
   autoComplete?: string;
   minLength?: number;
+  hint?: ReactNode;
 };
 
 /** A labelled text input for the login and signup forms. */
@@ -29,6 +30,7 @@ export function AuthField({
   placeholder,
   autoComplete,
   minLength,
+  hint,
 }: AuthFieldProps) {
   return (
     <div>
@@ -45,6 +47,7 @@ export function AuthField({
         required
         className={INPUT_CLASS}
       />
+      {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
     </div>
   );
 }

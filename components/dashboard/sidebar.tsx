@@ -17,6 +17,7 @@ import {
   Package,
   Settings,
   ShoppingCart,
+  Smartphone,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -44,6 +45,7 @@ const SECONDARY_ITEMS: NavItem[] = [
 
 const BOTTOM_ITEMS: NavItem[] = [
   { label: "Settings", href: "/settings", icon: Settings },
+  { label: "AI Line", href: "/settings/ai-line", icon: Smartphone },
 ];
 
 function isActivePath(pathname: string, href: string): boolean {
@@ -273,7 +275,11 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         <nav aria-label="Bottom navigation">
           <ul className="flex flex-col gap-0.5">
             {BOTTOM_ITEMS.map((item) => {
-              const active = isActivePath(pathname, item.href);
+              // Keep the parent "Settings" link from also lighting up while on
+              // the "AI Line" sub-page, so only one bottom item is active.
+              const active =
+                isActivePath(pathname, item.href) &&
+                !(item.href === "/settings" && pathname.startsWith("/settings/ai-line"));
               const Icon = item.icon;
               return (
                 <li key={item.label}>

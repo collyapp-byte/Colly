@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   MessagesSquare,
   MessageSquare,
+  PhoneCall,
   Receipt,
   Wallet,
   BarChart3,
@@ -26,6 +27,7 @@ export default function OverviewPage() {
     null,
   );
   const [pendingInvoices, setPendingInvoices] = useState<number | null>(null);
+  const [aiLineConnected, setAiLineConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -55,6 +57,17 @@ export default function OverviewPage() {
         // Leave the card at 0 if invoices cannot be loaded.
       });
 
+    fetch("/api/business")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { business?: { aiLineConnected?: boolean } } | null) => {
+        if (active && data?.business) {
+          setAiLineConnected(data.business.aiLineConnected === true);
+        }
+      })
+      .catch(() => {
+        // Without a definite status, skip the banner rather than nag wrongly.
+      });
+
     return () => {
       active = false;
     };
@@ -79,6 +92,33 @@ export default function OverviewPage() {
           Overview
         </h1>
       </div>
+
+      {aiLineConnected === false && (
+        <div className="mb-6 flex flex-col gap-4 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] p-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FF6600]/10 text-[#FF6600]">
+              <PhoneCall className="h-[18px] w-[18px]" aria-hidden />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                Your AI line is not connected yet.
+              </p>
+              <p className="mt-1 text-sm text-gray-600">
+                You keep your current WhatsApp on your phone. We are setting up
+                your new dedicated AI line. Once connected, you can post this
+                new number on your WhatsApp Status and Instagram bio so
+                customers can reach your AI.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/settings/ai-line"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"
+          >
+            View Setup Instructions
+          </Link>
+        </div>
+      )}
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         {stats.map((stat) => {

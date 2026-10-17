@@ -22,6 +22,11 @@ export type Business = {
   businessHours: string | null;
   address: string | null;
   description: string | null;
+  /** Two-Number Model: false until the dedicated AI line is provisioned. */
+  aiLineConnected: boolean;
+  /** Agent ("AG-0001") that set the business up, if any — drives the
+   * "your agent will set this up" note on the AI line page. */
+  referredByAgentId: string | null;
   createdAt: string;
   nrsTaxId: string | null;
   nrsRegistrationDate: string | null;
@@ -40,6 +45,8 @@ export type BusinessRecord = {
   businessHours: string | null;
   address: string | null;
   description: string | null;
+  aiLineConnected: boolean;
+  referredByAgentId: string | null;
   createdAt: Date;
   nrsTaxId: string | null;
   nrsRegistrationDate: Date | null;
@@ -63,6 +70,8 @@ export function serializeBusiness(business: BusinessRecord): Business {
     businessHours: business.businessHours,
     address: business.address,
     description: business.description,
+    aiLineConnected: business.aiLineConnected,
+    referredByAgentId: business.referredByAgentId,
     createdAt: new Date(business.createdAt).toISOString(),
     nrsTaxId: business.nrsTaxId,
     nrsRegistrationDate: business.nrsRegistrationDate

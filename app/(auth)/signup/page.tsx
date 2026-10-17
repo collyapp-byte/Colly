@@ -61,11 +61,12 @@ function BusinessSignupForm({ referredBy }: { referredBy?: string }) {
         />
         <AuthField
           id="phone"
-          label="Business phone"
+          label="Dedicated AI Line Number"
           name="phone"
           type="tel"
           placeholder="+2348012345678"
           autoComplete="tel"
+          hint="Enter a new phone number (SIM) for your AI assistant. You will keep your existing WhatsApp number on your phone. This must be different from your personal WhatsApp number."
         />
         <div>
           <label

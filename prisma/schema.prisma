@@ -37,6 +37,14 @@ model Business {
   /// Short description of what the business sells, given to the AI as context.
   description   String?
 
+  /// Two-Number Model: the business keeps its own WhatsApp on the owner's
+  /// phone; Colly assigns a separate dedicated AI line. `aiLineConnected` is
+  /// false until that line is provisioned and live (no Meta/telephony
+  /// connection is built yet — this flag only drives the onboarding banner
+  /// and the /settings/ai-line status). `phone` holds the requested
+  /// AI line number from signup.
+  aiLineConnected Boolean @default(false)
+
   /// NRS (National Revenue Service) e-invoicing compliance. `nrsTaxId` is the
   /// NRS Tax ID (the CAC number); `nrsRegistrationDate` is when it was saved
   /// here. `nrsTier` is reserved for future tiering, `nrsExemptReason` marks

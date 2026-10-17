@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Settings, PanelLeft } from "lucide-react";
 import { Sidebar } from "./sidebar";
@@ -12,11 +12,34 @@ type DashboardShellProps = {
   children: ReactNode;
 };
 
-export function DashboardShell({ children }: DashboardShellProps) {
+export function DashboardShell({ businessName, children }: DashboardShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [aiLineConnected, setAiLineConnected] = useState<boolean | null>(null);
   const pathname = usePathname();
   const segment = pathname === "/" ? "Dashboard" : (pathname.split("/")[1] || "Dashboard");
   const title = segment.charAt(0).toUpperCase() + segment.slice(1);
+  const label = businessName?.trim() || title;
+
+  // Two-Number Model: surface a "Setup Pending" chip until the dedicated AI
+  // line is connected, so a freshly signed-up owner knows the next step.
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/business")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { business?: { aiLineConnected?: boolean } } | null) => {
+        if (active && data?.business) {
+          setAiLineConnected(data.business.aiLineConnected === true);
+        }
+      })
+      .catch(() => {
+        // Without a status, show the plain business name only.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-(--background-page)">
@@ -54,7 +77,14 @@ export function DashboardShell({ children }: DashboardShellProps) {
               >
                 <PanelLeft className="h-[18px] w-[18px]" />
               </button>
-              <span className="text-[13px] font-medium text-gray-500">{title}</span>
+              <span className="max-w-[40vw] truncate text-[13px] font-medium text-gray-500 md:max-w-none">
+                {label}
+              </span>
+              {aiLineConnected === false && (
+                <span className="rounded-full bg-[#FFF4EC] px-2 py-0.5 text-[11px] font-semibold tracking-wide text-[#FF6600]">
+                  Setup Pending
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-3 px-3 md:px-0">
               <PlanChip />
