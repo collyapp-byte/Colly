@@ -13,8 +13,11 @@ const AUTH_PATHS = ["/login", "/signup"];
  */
 const AGENT_PUBLIC_PATHS = ["/agents/login", "/agents/signup"];
 
-/** Always-public paths (no session required): agent certificate verification. */
-const PUBLIC_PATHS = ["/verify"];
+/**
+ * Always-public paths (no session required): agent certificate verification and
+ * the legal pages (privacy, terms, account deletion).
+ */
+const PUBLIC_PATHS = ["/verify", "/privacy", "/terms", "/account/delete"];
 
 /**
  * Auth routes a signed-in visitor is bounced away from -- but only when the

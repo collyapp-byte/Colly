@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { AgentShell } from "@/components/agents/agent-shell";
 import { AgentBadge } from "@/components/agents/agent-badge";
+import { Footer } from "@/components/ui/footer";
 import { requireAgent } from "@/lib/agent-auth";
 
 /*
@@ -36,6 +37,7 @@ export default async function AgentsLayout({ children }: { children: React.React
   return (
     <AgentShell agentBadge={<AgentBadge agent={agent} />}>
       {children}
+      <Footer />
     </AgentShell>
   );
 }
