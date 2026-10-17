@@ -1,9 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Award, Check, Copy, Download, TriangleAlert } from "lucide-react";
+import Image from "next/image";
+import {
+  Award,
+  Check,
+  ChevronDown,
+  Copy,
+  Download,
+  Image as ImageIcon,
+  TriangleAlert,
+} from "lucide-react";
 import { useAgentData } from "@/components/agents/use-agent-data";
+import { AgentCertificationBadge } from "@/components/agents/agent-certification-badge";
 import type { AgentCertificateResponse } from "@/lib/agents-types";
 
 export default function AgentCertificatePage() {
@@ -11,6 +21,21 @@ export default function AgentCertificatePage() {
     "/api/agents/certificate",
   );
   const [copied, setCopied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [menuOpen]);
 
   if (loading) {
     return (
@@ -40,7 +65,8 @@ export default function AgentCertificatePage() {
             Not certified yet
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Complete every course and pass each quiz to earn your certificate.
+            Complete every course, earn all four badges, and pass the final
+            certification exam to earn your certificate.
           </p>
           <Link
             href="/agents/training"
@@ -59,6 +85,7 @@ export default function AgentCertificatePage() {
     month: "long",
     year: "numeric",
   });
+  const issuedYear = new Date(certificate.issuedAt).getFullYear();
 
   async function handleCopy() {
     try {
@@ -74,45 +101,138 @@ export default function AgentCertificatePage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="font-display text-2xl text-gray-900">Your certificate</h1>
           <p className="mt-1 text-sm text-gray-500">
             Download it or share your verification link with businesses.
           </p>
         </div>
-        <a
-          href="/api/agents/certificate/pdf"
-          className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00] sm:mt-0"
-        >
-          <Download className="h-4 w-4" aria-hidden />
-          Download PDF
-        </a>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Download badge (dropdown: PNG / SVG) */}
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              <ImageIcon className="h-4 w-4" aria-hidden />
+              Download badge
+              <ChevronDown className="h-4 w-4" aria-hidden />
+            </button>
+            {menuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 z-20 mt-2 w-44 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+              >
+                <a
+                  role="menuitem"
+                  href="/api/agents/certificate/badge"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  PNG
+                  <span className="text-xs text-gray-400">500×500</span>
+                </a>
+                <a
+                  role="menuitem"
+                  href="/api/agents/certificate/badge?format=svg"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  SVG
+                  <span className="text-xs text-gray-400">vector</span>
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Download certificate (PDF) */}
+          <a
+            href="/api/agents/certificate/pdf"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"
+          >
+            <Download className="h-4 w-4" aria-hidden />
+            Download certificate
+          </a>
+
+          {/* Copy share link */}
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            {copied ? (
+              <>
+                <Check className="h-4 w-4 text-success" aria-hidden />
+                Copied
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4" aria-hidden />
+                Copy share link
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Shareable badge (inline SVG — same artwork as the download route) */}
+      <div className="mt-5 flex flex-col items-center gap-3 rounded-2xl border border-panel-border bg-white p-6 sm:flex-row sm:justify-center sm:gap-8 sm:p-8">
+        <AgentCertificationBadge
+          fullName={agent.fullName}
+          year={issuedYear}
+          size={220}
+        />
+        <div className="max-w-xs text-center sm:text-left">
+          <h2 className="font-display text-lg text-gray-900">
+            Your certified badge
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Use the PNG for LinkedIn and social profiles, or grab the SVG for
+            print and high-resolution use.
+          </p>
+          <a
+            href="/api/agents/certificate/badge"
+            className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-[#FF6600] hover:underline"
+          >
+            <Download className="h-4 w-4" aria-hidden />
+            Download PNG
+          </a>
+        </div>
       </div>
 
       {/* On-screen certificate */}
       <div className="mt-5 rounded-2xl border-2 border-colly bg-white p-6 sm:p-10">
         <div className="flex flex-col items-center text-center">
-          <span className="font-display text-2xl tracking-[0.2em] text-colly">
+          <Image
+            src="/logo.png"
+            alt="Colly"
+            width={64}
+            height={64}
+            className="h-16 w-16"
+          />
+          <span className="mt-2 font-display text-2xl tracking-[0.2em] text-colly">
             COLLY
           </span>
           <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.3em] text-gray-400">
-            Agent Certification
+            Agent Certification Programme
           </span>
 
-          <h2 className="mt-6 font-display text-3xl text-gray-900">
-            Certificate of Completion
-          </h2>
-          <p className="mt-3 text-sm text-gray-500">
-            This certificate is proudly presented to
-          </p>
+          <p className="mt-6 text-sm text-gray-500">This certifies that</p>
           <p className="mt-2 text-2xl font-semibold text-gray-900">
             {agent.fullName}
           </p>
           <div className="mt-3 h-px w-64 bg-gray-200" />
           <p className="mt-4 max-w-md text-sm text-gray-500">
-            for successfully completing the Colly Agent training programme and
-            being certified to set up and configure Colly for businesses.
+            has successfully completed all four course requirements and passed
+            the Final Certification Exam
+          </p>
+          <p className="mt-6 font-display text-xl tracking-[0.2em] text-colly">
+            CERTIFIED
           </p>
 
           <div className="mt-8 grid w-full grid-cols-1 gap-4 text-left sm:grid-cols-3">
@@ -131,28 +251,9 @@ export default function AgentCertificatePage() {
         <p className="mt-1 text-[13px] text-gray-500">
           Anyone can open this to confirm your certification.
         </p>
-        <div className="mt-3 flex items-center gap-2">
-          <code className="flex-1 truncate rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-[13px] text-gray-600">
-            /verify/{agent.agentNumber}
-          </code>
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] font-medium text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            {copied ? (
-              <>
-                <Check className="h-3.5 w-3.5 text-success" aria-hidden />
-                Copied
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5" aria-hidden />
-                Copy
-              </>
-            )}
-          </button>
-        </div>
+        <code className="mt-3 block truncate rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-[13px] text-gray-600">
+          /verify/{agent.agentNumber}
+        </code>
       </div>
     </div>
   );

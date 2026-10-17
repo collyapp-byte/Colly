@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { BadgeCheck, CircleAlert, ShieldQuestion } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { CourseBadge } from "@/components/agents/course-badge";
+import { COURSE_BADGE_SLUGS } from "@/lib/course-badge-meta";
 
 export const metadata: Metadata = {
   title: "Verify a Colly agent",
@@ -51,10 +53,16 @@ async function VerifyDetail({
 
   const agent = await prisma.agent.findUnique({
     where: { agentNumber: decoded },
-    include: { certificate: true },
+    include: { certificate: true, badges: { select: { courseSlug: true } } },
   });
 
   const certified = agent !== null && agent.certifiedAt !== null;
+
+  const earnedBadges = new Set(agent?.badges.map((badge) => badge.courseSlug));
+  const badges = COURSE_BADGE_SLUGS.map((courseSlug) => ({
+    courseSlug,
+    earned: earnedBadges.has(courseSlug),
+  }));
 
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8 text-center">
@@ -95,8 +103,36 @@ async function VerifyDetail({
               })}
             />
             {agent.state && <Row label="State" value={agent.state} />}
+            {agent.finalExamPassedAt && (
+              <Row
+                label="Final exam passed"
+                value={agent.finalExamPassedAt.toLocaleDateString("en-NG", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              />
+            )}
           </dl>
         </>
+      )}
+
+      {agent && (
+        <div className="mt-6">
+          <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.15em] text-gray-400">
+            Course badges
+          </p>
+          <div className="grid grid-cols-4 gap-3">
+            {badges.map((badge) => (
+              <CourseBadge
+                key={badge.courseSlug}
+                courseSlug={badge.courseSlug}
+                earned={badge.earned}
+                size="sm"
+              />
+            ))}
+          </div>
+        </div>
       )}
 
       <p className="mt-6 text-sm text-gray-500">

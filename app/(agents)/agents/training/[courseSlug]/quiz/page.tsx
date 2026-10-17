@@ -206,17 +206,11 @@ function QuizRunner({
           passed ? "border-success/30 bg-success/5" : "border-danger/30 bg-danger/5"
         }`}
       >
-        <div
-          className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${
-            passed ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
-          }`}
-        >
-          {passed ? (
-            <CircleCheck className="h-7 w-7" aria-hidden />
-          ) : (
+        {!passed && (
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-danger/10 text-danger">
             <CircleAlert className="h-7 w-7" aria-hidden />
-          )}
-        </div>
+          </div>
+        )}
 
         <h1 className="mt-4 font-display text-2xl text-gray-900">
           {passed ? "Passed!" : "Not passed"}

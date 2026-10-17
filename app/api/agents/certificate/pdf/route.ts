@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { prisma } from "@/lib/prisma";
 import { getCurrentAgent } from "@/lib/agent-auth";
+import { collyLogoDataUri } from "@/lib/badge-assets";
 import { AgentCertificatePdf } from "@/components/agents/agent-certificate-pdf";
 
 /** Resolves the public base URL used in the certificate's verification link. */
@@ -44,6 +45,11 @@ export async function GET(request: Request) {
       year: "numeric",
     }).format(certificate.issuedAt);
 
+    // react-pdf can only embed raster images, so use the PNG logo and skip it
+    // entirely if only the (non-rasterisable) SVG fallback is available.
+    const logo = await collyLogoDataUri();
+    const logoSrc = logo.startsWith("data:image/png") ? logo : undefined;
+
     // createElement infers the element's props from the component, but
     // renderToBuffer is typed against its own DocumentProps; the cast bridges
     // the two without leaking react-pdf types through the component.
@@ -54,6 +60,7 @@ export async function GET(request: Request) {
       issuedAt,
       verifyUrl,
       qrDataUrl,
+      logoSrc,
     }) as Parameters<typeof renderToBuffer>[0];
 
     const buffer = await renderToBuffer(element);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Award, BookOpen, Share2, TriangleAlert } from "lucide-react";
 import { useAgentData } from "@/components/agents/use-agent-data";
@@ -14,6 +15,7 @@ export default function AgentDashboardPage() {
   const { data: badgesData } = useAgentData<AgentBadgesResponse>(
     "/api/agents/badges",
   );
+  const [copied, setCopied] = useState(false);
 
   if (loading) return <DashboardSkeleton />;
 
@@ -22,6 +24,20 @@ export default function AgentDashboardPage() {
   }
 
   const { agent, progress, certified, referrals } = data;
+
+  async function handleCopyShareLink() {
+    const url = `${window.location.origin}/verify/${agent.agentNumber}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access can be blocked; fall back to a prompt so the agent can
+      // still copy the link manually.
+      window.prompt("Copy this link:", url);
+    }
+  }
+
   const percent =
     progress.totalLessons > 0
       ? Math.round((progress.completedLessons / progress.totalLessons) * 100)
@@ -109,13 +125,22 @@ export default function AgentDashboardPage() {
                 View certificate
               </Link>
             </>
+          ) : badgesData?.allEarned ? (
+            <>
+              <p className="mt-4 text-lg font-semibold text-amber-700">
+                Eligible for Final Exam
+              </p>
+              <p className="mt-1 text-sm text-gray-500">
+                You have earned all four badges. Take the final exam to get certified.
+              </p>
+            </>
           ) : (
             <>
               <p className="mt-4 text-lg font-semibold text-amber-700">
                 In training
               </p>
               <p className="mt-1 text-sm text-gray-500">
-                Finish every course and pass the quizzes to get certified.
+                Finish every course and earn all badges to unlock the final exam.
               </p>
             </>
           )}
@@ -125,9 +150,18 @@ export default function AgentDashboardPage() {
       {/* Course badges */}
       {badgesData && (
         <section className="rounded-lg border border-gray-200 bg-white p-6">
-          <h3 className="mb-4 text-sm font-semibold text-gray-900">
-            Course badges
-          </h3>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-900">
+              Course badges
+            </h3>
+            <button
+              type="button"
+              onClick={handleCopyShareLink}
+              className="text-xs text-gray-500 transition-colors hover:text-colly"
+            >
+              {copied ? "Link copied!" : "Copy share link"}
+            </button>
+          </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {badgesData.badges.map((badge) => (
               <div
@@ -144,22 +178,48 @@ export default function AgentDashboardPage() {
                     ? formatRelativeTime(badge.earnedAt)
                     : "Not yet earned"}
                 </p>
+                {badge.earned && (
+                  <div className="mt-1 flex items-center justify-center gap-2 text-[11px]">
+                    <a
+                      href={`/api/agents/badges/${badge.courseSlug}/png`}
+                      className="text-gray-500 hover:text-colly"
+                    >
+                      PNG
+                    </a>
+                    <span className="text-gray-300">·</span>
+                    <a
+                      href={`/api/agents/badges/${badge.courseSlug}/svg`}
+                      className="text-gray-500 hover:text-colly"
+                    >
+                      SVG
+                    </a>
+                  </div>
+                )}
               </div>
             ))}
           </div>
-          {badgesData.allEarned && (
+          {badgesData?.allEarned && (
             <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3">
               <p className="text-sm text-green-800">
-                🎉 All 4 badges earned! The Final Certification Exam is coming
-                soon.
+                {certified
+                  ? "🎉 Final exam passed. You are certified."
+                  : "🎉 All 4 badges earned! Take the final certification exam."}
               </p>
-              <button
-                type="button"
-                disabled
-                className="mt-2 cursor-not-allowed rounded-lg bg-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600"
-              >
-                Final Exam — Coming Soon
-              </button>
+              {certified ? (
+                <Link
+                  href="/agents/certificate"
+                  className="mt-2 inline-flex items-center rounded-lg bg-green-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-800"
+                >
+                  View certificate
+                </Link>
+              ) : (
+                <Link
+                  href="/agents/final-exam"
+                  className="mt-2 inline-flex items-center rounded-lg bg-[#FF6600] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#E65C00]"
+                >
+                  Start Final Certification Exam
+                </Link>
+              )}
             </div>
           )}
         </section>

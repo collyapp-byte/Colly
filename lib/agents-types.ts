@@ -15,12 +15,14 @@ export type AgentMeResponse = {
     fullName: string;
     agentNumber: string;
     certifiedAt: string | null;
+    finalExamPassedAt: string | null;
   };
   progress: {
     completedLessons: number;
     totalLessons: number;
   };
   certified: boolean;
+  finalExamPassed: boolean;
   referrals: AgentReferral[];
 };
 
@@ -116,4 +118,27 @@ export type AgentBadgeSummary = {
 export type AgentBadgesResponse = {
   badges: AgentBadgeSummary[];
   allEarned: boolean;
+};
+
+export type AgentFinalExamQuestion = {
+  id: string;
+  order: number;
+  sectionTitle: string;
+  question: string;
+  options: string[];
+};
+
+export type AgentFinalExamResponse = {
+  questions: AgentFinalExamQuestion[];
+  /// True until all four course badges are earned. The exam is locked meanwhile.
+  locked: boolean;
+  alreadyPassed: boolean;
+};
+
+export type AgentFinalExamResult = {
+  score: number;
+  passed: boolean;
+  correct: number;
+  total: number;
+  certified: boolean;
 };

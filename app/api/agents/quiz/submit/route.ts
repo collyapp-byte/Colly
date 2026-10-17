@@ -1,7 +1,5 @@
-import type { Agent } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getCurrentAgent } from "@/lib/agent-auth";
-import { generateCertificateId } from "@/lib/agent-id";
 import { awardBadgeIfEligible } from "@/lib/badges";
 
 /** A quiz passes at 80% or above. */
@@ -17,8 +15,9 @@ function toOptions(value: unknown): unknown[] {
 }
 
 /**
- * Grades a course quiz for the signed-in agent, records the attempt, and issues
- * the certificate once the agent has passed every course's quiz.
+ * Grades a course quiz for the signed-in agent and records the attempt. Passing
+ * awards the course badge; certification itself is gated on the Final
+ * Certification Exam (see `lib/certification.ts`), not on course quizzes.
  */
 export async function POST(request: Request) {
   try {
@@ -117,7 +116,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const certified = passed ? await ensureCertified(agent) : agent.certifiedAt !== null;
+    const certified = agent.certifiedAt !== null;
 
     return Response.json({ score, passed, certified });
   } catch (error) {
@@ -130,54 +129,4 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-}
-
-/**
- * Issues the certificate when the agent has passed every certification course
- * quiz. Returns whether the agent is certified afterwards. Idempotent: a second
- * call with the certificate already present leaves it untouched, and adding new
- * (non-certification) courses never revokes an existing certificate.
- */
-async function ensureCertified(agent: Agent): Promise<boolean> {
-  if (agent.certifiedAt) return true;
-
-  // Only courses flagged as certification courses gate certification.
-  const certCourses = await prisma.agentCourse.findMany({
-    where: { isCertificationCourse: true, published: true, questions: { some: {} } },
-    select: { id: true },
-  });
-
-  if (certCourses.length === 0) return false;
-
-  const passedAttempts = await prisma.agentQuizAttempt.findMany({
-    where: {
-      agentId: agent.id,
-      passed: true,
-      courseId: { in: certCourses.map((course) => course.id) },
-    },
-    select: { courseId: true },
-    distinct: ["courseId"],
-  });
-
-  const passedCourseIds = new Set(passedAttempts.map((row) => row.courseId));
-  const passedAll = certCourses.every((course) => passedCourseIds.has(course.id));
-
-  if (!passedAll) return false;
-
-  await prisma.$transaction([
-    prisma.agentCertificate.upsert({
-      where: { agentId: agent.id },
-      create: {
-        agentId: agent.id,
-        certificateId: generateCertificateId(agent.agentNumber),
-      },
-      update: {},
-    }),
-    prisma.agent.update({
-      where: { id: agent.id },
-      data: { certifiedAt: new Date() },
-    }),
-  ]);
-
-  return true;
 }

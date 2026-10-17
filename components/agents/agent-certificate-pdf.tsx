@@ -1,12 +1,22 @@
 import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 
 /**
- * The agent certificate as a PDF. Built with @react-pdf/renderer primitives so
- * it renders on the server in the download route.
+ * The agent certificate as a simplified, industry-standard PDF.
  *
- * The Colly mark is drawn as styled text rather than an image: the project only
- * ships `logo.svg`, and @react-pdf/renderer cannot embed SVG without an extra
- * font/SVG package. The QR code is a PNG data URL, which react-pdf supports.
+ * Layout follows the clean IBM/Microsoft/Cisco convention:
+ * - header: the real Colly logo, the wordmark and the programme name
+ * - body: "This certifies that" + the holder's name + the award line
+ * - footer: a bold CERTIFIED line, the QR verification block, the issued
+ *   date / IDs, and the signature block
+ * - a single thin orange border frames the page
+ *
+ * @react-pdf/renderer constraints handled here:
+ * - Inter is loaded for the web via next/font but is NOT registered with
+ *   react-pdf (no font files ship in the repo), so text falls back to the
+ *   built-in Helvetica/Helvetica-Bold.
+ * - The logo is passed in as `logoSrc` (a PNG data URI). react-pdf's `<Image>`
+ *   cannot rasterise SVG, so the caller supplies the PNG produced by
+ *   `scripts/convert-logo.cjs`; the logo is omitted if it is unavailable.
  */
 
 export type AgentCertificatePdfProps = {
@@ -16,120 +26,101 @@ export type AgentCertificatePdfProps = {
   issuedAt: string;
   verifyUrl: string;
   qrDataUrl: string;
+  /** PNG data URI for the Colly logo. Optional so the PDF still builds without it. */
+  logoSrc?: string;
 };
 
 const ORANGE = "#FF6600";
 const INK = "#111827";
+const BODY = "#374151";
 const MUTED = "#6b7280";
 
 const styles = StyleSheet.create({
   page: {
     backgroundColor: "#ffffff",
     fontFamily: "Helvetica",
-    // The 8mm page padding is what insets the border from the paper edge.
-    padding: "8mm",
+    // The 5mm page padding insets the border 5mm from the paper edge.
+    padding: "5mm",
   },
   frame: {
     flexGrow: 1,
-    borderWidth: 3,
+    borderWidth: 1,
     borderColor: ORANGE,
-    padding: "10mm",
+    padding: "14mm",
     alignItems: "center",
+    justifyContent: "space-between",
   },
-  logo: {
-    fontSize: 26,
+
+  // Header
+  logo: { width: 64, height: 64 },
+  wordmark: {
+    fontSize: 22,
     fontFamily: "Helvetica-Bold",
     color: ORANGE,
     letterSpacing: 2,
-  },
-  logoSub: {
-    fontSize: 8,
-    color: MUTED,
-    letterSpacing: 3,
-    marginTop: 3,
-  },
-  heading: {
-    fontSize: 28,
-    fontFamily: "Helvetica-Bold",
-    color: ORANGE,
-    marginTop: 24,
-    letterSpacing: 1,
-  },
-  certifies: {
-    fontSize: 11,
-    color: MUTED,
-    marginTop: 22,
-  },
-  name: {
-    fontSize: 26,
-    fontFamily: "Helvetica-Bold",
-    color: INK,
-    marginTop: 20,
-    textAlign: "center",
-  },
-  nameRule: {
-    width: "70%",
-    height: 1,
-    backgroundColor: INK,
     marginTop: 8,
   },
-  body: {
-    fontSize: 11,
-    color: MUTED,
-    marginTop: 18,
-    textAlign: "center",
-    lineHeight: 1.6,
-  },
   programme: {
-    fontSize: 13,
-    fontFamily: "Helvetica-Bold",
-    color: INK,
-    marginTop: 6,
-    textAlign: "center",
-  },
-  qrBlock: {
-    alignItems: "center",
-    marginTop: 22,
-  },
-  qr: {
-    width: "35mm",
-    height: "35mm",
-  },
-  qrCaption: {
-    fontSize: 7,
-    color: MUTED,
-    marginTop: 5,
-  },
-  ids: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "70%",
-    marginTop: 18,
-  },
-  idItem: {
     fontSize: 9,
     color: MUTED,
+    letterSpacing: 2,
+    marginTop: 4,
   },
-  signature: {
-    alignItems: "center",
-    marginTop: 26,
-  },
-  signatureLine: {
-    width: "55mm",
-    height: 1,
-    backgroundColor: INK,
-  },
-  signatureName: {
-    fontSize: 10,
+
+  // Body
+  middle: { alignItems: "center" },
+  certifies: { fontSize: 12, color: MUTED },
+  name: {
+    fontSize: 36,
     fontFamily: "Helvetica-Bold",
     color: INK,
-    marginTop: 5,
+    textAlign: "center",
+    marginTop: 12,
   },
-  signatureRole: {
-    fontSize: 8,
-    color: MUTED,
-    marginTop: 2,
+  body: {
+    fontSize: 12,
+    color: BODY,
+    textAlign: "center",
+    lineHeight: 1.5,
+    marginTop: 16,
+    maxWidth: 340,
   },
+
+  // Footer
+  footer: { alignItems: "center", width: "100%" },
+  certified: {
+    fontSize: 26,
+    fontFamily: "Helvetica-Bold",
+    color: ORANGE,
+    letterSpacing: 4,
+    textAlign: "center",
+  },
+  qrBlock: { alignItems: "center", marginTop: 16 },
+  qr: { width: "30mm", height: "30mm" },
+  qrCaption: { fontSize: 8, color: MUTED, marginTop: 6 },
+
+  metaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    marginTop: 20,
+  },
+  metaText: { fontSize: 9, color: MUTED },
+
+  signature: { alignItems: "center", marginTop: 18 },
+  signatureLine: {
+    width: "60mm",
+    height: 1,
+    backgroundColor: INK,
+    marginBottom: 6,
+  },
+  signatureName: {
+    fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    color: INK,
+  },
+  signatureRole: { fontSize: 9, color: MUTED, marginTop: 2 },
 });
 
 export function AgentCertificatePdf({
@@ -139,7 +130,11 @@ export function AgentCertificatePdf({
   issuedAt,
   verifyUrl,
   qrDataUrl,
+  logoSrc,
 }: AgentCertificatePdfProps) {
+  // QR keeps the full URL; the caption drops the scheme for readability.
+  const captionUrl = verifyUrl.replace(/^https?:\/\//, "");
+
   return (
     <Document
       title={`Colly Agent Certificate - ${fullName}`}
@@ -148,40 +143,48 @@ export function AgentCertificatePdf({
     >
       <Page size="A4" style={styles.page}>
         <View style={styles.frame}>
-          {/* Logo — styled text; react-pdf can't embed the project's SVG mark. */}
-          <Text style={styles.logo}>COLLY</Text>
-          <Text style={styles.logoSub}>AGENT CERTIFICATION</Text>
-
-          <Text style={styles.heading}>CERTIFICATE OF COMPLETION</Text>
-          <Text style={styles.certifies}>This certifies that</Text>
-
-          <Text style={styles.name}>{fullName}</Text>
-          <View style={styles.nameRule} />
-
-          <Text style={styles.body}>has successfully completed the</Text>
-          <Text style={styles.programme}>
-            Colly Agent Certification Programme
-          </Text>
-          <Text style={styles.body}>certified by Colly</Text>
-          <Text style={styles.body}>on {issuedAt}, in Nigeria</Text>
-
-          <View style={styles.qrBlock}>
-            {/* react-pdf's Image has no `alt` prop; the QR is decorative here
-                because the verification URL is printed directly beneath it. */}
+          {/* Header: real logo + wordmark */}
+          <View style={{ alignItems: "center" }}>
             {/* eslint-disable-next-line jsx-a11y/alt-text */}
-            <Image style={styles.qr} src={qrDataUrl} />
-            <Text style={styles.qrCaption}>{verifyUrl}</Text>
+            {logoSrc ? <Image style={styles.logo} src={logoSrc} /> : null}
+            <Text style={styles.wordmark}>COLLY</Text>
+            <Text style={styles.programme}>AGENT CERTIFICATION PROGRAMME</Text>
           </View>
 
-          <View style={styles.ids}>
-            <Text style={styles.idItem}>Agent ID: {agentNumber}</Text>
-            <Text style={styles.idItem}>Certificate ID: {certificateId}</Text>
+          {/* Body: award copy */}
+          <View style={styles.middle}>
+            <Text style={styles.certifies}>This certifies that</Text>
+            <Text style={styles.name}>{fullName}</Text>
+            <Text style={styles.body}>
+              has successfully completed all four course requirements and passed
+              the Final Certification Exam
+            </Text>
           </View>
 
-          <View style={styles.signature}>
-            <View style={styles.signatureLine} />
-            <Text style={styles.signatureName}>Ifeanyi Bryan</Text>
-            <Text style={styles.signatureRole}>Chief Executive Officer</Text>
+          {/* Footer: CERTIFIED, QR, meta and signature */}
+          <View style={styles.footer}>
+            <Text style={styles.certified}>CERTIFIED</Text>
+
+            <View style={styles.qrBlock}>
+              {/* react-pdf's Image has no `alt` prop; the QR is decorative here
+                  because the verification URL is printed directly beneath it. */}
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
+              <Image style={styles.qr} src={qrDataUrl} />
+              <Text style={styles.qrCaption}>Verify at {captionUrl}</Text>
+            </View>
+
+            <View style={styles.metaRow}>
+              <Text style={styles.metaText}>Issued {issuedAt}</Text>
+              <Text style={styles.metaText}>
+                Agent ID: {agentNumber} | Certificate ID: {certificateId}
+              </Text>
+            </View>
+
+            <View style={styles.signature}>
+              <View style={styles.signatureLine} />
+              <Text style={styles.signatureName}>Ifeanyi Bryan</Text>
+              <Text style={styles.signatureRole}>Chief Executive Officer</Text>
+            </View>
           </View>
         </View>
       </Page>

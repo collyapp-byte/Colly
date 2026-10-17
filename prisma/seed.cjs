@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 // Development seed script for Colly.
 //
 // Creates one demo tenant (ABC Electronics) with three customers, one
@@ -12,6 +13,8 @@
 
 require("dotenv").config();
 
+const fs = require("fs");
+const path = require("path");
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
@@ -533,7 +536,7 @@ Credits do not expire. Buy 500, use 200 this month, 300 next month. All fine.
 
 **Why the limits exist**
 
-WhatsApp charges Colly for every message sent. After the first 1,000 messages per number per month, WhatsApp charges about ₦10 per message. Colly passes part of this to the business through credits.
+Every plan includes a monthly message allowance so pricing stays simple and predictable. If a business needs to send more, they can top up with credits — there is no hard stop.
 
 This is not Colly being greedy. This is Colly staying alive.
 
@@ -649,7 +652,7 @@ Before your first sales pitch, memorize these 6 limits. When a business owner as
         question:
           "How much do credits cost for a business on a paid plan (over their limit)?",
         options: [
-          "₦10 per message",
+          "₦5 per message",
           "₦20 per message",
           "₦35 per message",
           "₦50 per message",
@@ -678,12 +681,13 @@ Before your first sales pitch, memorize these 6 limits. When a business owner as
         correctIndex: 2,
       },
       {
-        question: "Why do the plans have message limits?",
+        question:
+          "What should you tell a business owner who hits their monthly message cap?",
         options: [
-          "To make more money",
-          "Because WhatsApp charges Colly per message after 1,000 free per number",
-          "Because the AI gets tired",
-          "Because Meta requires it",
+          "There is nothing you can do, wait until next month",
+          "You can buy credits to keep going, or upgrade your plan",
+          "Colly is being greedy",
+          "Just tell customers to message less",
         ],
         correctIndex: 1,
       },
@@ -2096,6 +2100,75 @@ Save the support number. Save the escalation template. When you need it, you wil
   }
 ];
 
+// Section boundaries for the Final Certification Exam, keyed by question number.
+const FINAL_EXAM_SECTIONS = [
+  { start: 1, end: 10, title: "Understanding Colly" },
+  { start: 11, end: 20, title: "Setting Up a Business" },
+  { start: 21, end: 30, title: "Training the Owner" },
+  { start: 31, end: 40, title: "Sales & Support" },
+];
+
+/**
+ * Parses the authored 40-question Final Certification Exam from
+ * `final-exam-questions.txt` in the repo root. Each block is:
+ *
+ *   Q1. Question text
+ *   A) option
+ *   B) option
+ *   C) option
+ *   D) option
+ *   Correct: C
+ *
+ * Returns the rows ready for `agentFinalExamQuestion.createMany`, each tagged
+ * with its section title by question number.
+ */
+function parseFinalExamQuestions() {
+  const file = fs.readFileSync(
+    path.join(__dirname, "..", "final-exam-questions.txt"),
+    "utf8",
+  );
+  const lines = file.replace(/\r\n/g, "\n").split("\n");
+  const letters = ["A", "B", "C", "D"];
+  const rows = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const qmatch = lines[i].match(/^Q(\d+)\.\s*(.*)$/);
+    if (!qmatch) continue;
+
+    const num = Number.parseInt(qmatch[1], 10);
+    const options = [];
+    for (let k = 1; k <= 4; k++) {
+      options.push(
+        (lines[i + k] || "").trim().replace(/^[A-D]\)\s*/, "").trim(),
+      );
+    }
+
+    let correctIndex = 0;
+    for (let j = 5; j < 10; j++) {
+      const cl = lines[i + j];
+      const m = cl && cl.match(/Correct:\s*([A-D])/i);
+      if (m) {
+        correctIndex = letters.indexOf(m[1].toUpperCase());
+        break;
+      }
+    }
+
+    const section = FINAL_EXAM_SECTIONS.find(
+      (s) => num >= s.start && num <= s.end,
+    );
+
+    rows.push({
+      order: num,
+      sectionTitle: section ? section.title : "",
+      question: qmatch[2].trim(),
+      options,
+      correctIndex,
+    });
+  }
+
+  return rows;
+}
+
 async function main() {
   const now = Date.now();
 
@@ -2401,11 +2474,23 @@ async function main() {
     agentQuestionCount += course.questions.length;
   }
 
+  // Final Certification Exam. The 40 questions are authored in the repo root as
+  // final-exam-questions.txt and parsed here, matching seed-final-exam.cjs. The
+  // file has no natural key, so the rows are replaced on each run.
+  const finalExamQuestions = parseFinalExamQuestions();
+  await prisma.agentFinalExamQuestion.deleteMany({});
+  await prisma.agentFinalExamQuestion.createMany({
+    data: finalExamQuestions,
+  });
+
   console.log(
     `Seeded "${business.name}" (${business.id}) with ${CONVERSATIONS.length} conversations, ${messageCount} messages, ${products.count} products, ${faqs.count} FAQs, ${salesCount} sales and ${invoiceCount} invoices.`,
   );
   console.log(
     `Seeded ${AGENT_COURSES.length} agent courses, ${agentLessonCount} lessons and ${agentQuestionCount} quiz questions.`,
+  );
+  console.log(
+    `Seeded ${finalExamQuestions.length} final certification exam questions.`,
   );
   console.log(
     `Demo owner: ${DEMO_OWNER_EMAIL} (sign up with this email to own the seeded business).`,

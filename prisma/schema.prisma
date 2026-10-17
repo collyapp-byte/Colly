@@ -28,14 +28,14 @@ model Business {
 
   /// AI writing style. One of "formal", "friendly" or "pidgin_friendly";
   /// stored as text so adding a tone is not a migration.
-  tone String @default("friendly")
+  tone          String  @default("friendly")
   /// Free text such as "Mon-Fri 9am-6pm, Sat 10am-4pm". Shown to the AI and
   /// displayed on the Settings page.
   businessHours String?
   /// Street address, used on invoices/receipts (optional).
-  address String?
+  address       String?
   /// Short description of what the business sells, given to the AI as context.
-  description String?
+  description   String?
 
   /// NRS (National Revenue Service) e-invoicing compliance. `nrsTaxId` is the
   /// NRS Tax ID (the CAC number); `nrsRegistrationDate` is when it was saved
@@ -55,22 +55,22 @@ model Business {
   /// `paystackCustomerCode` / `paystackSubscriptionCode` / `paystackEmailToken`
   /// identify the business in Paystack; `paystackEmailToken` is needed to
   /// pause/resume a Paystack subscription. `billingEmail` receives receipts.
-  plan                      String   @default("free")
-  planInterval              String   @default("monthly")
-  planStatus                String   @default("trialing")
-  planStartedAt             DateTime @default(now())
-  planExpiresAt             DateTime?
+  plan                     String    @default("free")
+  planInterval             String    @default("monthly")
+  planStatus               String    @default("trialing")
+  planStartedAt            DateTime  @default(now())
+  planExpiresAt            DateTime?
   onboardingEndsAt         DateTime?
-  creditsBalance            Int      @default(0)
-  paystackCustomerCode      String?
-  paystackSubscriptionCode  String?
-  paystackEmailToken        String?
-  billingEmail              String?
+  creditsBalance           Int       @default(0)
+  paystackCustomerCode     String?
+  paystackSubscriptionCode String?
+  paystackEmailToken       String?
+  billingEmail             String?
 
   /// Message tracking for plan caps. `messagesUsedThisMonth` counts AI replies
   /// sent this billing month. `messagesResetAt` is when the counter resets
   /// (next billing anniversary). `aiEnabled` gates auto-replies when cap is
-  /// hit or plan expires — can be toggled by owner if they buy credits.
+  /// hit or plan expires â€” can be toggled by owner if they buy credits.
   messagesUsedThisMonth Int      @default(0)
   messagesResetAt       DateTime @default(now())
   aiEnabled             Boolean  @default(true)
@@ -177,23 +177,23 @@ model Product {
 }
 
 model Sale {
-  id          String   @id @default(cuid())
-  businessId  String
-  customerId  String
+  id            String   @id @default(cuid())
+  businessId    String
+  customerId    String
   /// null when the sale is a productless "custom amount" line (Quick Sale).
-  productId   String?
+  productId     String?
   /// Human-readable label for productless lines, e.g. "Delivery charge".
-  customLabel String?
-  quantity    Int
-  totalAmount Decimal  @db.Decimal(10, 2)
-  status      String
+  customLabel   String?
+  quantity      Int
+  totalAmount   Decimal  @db.Decimal(10, 2)
+  status        String
   /// How the sale was paid: "cash" | "transfer" | "pos" | "credit". Null on rows created before this field existed.
   paymentMethod String?
-  createdAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
 
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customer Customer @relation(fields: [customerId], references: [id])
-  product  Product? @relation(fields: [productId], references: [id])
+  business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer  @relation(fields: [customerId], references: [id])
+  product  Product?  @relation(fields: [productId], references: [id])
   invoices Invoice[]
 
   @@index([businessId])
@@ -240,9 +240,9 @@ model Message {
   /// Storage; `audioDuration` is the clip length in seconds; `transcript` is the
   /// speech-to-text output. For a voice note `content` mirrors `transcript` so
   /// the existing chat UI and history keep working unchanged.
-  audioUrl      String?
-  audioDuration Int?
-  transcript    String?
+  audioUrl         String?
+  audioDuration    Int?
+  transcript       String?
   /// Image fields. `imageUrl` is the public URL of the photo in Supabase
   /// Storage; `imageDescription` is the vision model's short description. For an
   /// image message `content` mirrors `imageDescription` so the existing chat UI
@@ -250,7 +250,7 @@ model Message {
   imageUrl         String?
   imageDescription String?
   /// "text" | "voice" | "image". Stored as text so a new kind is not a migration.
-  messageType   String   @default("text")
+  messageType      String  @default("text")
 
   business     Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -307,23 +307,23 @@ model Transaction {
   businessId String
 
   /// Paystack transaction reference (unique so a webhook can be processed once).
-  reference String @unique
+  reference        String    @unique
   /// Amount actually charged, in Naira (kept as Decimal for exact math).
-  amount    Decimal @db.Decimal(10, 2)
+  amount           Decimal   @db.Decimal(10, 2)
   /// "success" | "failed" | "pending".
-  status    String
+  status           String
   /// "subscription" | "credits".
-  type      String
+  type             String
   /// For subscription payments: the plan the customer is on. Missing for
   /// standalone credit purchases.
-  plan         String?
-  planInterval String?
+  plan             String?
+  planInterval     String?
   /// For credit purchases: how many replies were bought.
   creditsPurchased Int?
   /// Paystack funding channel, e.g. "card", "bank", "ussd".
-  channel String?
-  paidAt  DateTime?
-  createdAt DateTime @default(now())
+  channel          String?
+  paidAt           DateTime?
+  createdAt        DateTime  @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
@@ -352,23 +352,26 @@ model Agent {
   updatedAt      DateTime  @updatedAt
   certifiedAt    DateTime?
 
-  progress          AgentLessonProgress[]
-  quizAttempts      AgentQuizAttempt[]
-  certificate       AgentCertificate?
-  badges            AgentBadge[]
+  progress           AgentLessonProgress[]
+  quizAttempts       AgentQuizAttempt[]
+  certificate        AgentCertificate?
+  badges             AgentBadge[]
+  finalExamAttempts  AgentFinalExamAttempt[]
+  /// Timestamp of the first passing Final Certification Exam attempt.
+  finalExamPassedAt  DateTime?
   referredBusinesses Business[]
 }
 
 model AgentCourse {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  description String
-  order       Int      @default(0)
-  published   Boolean  @default(true)
+  id                    String   @id @default(cuid())
+  slug                  String   @unique
+  title                 String
+  description           String
+  order                 Int      @default(0)
+  published             Boolean  @default(true)
   /// Only courses flagged here gate certification. Adding a non-certification course does not revoke anyone's certificate.
-  isCertificationCourse Boolean @default(false)
-  createdAt   DateTime @default(now())
+  isCertificationCourse Boolean  @default(false)
+  createdAt             DateTime @default(now())
 
   lessons   AgentLesson[]
   questions AgentQuizQuestion[]
@@ -386,7 +389,7 @@ model AgentLesson {
   durationMin  Int?
   createdAt    DateTime @default(now())
 
-  course   AgentCourse            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course   AgentCourse           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   progress AgentLessonProgress[]
 
   @@unique([courseId, slug])
@@ -405,10 +408,10 @@ model AgentLessonProgress {
 }
 
 model AgentQuizQuestion {
-  id           String @id @default(cuid())
+  id           String  @id @default(cuid())
   courseId     String
-  order        Int    @default(0)
-  question     String @db.Text
+  order        Int     @default(0)
+  question     String  @db.Text
   /// Answer options, e.g. ["A", "B", "C", "D"].
   options      Json
   correctIndex Int
@@ -456,4 +459,30 @@ model AgentBadge {
 
   @@unique([agentId, courseSlug])
   @@index([agentId])
+}
+
+// Final Certification Exam
+model AgentFinalExamQuestion {
+  id           String  @id @default(cuid())
+  order        Int     @default(0)
+  sectionTitle String
+  question     String  @db.Text
+  options      Json
+  correctIndex Int
+  explanation  String? @db.Text
+
+  @@index([order])
+}
+
+model AgentFinalExamAttempt {
+  id          String   @id @default(cuid())
+  agentId     String
+  score       Int
+  passed      Boolean
+  answers     Json
+  attemptedAt DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, attemptedAt])
 }

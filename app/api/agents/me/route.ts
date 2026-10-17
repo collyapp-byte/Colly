@@ -35,12 +35,14 @@ export async function GET() {
         fullName: agent.fullName,
         agentNumber: agent.agentNumber,
         certifiedAt: agent.certifiedAt,
+        finalExamPassedAt: agent.finalExamPassedAt,
       },
       progress: {
         completedLessons,
         totalLessons,
       },
       certified: agent.certifiedAt !== null,
+      finalExamPassed: agent.finalExamPassedAt !== null,
       referrals: referrals.map((business) => ({
         id: business.id,
         name: business.name,
