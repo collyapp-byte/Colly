@@ -6,10 +6,10 @@
  */
 
 export const COURSE_BADGES = {
-  "understanding-colly": { label: "Understanding Colly", color: "#1E3A8A" },
+  "understanding-colly": { label: "Understanding Colly", color: "#FF6600" },
   "setting-up-a-business": { label: "Setting Up a Business", color: "#FF6600" },
-  "training-the-owner": { label: "Training the Owner", color: "#10B981" },
-  "sales-and-support": { label: "Sales & Support", color: "#7C3AED" },
+  "training-the-owner": { label: "Training the Owner", color: "#FF6600" },
+  "sales-and-support": { label: "Sales & Support", color: "#FF6600" },
 } as const;
 
 export type CourseSlug = keyof typeof COURSE_BADGES;

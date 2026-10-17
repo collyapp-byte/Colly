@@ -36,10 +36,10 @@ export async function GET(request: Request) {
     const verifyUrl = `${resolveOrigin(request)}/verify/${agent.agentNumber}`;
     const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
       margin: 2,
-      width: 200,
+      width: 300,
     });
 
-    const issuedAt = new Intl.DateTimeFormat("en-NG", {
+    const issuedAt = new Intl.DateTimeFormat("en-GB", {
       day: "numeric",
       month: "long",
       year: "numeric",
