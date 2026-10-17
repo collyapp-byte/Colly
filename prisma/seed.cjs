@@ -10,6 +10,9 @@
 // It wipes the seeded data first (children cascade), so it is safe to re-run.
 // Real accounts (a `User` row linked to a Supabase Auth user) are preserved:
 // they are captured before the wipe and re-linked to a "Personal" business.
+// Agent rows are never wiped either: three demo agents are ensured for the
+// public /find-an-agent directory, and an agent that already exists is left
+// as-is.
 
 require("dotenv").config();
 
@@ -2169,6 +2172,31 @@ function parseFinalExamQuestions() {
   return rows;
 }
 
+// Dummy certified agents so the public "Find a Colly Agent" directory has data
+// to show. They are keyed by email below and created only when missing: agents
+// are never wiped by the seed, so re-runs must not duplicate them or overwrite
+// a real agent. `supabaseUserId` stays null, so these accounts cannot sign in.
+const DEMO_AGENTS = [
+  {
+    fullName: "Chidi Okeke",
+    email: "chidi.okeke@colly.test",
+    phone: "08011111111",
+    state: "Lagos",
+  },
+  {
+    fullName: "Aisha Bello",
+    email: "aisha.bello@colly.test",
+    phone: "08022222222",
+    state: "Abuja",
+  },
+  {
+    fullName: "Emeka Nwosu",
+    email: "emeka.nwosu@colly.test",
+    phone: "08033333333",
+    state: "Rivers",
+  },
+];
+
 async function main() {
   const now = Date.now();
 
@@ -2483,6 +2511,44 @@ async function main() {
     data: finalExamQuestions,
   });
 
+  // Demo agents for /find-an-agent. Numbers are assigned past the highest
+  // existing "AG-####" (same rule as lib/agent-id.ts) so a seeded agent can
+  // never collide with a real signup; an agent already holding one of the demo
+  // emails is left untouched.
+  const existingAgentNumbers = await prisma.agent.findMany({
+    select: { agentNumber: true },
+  });
+  let highestAgentNumber = 0;
+  for (const { agentNumber } of existingAgentNumbers) {
+    const parsed = Number.parseInt(agentNumber.slice(3), 10);
+    if (Number.isFinite(parsed) && parsed > highestAgentNumber) {
+      highestAgentNumber = parsed;
+    }
+  }
+
+  let seededAgentCount = 0;
+  for (const demo of DEMO_AGENTS) {
+    const existing = await prisma.agent.findUnique({
+      where: { email: demo.email },
+      select: { id: true },
+    });
+    if (existing) continue;
+
+    highestAgentNumber += 1;
+    await prisma.agent.create({
+      data: {
+        agentNumber: `AG-${String(highestAgentNumber).padStart(4, "0")}`,
+        fullName: demo.fullName,
+        email: demo.email,
+        phone: demo.phone,
+        state: demo.state,
+        supabaseUserId: null,
+        certifiedAt: new Date(),
+      },
+    });
+    seededAgentCount += 1;
+  }
+
   console.log(
     `Seeded "${business.name}" (${business.id}) with ${CONVERSATIONS.length} conversations, ${messageCount} messages, ${products.count} products, ${faqs.count} FAQs, ${salesCount} sales and ${invoiceCount} invoices.`,
   );
@@ -2491,6 +2557,9 @@ async function main() {
   );
   console.log(
     `Seeded ${finalExamQuestions.length} final certification exam questions.`,
+  );
+  console.log(
+    `Demo agents for /find-an-agent: ${seededAgentCount} created, ${DEMO_AGENTS.length - seededAgentCount} already present.`,
   );
   console.log(
     `Demo owner: ${DEMO_OWNER_EMAIL} (sign up with this email to own the seeded business).`,

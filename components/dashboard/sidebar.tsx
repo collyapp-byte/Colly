@@ -12,6 +12,7 @@ import {
   HelpCircle,
   LayoutGrid,
   LogOut,
+  MapPin,
   MessageSquare,
   Package,
   Settings,
@@ -38,6 +39,7 @@ const PRIMARY_ITEMS: NavItem[] = [
 const SECONDARY_ITEMS: NavItem[] = [
   { label: "Products", href: "/products", icon: Package },
   { label: "FAQs", href: "/faqs", icon: HelpCircle },
+  { label: "Find an Agent", href: "/find-an-agent", icon: MapPin },
 ];
 
 const BOTTOM_ITEMS: NavItem[] = [

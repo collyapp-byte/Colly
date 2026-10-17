@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Suspense, useActionState, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Check, Eye, EyeOff } from "lucide-react";
 import { logout, signup } from "@/lib/auth-actions";
 import { INITIAL_AUTH_STATE } from "@/lib/auth-form";
 import { NIGERIAN_STATES } from "@/lib/nigerian-states";
@@ -22,7 +22,7 @@ function viewFromParam(value: string | null): View {
   return value === "business" || value === "agent" ? value : "chooser";
 }
 
-function BusinessSignupForm() {
+function BusinessSignupForm({ referredBy }: { referredBy?: string }) {
   const [state, formAction, pending] = useActionState(
     signup,
     INITIAL_AUTH_STATE,
@@ -83,8 +83,18 @@ function BusinessSignupForm() {
             type="text"
             placeholder="AG-0001"
             autoComplete="off"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
+            defaultValue={referredBy}
+            readOnly={Boolean(referredBy)}
+            className={`w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20 ${
+              referredBy ? "cursor-not-allowed bg-gray-50 text-gray-600" : ""
+            }`}
           />
+          {referredBy && (
+            <p className="mt-1.5 flex items-center gap-1.5 text-[13px] font-medium text-success">
+              <Check className="h-3.5 w-3.5" aria-hidden />
+              Referred by {referredBy}
+            </p>
+          )}
         </div>
         <div>
           <label
@@ -358,6 +368,8 @@ function SignupContent() {
   const [view, setView] = useState<View>(() =>
     viewFromParam(searchParams.get("role")),
   );
+  // `?ref=AG-0001` from an agent's referral link; blank on a normal signup.
+  const referredBy = (searchParams.get("ref") ?? "").trim();
 
   return (
     <div>
@@ -373,7 +385,7 @@ function SignupContent() {
       )}
 
       {view === "chooser" && <RoleChooser variant="signup" onSelect={setView} />}
-      {view === "business" && <BusinessSignupForm />}
+      {view === "business" && <BusinessSignupForm referredBy={referredBy} />}
       {view === "agent" && <AgentSignupForm />}
     </div>
   );

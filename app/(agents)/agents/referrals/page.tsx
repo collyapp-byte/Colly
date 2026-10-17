@@ -1,16 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Check, Copy, TriangleAlert, Users } from "lucide-react";
 import { useAgentData } from "@/components/agents/use-agent-data";
 import type { AgentReferralsResponse } from "@/lib/agents-types";
 import { formatRelativeTime } from "@/lib/format";
+
+function subscribeToOrigin(): () => void {
+  return () => {};
+}
+
+/**
+ * The browser origin, or "" during the server render. `useSyncExternalStore`
+ * returns the server snapshot for hydration and the client snapshot once
+ * mounted, so the link is never read from `window` while it is undefined and
+ * no setState-in-effect is needed.
+ */
+function useOrigin(): string {
+  return useSyncExternalStore(
+    subscribeToOrigin,
+    () => window.location.origin,
+    () => "",
+  );
+}
 
 export default function AgentReferralsPage() {
   const { data, error, loading } = useAgentData<AgentReferralsResponse>(
     "/api/agents/referrals",
   );
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const origin = useOrigin();
 
   if (loading) {
     return (
@@ -31,6 +51,7 @@ export default function AgentReferralsPage() {
   }
 
   const { agentNumber, referrals } = data;
+  const referralLink = origin ? `${origin}/signup?ref=${agentNumber}` : "";
 
   async function handleCopy() {
     try {
@@ -42,6 +63,17 @@ export default function AgentReferralsPage() {
     }
   }
 
+  async function handleCopyLink() {
+    if (!referralLink) return;
+    try {
+      await navigator.clipboard.writeText(referralLink);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      // Clipboard access can be blocked; the link is shown in full regardless.
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -50,6 +82,46 @@ export default function AgentReferralsPage() {
           Businesses that sign up with your agent ID are credited to you here.
         </p>
       </div>
+
+      {/* Referral link card */}
+      <section className="rounded-xl border border-panel-border bg-white p-5">
+        <p className="text-[13px] font-medium text-gray-700">
+          Your referral link
+        </p>
+        <p className="mt-1 text-[13px] text-gray-500">
+          Share this link with businesses. When they sign up through it, they
+          will be credited to you automatically.
+        </p>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            type="text"
+            readOnly
+            value={referralLink}
+            aria-label="Your referral link"
+            placeholder="Loading your link…"
+            onFocus={(event) => event.currentTarget.select()}
+            className="w-full flex-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-[13px] text-gray-700 outline-none"
+          />
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            disabled={!referralLink}
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {linkCopied ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-success" aria-hidden />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5" aria-hidden />
+                Copy Link
+              </>
+            )}
+          </button>
+        </div>
+      </section>
 
       {/* Agent ID card */}
       <section className="rounded-xl border border-panel-border bg-white p-5">
