@@ -8,8 +8,9 @@ function unauthorized() {
 
 // GET /api/billing/usage
 // Shows how many AI replies this business has used this month versus its plan
-// limit, plus its credit balance and plan details. The limit comes from the
-// plan config; the trial's 50-reply allowance is the limit while trialing.
+// limit, plus its Naira wallet balance and plan details. The limit comes from
+// the plan config for the business's channel; the trial's 50-reply allowance
+// is the limit while trialing.
 export async function GET() {
   try {
     const businessId = await getCurrentBusinessId();
@@ -26,7 +27,9 @@ export async function GET() {
         planStatus: true,
         planExpiresAt: true,
         onboardingEndsAt: true,
-        creditsBalance: true,
+        channel: true,
+        creditWalletBalanceNaira: true,
+        manualMessagesUsedThisMonth: true,
       },
     });
 
@@ -38,20 +41,21 @@ export async function GET() {
         AND "createdAt" >= date_trunc('month', now())
     `;
 
-    const limits = getPlanLimits(business.plan, business.planInterval);
-    const aiRepliesLimit =
-      "includedMessages" in limits
-        ? limits.includedMessages
-        : limits.aiRepliesLimit;
+    const limits = getPlanLimits(business.plan, business.planInterval, business.channel);
+    const aiRepliesLimit = limits.includedMsgs;
+    const includedManualMessages = limits.includedManualMessages;
 
     return Response.json({
       aiRepliesUsed,
       aiRepliesLimit,
-      creditsBalance: business.creditsBalance,
+      manualMessagesUsed: business.manualMessagesUsedThisMonth,
+      includedManualMessages,
+      creditWalletBalanceNaira: business.creditWalletBalanceNaira,
       plan: business.plan,
       planInterval: business.planInterval,
       planStatus: business.planStatus,
       planExpiresAt: business.planExpiresAt,
+      channel: business.channel,
       trialEndsAt: business.onboardingEndsAt,
     });
   } catch (error) {

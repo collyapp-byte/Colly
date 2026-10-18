@@ -21,7 +21,7 @@ type Usage = {
   planInterval: string;
   aiRepliesUsed: number;
   aiRepliesLimit: number;
-  creditsBalance: number;
+  creditWalletBalanceNaira: number;
 };
 
 const EMPTY_STATE_TEXT =
@@ -100,12 +100,12 @@ export default function ConversationsPage() {
     usage &&
     (usage.planStatus !== "active" ||
       usage.aiRepliesUsed >= usage.aiRepliesLimit) &&
-    usage.creditsBalance === 0;
+    usage.creditWalletBalanceNaira === 0;
 
   const bannerReason = usage
     ? usage.planStatus !== "active"
       ? "plan_expired"
-      : usage.creditsBalance === 0
+      : usage.creditWalletBalanceNaira === 0
       ? "cap_hit"
       : null
     : null;

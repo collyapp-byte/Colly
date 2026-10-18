@@ -166,7 +166,7 @@ export async function signup(
       return {
         error: null,
         notice:
-          "Account created. Check your email to confirm your address, then sign in.",
+          "Account created! Please check your email to confirm your address before logging in.",
       };
     }
   } catch (error) {
@@ -291,7 +291,7 @@ function loginErrorMessage(message: string): string {
     case "Invalid login credentials":
       return "Incorrect email or password.";
     case "Email not confirmed":
-      return "Confirm your email address first, then sign in.";
+      return "Please check your email and click the confirmation link before signing in.";
     default:
       return message;
   }

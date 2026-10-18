@@ -25,13 +25,13 @@ export async function POST() {
 
     const business = await prisma.business.findUniqueOrThrow({
       where: { id: user.businessId },
-      select: { plan: true, planStatus: true, onboardingEndsAt: true },
+      select: { plan: true, planStatus: true, channel: true },
     });
 
     const creditPackage = getCreditPackage({
       plan: business.plan,
       planStatus: business.planStatus,
-      onboardingEndsAt: business.onboardingEndsAt,
+      channel: business.channel,
     });
 
     const callbackUrl = `${getAppUrl()}/billing/callback`;

@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { channelForTier } from "@/lib/plans";
 import {
   fetchSubscription,
   verifyTransaction,
   type VerifyTransactionData,
 } from "@/lib/paystack";
-import { CREDIT_PACKAGES } from "@/lib/plans";
 
 /** Paystack's verify payload, plus the optional subscription object. */
 type VerifyData = VerifyTransactionData & {
@@ -26,8 +26,8 @@ function addDays(date: Date, days: number): Date {
 // POST /api/billing/verify
 // Confirms a checkout that just came back through the Paystack callback URL.
 // On success the pending Transaction is marked paid and the business's plan or
-// credit balance is applied. Idempotent: an already-finalized transaction is
-// left alone.
+// Naira wallet balance is applied. Idempotent: an already-finalized
+// transaction is left alone.
 export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
@@ -59,21 +59,21 @@ export async function POST(request: Request) {
     }
 
     let plan = transaction.plan;
-    let creditsBalance = await getCreditsBalance(user.businessId);
+    let creditWalletBalanceNaira = await getWalletBalanceNaira(user.businessId);
 
     // Already fulfilled (e.g. the webhook beat this browser callback): the
     // payment is confirmed, so report success without re-applying anything.
     // Without this, the fall-through below would return ok:false and the client
     // would show a false "could not be confirmed" error.
     if (data.status === "success" && transaction.status === "success") {
-      return Response.json({ ok: true, plan, creditsBalance });
+      return Response.json({ ok: true, plan, creditWalletBalanceNaira });
     }
 
     if (data.status === "success" && transaction.status === "pending") {
       // Idempotency guard (BUG 2): atomically flip this transaction from
       // "pending" to "success". Only the first caller (verify or the webhook)
       // wins the claim; a repeat call sees 0 rows and no-ops without touching
-      // creditsBalance or the plan.
+      // the wallet or the plan.
       const claim = await prisma.transaction.updateMany({
         where: { id: transaction.id, status: "pending" },
         data: {
@@ -85,8 +85,8 @@ export async function POST(request: Request) {
 
       if (claim.count === 0) {
         // Already fulfilled by the webhook (or a prior verify call).
-        creditsBalance = await getCreditsBalance(user.businessId);
-        return Response.json({ ok: true, plan, creditsBalance });
+        creditWalletBalanceNaira = await getWalletBalanceNaira(user.businessId);
+        return Response.json({ ok: true, plan, creditWalletBalanceNaira });
       }
 
       if (transaction.type === "subscription") {
@@ -97,6 +97,7 @@ export async function POST(request: Request) {
             plan: transaction.plan ?? undefined,
             planInterval: interval,
             planStatus: "active",
+            channel: channelForTier(transaction.plan),
             planStartedAt: new Date(),
             planExpiresAt: addDays(
               new Date(),
@@ -132,25 +133,23 @@ export async function POST(request: Request) {
           });
         }
 
-        return Response.json({ ok: true, plan, creditsBalance });
+        return Response.json({ ok: true, plan, creditWalletBalanceNaira });
       }
 
-      // Credits: add the purchased replies to the balance.
-      const purchased =
-        transaction.creditsPurchased ?? CREDIT_PACKAGES.free_credits.messages;
+      // Credit top-ups: fund the Naira wallet with the amount actually paid.
       await prisma.business.update({
         where: { id: user.businessId },
         data: {
-          creditsBalance: { increment: purchased },
+          creditWalletBalanceNaira: { increment: Number(transaction.amount) },
         },
       });
 
-      creditsBalance = await getCreditsBalance(user.businessId);
-      return Response.json({ ok: true, plan, creditsBalance });
+      creditWalletBalanceNaira = await getWalletBalanceNaira(user.businessId);
+      return Response.json({ ok: true, plan, creditWalletBalanceNaira });
     }
 
     // Not a successful, pending payment (already handled, abandoned, failed...).
-    return Response.json({ ok: false, plan, creditsBalance });
+    return Response.json({ ok: false, plan, creditWalletBalanceNaira });
   } catch (error) {
     console.error("[POST /api/billing/verify]", error);
     return Response.json(
@@ -163,11 +162,11 @@ export async function POST(request: Request) {
   }
 }
 
-async function getCreditsBalance(businessId: string): Promise<number> {
+async function getWalletBalanceNaira(businessId: string): Promise<number> {
   const business = await prisma.business.findUniqueOrThrow({
     where: { id: businessId },
-    select: { creditsBalance: true },
+    select: { creditWalletBalanceNaira: true },
   });
 
-  return business.creditsBalance;
+  return business.creditWalletBalanceNaira;
 }

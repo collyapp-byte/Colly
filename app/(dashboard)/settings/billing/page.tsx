@@ -4,16 +4,20 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, CircleAlert, Info } from "lucide-react";
 import { formatNaira } from "@/lib/format";
+import { getCreditPackage, getCreditPrice } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 
 type Usage = {
   aiRepliesUsed: number;
   aiRepliesLimit: number;
-  creditsBalance: number;
+  manualMessagesUsed: number;
+  includedManualMessages: number;
+  creditWalletBalanceNaira: number;
   plan: string;
   planInterval: string;
   planStatus: string;
   planExpiresAt: string | null;
+  channel: string;
   trialEndsAt: string | null;
   onboardingEndsAt?: string | null;
 };
@@ -78,19 +82,6 @@ function daysUntil(value: string | null): number | null {
   if (Number.isNaN(date.getTime())) return null;
   const diff = date.getTime() - Date.now();
   return Math.max(0, Math.ceil(diff / 86_400_000));
-}
-
-function getCreditPrice(plan: string, planStatus: string): number {
-  const isActivePaidPlan =
-    planStatus === "active" && ["starter", "business", "pro"].includes(plan);
-  return isActivePaidPlan ? 20 : 35;
-}
-
-function getCreditPackage(plan: string, planStatus: string) {
-  const price = getCreditPrice(plan, planStatus);
-  return price === 20
-    ? { messages: 150, price: 3_000, label: "150 messages" }
-    : { messages: 150, price: 5_250, label: "150 messages" };
 }
 
 export default function BillingPage() {
@@ -175,10 +166,14 @@ export default function BillingPage() {
   const planName = usage ? PLAN_NAMES[usage.plan] ?? capitalize(usage.plan) : "";
   const isTrial = usage?.plan === "trial";
   const isFree = usage?.plan === "free";
-  const creditPrice = usage ? getCreditPrice(usage.plan, usage.planStatus) : 35;
-  const creditPackage = usage
-    ? getCreditPackage(usage.plan, usage.planStatus)
-    : { messages: 150, price: 5_250, label: "150 messages" };
+  const creditPrice = usage
+    ? getCreditPrice({ channel: usage.channel, plan: usage.plan }, "ai")
+    : 20;
+  const creditPackage = getCreditPackage(
+    usage
+      ? { channel: usage.channel, plan: usage.plan, planStatus: usage.planStatus }
+      : { plan: "free", planStatus: "inactive", channel: null },
+  );
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -275,7 +270,7 @@ export default function BillingPage() {
             <div className="mt-4">
               <div className="flex items-baseline justify-between gap-2 text-sm">
                 <span className="text-gray-600">
-                  Messages used: {usage.aiRepliesUsed.toLocaleString()} /{" "}
+                  AI replies used: {usage.aiRepliesUsed.toLocaleString()} /{" "}
                   {usage.aiRepliesLimit.toLocaleString()}
                 </span>
                 <span className="text-xs text-gray-400">resets monthly</span>
@@ -283,21 +278,35 @@ export default function BillingPage() {
               <UsageBar used={usage.aiRepliesUsed} limit={usage.aiRepliesLimit} />
             </div>
 
-            {/* CREDITS */}
+            <div className="mt-4">
+              <div className="flex items-baseline justify-between gap-2 text-sm">
+                <span className="text-gray-600">
+                  Manual replies used: {usage.manualMessagesUsed.toLocaleString()}{" "}
+                  / {usage.includedManualMessages.toLocaleString()}
+                </span>
+                <span className="text-xs text-gray-400">resets monthly</span>
+              </div>
+              <UsageBar
+                used={usage.manualMessagesUsed}
+                limit={usage.includedManualMessages}
+              />
+            </div>
+
+            {/* WALLET */}
             <div className="mt-5 flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
               <div>
                 <p className="text-sm font-medium text-gray-900">
-                  {usage.creditsBalance.toLocaleString()} credits remaining
+                  {formatNaira(usage.creditWalletBalanceNaira)} wallet balance
                 </p>
                 <p className="text-xs text-gray-500">
-                  {formatNaira(creditPrice)} per message · credits never expire
+                  {formatNaira(creditPrice)} per AI reply · wallet never expires
                 </p>
               </div>
               <Link
                 href="/settings/billing/credits"
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
               >
-                Buy credits
+                Top up wallet
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>

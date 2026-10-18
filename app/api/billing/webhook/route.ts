@@ -4,7 +4,6 @@ import {
   fetchSubscription,
   verifyWebhookSignature,
 } from "@/lib/paystack";
-import { CREDIT_PACKAGES } from "@/lib/plans";
 
 // The Paystack fields Colly reads out of a webhook event. Everything else is
 // ignored, so the type only needs the intersection of what the handlers touch.
@@ -121,19 +120,19 @@ export async function POST(request: Request) {
           break;
         }
 
-        // Credit top-ups also top up the balance. The Transaction row's own
+        // Credit top-ups also fund the Naira wallet. The Transaction row's own
         // `type` is authoritative; metadata.type is the Paystack echo.
         const isCredit =
           transaction?.type === "credits" || data.metadata?.type === "credits";
 
         if (isCredit && transaction) {
-          const purchased =
-            transaction.creditsPurchased ??
-            CREDIT_PACKAGES.free_credits.messages;
-
           await prisma.business.update({
             where: { id: transaction.businessId },
-            data: { creditsBalance: { increment: purchased } },
+            data: {
+              creditWalletBalanceNaira: {
+                increment: Number(transaction.amount),
+              },
+            },
           });
         }
         break;

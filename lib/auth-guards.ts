@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getPlanLimits } from "@/lib/plans";
+import { getCreditPrice, getPlanLimits, isActivePaidPlan } from "@/lib/plans";
 import { getCurrentAgent } from "@/lib/agent-auth";
 
 export type AiEnabledResult =
@@ -30,8 +30,8 @@ export async function requireSiteAccess(businessId: string): Promise<void> {
 /**
  * Checks if AI auto-reply should be enabled for this business.
  * Returns ok=true if:
- * - Plan is active paid AND messagesUsedThisMonth < includedMessages, OR
- * - creditsBalance > 0
+ * - Plan is active paid AND messagesUsedThisMonth < includedMsgs, OR
+ * - the Naira wallet can cover at least one AI reply
  * Otherwise returns ok=false with reason.
  */
 export async function requireAiEnabled(businessId: string): Promise<AiEnabledResult> {
@@ -43,7 +43,8 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
       planInterval: true,
       planExpiresAt: true,
       onboardingEndsAt: true,
-      creditsBalance: true,
+      channel: true,
+      creditWalletBalanceNaira: true,
       messagesUsedThisMonth: true,
       messagesResetAt: true,
       aiEnabled: true,
@@ -75,9 +76,7 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
   }
 
   // Active paid plan
-  const isActivePaidPlan =
-    business.planStatus === "active" &&
-    ["starter", "business", "pro"].includes(business.plan);
+  const activePaidPlan = isActivePaidPlan(business);
 
   // Active trial
   const isTrialActive =
@@ -85,27 +84,27 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
     business.onboardingEndsAt &&
     business.onboardingEndsAt > now;
 
-  if (isActivePaidPlan || isTrialActive) {
-    const limits = getPlanLimits(business.plan, business.planInterval);
-    const included =
-      "includedMessages" in limits
-        ? limits.includedMessages
-        : limits.aiRepliesLimit ?? 0;
+  // What one AI reply over the cap costs out of the Naira wallet.
+  const aiCreditPrice = getCreditPrice(business, "ai");
+
+  if (activePaidPlan || isTrialActive) {
+    const limits = getPlanLimits(business.plan, business.planInterval, business.channel);
+    const included = limits.includedMsgs;
 
     if (business.messagesUsedThisMonth < included) {
       return { ok: true };
     }
 
-    // Cap hit — check credits
-    if (business.creditsBalance > 0) {
+    // Cap hit — the wallet must cover at least one more reply
+    if (business.creditWalletBalanceNaira >= aiCreditPrice) {
       return { ok: true };
     }
 
     return { ok: false, reason: "cap_hit" };
   }
 
-  // Free/expired plan — check credits
-  if (business.creditsBalance > 0) {
+  // Free/expired plan — the wallet must cover the reply
+  if (business.creditWalletBalanceNaira >= aiCreditPrice) {
     return { ok: true };
   }
 

@@ -3,18 +3,22 @@ import { getCurrentUser } from "@/lib/auth";
 import { getAppUrl } from "@/lib/app-url";
 import { initializeTransaction } from "@/lib/paystack";
 import {
-  PLANS,
+  TELEGRAM_PLANS,
+  WHATSAPP_PLANS,
   getPaystackPlanCode,
+  getPlanPrice,
+  isChannel,
+  isTelegramChannel,
   type PlanInterval,
   type PlanTier,
 } from "@/lib/plans";
 
-const TIERS = ["starter", "business", "pro"] as const;
+const WHATSAPP_TIERS = Object.keys(WHATSAPP_PLANS) as PlanTier[];
+const TELEGRAM_TIERS = Object.keys(TELEGRAM_PLANS) as PlanTier[];
 
-function isPlanTier(value: unknown): value is PlanTier {
-  return (
-    typeof value === "string" && (TIERS as readonly string[]).includes(value)
-  );
+function isPlanTier(value: unknown, channel: string): value is PlanTier {
+  const tiers = isTelegramChannel(channel) ? TELEGRAM_TIERS : WHATSAPP_TIERS;
+  return typeof value === "string" && tiers.includes(value as PlanTier);
 }
 
 const INTERVALS = ["monthly", "yearly"] as const;
@@ -41,31 +45,40 @@ export async function POST(request: Request) {
       return unauthorized();
     }
 
+    const business = await prisma.business.findUniqueOrThrow({
+      where: { id: user.businessId },
+      select: { channel: true },
+    });
+
     const body = (await request
       .json()
       .catch(() => null)) as {
       tier?: unknown;
       interval?: unknown;
+      channel?: unknown;
     } | null;
 
-    if (!body || !isPlanTier(body.tier) || !isPlanInterval(body.interval)) {
+    // The plans page lets the owner pick a channel (Telegram is the default).
+    // Fall back to the business's stored channel when none is supplied.
+    const channel = isChannel(body?.channel) ? body.channel : business.channel;
+
+    if (!body || !isPlanTier(body.tier, channel) || !isPlanInterval(body.interval)) {
+      const tiers = isTelegramChannel(channel)
+        ? "green|blue|black"
+        : "starter|business|pro";
       return Response.json(
-        { error: "tier (starter|business|pro) and interval (monthly|yearly) are required" },
+        { error: `tier (${tiers}) and interval (monthly|yearly) are required` },
         { status: 400 },
       );
     }
 
-    const config = PLANS[body.tier];
-    const amountKobo =
-      body.interval === "monthly"
-        ? config.monthlyPriceNaira * 100
-        : config.yearlyPriceNaira * 100;
-    const planCode = getPaystackPlanCode(body.tier, body.interval);
+    const amountKobo = getPlanPrice(body.tier, body.interval, channel) * 100;
+    const planCode = getPaystackPlanCode(body.tier, body.interval, channel);
 
     if (!planCode) {
       return Response.json(
         {
-          error: `No Paystack plan code configured for ${body.tier}/${body.interval}`,
+          error: `No Paystack plan code configured for ${channel} ${body.tier}/${body.interval}`,
         },
         { status: 400 },
       );
@@ -82,6 +95,7 @@ export async function POST(request: Request) {
         businessId: user.businessId,
         tier: body.tier,
         interval: body.interval,
+        channel,
         type: "subscription",
       },
     });

@@ -63,7 +63,7 @@ async function main() {
     if (result.counter < minCounter) minCounter = result.counter;
 
     state.currentOffer = result.counter;
-    state.cumulativeConcession = state.startingPrice - result.counter;
+    state.cumulativeConcession = (state.startingPrice ?? state.listPrice) - result.counter;
   }
 
   console.log("");

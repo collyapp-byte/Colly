@@ -1,95 +1,112 @@
 // Colly's billing plans: the single source of truth for limits and prices.
 //
-// All tiers get every feature (Pidgin, voice notes, image recognition,
-// negotiation); only the volume and capacity numbers differ. Prices are in
-// Naira. `-1` in a limit means "unlimited".
+// Colly sells on two channels — WhatsApp and Telegram — each with its own
+// tiers, monthly message allowances and per-reply credit prices. All tiers
+// get every feature (Pidgin, voice notes, image recognition, negotiation);
+// only the volume and capacity numbers differ. Prices are in Naira.
+//
+// Credits are a Naira wallet (`Business.creditWalletBalanceNaira`): money on
+// account that pays for replies over the plan's monthly allowance at the
+// channel's `aiCredit` / `manualCredit` rates.
 
-export type PlanTier = "free" | "starter" | "business" | "pro";
+export type Channel = "WHATSAPP" | "TELEGRAM";
+
+export type WhatsappPlanTier = "starter" | "business" | "pro";
+export type TelegramPlanTier = "green" | "blue" | "black";
+export type PlanTier = WhatsappPlanTier | TelegramPlanTier;
 
 export type PlanInterval = "monthly" | "yearly";
 
+/** Whether a reply over the cap was written by the AI or by a human agent. */
+export type CreditType = "ai" | "manual";
+
 export type PlanConfig = {
-  tier: PlanTier;
-  monthlyPriceNaira: number;
-  yearlyPriceNaira: number;
-  includedMessages: number;
-  overCapCreditPrice: number;
-  whatsappNumbersLimit: number; // -1 = unlimited
-  seatsLimit: number; // -1 = unlimited
-  productsLimit: number; // -1 = unlimited
-  faqsLimit: number; // -1 = unlimited
-  hasAnalytics: boolean;
-  hasPrioritySupport: boolean;
-  hasCustomNegotiation: boolean;
+  /** Naira Paystack charges per billing interval. */
+  monthly: number;
+  yearly: number;
+  /** AI replies included per billing month before the wallet pays per reply. */
+  includedMsgs: number;
+  /** Manual (agent) replies included per billing month before the wallet pays. */
+  includedManualMessages: number;
+  /** Naira debited from the wallet per AI reply over the monthly cap. */
+  aiCredit: number;
+  /** Naira debited from the wallet per human (agent) reply over the cap. */
+  manualCredit: number;
 };
 
-export const PLANS: Record<PlanTier, PlanConfig> = {
-  free: {
-    tier: "free",
-    monthlyPriceNaira: 0,
-    yearlyPriceNaira: 0,
-    includedMessages: 0,
-    overCapCreditPrice: 35,
-    whatsappNumbersLimit: 1,
-    seatsLimit: 1,
-    productsLimit: 50,
-    faqsLimit: 20,
-    hasAnalytics: false,
-    hasPrioritySupport: false,
-    hasCustomNegotiation: false,
-  },
+export const WHATSAPP_PLANS: Record<WhatsappPlanTier, PlanConfig> = {
   starter: {
-    tier: "starter",
-    monthlyPriceNaira: 15_000,
-    yearlyPriceNaira: 150_000,
-    includedMessages: 500,
-    overCapCreditPrice: 20,
-    whatsappNumbersLimit: 1,
-    seatsLimit: 1,
-    productsLimit: 100,
-    faqsLimit: 50,
-    hasAnalytics: false,
-    hasPrioritySupport: false,
-    hasCustomNegotiation: false,
+    monthly: 15_000,
+    yearly: 150_000,
+    includedMsgs: 500,
+    includedManualMessages: 500,
+    aiCredit: 20,
+    manualCredit: 15,
   },
   business: {
-    tier: "business",
-    monthlyPriceNaira: 25_000,
-    yearlyPriceNaira: 250_000,
-    includedMessages: 1_500,
-    overCapCreditPrice: 20,
-    whatsappNumbersLimit: 2,
-    seatsLimit: 3,
-    productsLimit: 500,
-    faqsLimit: 200,
-    hasAnalytics: true,
-    hasPrioritySupport: false,
-    hasCustomNegotiation: false,
+    monthly: 25_000,
+    yearly: 250_000,
+    includedMsgs: 1_500,
+    includedManualMessages: 1_500,
+    aiCredit: 20,
+    manualCredit: 15,
   },
   pro: {
-    tier: "pro",
-    monthlyPriceNaira: 50_000,
-    yearlyPriceNaira: 500_000,
-    includedMessages: 2_500,
-    overCapCreditPrice: 20,
-    whatsappNumbersLimit: 5,
-    seatsLimit: -1,
-    productsLimit: -1,
-    faqsLimit: -1,
-    hasAnalytics: true,
-    hasPrioritySupport: true,
-    hasCustomNegotiation: true,
+    monthly: 50_000,
+    yearly: 500_000,
+    includedMsgs: 2_500,
+    includedManualMessages: 2_500,
+    aiCredit: 20,
+    manualCredit: 15,
+  },
+};
+
+export const TELEGRAM_PLANS: Record<TelegramPlanTier, PlanConfig> = {
+  green: {
+    monthly: 15_000,
+    yearly: 150_000,
+    includedMsgs: 2_000,
+    includedManualMessages: 2_000,
+    aiCredit: 10,
+    manualCredit: 0,
+  },
+  blue: {
+    monthly: 25_000,
+    yearly: 250_000,
+    includedMsgs: 6_000,
+    includedManualMessages: 6_000,
+    aiCredit: 10,
+    manualCredit: 0,
+  },
+  black: {
+    monthly: 50_000,
+    yearly: 500_000,
+    includedMsgs: 999_999,
+    includedManualMessages: 999_999,
+    aiCredit: 10,
+    manualCredit: 0,
   },
 };
 
 /** Free trial: a time box plus a one-off reply allowance, no card required. */
 export const TRIAL_CONFIG = {
-  aiRepliesLimit: 50,
+  includedMsgs: 50,
+  includedManualMessages: 50,
   durationDays: 5,
   whatsappNumbersLimit: 1,
   seatsLimit: 1,
   productsLimit: 50,
   faqsLimit: 20,
+};
+
+/** The free plan has no monthly allowance; replies must come from the wallet. */
+export const FREE_PLAN_LIMITS = {
+  monthly: 0,
+  yearly: 0,
+  includedMsgs: 0,
+  includedManualMessages: 0,
+  aiCredit: 20,
+  manualCredit: 15,
 };
 
 /** Credit packages: never expire, used after monthly plan allowance runs out. */
@@ -115,45 +132,79 @@ export const CREDIT_PACKAGES = {
 export type CreditPackageId = keyof typeof CREDIT_PACKAGES;
 export type CreditPackage = (typeof CREDIT_PACKAGES)[CreditPackageId];
 
-/**
- * Returns the per-message credit price for a business based on its plan state.
- * Free/expired/trial plans: ₦35/msg. Active paid plans: ₦20/msg.
- */
-export function getCreditPrice(business: {
-  plan: string;
-  planStatus: string;
-  onboardingEndsAt: Date | null;
-}): number {
-  const isActivePaidPlan =
-    business.planStatus === "active" &&
-    ["starter", "business", "pro"].includes(business.plan);
+/** A stored `Business.channel` that is not "TELEGRAM" means WhatsApp. */
+export function isTelegramChannel(channel: string | null | undefined): boolean {
+  return channel === "TELEGRAM";
+}
 
-  if (isActivePaidPlan) return 20;
-  return 35;
+/** True when the value is one of the two supported channels. */
+export function isChannel(value: unknown): value is Channel {
+  return value === "WHATSAPP" || value === "TELEGRAM";
+}
+
+/**
+ * The channel a plan tier belongs to. Tier names are disjoint across channels
+ * (green/blue/black vs starter/business/pro), so a plan alone identifies its
+ * channel — used when activating a subscription that did not store a channel.
+ */
+export function channelForTier(tier: string | null | undefined): Channel {
+  return tier && tier in TELEGRAM_PLANS ? "TELEGRAM" : "WHATSAPP";
+}
+
+/** The plan table for a business's channel; anything but Telegram is WhatsApp. */
+function plansFor(channel: string | null | undefined): Record<string, PlanConfig> {
+  return isTelegramChannel(channel) ? TELEGRAM_PLANS : WHATSAPP_PLANS;
+}
+
+/** True when the business is on an active paid plan for its channel. */
+export function isActivePaidPlan(business: {
+  plan?: string | null;
+  planStatus?: string | null;
+  channel?: string | null;
+}): boolean {
+  if (business.planStatus !== "active") return false;
+  return Boolean(plansFor(business.channel)[business.plan ?? ""]);
+}
+
+/**
+ * The Naira debited from the wallet for one reply over the monthly cap.
+ * AI replies cost `aiCredit`, human (agent) replies `manualCredit`. The rates
+ * live on the channel's plan tiers; every tier on a channel currently shares
+ * the same rates, so free/expired businesses fall back to the entry tier.
+ */
+export function getCreditPrice(
+  business: { channel?: string | null; plan?: string | null },
+  type: CreditType = "ai",
+): number {
+  const plans = plansFor(business.channel);
+  const config = plans[business.plan ?? ""] ?? plans[Object.keys(plans)[0]];
+  return type === "manual" ? config.manualCredit : config.aiCredit;
 }
 
 /**
  * Returns the correct credit package for a business based on its plan state.
  */
 export function getCreditPackage(business: {
-  plan: string;
-  planStatus: string;
-  onboardingEndsAt: Date | null;
+  plan?: string | null;
+  planStatus?: string | null;
+  channel?: string | null;
 }): CreditPackage {
-  const price = getCreditPrice(business);
-  return price === 20 ? CREDIT_PACKAGES.paid_credits : CREDIT_PACKAGES.free_credits;
+  return isActivePaidPlan(business)
+    ? CREDIT_PACKAGES.paid_credits
+    : CREDIT_PACKAGES.free_credits;
 }
 
 /**
- * The limits that apply to a business given its stored plan. The trial is
- * its own config; anything else resolves to the matching tier. Unknown plans
+ * The limits that apply to a business given its stored plan and channel. The
+ * trial is its own config, the free plan has no allowance, and a paid tier
+ * resolves against the plan table of the business's channel. Unknown plans
  * degrade to the trial limits rather than throwing.
  *
  * `planInterval` ("monthly" | "yearly") does not change the limits — both
  * billing intervals share a tier's numbers — but it is kept in the signature
  * so callers pass through the stored interval without a separate lookup.
  */
-export function getPlanLimits(plan: string, planInterval: string) {
+export function getPlanLimits(plan: string, planInterval: string, channel?: string | null) {
   // Both billing intervals share the same limits; the interval only changes
   // what Paystack charges, and is kept so callers surface the right price.
   void planInterval;
@@ -162,18 +213,39 @@ export function getPlanLimits(plan: string, planInterval: string) {
     return TRIAL_CONFIG;
   }
 
-  return PLANS[plan as PlanTier] ?? TRIAL_CONFIG;
+  if (plan === "free") {
+    return FREE_PLAN_LIMITS;
+  }
+
+  return plansFor(channel)[plan] ?? TRIAL_CONFIG;
 }
 
 /**
- * The Paystack plan code for a tier + billing interval, configured via env
- * vars like `PAYSTACK_PLAN_STARTER_MONTHLY`. Returns null when the code has
- * not been set up yet.
+ * The Naira price of a plan tier for one billing interval on a channel.
+ * Unknown tiers cost 0 rather than throwing.
+ */
+export function getPlanPrice(
+  plan: string,
+  interval: PlanInterval | string,
+  channel?: string | null,
+): number {
+  const config = plansFor(channel)[plan];
+  if (!config) return 0;
+  return interval === "yearly" ? config.yearly : config.monthly;
+}
+
+/**
+ * The Paystack plan code for a channel + tier + billing interval, configured
+ * via env vars like `PAYSTACK_PLAN_WA_STARTER_M` or `PAYSTACK_PLAN_TG_GREEN_Y`.
+ * Returns null when the code has not been set up yet.
  */
 export function getPaystackPlanCode(
-  tier: PlanTier,
-  interval: PlanInterval,
+  tier: string,
+  interval: PlanInterval | string,
+  channel?: string | null,
 ): string | null {
-  const envKey = `PAYSTACK_PLAN_${tier.toUpperCase()}_${interval.toUpperCase()}`;
+  const channelCode = isTelegramChannel(channel) ? "TG" : "WA";
+  const intervalCode = interval === "yearly" ? "Y" : "M";
+  const envKey = `PAYSTACK_PLAN_${channelCode}_${tier.toUpperCase()}_${intervalCode}`;
   return process.env[envKey] ?? null;
 }

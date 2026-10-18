@@ -516,9 +516,15 @@ Log into your own Colly account. Click every menu item in the sidebar. Spend 10 
         title: "What Colly Costs",
         order: 4,
         durationMin: 5,
-        bodyMarkdown: `There are three plans. There are also credits. Here is how it works.
+        bodyMarkdown: `There are two channels and six plans. There is also a Naira wallet. Here is how it works.
 
-**The Plans**
+**Two channels: WhatsApp and Telegram**
+
+Colly works on WhatsApp and on Telegram. WhatsApp is where most Nigerian businesses already sell. Telegram is newer, has no Meta fees, and gives far more messages for the same price.
+
+Plans are separate per channel, so you pick the channel that fits the business.
+
+**WhatsApp plans**
 
 | Plan | Monthly | Yearly (2 months free) | Messages Included |
 |---|---|---|---|
@@ -526,20 +532,34 @@ Log into your own Colly account. Click every menu item in the sidebar. Spend 10 
 | Business | ₦25,000 | ₦250,000 | 1,500 per month |
 | Pro | ₦50,000 | ₦500,000 | 2,500 per month |
 
-Messages reset every month. If a business sends more than their plan includes, the extra messages come from credits.
+**Telegram plans**
 
-**Credits**
+| Plan | Monthly | Yearly (2 months free) | Messages Included |
+|---|---|---|---|
+| Green | ₦15,000 | ₦150,000 | 2,000 per month |
+| Blue | ₦25,000 | ₦250,000 | 6,000 per month |
+| Black | ₦50,000 | ₦500,000 | Unlimited |
 
-Credits are how a business sends more than the plan allows.
+Compare them. For the same money, Telegram gives more. ₦15,000 buys 500 WhatsApp messages or 2,000 Telegram messages. The ₦50,000 Black plan has no message limit at all.
 
-- **Free plan (trial expired):** Credits cost ₦35 per message
-- **Paid plan (over limit):** Credits cost ₦20 per message
+**The Wallet**
 
-Credits do not expire. Buy 500, use 200 this month, 300 next month. All fine.
+Messages reset every month. When a business passes its monthly limit, Colly does not stop. The business keeps replying, and each extra message is paid from a Naira wallet.
+
+The wallet is money the business tops up. It does not expire. Buy ₦5,000, use ₦2,000 this month, ₦3,000 next month — all fine.
+
+How much each extra message deducts from the wallet:
+
+| Message type | WhatsApp | Telegram |
+|---|---|---|
+| AI message (automatic) | ₦20 | ₦10 |
+| Manual message (you reply) | ₦15 | ₦0 |
+
+On Telegram, your own manual replies are free — the wallet only pays for AI messages.
 
 **Why the limits exist**
 
-Every plan includes a monthly message allowance so pricing stays simple and predictable. If a business needs to send more, they can top up with credits — there is no hard stop.
+Every plan includes a monthly message allowance so pricing stays simple and predictable. If a business needs more, they top up the wallet — there is no hard stop.
 
 This is not Colly being greedy. This is Colly staying alive.
 
@@ -557,7 +577,7 @@ Colly does not track this money. Colly does not take a cut. The setup fee is 100
 
 **Do this now:**
 
-Look at the pricing plans on the Colly signup page. Then decide what setup fee you will charge. Write it down. Say it out loud. You will need to say it confidently when you meet a business owner.`,
+Look at the pricing plans on the Colly signup page. Compare the WhatsApp and Telegram plans. Then decide what setup fee you will charge. Write it down. Say it out loud. You will need to say it confidently when you meet a business owner.`,
       },
       {
         slug: "what-colly-cannot-do",
@@ -653,14 +673,20 @@ Before your first sales pitch, memorize these 6 limits. When a business owner as
       },
       {
         question:
-          "How much do credits cost for a business on a paid plan (over their limit)?",
+          "Which Telegram plan has no message limit at all?",
+        options: ["Green", "Blue", "Black", "Starter"],
+        correctIndex: 2,
+      },
+      {
+        question:
+          "A business is over its monthly limit. How much does one extra AI message deduct from the wallet?",
         options: [
-          "₦5 per message",
-          "₦20 per message",
-          "₦35 per message",
-          "₦50 per message",
+          "₦20 on WhatsApp and ₦10 on Telegram",
+          "₦10 on WhatsApp and ₦20 on Telegram",
+          "₦5 on both channels",
+          "₦35 on both channels",
         ],
-        correctIndex: 1,
+        correctIndex: 0,
       },
       {
         question:
@@ -688,7 +714,7 @@ Before your first sales pitch, memorize these 6 limits. When a business owner as
           "What should you tell a business owner who hits their monthly message cap?",
         options: [
           "There is nothing you can do, wait until next month",
-          "You can buy credits to keep going, or upgrade your plan",
+          "You can top up their wallet to keep going, or upgrade their plan",
           "Colly is being greedy",
           "Just tell customers to message less",
         ],
@@ -1700,6 +1726,10 @@ Do not explain everything. Show 3-4 things. Let them ask questions.
 
 Do not push. Do not discount. State the price. Shut up. Let them respond.
 
+**When to pitch Telegram instead**
+
+Some businesses are better on Telegram. If the business is a wholesaler, an electronics seller, or has high-volume VIP customers, pitch Telegram. It has zero Meta fees, so Colly can offer them 2,000+ messages for the same price as 500 WhatsApp messages. Same AI, same dashboard — just a cheaper channel with far more room.
+
 **What NOT to say:**
 
 - "This is the best AI on the market." (Every salesperson says this. Meaningless.)
@@ -2172,29 +2202,13 @@ function parseFinalExamQuestions() {
   return rows;
 }
 
-// Dummy certified agents so the public "Find a Colly Agent" directory has data
-// to show. They are keyed by email below and created only when missing: agents
-// are never wiped by the seed, so re-runs must not duplicate them or overwrite
-// a real agent. `supabaseUserId` stays null, so these accounts cannot sign in.
-const DEMO_AGENTS = [
-  {
-    fullName: "Chidi Okeke",
-    email: "chidi.okeke@colly.test",
-    phone: "08011111111",
-    state: "Lagos",
-  },
-  {
-    fullName: "Aisha Bello",
-    email: "aisha.bello@colly.test",
-    phone: "08022222222",
-    state: "Abuja",
-  },
-  {
-    fullName: "Emeka Nwosu",
-    email: "emeka.nwosu@colly.test",
-    phone: "08033333333",
-    state: "Rivers",
-  },
+// The public "Find a Colly Agent" directory now shows real certified agents
+// only. These three demo agents were created by earlier seed versions; the
+// emails are kept here so existing databases drop them on the next run.
+const RETIRED_DEMO_AGENT_EMAILS = [
+  "chidi.okeke@colly.test",
+  "aisha.bello@colly.test",
+  "emeka.nwosu@colly.test",
 ];
 
 async function main() {
@@ -2511,43 +2525,11 @@ async function main() {
     data: finalExamQuestions,
   });
 
-  // Demo agents for /find-an-agent. Numbers are assigned past the highest
-  // existing "AG-####" (same rule as lib/agent-id.ts) so a seeded agent can
-  // never collide with a real signup; an agent already holding one of the demo
-  // emails is left untouched.
-  const existingAgentNumbers = await prisma.agent.findMany({
-    select: { agentNumber: true },
+  // The directory is now populated only by real certified agents. Remove the
+  // retired demo agents so existing databases no longer show them.
+  const removedDemoAgents = await prisma.agent.deleteMany({
+    where: { email: { in: RETIRED_DEMO_AGENT_EMAILS } },
   });
-  let highestAgentNumber = 0;
-  for (const { agentNumber } of existingAgentNumbers) {
-    const parsed = Number.parseInt(agentNumber.slice(3), 10);
-    if (Number.isFinite(parsed) && parsed > highestAgentNumber) {
-      highestAgentNumber = parsed;
-    }
-  }
-
-  let seededAgentCount = 0;
-  for (const demo of DEMO_AGENTS) {
-    const existing = await prisma.agent.findUnique({
-      where: { email: demo.email },
-      select: { id: true },
-    });
-    if (existing) continue;
-
-    highestAgentNumber += 1;
-    await prisma.agent.create({
-      data: {
-        agentNumber: `AG-${String(highestAgentNumber).padStart(4, "0")}`,
-        fullName: demo.fullName,
-        email: demo.email,
-        phone: demo.phone,
-        state: demo.state,
-        supabaseUserId: null,
-        certifiedAt: new Date(),
-      },
-    });
-    seededAgentCount += 1;
-  }
 
   console.log(
     `Seeded "${business.name}" (${business.id}) with ${CONVERSATIONS.length} conversations, ${messageCount} messages, ${products.count} products, ${faqs.count} FAQs, ${salesCount} sales and ${invoiceCount} invoices.`,
@@ -2559,7 +2541,7 @@ async function main() {
     `Seeded ${finalExamQuestions.length} final certification exam questions.`,
   );
   console.log(
-    `Demo agents for /find-an-agent: ${seededAgentCount} created, ${DEMO_AGENTS.length - seededAgentCount} already present.`,
+    `Removed ${removedDemoAgents.count} retired demo agent(s) from /find-an-agent.`,
   );
   console.log(
     `Demo owner: ${DEMO_OWNER_EMAIL} (sign up with this email to own the seeded business).`,

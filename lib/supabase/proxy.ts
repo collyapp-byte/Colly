@@ -15,11 +15,13 @@ const AGENT_PUBLIC_PATHS = ["/agents/login", "/agents/signup"];
 
 /**
  * Always-public paths (no session required): agent certificate verification,
- * the agent discovery directory and the legal pages (privacy, terms, account
- * deletion).
+ * email verification (Supabase redirects here from the confirmation link, while
+ * the visitor is still signed out), the agent discovery directory and the legal
+ * pages (privacy, terms, account deletion).
  */
 const PUBLIC_PATHS = [
   "/verify",
+  "/verify-email",
   "/find-an-agent",
   "/privacy",
   "/terms",

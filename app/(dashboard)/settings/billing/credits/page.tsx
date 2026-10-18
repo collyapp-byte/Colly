@@ -10,6 +10,7 @@ export default function CreditsPage() {
   const [balance, setBalance] = useState<number | null>(null);
   const [planStatus, setPlanStatus] = useState<string | null>(null);
   const [plan, setPlan] = useState<string | null>(null);
+  const [channel, setChannel] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,14 +22,17 @@ export default function CreditsPage() {
         const res = await fetch("/api/billing/usage");
         if (!res.ok) return;
         const data = await res.json();
-        if (active && typeof data.creditsBalance === "number") {
-          setBalance(data.creditsBalance);
+        if (active && typeof data.creditWalletBalanceNaira === "number") {
+          setBalance(data.creditWalletBalanceNaira);
         }
         if (active && typeof data.plan === "string") {
           setPlan(data.plan);
         }
         if (active && typeof data.planStatus === "string") {
           setPlanStatus(data.planStatus);
+        }
+        if (active && typeof data.channel === "string") {
+          setChannel(data.channel);
         }
       } catch {
         // Balance stays hidden when usage can't be read; buying still works.
@@ -44,7 +48,7 @@ export default function CreditsPage() {
   const creditPackage = getCreditPackage({
     plan: plan ?? "free",
     planStatus: planStatus ?? "inactive",
-    onboardingEndsAt: null,
+    channel,
   });
 
   async function buy() {
@@ -104,7 +108,8 @@ export default function CreditsPage() {
         <div className="flex items-center gap-2">
           <Coins className="h-5 w-5 text-colly" aria-hidden />
           <h2 className="font-display text-base text-gray-900">
-            You have {balance === null ? "—" : balance.toLocaleString()} credits
+            You have {balance === null ? "—" : formatNaira(balance)} in your
+            wallet
           </h2>
         </div>
 
@@ -126,8 +131,7 @@ export default function CreditsPage() {
             {busy && (
               <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
             )}
-            Buy {creditPackage.messages.toLocaleString()} credits —{" "}
-            {formatNaira(creditPackage.price)}
+            Top up {formatNaira(creditPackage.price)}
           </button>
         </div>
 

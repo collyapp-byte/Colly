@@ -29,6 +29,27 @@ function BusinessSignupForm({ referredBy }: { referredBy?: string }) {
   );
   const [showPassword, setShowPassword] = useState(false);
 
+  // Email confirmation required: replace the form with a "check your email"
+  // screen instead of sending the user to the dashboard.
+  if (state.notice) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
+        <h1 className="font-display text-2xl text-gray-900">Check your email</h1>
+        <div className="mt-6">
+          <AuthAlert tone="success">{state.notice}</AuthAlert>
+        </div>
+        <p className="mt-6 text-sm text-gray-500">
+          <Link
+            href="/login?role=business"
+            className="font-medium text-colly transition-colors hover:text-colly-hover"
+          >
+            Go to sign in
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
       <h1 className="font-display text-2xl text-gray-900">Create your account</h1>
@@ -132,7 +153,6 @@ function BusinessSignupForm({ referredBy }: { referredBy?: string }) {
         </div>
 
         {state.error && <AuthAlert tone="error">{state.error}</AuthAlert>}
-        {state.notice && <AuthAlert tone="success">{state.notice}</AuthAlert>}
 
         <Button type="submit" variant="primary" loading={pending} className="w-full">
           Create account

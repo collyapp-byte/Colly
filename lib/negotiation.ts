@@ -5,13 +5,14 @@
 // up at most 15% of the remaining gap, so the AI negotiates in small steps.
 
 export type NegotiationState = {
+  productName?: string;
   listPrice: number;
-  floorPrice: number;
+  floorPrice: number | null;
   currentOffer: number;
   round: number;
   maxRounds: number; // default 6
-  cumulativeConcession: number;
-  startingPrice: number;
+  cumulativeConcession?: number;
+  startingPrice?: number;
 };
 
 /** How many offers the AI will entertain before holding its price. */
@@ -52,28 +53,30 @@ export function calculateCounterOffer(state: NegotiationState): {
     };
   }
 
+  const floor = floorPrice ?? 0;
+
   // Already at (or below) the floor: pin to the floor and stop.
-  if (currentOffer <= floorPrice) {
+  if (currentOffer <= floor) {
     return {
-      counter: floorPrice,
+      counter: floor,
       isFinal: true,
       explanation: "This is my best price.",
     };
   }
 
-  const gap = currentOffer - floorPrice;
+  const gap = currentOffer - floor;
   const concession = gap * MAX_CONCESSION_FRACTION;
 
   let counter = roundToNearest(currentOffer - concession, ROUND_TO);
 
   // Never step below the floor, and never quote more than the standing price.
-  if (counter < floorPrice) counter = floorPrice;
+  if (counter < floor) counter = floor;
   if (counter > currentOffer) counter = currentOffer;
 
-  const isFinal = counter === floorPrice || round >= maxRounds - 1;
+  const isFinal = counter === floor || round >= maxRounds - 1;
 
   let explanation: string;
-  if (counter === floorPrice) {
+  if (counter === floor) {
     explanation = "This is my best price.";
   } else if (isFinal) {
     explanation = "This is my best price. I cannot go any lower.";
