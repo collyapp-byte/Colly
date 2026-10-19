@@ -119,9 +119,11 @@ export async function getCurrentBusinessId(): Promise<string | null> {
  *
  * Redirects to /login when there is no session. If a session exists but no
  * tenant is linked, an Agent session is redirected to /agents/dashboard (agents
- * must never see business pages); any other tenant-less session throws instead
- * of redirecting: the proxy sends signed-in users away from /login, so
- * redirecting there would loop forever.
+ * must never see business pages); any other tenant-less session is redirected
+ * to /signup, which lets the owner claim a business instead of hitting a crash
+ * screen with no way to sign out. The proxy only bounces signed-in users away
+ * from /login (and only when they already have a tenant), so /signup stays
+ * reachable and this cannot loop.
  */
 export async function requireAuth(): Promise<AuthUser> {
   const authUser = await getSupabaseUser();
@@ -138,10 +140,7 @@ export async function requireAuth(): Promise<AuthUser> {
       redirect("/agents/dashboard");
     }
 
-    throw new Error(
-      "You are signed in, but no business is linked to this account yet. " +
-        "Sign up through /signup to create one, or ask an administrator to link your account.",
-    );
+    redirect("/signup");
   }
 
   return user;

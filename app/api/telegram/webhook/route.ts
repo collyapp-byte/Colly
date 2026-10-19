@@ -34,10 +34,25 @@ export async function POST(request: Request) {
 
     const telegramChatId = String(chatIdRaw);
 
-    const business = await prisma.business.findFirst({
+    let business = await prisma.business.findFirst({
       where: { telegramChatId, channel: "TELEGRAM" },
       select: { id: true, telegramBotToken: true },
     });
+
+    // First message from a freshly connected bot: no business has claimed this
+    // chat yet. Work out which bot received the update, save chat.id as the
+    // business's telegramChatId and carry on — every later message from this
+    // chat then resolves on the lookup above.
+    if (!business) {
+      const unlinked = await findUnlinkedBusiness(request);
+      if (unlinked) {
+        await prisma.business.update({
+          where: { id: unlinked.id },
+          data: { telegramChatId },
+        });
+        business = unlinked;
+      }
+    }
 
     // Not a chat we manage, or the bot has no token to reply with.
     if (!business || !business.telegramBotToken) {
@@ -84,6 +99,49 @@ export async function POST(request: Request) {
     // Telegram retries non-2xx responses, so failures are swallowed here.
     return Response.json({ ok: true });
   }
+}
+
+/**
+ * Finds the business a webhook update belongs to when no business has claimed
+ * the incoming chat yet (a bot that was just connected, first message).
+ *
+ * All bots share one webhook URL, so the update body does not name the
+ * business. Telegram does echo back the `secret_token` registered at connect
+ * time (a base64url copy of the bot token) as a header, which identifies the
+ * bot — and therefore the business with that `telegramBotToken`. If the header
+ * is missing, the only fallback that is safe is the single business still
+ * waiting to be linked: with several pending businesses there is nothing to
+ * tell them apart, so we link none of them rather than the wrong one.
+ */
+async function findUnlinkedBusiness(request: Request) {
+  const secret = request.headers.get("x-telegram-bot-api-secret-token");
+
+  if (secret) {
+    const botToken = Buffer.from(secret, "base64url").toString("utf8");
+    if (botToken) {
+      const byToken = await prisma.business.findFirst({
+        where: {
+          channel: "TELEGRAM",
+          telegramBotToken: botToken,
+          telegramChatId: null,
+        },
+        select: { id: true, telegramBotToken: true },
+      });
+      if (byToken) return byToken;
+    }
+  }
+
+  const pending = await prisma.business.findMany({
+    where: {
+      channel: "TELEGRAM",
+      telegramBotToken: { not: null },
+      telegramChatId: null,
+    },
+    select: { id: true, telegramBotToken: true },
+    take: 2,
+  });
+
+  return pending.length === 1 ? pending[0] : null;
 }
 
 async function sendTelegramMessage(args: {

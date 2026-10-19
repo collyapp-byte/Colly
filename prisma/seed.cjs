@@ -11,7 +11,7 @@
 // Real accounts (a `User` row linked to a Supabase Auth user) are preserved:
 // they are captured before the wipe and re-linked to a "Personal" business.
 // Agent rows are never wiped either: three demo agents are ensured for the
-// public /find-an-agent directory, and an agent that already exists is left
+// /find-an-agent directory, and an agent that already exists is left
 // as-is.
 
 require("dotenv").config();
@@ -2202,13 +2202,28 @@ function parseFinalExamQuestions() {
   return rows;
 }
 
-// The public "Find a Colly Agent" directory now shows real certified agents
-// only. These three demo agents were created by earlier seed versions; the
-// emails are kept here so existing databases drop them on the next run.
-const RETIRED_DEMO_AGENT_EMAILS = [
-  "chidi.okeke@colly.test",
-  "aisha.bello@colly.test",
-  "emeka.nwosu@colly.test",
+// The three demo agents shown by the /find-an-agent directory. Agent rows are
+// never wiped (a real agent may hold course progress), so they are looked up by
+// email and only created when missing -- an existing agent is left as-is.
+const DEMO_AGENTS = [
+  {
+    email: "chidi.okeke@colly.test",
+    fullName: "Chidi Okeke",
+    phone: "+2348031234001",
+    state: "Lagos",
+  },
+  {
+    email: "aisha.bello@colly.test",
+    fullName: "Aisha Bello",
+    phone: "+2348061234002",
+    state: "FCT (Abuja)",
+  },
+  {
+    email: "emeka.nwosu@colly.test",
+    fullName: "Emeka Nwosu",
+    phone: "+2348091234003",
+    state: "Rivers",
+  },
 ];
 
 async function main() {
@@ -2525,11 +2540,44 @@ async function main() {
     data: finalExamQuestions,
   });
 
-  // The directory is now populated only by real certified agents. Remove the
-  // retired demo agents so existing databases no longer show them.
-  const removedDemoAgents = await prisma.agent.deleteMany({
-    where: { email: { in: RETIRED_DEMO_AGENT_EMAILS } },
-  });
+  // The demo agents for the /find-an-agent directory. Certified so they show
+  // up in the directory; existing rows (real or demo) are left untouched.
+  // Numbers come from the same scan the signup flow uses (lib/agent-id.ts),
+  // taking the lowest unused one, so a real agent already holding "AG-0001"
+  // cannot collide.
+  const takenAgentNumbers = new Set(
+    (await prisma.agent.findMany({ select: { agentNumber: true } })).map(
+      (agent) => agent.agentNumber,
+    ),
+  );
+  let demoAgentCount = 0;
+  for (const demo of DEMO_AGENTS) {
+    const existing = await prisma.agent.findUnique({
+      where: { email: demo.email },
+      select: { id: true },
+    });
+    if (existing) continue;
+
+    let sequence = 1;
+    let agentNumber = `AG-${String(sequence).padStart(4, "0")}`;
+    while (takenAgentNumbers.has(agentNumber)) {
+      sequence += 1;
+      agentNumber = `AG-${String(sequence).padStart(4, "0")}`;
+    }
+    takenAgentNumbers.add(agentNumber);
+
+    await prisma.agent.create({
+      data: {
+        agentNumber,
+        email: demo.email,
+        fullName: demo.fullName,
+        phone: demo.phone,
+        state: demo.state,
+        certifiedAt: new Date(),
+      },
+    });
+    demoAgentCount += 1;
+  }
 
   console.log(
     `Seeded "${business.name}" (${business.id}) with ${CONVERSATIONS.length} conversations, ${messageCount} messages, ${products.count} products, ${faqs.count} FAQs, ${salesCount} sales and ${invoiceCount} invoices.`,
@@ -2541,7 +2589,7 @@ async function main() {
     `Seeded ${finalExamQuestions.length} final certification exam questions.`,
   );
   console.log(
-    `Removed ${removedDemoAgents.count} retired demo agent(s) from /find-an-agent.`,
+    `Seeded ${demoAgentCount} new demo agent(s) for /find-an-agent (${DEMO_AGENTS.length} total).`,
   );
   console.log(
     `Demo owner: ${DEMO_OWNER_EMAIL} (sign up with this email to own the seeded business).`,
@@ -2556,8 +2604,13 @@ async function main() {
     });
 
     for (const user of preservedUsers) {
-      await prisma.user.create({
-        data: {
+      // Upsert on email: a row with the same email can already exist (the
+      // re-created demo owner, for instance), and a plain create would crash
+      // the whole seed on the unique constraint at the very end.
+      await prisma.user.upsert({
+        where: { email: user.email },
+        update: {},
+        create: {
           businessId: personal.id,
           email: user.email,
           // Credentials live in Supabase Auth; this column is a leftover.

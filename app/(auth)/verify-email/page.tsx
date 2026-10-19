@@ -154,7 +154,7 @@ function VerifyEmailContent() {
             Your email address has been confirmed. You&apos;re all set.
           </AuthAlert>
         </div>
-        <Link href="/" className="mt-6 block">
+        <Link href="/dashboard" className="mt-6 block">
           <Button variant="primary" className="w-full">
             Go to Dashboard
           </Button>

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { isMissingConfigError } from "@/lib/supabase/env";
 import { TRIAL_CONFIG } from "@/lib/plans";
+import { isChannel } from "@/lib/business";
 import { isValidEmail } from "@/lib/validators";
 import type { AuthFormState } from "@/lib/auth-form";
 
@@ -53,6 +54,10 @@ export async function signup(
   const password = readPassword(formData);
   // Optional: the agent who set the business up. Blank on most signups.
   const agentId = readField(formData, "agentId");
+  // Channel chosen on the signup form ("WHATSAPP" | "TELEGRAM"); anything
+  // missing or unrecognised falls back to the schema default.
+  const channelField = readField(formData, "channel");
+  const channel = isChannel(channelField) ? channelField : "WHATSAPP";
 
   if (!businessName || !ownerName || !email || !phone || !password) {
     return { error: "Please fill in every field.", notice: null };
@@ -137,6 +142,9 @@ export async function signup(
             phone,
             // Same number for now; a dedicated WhatsApp number can be set later.
             whatsappNumber: phone,
+            // Channel picked on the signup form; drives which connection flow
+            // the AI Line settings page shows.
+            channel,
             // Fresh accounts start the free trial from the moment they sign up,
             // so the billing UI can count down to a real end date. The length
             // comes from TRIAL_CONFIG so there is a single source of truth.
@@ -181,7 +189,7 @@ export async function signup(
     return { error: "Could not create your account. Please try again.", notice: null };
   }
 
-  redirect("/");
+  redirect("/dashboard");
 }
 
 /**
@@ -282,7 +290,7 @@ export async function login(
   // A Supabase account with no matching User row has no business to show, so it
   // goes to /signup instead of a dashboard whose layout answers with "signed in,
   // but no business is linked to this account yet".
-  redirect(hasTenant ? "/" : "/signup");
+  redirect(hasTenant ? "/dashboard" : "/signup");
 }
 
 /** Turns Supabase's auth errors into copy that reads naturally in the form. */

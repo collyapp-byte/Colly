@@ -11,8 +11,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Public agent discovery directory. Anyone (no session) can browse the
- * certified agents and reach out on WhatsApp.
+ * Certified agent directory, rendered inside the dashboard shell so the
+ * sidebar link navigates in place instead of opening the public shell in a
+ * separate tab.
  *
  * The header renders immediately; the agent list lives behind a Suspense
  * boundary and `connection()`, so the page is never prerendered with a stale
@@ -20,8 +21,10 @@ export const metadata: Metadata = {
  */
 export default function FindAnAgentPage() {
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-12">
-      <h1 className="text-2xl font-bold">Find a Colly Agent</h1>
+    <div className="mx-auto w-full max-w-5xl">
+      <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
+        Find a Colly Agent
+      </h1>
       <p className="mt-2 max-w-2xl text-sm text-gray-600">
         Connect with a certified expert in your state to set up your WhatsApp
         AI.

@@ -30,7 +30,7 @@ type NavItem = {
 };
 
 const PRIMARY_ITEMS: NavItem[] = [
-  { label: "Overview", href: "/", icon: LayoutGrid },
+  { label: "Overview", href: "/dashboard", icon: LayoutGrid },
   { label: "Conversations", href: "/conversations", icon: MessageSquare },
   { label: "Customers", href: "/customers", icon: Users },
   { label: "Sales", href: "/sales", icon: ShoppingCart },
@@ -49,9 +49,6 @@ const BOTTOM_ITEMS: NavItem[] = [
 ];
 
 function isActivePath(pathname: string, href: string): boolean {
-  if (href === "/") {
-    return pathname === "/";
-  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

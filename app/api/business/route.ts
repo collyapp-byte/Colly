@@ -10,6 +10,7 @@ type BusinessRequestBody = {
   businessHours?: unknown;
   address?: unknown;
   description?: unknown;
+  ownerTelegramChatId?: unknown;
 };
 
 function badRequest(error: string) {
@@ -87,6 +88,7 @@ export async function PATCH(request: Request) {
       businessHours?: string | null;
       address?: string | null;
       description?: string | null;
+      ownerTelegramChatId?: string | null;
     } = {};
 
     if (body.name !== undefined) {
@@ -125,6 +127,21 @@ export async function PATCH(request: Request) {
         return badRequest(`${field} must be a string`);
       }
       data[field] = value.trim() || null;
+    }
+
+    // The owner's personal Telegram chat id (from @userinfobot): digits with an
+    // optional leading minus (group chats are negative). Empty clears it.
+    if (body.ownerTelegramChatId !== undefined) {
+      if (typeof body.ownerTelegramChatId !== "string") {
+        return badRequest("ownerTelegramChatId must be a string");
+      }
+      const chatId = body.ownerTelegramChatId.trim();
+      if (chatId && !/^-?\d+$/.test(chatId)) {
+        return badRequest(
+          "Telegram chat ID is numbers only. Message @userinfobot on Telegram to get yours.",
+        );
+      }
+      data.ownerTelegramChatId = chatId || null;
     }
 
     if (Object.keys(data).length === 0) {

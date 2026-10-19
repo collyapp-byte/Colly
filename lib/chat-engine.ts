@@ -26,6 +26,7 @@ import {
 } from "@/lib/language-detect";
 import { requireAiEnabled } from "@/lib/auth-guards";
 import { getCreditPrice, getPlanLimits, isActivePaidPlan } from "@/lib/plans";
+import { sendOwnerAlert } from "@/lib/owner-alerts";
 
 const ASSISTANT_INTRO =
   "You are a helpful business assistant for a Nigerian small business.";
@@ -36,7 +37,7 @@ const TONE_INSTRUCTIONS: Record<Tone, string> = {
 };
 
 const SYSTEM_PROMPT_RULES = [
-  "You have three tools: search_products for questions about products, prices, or stock, search_faqs for questions about policies, delivery, payment, returns, warranty, location, or business hours, and find_similar_products for when search_products finds no exact match. Use the correct tool.",
+  "You have four tools: search_products for questions about products, prices, or stock, search_faqs for questions about policies, delivery, payment, returns, warranty, location, or business hours, find_similar_products for when search_products finds no exact match, and escalate_to_owner when the customer asks something no tool can answer. Use the correct tool.",
   "You have access to a search_products tool. Use it whenever a customer asks about products, prices, stock, availability, or specifications.",
   "You must call the search_products tool for every question about a product, a price, availability or stock. That includes follow up questions in the same conversation, because your memory of earlier messages is not a catalogue. Never answer those questions from memory.",
   "You must call the search_faqs tool for every question about policies, delivery, payment, returns, warranty, location or business hours, including follow up questions. Never answer those questions from memory.",
@@ -48,6 +49,7 @@ const SYSTEM_PROMPT_RULES = [
   "If a product's stock is null, treat it as available. Never reveal exact stock numbers to customers, only say available or in stock. If stock is 0, say out of stock or sold out. If stock is 1 to 10, still only say available.",
   "PRODUCT FACTS — you may reason, not invent.\n\n- You may draw LOGICAL CONCLUSIONS from facts in the description. Example: description says '128GB' → you may say 'that holds plenty of photos and apps.'\n- You may NOT introduce NEW FACTS not present in the description. Example: description doesn't mention processor or GPU → do not claim the product is 'good for gaming.'\n- When a customer asks about something the description does NOT cover (warranty length, colour options, compatibility, dimensions, exact battery life in hours), say: 'I don't have that detail — let me check with the owner.' Then call escalate_to_owner with the customer's exact question.\n- NEVER use marketing words: sleek, premium, perfect for, built to last, easy to install, cutting-edge, powerful, versatile, innovative. Those are inventions, not facts.",
   "When a customer asks about several products or a bundle, put each product on its own line as the product name followed by its price, then give the total on its own separate line at the end. Write each line as the name then the price with nothing in between, like this: Hisense 32 inch LED TV 145000 Naira. Never put a hyphen, a dash, a colon or a bullet between the name and the price, and never start a line with a hyphen or a dash. Plain lines only, with no bullet points, no dashes and no bold.",
+  "Escalate instead of guessing: when a customer asks about waybill or delivery logistics your FAQs do not cover, wants a custom or bulk quote, or asks for anything you cannot confirm from a tool, reply that you will check with the owner, then call escalate_to_owner with their exact question. Never invent prices, delivery fees, timelines or quotes. The owner is alerted the moment you call that tool, so only call it for the customer's live question.",
   "Nigerian Pidgin is a real language, not bad grammar. Words like 'dey', 'na', 'wey', 'abeg', 'sabi', 'wetin', 'wahala', 'oya', 'shey' are Pidgin, not typos or misspellings. Never correct them. Never rewrite the customer's message into standard English before replying.",
   "If the customer writes in Pidgin, you MUST reply in Pidgin. Use the same vocabulary they used. It is unacceptable to reply in formal English to a Pidgin-speaking customer.",
   "If the customer writes in English with occasional typos, do NOT switch to Pidgin. Reply in clear English. Do not correct their typos either, just answer the question.",
@@ -106,6 +108,25 @@ const TOOLS: ChatTool[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "escalate_to_owner",
+      description:
+        "Hand the conversation to the human owner. Call this when the customer asks something no other tool can answer: waybill or delivery logistics not covered by the FAQs, a custom or bulk quote, or a product detail the description does not include. The owner is alerted on their phone with the customer's exact question.",
+      parameters: {
+        type: "object",
+        properties: {
+          reason: {
+            type: "string",
+            description:
+              "The customer's exact question or request that needs the owner (e.g. 'how much is waybill to Enugu for 3 units?', 'can you give me a quote for 50 pieces?')",
+          },
+        },
+        required: ["reason"],
+      },
+    },
+  },
 ];
 
 const MAX_TOOL_ROUNDS = 2;
@@ -115,6 +136,7 @@ const NEGOTIATION_INACTIVITY_MS = 24 * 60 * 60 * 1000;
 type ToolResult =
   | { query: string; count: number; products: ProductMatch[] }
   | { query: string; count: number; faqs: FaqMatch[] }
+  | { escalated: true; reason: string }
   | { error: string };
 
 type StoredNegotiation = NegotiationState & {
@@ -227,7 +249,7 @@ export async function handleIncomingMessage({
       chatMessages.push({
         role: "tool",
         tool_call_id: toolCall.id,
-        content: JSON.stringify(await runToolCall(businessId, toolCall)),
+        content: JSON.stringify(await runToolCall(businessId, conversation.id, toolCall)),
       });
     }
     result = await askAI(chatMessages, TOOLS);
@@ -343,11 +365,15 @@ function buildSystemPrompt(
   return systemPrompt;
 }
 
-async function runToolCall(businessId: string, toolCall: ChatToolCall): Promise<ToolResult> {
+async function runToolCall(
+  businessId: string,
+  conversationId: string,
+  toolCall: ChatToolCall,
+): Promise<ToolResult> {
   if (toolCall.type !== "function") {
     return { error: `Unknown tool: ${toolCall.type}` };
   }
-  const query = readQuery(toolCall.function.arguments);
+  const query = readArgument(toolCall.function.arguments, "query");
   switch (toolCall.function.name) {
     case "search_products": {
       const products = await searchProducts(businessId, query);
@@ -361,15 +387,31 @@ async function runToolCall(businessId: string, toolCall: ChatToolCall): Promise<
       const products = await findSimilarProducts(businessId, query);
       return { query, count: products.length, products };
     }
+    case "escalate_to_owner": {
+      const reason = readArgument(toolCall.function.arguments, "reason");
+      // Flag the conversation so the dashboard can surface "needs attention",
+      // then alert the owner's personal Telegram. `sendOwnerAlert` swallows its
+      // own errors, so a failed alert never fails the customer's chat reply.
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: { escalatedAt: new Date() },
+      });
+      await sendOwnerAlert(
+        businessId,
+        "🚨 AI needs help in a conversation. Customer asked: " + reason,
+      );
+      return { escalated: true, reason };
+    }
     default:
       return { error: `Unknown tool: ${toolCall.function.name}` };
   }
 }
 
-function readQuery(rawArguments: string): string {
+/** Read a string field out of a tool call's JSON argument object ("" if absent). */
+function readArgument(rawArguments: string, key: string): string {
   try {
-    const parsed = JSON.parse(rawArguments) as { query?: unknown };
-    return typeof parsed?.query === "string" ? parsed.query : "";
+    const parsed = JSON.parse(rawArguments) as Record<string, unknown>;
+    return typeof parsed?.[key] === "string" ? (parsed[key] as string) : "";
   } catch {
     return "";
   }

@@ -82,9 +82,25 @@ model Business {
   /// "WHATSAPP" | "TELEGRAM". Telegram businesses connect their own bot:
   /// `telegramBotToken` is the bot token from BotFather and `telegramChatId`
   /// is the chat the AI should answer in.
-  channel          String  @default("WHATSAPP")
-  telegramBotToken String?
-  telegramChatId   String?
+  channel             String  @default("WHATSAPP")
+  telegramBotToken    String?
+  telegramChatId      String?
+  /// Bot handle from the getMe response (without "@"), shown to the owner as
+  /// a shareable t.me link once the bot is connected.
+  telegramBotUsername String?
+
+  /// The OWNER'S personal Telegram chat id (from @userinfobot), NOT the
+  /// customer chat (`telegramChatId` above). When set, escalation alerts from
+  /// `escalate_to_owner` are delivered there via the Colly Admin Bot
+  /// (COLLY_TELEGRAM_BOT_TOKEN). Independent of `channel` — a WhatsApp
+  /// business can still receive owner alerts on personal Telegram.
+  ownerTelegramChatId String?
+
+  /// Channel connection state, set by the AI Line settings page:
+  /// "DISCONNECTED" (default, nothing connected yet) |
+  /// "PENDING_BSP_SETUP" (WhatsApp number submitted, waiting on Gupshup onboarding) |
+  /// "CONNECTED" (Telegram bot verified, or WhatsApp line live).
+  connectionStatus String  @default("DISCONNECTED")
 
   /// Message tracking for plan caps. `messagesUsedThisMonth` counts AI replies
   /// sent this billing month. `messagesResetAt` is when the counter resets
@@ -240,6 +256,12 @@ model Conversation {
   /// null means no negotiation is in progress. Reset when the product in play
   /// changes or after 24 hours of inactivity.
   negotiationState Json?
+
+  /// Set when the AI calls `escalate_to_owner` (customer asked something the
+  /// AI cannot answer — waybill, custom quote, product detail beyond the
+  /// description). The owner is alerted on their personal Telegram at the same
+  /// time; the flag lets the dashboard surface "needs your attention".
+  escalatedAt DateTime?
 
   business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customer Customer  @relation(fields: [customerId], references: [id])
