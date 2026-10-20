@@ -33,8 +33,13 @@ export async function POST() {
     const amountNaira = agent.commissionBalanceNaira;
     const reference = `AP-${Date.now()}-${randomUUID().slice(0, 6).toUpperCase()}`;
 
+    // Paystack is the point of failure: network errors throw, and a 200 with
+    // `status: false` means the transfer was rejected. In both cases no money
+    // moved, so we must not deduct the agent's balance or record a payout —
+    // and we restore the balance to be safe (idempotent if it never changed).
+    let transfer: { status?: string } | null = null;
     try {
-      await initiateTransfer({
+      transfer = await initiateTransfer({
         amountKobo: amountNaira * 100,
         recipient: agent.paystackRecipientCode,
         reason: "Colly Agent Commission",
@@ -42,11 +47,23 @@ export async function POST() {
       });
     } catch (error) {
       console.error("[POST /api/agents/payouts/request] transfer failed:", error);
+      await prisma.agent.update({
+        where: { id: agent.id },
+        data: { commissionBalanceNaira: { increment: amountNaira } },
+      });
       return Response.json(
-        {
-          error: "Paystack transfer failed",
-          detail: error instanceof Error ? error.message : String(error),
-        },
+        { error: "Payout failed. Your balance has been restored." },
+        { status: 502 },
+      );
+    }
+
+    if (!transfer || (transfer.status && transfer.status !== "success")) {
+      await prisma.agent.update({
+        where: { id: agent.id },
+        data: { commissionBalanceNaira: { increment: amountNaira } },
+      });
+      return Response.json(
+        { error: "Payout failed. Your balance has been restored." },
         { status: 502 },
       );
     }

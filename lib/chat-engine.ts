@@ -130,7 +130,10 @@ const TOOLS: ChatTool[] = [
 ];
 
 const MAX_TOOL_ROUNDS = 2;
-const HISTORY_LIMIT = 20;
+// Only the tail of the conversation is sent to the model. An unbounded
+// history eventually blows past DeepSeek's context window and crashes the
+// call, so we cap it at the last 10 messages.
+const HISTORY_LIMIT = 10;
 const NEGOTIATION_INACTIVITY_MS = 24 * 60 * 60 * 1000;
 
 type ToolResult =

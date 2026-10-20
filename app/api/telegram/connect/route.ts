@@ -105,9 +105,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Register our webhook. `secret_token` is echoed back as the
-    //    X-Telegram-Bot-Api-Secret-Token header so the webhook route can find
-    //    the business for this bot without changing the shared URL.
+    // 2. Register our webhook. The bot token rides along as a query param so
+    //    the webhook can identify this business on the very first message
+    //    (before any chat.id has been linked). `secret_token` is kept as a
+    //    fallback header for bots registered by older connect calls.
     let webhook: { ok?: boolean; description?: string } | null = null;
     try {
       const response = await fetch(
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            url: hookUrl,
+            url: `${hookUrl}?token=${encodeURIComponent(botToken)}`,
             secret_token: Buffer.from(botToken, "utf8").toString("base64url"),
             allowed_updates: ["message"],
           }),
