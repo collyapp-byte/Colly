@@ -13,30 +13,27 @@ import { TELEGRAM_PLANS } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
 
 export const metadata: Metadata = {
-  title: { absolute: "Colly — The AI sales assistant for your business" },
+  title: { absolute: "Colly — The AI sales assistant for Telegram" },
   description:
-    "Colly replies to your WhatsApp and Telegram customers 24/7. Keep your personal WhatsApp; we add a dedicated AI line.",
+    "Colly replies to your Telegram customers 24/7. Connect a bot in 30 seconds. No SIM cards, no Meta fees.",
 };
 
-/** The two channels, side by side. Telegram is the recommended one. */
+/** The channels. WhatsApp is postponed until Meta verification clears. */
 const CHANNEL_CARDS = [
   {
     name: "WhatsApp",
     icon: MessageCircle,
-    iconClass: "bg-[#25D366]/10 text-[#25D366]",
+    iconClass: "bg-gray-200 text-gray-500",
     recommended: false,
-    points: [
-      "500 messages / month",
-      "₦20 per extra message",
-      "Requires a dedicated new SIM card",
-      "Setup takes ~24 hours (via a BSP)",
-    ],
+    comingSoon: true,
+    points: ["Coming soon — pending Meta business verification."],
   },
   {
     name: "Telegram",
     icon: Send,
     iconClass: "bg-[#FF6600]/10 text-[#FF6600]",
     recommended: true,
+    comingSoon: false,
     points: [
       "2,000 messages / month",
       "₦10 per extra message",
@@ -49,8 +46,8 @@ const CHANNEL_CARDS = [
 const STEPS = [
   {
     icon: UserRoundCog,
-    title: "Connect your line",
-    body: "WhatsApp or Telegram — paste a bot token or hand us your number and we handle the rest.",
+    title: "Connect your bot",
+    body: "Create a Telegram bot with @BotFather and paste the token. It takes 30 seconds.",
   },
   {
     icon: BookOpenCheck,
@@ -78,12 +75,11 @@ export default function MarketingHomePage() {
             Built for Nigerian businesses
           </span>
           <h1 className="mx-auto mt-6 max-w-3xl font-display text-3xl leading-tight tracking-tight text-gray-900 sm:text-5xl">
-            Stop losing sales to unanswered WhatsApp messages.
+            Stop losing sales to unanswered Telegram messages.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base text-gray-600 sm:text-lg">
-            Colly is the AI sales assistant that replies to your customers
-            24/7. Keep your personal WhatsApp on your phone. We add a dedicated
-            AI line.
+            Colly is the AI sales assistant for Telegram. Connect a bot in 30
+            seconds. Zero SIM cards. 2,000+ messages.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -109,11 +105,11 @@ export default function MarketingHomePage() {
       <section className="mx-auto w-full max-w-5xl px-4 py-16 sm:py-20">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-2xl text-gray-900 sm:text-3xl">
-            Start on Telegram. Add WhatsApp when you are ready.
+            Start on Telegram today. WhatsApp is coming soon.
           </h2>
           <p className="mt-3 text-sm text-gray-600 sm:text-base">
-            Both channels get the same assistant. Telegram is instant and
-            cheaper per message; WhatsApp needs a second SIM and a BSP setup.
+            Telegram is instant, has no Meta fees, and needs no second SIM.
+            WhatsApp plans will be available once we finish Meta verification.
           </p>
         </div>
 
@@ -126,7 +122,7 @@ export default function MarketingHomePage() {
                 className={`relative flex flex-col rounded-2xl border bg-white p-6 shadow-sm ${
                   card.recommended
                     ? "border-[#FF6600] ring-1 ring-[#FF6600]"
-                    : "border-gray-200"
+                    : "border-gray-200 opacity-80"
                 }`}
               >
                 {card.recommended && (
@@ -135,13 +131,22 @@ export default function MarketingHomePage() {
                     Recommended
                   </span>
                 )}
+                {card.comingSoon && (
+                  <span className="absolute -top-3 right-5 inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-[11px] font-bold text-gray-600">
+                    Coming Soon
+                  </span>
+                )}
                 <div className="flex items-center gap-3">
                   <span
                     className={`flex h-10 w-10 items-center justify-center rounded-xl ${card.iconClass}`}
                   >
                     <Icon className="h-5 w-5" aria-hidden />
                   </span>
-                  <h3 className="font-display text-lg text-gray-900">
+                  <h3
+                    className={`font-display text-lg ${
+                      card.comingSoon ? "text-gray-500" : "text-gray-900"
+                    }`}
+                  >
                     {card.name}
                   </h3>
                 </div>
@@ -149,10 +154,14 @@ export default function MarketingHomePage() {
                   {card.points.map((point) => (
                     <li
                       key={point}
-                      className="flex items-start gap-2 text-sm text-gray-600"
+                      className={`flex items-start gap-2 text-sm ${
+                        card.comingSoon ? "text-gray-400" : "text-gray-600"
+                      }`}
                     >
                       <span
-                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF6600]"
+                        className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${
+                          card.comingSoon ? "bg-gray-300" : "bg-[#FF6600]"
+                        }`}
                         aria-hidden
                       />
                       {point}
@@ -288,7 +297,7 @@ export default function MarketingHomePage() {
         </div>
 
         <p className="mt-8 text-center text-sm text-gray-500">
-          WhatsApp plans and yearly billing are also available.{" "}
+          Telegram only for now — WhatsApp plans are coming soon.{" "}
           <Link
             href="/signup?role=business"
             className="font-medium text-[#FF6600] transition-colors hover:text-[#E65C00]"

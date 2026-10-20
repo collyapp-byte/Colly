@@ -8,6 +8,8 @@ export default async function CollyAIPage() {
     where: { id: user.businessId },
     select: {
       tone: true,
+      ownerTelegramChatId: true,
+      telegramBotToken: true,
       creditWalletBalanceNaira: true,
       messagesUsedThisMonth: true,
       manualMessagesUsedThisMonth: true,
@@ -38,6 +40,8 @@ export default async function CollyAIPage() {
   const aiUsed = business?.messagesUsedThisMonth ?? 0;
   const manualUsed = business?.manualMessagesUsedThisMonth ?? 0;
   const tone = business?.tone === "formal" ? "Formal" : "Friendly";
+  const ownerAlertsActive = Boolean(business?.ownerTelegramChatId);
+  const telegramConnected = Boolean(business?.telegramBotToken);
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
@@ -48,10 +52,37 @@ export default async function CollyAIPage() {
             Your AI control center for tone, channels, usage, and knowledge.
           </p>
         </div>
-        <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
-          Active
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+            Active
+          </span>
+          {ownerAlertsActive && (
+            <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+              Owner Alerts: Active
+            </span>
+          )}
+        </div>
       </div>
+
+      {!ownerAlertsActive && (
+        <Link
+          href="/settings/ai-line"
+          className="mb-6 flex items-start gap-3 rounded-xl border border-[#FF6600]/40 bg-[#FFF4EC] p-4 transition-colors hover:bg-[#FFEADB]"
+        >
+          <span className="mt-0.5 text-lg" aria-hidden>
+            ⚠️
+          </span>
+          <span>
+            <span className="block font-semibold text-[#C2410C]">
+              Action Required: Setup Owner Notifications
+            </span>
+            <span className="mt-0.5 block text-sm text-[#9A3412]">
+              The AI will pause when it hits a limit, but you won&apos;t receive
+              an alert. Setup now &rarr;
+            </span>
+          </span>
+        </Link>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* AI Persona */}
@@ -83,27 +114,35 @@ export default async function CollyAIPage() {
           <div className="mt-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3">
               <div>
-                <p className="text-sm font-medium text-gray-900">WhatsApp</p>
-                <p className="text-xs text-gray-500">Customer-facing AI line</p>
-              </div>
-              <Link
-                href="/settings/ai-line"
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-              >
-                Manage
-              </Link>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3">
-              <div>
                 <p className="text-sm font-medium text-gray-900">Telegram</p>
                 <p className="text-xs text-gray-500">Customer-facing bot</p>
               </div>
-              <Link
-                href="/settings/ai-line"
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-              >
-                Manage
-              </Link>
+              <div className="flex items-center gap-2">
+                {telegramConnected ? (
+                  <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[11px] font-medium text-green-700">
+                    Connected
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600">
+                    Disconnected
+                  </span>
+                )}
+                <Link
+                  href="/settings/ai-line"
+                  className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  Manage
+                </Link>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 opacity-70">
+              <div>
+                <p className="text-sm font-medium text-gray-500">WhatsApp</p>
+                <p className="text-xs text-gray-400">Customer-facing AI line</p>
+              </div>
+              <span className="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-[11px] font-bold text-gray-600">
+                Coming Soon
+              </span>
             </div>
           </div>
         </section>

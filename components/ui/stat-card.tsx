@@ -29,17 +29,19 @@ export function StatCard({
       {...(href ? { href } : {})}
       {...(onClick ? { onClick } : {})}
     >
-      {icon && (
-        <div
-          className="absolute top-3 right-3 text-gray-400 md:top-4 md:right-4"
-          aria-hidden
-        >
-          {icon}
-        </div>
-      )}
-      <p className="mb-1 pr-8 text-[11px] font-medium text-gray-500 md:mb-2 md:pr-0 md:text-[13px]">
-        {label}
-      </p>
+      <div className="mb-1 flex items-center justify-between gap-2 md:mb-2">
+        <p className="min-w-0 flex-1 truncate text-[11px] font-medium text-gray-500 md:text-[13px]">
+          {label}
+        </p>
+        {icon && (
+          <span
+            className="ml-auto shrink-0 text-gray-400"
+            aria-hidden
+          >
+            {icon}
+          </span>
+        )}
+      </div>
       <div className="flex items-end justify-between">
         <p className="font-display text-xl font-bold text-gray-900 md:text-2xl">
           {value}

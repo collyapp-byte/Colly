@@ -4,18 +4,14 @@ import { useState } from "react";
 import { Check, Star, Zap } from "lucide-react";
 import {
   TELEGRAM_PLANS,
-  WHATSAPP_PLANS,
-  type Channel,
   type PlanConfig,
   type PlanInterval,
   type TelegramPlanTier,
-  type WhatsappPlanTier,
 } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 
 const TELEGRAM_TIERS: TelegramPlanTier[] = ["green", "blue", "black"];
-const WHATSAPP_TIERS: WhatsappPlanTier[] = ["starter", "business", "pro"];
 
 // A reply count at or above this is treated as unlimited in the UI.
 const UNLIMITED = 999_999;
@@ -39,23 +35,8 @@ const TELEGRAM_META: Record<TelegramPlanTier, CardMeta> = {
   },
 };
 
-const WHATSAPP_META: Record<WhatsappPlanTier, CardMeta> = {
-  starter: { name: "Starter", tagline: "For solo sellers getting started" },
-  business: {
-    name: "Business",
-    tagline: "For growing businesses",
-    badge: "Most Popular",
-    featured: true,
-  },
-  pro: { name: "Pro", tagline: "For high-volume stores" },
-};
-
 /** The bullet list under a card. Message counts come from the plan config. */
-function cardFeatures(
-  tier: string,
-  channel: Channel,
-  config: PlanConfig,
-): string[] {
+function cardFeatures(tier: TelegramPlanTier, config: PlanConfig): string[] {
   const messages =
     config.includedMsgs >= UNLIMITED
       ? "Unlimited Messages"
@@ -65,27 +46,16 @@ function cardFeatures(
       ? "Unlimited manual replies"
       : `${config.includedManualMessages.toLocaleString()} manual replies/month`;
 
-  if (channel === "TELEGRAM") {
-    if (tier === "green") {
-      return [messages, manual, "Telegram bot connection", "Product catalogue", "FAQ knowledge base"];
-    }
-    if (tier === "blue") {
-      return [messages, manual, "Everything in Green", "Analytics", "Priority support"];
-    }
-    return [messages, manual, "Everything in Blue", "Dedicated support", "Advanced analytics"];
+  if (tier === "green") {
+    return [messages, manual, "Telegram bot connection", "Product catalogue", "FAQ knowledge base"];
   }
-
-  if (tier === "starter") {
-    return [messages, manual, "1 WhatsApp number", "Product catalogue", "FAQ knowledge base"];
+  if (tier === "blue") {
+    return [messages, manual, "Everything in Green", "Analytics", "Priority support"];
   }
-  if (tier === "business") {
-    return [messages, manual, "3 WhatsApp numbers", "Everything in Starter", "Analytics"];
-  }
-  return [messages, manual, "10 WhatsApp numbers", "Everything in Business", "Dedicated support"];
+  return [messages, manual, "Everything in Blue", "Dedicated support", "Advanced analytics"];
 }
 
 export default function PlansPage() {
-  const [channel, setChannel] = useState<Channel>("TELEGRAM");
   const [interval, setInterval] = useState<PlanInterval>("monthly");
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +67,7 @@ export default function PlansPage() {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channel, tier, interval: chosenInterval }),
+        body: JSON.stringify({ channel: "TELEGRAM", tier, interval: chosenInterval }),
       });
       const data = await res.json();
 
@@ -118,12 +88,8 @@ export default function PlansPage() {
     }
   }
 
-  const isTelegram = channel === "TELEGRAM";
-  const tiers: string[] = isTelegram ? TELEGRAM_TIERS : WHATSAPP_TIERS;
-  const plans = (isTelegram ? TELEGRAM_PLANS : WHATSAPP_PLANS) as Record<
-    string,
-    PlanConfig
-  >;
+  const tiers = TELEGRAM_TIERS;
+  const plans = TELEGRAM_PLANS as Record<string, PlanConfig>;
 
   return (
     <div className="mx-auto w-full max-w-4xl">
@@ -132,48 +98,9 @@ export default function PlansPage() {
           Choose a plan
         </h1>
         <p className="mt-2 max-w-md text-center text-sm text-gray-500">
-          We recommend Telegram: cheaper per reply, with no monthly WhatsApp fees
-          from Meta.
+          WhatsApp plans will be available soon. For now, enjoy Telegram with
+          drastically higher limits and zero Meta fees.
         </p>
-      </div>
-
-      {/* CHANNEL TOGGLE */}
-      <div className="mt-8 flex justify-center">
-        <div className="inline-flex rounded-full border bg-white p-1">
-          <button
-            type="button"
-            onClick={() => setChannel("TELEGRAM")}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              isTelegram
-                ? "bg-[#16A34A] text-white"
-                : "text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            <span aria-hidden>📱</span>
-            Telegram
-            <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                isTelegram
-                  ? "bg-white/20 text-white"
-                  : "bg-green-100 text-green-700"
-              }`}
-            >
-              Recommended
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setChannel("WHATSAPP")}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              !isTelegram
-                ? "bg-gray-900 text-white"
-                : "text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            <span aria-hidden>💬</span>
-            WhatsApp
-          </button>
-        </div>
       </div>
 
       {/* BILLING TOGGLE */}
@@ -219,9 +146,7 @@ export default function PlansPage() {
           const config = plans[tier];
           const price = interval === "monthly" ? config.monthly : config.yearly;
           const yearlySaving = config.monthly * 12 - config.yearly;
-          const meta: CardMeta = isTelegram
-            ? TELEGRAM_META[tier as TelegramPlanTier]
-            : WHATSAPP_META[tier as WhatsappPlanTier];
+          const meta: CardMeta = TELEGRAM_META[tier];
           const isDark = Boolean(meta.dark);
           const isFeatured = Boolean(meta.featured);
           const Icon = isFeatured || isDark ? Star : Zap;
@@ -292,7 +217,7 @@ export default function PlansPage() {
               </Button>
 
               <div className="mt-6 space-y-2">
-                {cardFeatures(tier, channel, config).map((feature) => (
+                {cardFeatures(tier, config).map((feature) => (
                   <div key={feature} className="flex items-center gap-2">
                     <Check className="h-3.5 w-3.5 text-gray-400" />
                     <span className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>

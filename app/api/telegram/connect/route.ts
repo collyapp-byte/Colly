@@ -59,15 +59,10 @@ export async function POST(request: Request) {
 
     const business = await prisma.business.findUnique({
       where: { id: user.businessId },
-      select: { id: true, channel: true },
+      select: { id: true },
     });
     if (!business) {
       return Response.json({ error: "Business not found" }, { status: 404 });
-    }
-    if (business.channel !== "TELEGRAM") {
-      return badRequest(
-        "This business is set up for WhatsApp. Change your channel before connecting a Telegram bot.",
-      );
     }
 
     // Fail before calling Telegram when there is no public origin to register:

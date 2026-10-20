@@ -30,6 +30,8 @@ export async function GET() {
         channel: true,
         creditWalletBalanceNaira: true,
         manualMessagesUsedThisMonth: true,
+        subscriptionStatus: true,
+        gracePeriodEndsAt: true,
       },
     });
 
@@ -57,6 +59,8 @@ export async function GET() {
       planExpiresAt: business.planExpiresAt,
       channel: business.channel,
       trialEndsAt: business.onboardingEndsAt,
+      subscriptionStatus: business.subscriptionStatus,
+      gracePeriodEndsAt: business.gracePeriodEndsAt,
     });
   } catch (error) {
     console.error("[GET /api/billing/usage]", error);

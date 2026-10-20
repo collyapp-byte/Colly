@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { CollyAiWidget } from "@/components/dashboard/colly-ai-widget";
 import { Footer } from "@/components/ui/footer";
 import { requireAuth } from "@/lib/auth";
 import { requireSiteAccess } from "@/lib/auth-guards";
@@ -50,6 +51,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
     <DashboardShell businessName={user.businessName}>
       {children}
       <Footer />
+      <CollyAiWidget ownerName={user.name} />
     </DashboardShell>
   );
 }

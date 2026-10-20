@@ -40,6 +40,29 @@ export async function GET() {
       return Response.json({ error: "Business not found" }, { status: 404 });
     }
 
+    // Onboarding checklist, surfaced as an orange dot in the sidebar and used
+    // to highlight the relevant settings card. A channel counts as connected
+    // when the Telegram bot token is set (WhatsApp self-serve setup is paused
+    // until Meta verification clears).
+    const [productsCount, faqsCount] = await Promise.all([
+      prisma.product.count({ where: { businessId: user.businessId } }),
+      prisma.faq.count({ where: { businessId: user.businessId } }),
+    ]);
+
+    const pendingTasks: string[] = [];
+    if (!business.telegramBotToken) {
+      pendingTasks.push("Connect a channel");
+    }
+    if (!business.ownerTelegramChatId) {
+      pendingTasks.push("Setup Owner Notifications");
+    }
+    if (productsCount === 0) {
+      pendingTasks.push("Add your first product");
+    }
+    if (faqsCount === 0) {
+      pendingTasks.push("Add FAQs");
+    }
+
     // Owner display name: real name when set, else the email prefix for rows
     // created before the name column was used (the sidebar shows "…" until
     // this loads).
@@ -53,6 +76,7 @@ export async function GET() {
       ownerEmail: user.email,
       ownerName,
       businessName: business.name,
+      pendingTasks,
     });
   } catch (error) {
     console.error("[GET /api/business]", error);

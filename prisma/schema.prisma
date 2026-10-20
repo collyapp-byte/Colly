@@ -102,6 +102,15 @@ model Business {
   /// "CONNECTED" (Telegram bot verified, or WhatsApp line live).
   connectionStatus String  @default("DISCONNECTED")
 
+  /// Automated dunning. `subscriptionStatus` tracks the Paystack subscription
+  /// lifecycle: "active" | "past_due" | "canceled". When a subscription charge
+  /// fails the webhook marks the business "past_due" and sets
+  /// `gracePeriodEndsAt` 3 days out; `requireAiEnabled` stops the AI once that
+  /// grace period lapses. A later successful charge (or `invoice.payment_success`)
+  /// clears both back to "active" / null.
+  subscriptionStatus String    @default("active")
+  gracePeriodEndsAt  DateTime?
+
   /// Message tracking for plan caps. `messagesUsedThisMonth` counts AI replies
   /// sent this billing month. `messagesResetAt` is when the counter resets
   /// (next billing anniversary). `aiEnabled` gates auto-replies when cap is

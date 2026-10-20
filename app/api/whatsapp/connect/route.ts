@@ -37,15 +37,10 @@ export async function POST(request: Request) {
 
     const business = await prisma.business.findUnique({
       where: { id: user.businessId },
-      select: { id: true, channel: true },
+      select: { id: true },
     });
     if (!business) {
       return Response.json({ error: "Business not found" }, { status: 404 });
-    }
-    if (business.channel !== "WHATSAPP") {
-      return badRequest(
-        "This business is set up for Telegram. Change your channel before starting WhatsApp setup.",
-      );
     }
 
     await prisma.business.update({

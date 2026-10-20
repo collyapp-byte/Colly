@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { processVoiceNote } from "@/lib/voice-pipeline";
 import { processImageMessage } from "@/lib/image-pipeline";
 import { handleIncomingMessage } from "@/lib/chat-engine";
+import { askAI } from "@/lib/ai";
 
 type ChatRequestBody = {
   businessId?: unknown;
@@ -10,7 +11,18 @@ type ChatRequestBody = {
   message?: unknown;
   audioUrl?: unknown;
   imageUrl?: unknown;
+  isDashboardAssistant?: unknown;
 };
+
+/**
+ * System prompt used when the owner talks to the floating "Colly AI" widget on
+ * the dashboard. It is owner-facing: help with sales, products and training the
+ * bot, and keep answers short and actionable. No customer context applies.
+ */
+const DASHBOARD_ASSISTANT_PROMPT =
+  "You are Colly AI, the internal dashboard assistant for the business owner. " +
+  "Help them understand their sales, manage their products, and train their " +
+  "WhatsApp/Telegram bot. Keep answers short and actionable.";
 
 // POST /api/chat
 // Body: { businessId: string, customerId: string, message: string }
@@ -68,6 +80,37 @@ export async function POST(request: Request) {
       if (!expected || secret !== expected) {
         return Response.json({ error: "Unauthorized" }, { status: 401 });
       }
+    }
+
+    // The dashboard's floating "Colly AI" widget talks to the owner, not a
+    // customer. It carries no customerId, so it takes a dedicated owner-facing
+    // path: the AI is given the business context and the dashboard system
+    // prompt, and no customer conversation is created.
+    if (body.isDashboardAssistant === true) {
+      if (!user) {
+        return Response.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      if (messageText.trim().length === 0) {
+        return Response.json({ error: "message is required" }, { status: 400 });
+      }
+
+      const business = await prisma.business.findUnique({
+        where: { id: user.businessId },
+        select: { name: true, description: true },
+      });
+
+      let context = `Business name: ${business?.name ?? user.businessName}.`;
+      if (business?.description) {
+        context += ` Business description: ${business.description}`;
+      }
+
+      const result = await askAI([
+        { role: "system", content: DASHBOARD_ASSISTANT_PROMPT },
+        { role: "system", content: context },
+        { role: "user", content: messageText },
+      ]);
+
+      return Response.json({ reply: result.reply });
     }
 
     if (

@@ -48,6 +48,8 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
       messagesUsedThisMonth: true,
       messagesResetAt: true,
       aiEnabled: true,
+      subscriptionStatus: true,
+      gracePeriodEndsAt: true,
     },
   });
 
@@ -58,6 +60,15 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
   // If AI is manually disabled by owner, respect that
   if (!business.aiEnabled) {
     return { ok: false, reason: "plan_expired" };
+  }
+
+  // Automated dunning: a failed subscription charge keeps the AI replying
+  // during the grace period, then stops it once that period lapses.
+  if (business.subscriptionStatus === "past_due") {
+    const graceEndsAt = business.gracePeriodEndsAt;
+    if (!graceEndsAt || graceEndsAt.getTime() <= Date.now()) {
+      return { ok: false, reason: "plan_expired" };
+    }
   }
 
   // Check monthly reset

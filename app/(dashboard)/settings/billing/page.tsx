@@ -20,6 +20,8 @@ type Usage = {
   channel: string;
   trialEndsAt: string | null;
   onboardingEndsAt?: string | null;
+  subscriptionStatus: string | null;
+  gracePeriodEndsAt: string | null;
 };
 
 type BillingTransaction = {
@@ -201,6 +203,11 @@ export default function BillingPage() {
 
       {usage && (
         <div className="mt-6 space-y-6">
+          {/* DUNNING ALERT */}
+          {usage.subscriptionStatus === "past_due" && (
+            <DunningBanner gracePeriodEndsAt={usage.gracePeriodEndsAt} />
+          )}
+
           {/* CURRENT PLAN */}
           <section className="rounded-lg border border-gray-200 bg-surface p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -396,6 +403,46 @@ export default function BillingPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function DunningBanner({
+  gracePeriodEndsAt,
+}: {
+  gracePeriodEndsAt: string | null;
+}) {
+  const days = daysUntil(gracePeriodEndsAt);
+
+  return (
+    <section
+      role="alert"
+      className="flex flex-col gap-3 rounded-lg border-2 border-danger bg-danger/5 p-5 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div className="flex items-start gap-3">
+        <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-danger" aria-hidden />
+        <div>
+          <p className="font-display text-base font-semibold text-danger">
+            Payment failed
+          </p>
+          <p className="mt-0.5 text-sm text-danger/90">
+            {days === null
+              ? "Your subscription payment failed. Please update your payment method to keep your AI replying."
+              : days === 0
+                ? "Your AI will stop today unless you update your payment method."
+                : `Your AI will stop in ${days} ${days === 1 ? "day" : "days"} unless you update your payment method.`}
+          </p>
+        </div>
+      </div>
+      <a
+        href="https://paystack.com/manage"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 sm:self-auto"
+      >
+        Manage subscription
+        <ArrowRight className="h-4 w-4" aria-hidden />
+      </a>
+    </section>
   );
 }
 

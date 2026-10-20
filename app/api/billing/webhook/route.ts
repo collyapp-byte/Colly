@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendAlert } from "@/lib/alerts";
+import { sendOwnerAlert } from "@/lib/owner-alerts";
 import {
   fetchSubscription,
   verifyWebhookSignature,
@@ -17,6 +18,7 @@ type WebhookEventData = {
   metadata?: { type?: string } | null;
   plan?: { plan_code?: string; interval?: string; name?: string } | null;
   customer?: { customer_code?: string; email?: string } | null;
+  subscription?: { subscription_code?: string } | null;
   transaction?: {
     channel?: string;
     paid_at?: string;
@@ -28,11 +30,18 @@ type WebhookEventData = {
 
 type WebhookEvent = { event: string; data: WebhookEventData };
 
+/** Length of the dunning grace period, in days, before the AI stops. */
+const GRACE_PERIOD_DAYS = 3;
+
+/** Where the owner updates their card (Paystack's hosted customer portal). */
+const BILLING_PORTAL_URL = "https://colly.com.ng/settings/billing";
+
 /**
  * Maps a webhook event back to a Business. The subscriber's Paystack customer
  * code is the most reliable link; the owner email (from the User table) and
  * then the stored billing email cover the first payment, before the customer
- * code is saved.
+ * code is saved. The subscription code is the last resort (subscription-only
+ * events, e.g. invoice.update, may carry no customer object).
  */
 async function findBusinessId(
   data: WebhookEventData,
@@ -60,6 +69,16 @@ async function findBusinessId(
       select: { id: true },
     });
     if (byBilling) return byBilling.id;
+  }
+
+  const subscriptionCode =
+    data.subscription?.subscription_code ?? data.subscription_code;
+  if (subscriptionCode) {
+    const bySubscription = await prisma.business.findFirst({
+      where: { paystackSubscriptionCode: subscriptionCode },
+      select: { id: true },
+    });
+    if (bySubscription) return bySubscription.id;
   }
 
   return null;
@@ -135,6 +154,60 @@ export async function POST(request: Request) {
             },
           });
         }
+
+        // A successful subscription charge pays off any past-due balance: clear
+        // the dunning state so the AI keeps replying. Scoped by the resolved
+        // business (from the transaction row, else the customer/subscription).
+        const isSubscription =
+          transaction?.type === "subscription" ||
+          data.metadata?.type === "subscription" ||
+          Boolean(data.subscription_code);
+
+        if (isSubscription) {
+          const businessId =
+            transaction?.businessId ?? (await findBusinessId(data));
+          if (businessId) {
+            await prisma.business.update({
+              where: { id: businessId },
+              data: { subscriptionStatus: "active", gracePeriodEndsAt: null },
+            });
+          }
+        }
+        break;
+      }
+
+      // Paystack fires `invoice.update` as a subscription invoice changes state
+      // (including when a recurring charge fails). This is the canonical dunning
+      // trigger: mark the business past_due, start a 3-day grace period and alert
+      // the owner.
+      case "invoice.update": {
+        if (data.status !== "failed") break;
+
+        const businessId = await findBusinessId(data);
+        if (!businessId) break;
+
+        const gracePeriodEndsAt = new Date(
+          Date.now() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
+        );
+
+        await prisma.business.update({
+          where: { id: businessId },
+          data: {
+            subscriptionStatus: "past_due",
+            planStatus: "past_due",
+            gracePeriodEndsAt,
+          },
+        });
+
+        await sendOwnerAlert(
+          businessId,
+          `🚨 Subscription payment failed. You have ${GRACE_PERIOD_DAYS} days to update your card before your AI stops replying. Update here: ${BILLING_PORTAL_URL}`,
+        );
+
+        await sendAlert(
+          `Subscription payment FAILED (invoice.update) for business ${businessId}. Grace period ends ${gracePeriodEndsAt.toISOString()}.`,
+          "critical",
+        );
         break;
       }
 
@@ -172,19 +245,38 @@ export async function POST(request: Request) {
 
         await prisma.business.update({
           where: { id: businessId },
-          data: { planStatus: "cancelled" },
+          data: {
+            planStatus: "cancelled",
+            subscriptionStatus: "canceled",
+            gracePeriodEndsAt: null,
+          },
         });
         break;
       }
 
+      // Legacy alias for the same failure/`invoice.update` flow above; kept so
+      // older Paystack subscriptions still start the dunning grace period.
       case "invoice.payment_failed": {
         const businessId = await findBusinessId(data);
         if (!businessId) break;
 
+        const gracePeriodEndsAt = new Date(
+          Date.now() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
+        );
+
         await prisma.business.update({
           where: { id: businessId },
-          data: { planStatus: "past_due" },
+          data: {
+            planStatus: "past_due",
+            subscriptionStatus: "past_due",
+            gracePeriodEndsAt,
+          },
         });
+
+        await sendOwnerAlert(
+          businessId,
+          `🚨 Subscription payment failed. You have ${GRACE_PERIOD_DAYS} days to update your card before your AI stops replying. Update here: ${BILLING_PORTAL_URL}`,
+        );
 
         await sendAlert(
           `Subscription payment FAILED for business ${businessId} (${data.plan?.name ?? "unknown plan"}). Taken over by human attention.`,
@@ -193,6 +285,8 @@ export async function POST(request: Request) {
         break;
       }
 
+      // A successful recurring charge clears the dunning state and extends the
+      // plan for another interval.
       case "invoice.payment_success": {
         const businessId = await findBusinessId(data);
         if (!businessId) break;
@@ -207,6 +301,8 @@ export async function POST(request: Request) {
           where: { id: businessId },
           data: {
             planStatus: "active",
+            subscriptionStatus: "active",
+            gracePeriodEndsAt: null,
             planExpiresAt: addDays(
               new Date(),
               interval === "yearly" ? 365 : 30,

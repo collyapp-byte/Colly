@@ -17,7 +17,6 @@ import {
   Package,
   Settings,
   ShoppingCart,
-  Smartphone,
   Sparkles,
   Users,
   type LucideIcon,
@@ -28,6 +27,8 @@ type NavItem = {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** The pending-task label(s) that flag this item with an orange dot. */
+  taskLabels?: string[];
 };
 
 const PRIMARY_ITEMS: NavItem[] = [
@@ -36,12 +37,32 @@ const PRIMARY_ITEMS: NavItem[] = [
   { label: "Customers", href: "/customers", icon: Users },
   { label: "Sales", href: "/sales", icon: ShoppingCart },
   { label: "Invoices", href: "/invoices", icon: FileText },
-  { label: "Colly AI", href: "/ai", icon: Sparkles },
+  {
+    label: "Colly AI",
+    href: "/ai",
+    icon: Sparkles,
+    taskLabels: [
+      "Connect a channel",
+      "Setup Owner Notifications",
+      "Add your first product",
+      "Add FAQs",
+    ],
+  },
 ];
 
 const SECONDARY_ITEMS: NavItem[] = [
-  { label: "Products", href: "/products", icon: Package },
-  { label: "FAQs", href: "/faqs", icon: HelpCircle },
+  {
+    label: "Products",
+    href: "/products",
+    icon: Package,
+    taskLabels: ["Add your first product"],
+  },
+  {
+    label: "FAQs",
+    href: "/faqs",
+    icon: HelpCircle,
+    taskLabels: ["Add FAQs"],
+  },
   { label: "Find an Agent", href: "/find-an-agent", icon: MapPin },
 ];
 
@@ -53,11 +74,18 @@ function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/** The pending-task labels relevant to a nav item (empty when none apply). */
+function pendingForItem(item: NavItem, pendingTasks: string[]): string[] {
+  if (!item.taskLabels || item.taskLabels.length === 0) return [];
+  return item.taskLabels.filter((task) => pendingTasks.includes(task));
+}
+
 export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerName, setOwnerName] = useState("");
+  const [pendingTasks, setPendingTasks] = useState<string[]>([]);
   const switcherRef = useRef<HTMLDivElement>(null);
 
   // The owner's name and email, shown in the switcher header and the bottom
@@ -69,7 +97,15 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     fetch("/api/business")
       .then((res) => (res.ok ? res.json() : null))
       .then(
-        (data: { ownerEmail?: string; ownerName?: string } | null) => {
+        (
+          data:
+            | {
+                ownerEmail?: string;
+                ownerName?: string;
+                pendingTasks?: string[];
+              }
+            | null,
+        ) => {
           if (!active || !data) return;
           if (data.ownerEmail) setOwnerEmail(data.ownerEmail);
           // The API already returns a name (real or email-prefix fallback);
@@ -79,6 +115,13 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
           } else if (data.ownerEmail) {
             const prefix = data.ownerEmail.split("@")[0] || data.ownerEmail;
             setOwnerName(prefix.charAt(0).toUpperCase() + prefix.slice(1));
+          }
+          if (Array.isArray(data.pendingTasks)) {
+            setPendingTasks(
+              data.pendingTasks.filter(
+                (task): task is string => typeof task === "string",
+              ),
+            );
           }
         },
       )
@@ -198,13 +241,15 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
             {PRIMARY_ITEMS.map((item) => {
               const active = isActivePath(pathname, item.href);
               const Icon = item.icon;
+              const itemPending = pendingForItem(item, pendingTasks);
               return (
                 <li key={item.label}>
                   <Link
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     onClick={onClose}
-                    className={`flex h-8 items-center gap-3 rounded-lg px-3 text-[13.5px] font-medium transition-colors ${
+                    title={itemPending.length > 0 ? itemPending.join(", ") : undefined}
+                    className={`relative flex h-8 items-center gap-3 rounded-lg px-3 text-[13.5px] font-medium transition-colors ${
                       active
                         ? "bg-[#FFF4EC] text-[#FF6600] nav-active-texture"
                         : "text-gray-700 hover:bg-gray-50"
@@ -217,6 +262,12 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                       aria-hidden
                     />
                     <span>{item.label}</span>
+                    {itemPending.length > 0 && (
+                      <span
+                        className="absolute right-3 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-[#FF6600]"
+                        aria-hidden
+                      />
+                    )}
                   </Link>
                 </li>
               );
@@ -239,13 +290,15 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
             {SECONDARY_ITEMS.map((item) => {
               const active = isActivePath(pathname, item.href);
               const Icon = item.icon;
+              const itemPending = pendingForItem(item, pendingTasks);
               return (
                 <li key={item.label}>
                   <Link
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     onClick={onClose}
-                    className={`flex h-8 items-center gap-3 rounded-lg px-3 text-[13.5px] font-medium transition-colors ${
+                    title={itemPending.length > 0 ? itemPending.join(", ") : undefined}
+                    className={`relative flex h-8 items-center gap-3 rounded-lg px-3 text-[13.5px] font-medium transition-colors ${
                       active
                         ? "bg-[#FFF4EC] text-[#FF6600] nav-active-texture"
                         : "text-gray-700 hover:bg-gray-50"
@@ -258,6 +311,12 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                       aria-hidden
                     />
                     <span>{item.label}</span>
+                    {itemPending.length > 0 && (
+                      <span
+                        className="absolute right-3 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-[#FF6600]"
+                        aria-hidden
+                      />
+                    )}
                   </Link>
                 </li>
               );
