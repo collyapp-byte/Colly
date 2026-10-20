@@ -1,0 +1,27 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Runs at 00:00 UTC every 3 days (prevents the 7-day pause)
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Colly Health Endpoint
+        run: |
+          echo "Pinging production health endpoint..."
+          # We use a GET request. If it returns 200, the DB is awake.
+          # Make sure to update the URL if your production domain changes.
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://colly.com.ng/api/health)
+
+          echo "HTTP Status: $STATUS"
+
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Error: Health check failed. Supabase might be paused or the app is down."
+            exit 1
+          fi
+
+          echo "Success! Database is awake."
