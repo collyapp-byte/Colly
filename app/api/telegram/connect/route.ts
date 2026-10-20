@@ -6,19 +6,19 @@ type TelegramConnectBody = {
 };
 
 /**
- * The webhook URL Telegram must call back: the deployed app origin + the shared
- * handler. Built from NEXT_PUBLIC_APP_URL so a preview/staging deployment never
- * registers production's URL, and reported as null when there is no public
- * HTTPS origin to register (Telegram rejects localhost, so connecting would
- * only fail at setWebhook with an opaque error).
+ * The webhook URL Telegram must call back: the current request's origin + the
+ * shared handler. Derived from the incoming request URL (which reflects the
+ * deployed host, e.g. behind a proxy) instead of NEXT_PUBLIC_APP_URL, which is
+ * baked at build time and often points at localhost. Reported as null when the
+ * request has no public HTTPS origin to register (Telegram rejects localhost,
+ * so connecting would only fail at setWebhook with an opaque error).
  */
-function webhookUrl(): string | null {
-  const base = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/, "");
-  if (!base) return null;
+function webhookUrl(request: Request): string | null {
+  const origin = new URL(request.url).origin;
 
   let url: URL;
   try {
-    url = new URL(`${base}/api/telegram/webhook`);
+    url = new URL(`${origin}/api/telegram/webhook`);
   } catch {
     return null;
   }
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     // Fail before calling Telegram when there is no public origin to register:
     // setWebhook would reject localhost anyway, with an error that says nothing
     // about why.
-    const hookUrl = webhookUrl();
+    const hookUrl = webhookUrl(request);
     if (!hookUrl) {
       return badRequest(
         "Telegram requires a public HTTPS URL. Please connect your bot on the live deployed site.",
