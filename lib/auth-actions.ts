@@ -130,7 +130,10 @@ export async function signup(
       if (referringAgent) {
         await prisma.business.updateMany({
           where: { id: existing.businessId, referredByAgentId: null },
-          data: { referredByAgentId: referringAgent.id },
+          data: {
+            referredByAgentId: referringAgent.id,
+            commissionEndsAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          },
         });
       }
     } else {
@@ -152,6 +155,10 @@ export async function signup(
               Date.now() + TRIAL_CONFIG.durationDays * 24 * 60 * 60 * 1000,
             ),
             referredByAgentId: referringAgent?.id ?? null,
+            // Agents earn 15% for 12 months from signup when they refer a business.
+            commissionEndsAt: referringAgent
+              ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+              : null,
           },
         });
 

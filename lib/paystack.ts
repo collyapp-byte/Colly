@@ -192,6 +192,100 @@ export async function disableSubscription({
 // Webhooks
 // ---------------------------------------------------------------------------
 
+export type TransferRecipientData = {
+  recipient_code: string;
+  type: string;
+  name: string;
+  details: {
+    account_number: string;
+    account_name: string;
+    bank_code: string;
+    bank_name: string;
+  };
+};
+
+export type TransferData = {
+  reference: string;
+  status: string;
+  amount: number;
+  recipient: { recipient_code: string };
+};
+
+export type PaystackBank = {
+  id: number;
+  name: string;
+  slug: string;
+  code: string;
+  longcode: string;
+  gateway: string | null;
+  pay_with_bank: boolean;
+  active: boolean;
+  country: string;
+  currency: string;
+  type: string;
+  is_deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * List Nigerian banks supported for transfers.
+ */
+export async function listBanks(): Promise<PaystackBank[]> {
+  return paystackFetch<PaystackBank[]>("/bank?currency=NGN", { method: "GET" });
+}
+
+/**
+ * Create a transfer recipient (NUBAN) so funds can be sent to an agent's bank account.
+ */
+export async function createTransferRecipient({
+  name,
+  accountNumber,
+  bankCode,
+}: {
+  name: string;
+  accountNumber: string;
+  bankCode: string;
+}): Promise<TransferRecipientData> {
+  return paystackFetch<TransferRecipientData>("/transferrecipient", {
+    method: "POST",
+    body: JSON.stringify({
+      type: "nuban",
+      name,
+      account_number: accountNumber,
+      bank_code: bankCode,
+      currency: "NGN",
+    }),
+  });
+}
+
+/**
+ * Initiate a transfer from the Paystack balance to a recipient.
+ * Amount must be passed in kobo; we store amounts in Naira.
+ */
+export async function initiateTransfer({
+  amountKobo,
+  recipient,
+  reason,
+  reference,
+}: {
+  amountKobo: number;
+  recipient: string;
+  reason?: string;
+  reference: string;
+}): Promise<TransferData> {
+  return paystackFetch<TransferData>("/transfer", {
+    method: "POST",
+    body: JSON.stringify({
+      source: "balance",
+      amount: amountKobo,
+      recipient,
+      reason: reason ?? "Colly Agent Commission",
+      reference,
+    }),
+  });
+}
+
 /**
  * Verify a Paystack webhook signature. Paystack signs the raw request body
  * with an HMAC-SHA512 of the secret key, sent as `x-paystack-signature` in the

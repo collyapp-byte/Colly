@@ -12,6 +12,7 @@ import {
   LogOut,
   Settings,
   Share2,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import { agentLogout } from "@/lib/agent-auth-actions";
@@ -27,6 +28,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Training", href: "/agents/training", icon: BookOpen },
   { label: "Certificate", href: "/agents/certificate", icon: Award },
   { label: "Referrals", href: "/agents/referrals", icon: Share2 },
+  { label: "Wallet", href: "/agents/wallet", icon: Wallet },
 ];
 
 function isActivePath(pathname: string, href: string): boolean {

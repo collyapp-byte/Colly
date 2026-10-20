@@ -171,6 +171,38 @@ export async function POST(request: Request) {
               where: { id: businessId },
               data: { subscriptionStatus: "active", gracePeriodEndsAt: null },
             });
+
+            // Pay the referring agent 15% for up to 12 months from signup.
+            const business = await prisma.business.findUnique({
+              where: { id: businessId },
+              select: {
+                referredByAgentId: true,
+                commissionEndsAt: true,
+              },
+            });
+
+            if (
+              business?.referredByAgentId &&
+              business.commissionEndsAt &&
+              new Date() < business.commissionEndsAt
+            ) {
+              const chargedAmountNaira = transaction?.amount
+                ? Number(transaction.amount)
+                : 0;
+              if (chargedAmountNaira > 0) {
+                const commissionNaira = Math.floor(chargedAmountNaira * 0.15);
+                if (commissionNaira > 0) {
+                  await prisma.agent.update({
+                    where: { id: business.referredByAgentId },
+                    data: {
+                      commissionBalanceNaira: {
+                        increment: commissionNaira,
+                      },
+                    },
+                  });
+                }
+              }
+            }
           }
         }
         break;

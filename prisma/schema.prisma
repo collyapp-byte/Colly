@@ -123,9 +123,11 @@ model Business {
   manualMessagesUsedThisMonth Int @default(0)
 
   /// Referral tracking. Set at signup when the owner enters a certified
-  /// agent's ID ("AG-0001"). Colly never pays the agent or takes a cut; this
-  /// only records who set the business up.
+  /// agent's ID ("AG-0001"). Colly pays the agent 15% of every subscription
+  /// charge for the first 12 months; `commissionEndsAt` is when that window
+  /// closes (the agent earns nothing from this business after it).
   referredByAgentId String?
+  commissionEndsAt  DateTime?
 
   users         User[]
   customers     Customer[]
@@ -414,6 +416,15 @@ model Agent {
   /// Timestamp of the first passing Final Certification Exam attempt.
   finalExamPassedAt  DateTime?
   referredBusinesses Business[]
+  /// Agent earnings. `commissionBalanceNaira` is the available balance ready to
+  /// withdraw (deducted on payout). Bank details are saved so transfers can be
+  /// initiated via Paystack; `paystackRecipientCode` is the transfer recipient.
+  commissionBalanceNaira Int    @default(0)
+  bankAccountName        String?
+  bankAccountNumber      String?
+  bankCode               String?
+  paystackRecipientCode  String?
+  payouts                AgentPayout[]
 }
 
 model AgentCourse {
@@ -539,4 +550,21 @@ model AgentFinalExamAttempt {
   agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@index([agentId, attemptedAt])
+}
+
+/// Agent payouts. Each successful transfer from the Paystack balance to the
+/// agent's bank account is recorded here.
+model AgentPayout {
+  id          String   @id @default(cuid())
+  agentId     String
+  amountNaira Int
+  /// "pending" | "success" | "failed".
+  status      String   @default("pending")
+  /// Paystack transfer reference, unique to avoid double-processing.
+  reference   String   @unique
+  createdAt   DateTime @default(now())
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, createdAt])
 }
