@@ -6,7 +6,7 @@
 // standard English. The business owner's tone setting is only a fallback for the
 // cases this module cannot read confidently.
 
-export type DetectedLanguage = "english" | "pidgin" | "mixed";
+export type DetectedLanguage = "english" | "pidgin" | "slang" | "mixed";
 
 /**
  * Words that are strong Pidgin signals. They are not typos or misspellings, so
@@ -17,6 +17,19 @@ export const PIDGIN_MARKERS = new Set([
   "wetin", "oya", "sef", "sha", "japa", "gbedu", "make", "wan", "no", "be",
   "go", "come", "see", "hear", "talk", "small", "plenty", "bin", "kon", "waka",
   "yan", "tok", "do", "chale", "chai", "eh", "o", "se",
+]);
+
+/**
+ * Nigerian slang and informal greetings. Unlike the Pidgin markers these are
+ * not full Pidgin sentences, but they are deliberate casual style, so a message
+ * built from them must be answered in an informal Nigerian tone, never with
+ * corporate English.
+ */
+export const SLANG_MARKERS = new Set([
+  "wagwan", "wassup", "whassup", "sup", "howfar", "baddest", "boss", "gang",
+  "chop", "life", "soft", "sharp", "sweet", "wahala", "gbedu", "gist", "japa",
+  "sha", "sef", "no", "omo", "guy", "guys", "bros", "bro", "sis", "abi",
+  "gbam", "gbege", "kolo", "sabi", "yen", "azaman", "chill", "vibe", "vibes",
 ]);
 
 /**
@@ -57,12 +70,16 @@ export function detectLanguage(text: string): DetectedLanguage {
   }
 
   let pidginTokenCount = 0;
+  let slangTokenCount = 0;
   let englishTokenCount = 0;
   const distinctMarkers = new Set<string>();
 
   for (const token of tokens) {
     if (PIDGIN_MARKERS.has(token)) {
       pidginTokenCount += 1;
+      distinctMarkers.add(token);
+    } else if (SLANG_MARKERS.has(token)) {
+      slangTokenCount += 1;
       distinctMarkers.add(token);
     } else if (ENGLISH_ONLY_WORDS.has(token)) {
       englishTokenCount += 1;
@@ -86,6 +103,13 @@ export function detectLanguage(text: string): DetectedLanguage {
     return "mixed";
   }
 
+  // Pure slang/informal greeting ("wagwan gang", "wassup boss"): at least one
+  // strong slang marker and no real English content words to outweigh it. Such
+  // messages must be answered informally, not with corporate English.
+  if (slangTokenCount >= 1 && englishTokenCount <= slangTokenCount) {
+    return "slang";
+  }
+
   return "english";
 }
 
@@ -98,6 +122,8 @@ export function getLanguageInstruction(lang: DetectedLanguage): string {
   switch (lang) {
     case "pidgin":
       return "The customer is writing in Nigerian Pidgin. Reply in Nigerian Pidgin using the same style. Do not correct their grammar or convert their words to standard English.";
+    case "slang":
+      return "The customer is writing in informal Nigerian slang. Reply in a relaxed, casual Nigerian tone that matches their energy. Do not open with corporate phrases like 'Welcome' or 'How may I assist you'. Keep it short and informal.";
     case "mixed":
       return "The customer is mixing English and Nigerian Pidgin. Reply in the same mixed style. Match their tone and vocabulary.";
     case "english":
