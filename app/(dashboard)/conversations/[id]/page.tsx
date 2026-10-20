@@ -40,6 +40,13 @@ type Conversation = {
   customer: { id: string; name: string; phone: string };
 };
 
+type PlanState = {
+  plan: string;
+  aiPaused: boolean;
+  includedManualMessages: number;
+  manualMessagesRemaining: number;
+};
+
 export default function ConversationDetailPage() {
   return (
     <Suspense fallback={<ConversationDetailFallback />}>
@@ -59,6 +66,7 @@ function ConversationDetail() {
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[] | null>(null);
+  const [plan, setPlan] = useState<PlanState | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Action failures (take over / resume / send) show inline, so a bad request
   // never replaces the conversation that is already on screen.
@@ -85,11 +93,15 @@ function ConversationDetail() {
         if (!res.ok) {
           throw new Error(`Request failed with status ${res.status}`);
         }
-        const data: { conversation: Conversation; messages: Message[] } =
-          await res.json();
+        const data: {
+          conversation: Conversation;
+          messages: Message[];
+          plan: PlanState;
+        } = await res.json();
         if (active) {
           setConversation(data.conversation);
           setMessages(data.messages);
+          setPlan(data.plan);
         }
       } catch (err) {
         // A dropped poll keeps the messages already on screen; only the first
@@ -123,6 +135,13 @@ function ConversationDetail() {
   const paused = conversation?.pausedUntil
     ? isInFuture(conversation.pausedUntil)
     : false;
+
+  // The AI is off (free/expired plan or an active takeover); the owner answers
+  // by hand. The composer stays open while free manual replies remain.
+  const aiPaused = plan?.aiPaused ?? false;
+  const manualRemaining = plan?.manualMessagesRemaining ?? 0;
+  const canReplyManually = manualRemaining > 0;
+  const showComposer = paused || (aiPaused && canReplyManually);
 
   async function handleTakeOver() {
     setActionError(null);
@@ -302,6 +321,24 @@ function ConversationDetail() {
             </div>
           )}
 
+          {/* Free/expired plan banner: the AI is off, the owner replies by hand. */}
+          {aiPaused && !paused && (
+            <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 sm:px-6">
+              <CircleAlert className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
+              <p className="min-w-0 flex-1 text-sm text-gray-900">
+                Your AI is paused. You have{" "}
+                <span className="font-semibold">{manualRemaining}</span> free
+                manual replies left this month. Upgrade to restore AI.
+              </p>
+              <Link
+                href="/billing"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+              >
+                Upgrade
+              </Link>
+            </div>
+          )}
+
           {/* Messages */}
           <div className="mt-4 rounded-lg border border-gray-200 bg-surface px-4 py-5 sm:px-6">
             {messages && messages.length > 0 ? (
@@ -323,8 +360,9 @@ function ConversationDetail() {
             )}
           </div>
 
-          {/* Agent composer, shown only while a human has the conversation. */}
-          {paused && (
+          {/* Agent composer: open during a human takeover, or while the AI is
+              off and the owner still has free manual replies left. */}
+          {showComposer && (
             <form
               onSubmit={handleSend}
               className="mt-4 rounded-lg border border-gray-200 bg-surface p-3 sm:p-4"

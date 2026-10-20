@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
+import { getPlanLimits } from "@/lib/plans";
 
 function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
@@ -38,6 +39,32 @@ export async function GET(
 
     const { messages, ...meta } = conversation;
 
+    // Plan state for the page banner: on the free plan the AI is off and the
+    // owner gets `includedManualMessages` free manual replies each billing
+    // month. The page shows how many are left and keeps the composer enabled
+    // until they run out.
+    const business = await prisma.business.findUniqueOrThrow({
+      where: { id: businessId },
+      select: {
+        plan: true,
+        planInterval: true,
+        channel: true,
+        planStatus: true,
+        manualMessagesUsedThisMonth: true,
+      },
+    });
+    const limits = getPlanLimits(
+      business.plan,
+      business.planInterval,
+      business.channel,
+    );
+    const includedManualMessages = limits.includedManualMessages;
+    const manualMessagesRemaining = Math.max(
+      includedManualMessages - business.manualMessagesUsedThisMonth,
+      0,
+    );
+    const aiPaused = business.plan === "free" || business.planStatus !== "active";
+
     return Response.json({
       conversation: meta,
       messages: messages.map((message) => ({
@@ -46,6 +73,12 @@ export async function GET(
         content: message.content,
         createdAt: message.createdAt,
       })),
+      plan: {
+        plan: business.plan,
+        aiPaused,
+        includedManualMessages,
+        manualMessagesRemaining,
+      },
     });
   } catch (error) {
     console.error("[GET /api/conversations/[id]]", error);

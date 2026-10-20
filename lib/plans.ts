@@ -103,8 +103,8 @@ export const TRIAL_CONFIG = {
 export const FREE_PLAN_LIMITS = {
   monthly: 0,
   yearly: 0,
-  includedMsgs: 0,
-  includedManualMessages: 0,
+  includedMsgs: 0, // 0 AI replies
+  includedManualMessages: 50, // 50 manual replies
   aiCredit: 20,
   manualCredit: 15,
 };

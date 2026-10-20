@@ -217,8 +217,17 @@ export async function handleIncomingMessage({
 
   const aiCheck = await requireAiEnabled(businessId);
   if (!aiCheck.ok) {
-    // Message already saved — the AI just does not reply. The concrete reason
-    // (cap_hit / plan_expired / no_credits) is surfaced to the caller.
+    // Message already saved — the AI just does not reply. Alert the owner's
+    // personal Telegram so a paused AI is not silently ignored, then surface
+    // the concrete reason (cap_hit / plan_expired / no_credits) to the caller.
+    // `sendOwnerAlert` swallows its own errors, so a failed alert never breaks
+    // the inbound pipeline.
+    await sendOwnerAlert(
+      businessId,
+      "New message from customer! Your AI is currently paused (" +
+        aiCheck.reason +
+        "). Reply manually in your dashboard or upgrade to restore AI.",
+    );
     return { reply: null, blocked: true, saved: true, replied: false, reason: aiCheck.reason };
   }
 

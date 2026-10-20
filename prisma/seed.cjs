@@ -2287,6 +2287,13 @@ async function main() {
       tone: "friendly",
       description:
         "We sell TVs, phones, home appliances and electronics accessories in Lagos.",
+      // Active for testing: an active Telegram plan with Naira credits so the
+      // AI answers immediately after seeding, no billing step required.
+      plan: "green",
+      planStatus: "active",
+      creditWalletBalanceNaira: 5000,
+      messagesUsedThisMonth: 0,
+      manualMessagesUsedThisMonth: 0,
     },
   });
 
