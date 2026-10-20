@@ -86,13 +86,17 @@ export async function POST(request: Request) {
     try {
       const response = await fetch(
         `https://api.telegram.org/bot${botToken}/getMe`,
-        { signal: AbortSignal.timeout(10_000) },
+        { signal: AbortSignal.timeout(10_000), cache: "no-store" },
       );
       me = await response.json().catch(() => null);
-    } catch {
+    } catch (error) {
+      console.error("[telegram-connect] getMe fetch failed:", error);
       return Response.json(
-        { error: "Could not reach Telegram. Try again in a moment." },
-        { status: 502 },
+        {
+          error: "Could not reach Telegram",
+          details: error instanceof Error ? error.message : String(error),
+        },
+        { status: 500 },
       );
     }
     if (!me?.ok) {
@@ -117,13 +121,18 @@ export async function POST(request: Request) {
             allowed_updates: ["message"],
           }),
           signal: AbortSignal.timeout(10_000),
+          cache: "no-store",
         },
       );
       webhook = await response.json().catch(() => null);
-    } catch {
+    } catch (error) {
+      console.error("[telegram-connect] setWebhook fetch failed:", error);
       return Response.json(
-        { error: "Could not reach Telegram. Try again in a moment." },
-        { status: 502 },
+        {
+          error: "Could not reach Telegram",
+          details: error instanceof Error ? error.message : String(error),
+        },
+        { status: 500 },
       );
     }
     if (!webhook?.ok) {
