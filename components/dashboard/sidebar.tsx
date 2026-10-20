@@ -18,6 +18,7 @@ import {
   Settings,
   ShoppingCart,
   Smartphone,
+  Sparkles,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -35,6 +36,7 @@ const PRIMARY_ITEMS: NavItem[] = [
   { label: "Customers", href: "/customers", icon: Users },
   { label: "Sales", href: "/sales", icon: ShoppingCart },
   { label: "Invoices", href: "/invoices", icon: FileText },
+  { label: "Colly AI", href: "/ai", icon: Sparkles },
 ];
 
 const SECONDARY_ITEMS: NavItem[] = [
@@ -45,7 +47,6 @@ const SECONDARY_ITEMS: NavItem[] = [
 
 const BOTTOM_ITEMS: NavItem[] = [
   { label: "Settings", href: "/settings", icon: Settings },
-  { label: "AI Line", href: "/settings/ai-line", icon: Smartphone },
 ];
 
 function isActivePath(pathname: string, href: string): boolean {

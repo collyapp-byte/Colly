@@ -61,6 +61,9 @@ export type Business = {
   /** Telegram bot handle (no "@") from getMe; renders the owner's shareable
    * t.me link once the bot is connected. */
   telegramBotUsername: string | null;
+  /** Telegram bot token (private). Present on the API response only when
+   * returned by the server; the client type is still fine. */
+  telegramBotToken?: string | null;
   /** The OWNER'S personal Telegram chat id (from @userinfobot) — where
    * escalation alerts go. null means owner alerts are not connected yet. */
   ownerTelegramChatId: string | null;
@@ -89,6 +92,7 @@ export type BusinessRecord = {
   channel: string;
   connectionStatus: string;
   telegramBotUsername: string | null;
+  telegramBotToken?: string | null;
   ownerTelegramChatId: string | null;
   referredByAgentId: string | null;
   createdAt: Date;
@@ -122,6 +126,7 @@ export function serializeBusiness(business: BusinessRecord): Business {
       ? business.connectionStatus
       : "DISCONNECTED",
     telegramBotUsername: business.telegramBotUsername,
+    telegramBotToken: (business as any).telegramBotToken ?? null,
     ownerTelegramChatId: business.ownerTelegramChatId,
     referredByAgentId: business.referredByAgentId,
     createdAt: new Date(business.createdAt).toISOString(),

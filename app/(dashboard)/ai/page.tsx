@@ -1,0 +1,236 @@
+import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
+import Link from "next/link";
+
+export default async function CollyAIPage() {
+  const user = await requireAuth();
+  const business = await prisma.business.findUnique({
+    where: { id: user.businessId },
+    select: {
+      tone: true,
+      creditWalletBalanceNaira: true,
+      messagesUsedThisMonth: true,
+      manualMessagesUsedThisMonth: true,
+    },
+  });
+
+  const [productsCount, faqsCount, transactions] = await Promise.all([
+    prisma.product.count({ where: { businessId: user.businessId } }),
+    prisma.faq.count({ where: { businessId: user.businessId } }),
+    prisma.transaction.findMany({
+      where: { businessId: user.businessId },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+      select: {
+        id: true,
+        createdAt: true,
+        amount: true,
+        type: true,
+        status: true,
+        reference: true,
+      },
+    }),
+  ]);
+
+  // Fallback plan limits (simplified display; can be refined later)
+  const includedMsgs = 500;
+  const includedManual = 500;
+  const aiUsed = business?.messagesUsedThisMonth ?? 0;
+  const manualUsed = business?.manualMessagesUsedThisMonth ?? 0;
+  const tone = business?.tone === "formal" ? "Formal" : "Friendly";
+
+  return (
+    <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl text-gray-900">Colly AI</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Your AI control center for tone, channels, usage, and knowledge.
+          </p>
+        </div>
+        <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+          Active
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* AI Persona */}
+        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 className="font-display text-base text-gray-900">AI Persona</h2>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700">
+              Tone: {tone}
+            </span>
+            <span className="inline-flex items-center rounded-full border border-[#FF6600]/20 bg-[#FFF4EC] px-3 py-1 text-xs font-medium text-[#FF6600]">
+              Adaptive Language: Auto-detects English & Pidgin
+            </span>
+          </div>
+          <div className="mt-4">
+            <Link
+              href="/settings"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              Edit Tone
+            </Link>
+          </div>
+        </section>
+
+        {/* Connected Apps */}
+        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 className="font-display text-base text-gray-900">
+            Connected Apps
+          </h2>
+          <div className="mt-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3">
+              <div>
+                <p className="text-sm font-medium text-gray-900">WhatsApp</p>
+                <p className="text-xs text-gray-500">Customer-facing AI line</p>
+              </div>
+              <Link
+                href="/settings/ai-line"
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Manage
+              </Link>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Telegram</p>
+                <p className="text-xs text-gray-500">Customer-facing bot</p>
+              </div>
+              <Link
+                href="/settings/ai-line"
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Manage
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Credits & Usage */}
+        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 className="font-display text-base text-gray-900">
+            Credits & Usage
+          </h2>
+          <div className="mt-4 space-y-4">
+            <div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">AI Replies</span>
+                <span className="font-medium text-gray-900">
+                  {aiUsed} / {includedMsgs}
+                </span>
+              </div>
+              <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
+                <div
+                  className="h-2 rounded-full bg-[#FF6600]"
+                  style={{
+                    width: `${Math.min(100, (aiUsed / includedMsgs) * 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Manual Replies</span>
+                <span className="font-medium text-gray-900">
+                  {manualUsed} / {includedManual}
+                </span>
+              </div>
+              <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
+                <div
+                  className="h-2 rounded-full bg-[#FF6600]"
+                  style={{
+                    width: `${Math.min(100, (manualUsed / includedManual) * 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
+              <span className="text-sm text-gray-600">Wallet Balance</span>
+              <span className="font-semibold text-gray-900">
+                ₦{(business?.creditWalletBalanceNaira ?? 0).toLocaleString("en-NG")} remaining
+              </span>
+            </div>
+            <Link
+              href="/settings/billing"
+              className="inline-flex items-center justify-center rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"
+            >
+              Top Up
+            </Link>
+          </div>
+        </section>
+
+        {/* Past Transactions */}
+        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 className="font-display text-base text-gray-900">
+            Past Transactions
+          </h2>
+          <div className="mt-4 space-y-2">
+            {transactions.length === 0 ? (
+              <p className="text-sm text-gray-500">No transactions yet.</p>
+            ) : (
+              transactions.map((t) => (
+                <div
+                  key={t.id}
+                  className="flex items-center justify-between rounded-lg border border-gray-100 p-3 text-sm"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">{t.type}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(t.createdAt).toLocaleDateString("en-NG")}
+                    </p>
+                  </div>
+                  <span className="font-semibold text-gray-900">
+                    ₦{Number(t.amount).toLocaleString("en-NG")}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="mt-4">
+            <Link
+              href="/settings/billing"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              View All Transactions
+            </Link>
+          </div>
+        </section>
+      </div>
+
+      {/* Knowledge Base */}
+      <section className="mt-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 className="font-display text-base text-gray-900">Knowledge Base</h2>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Link
+            href="/products"
+            className="flex items-center justify-between rounded-lg border border-gray-100 p-4 transition-colors hover:bg-gray-50"
+          >
+            <div>
+              <p className="text-sm font-medium text-gray-900">Products</p>
+              <p className="text-xs text-gray-500">
+                {productsCount} item{productsCount === 1 ? "" : "s"}
+              </p>
+            </div>
+            <span className="text-sm text-gray-500">&rarr;</span>
+          </Link>
+          <Link
+            href="/faqs"
+            className="flex items-center justify-between rounded-lg border border-gray-100 p-4 transition-colors hover:bg-gray-50"
+          >
+            <div>
+              <p className="text-sm font-medium text-gray-900">FAQs</p>
+              <p className="text-xs text-gray-500">
+                {faqsCount} item{faqsCount === 1 ? "" : "s"}
+              </p>
+            </div>
+            <span className="text-sm text-gray-500">&rarr;</span>
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}

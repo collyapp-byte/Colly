@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Check, Eye, EyeOff } from "lucide-react";
-import { logout, signup } from "@/lib/auth-actions";
+import { signup } from "@/lib/auth-actions";
 import { INITIAL_AUTH_STATE } from "@/lib/auth-form";
 import type { Channel } from "@/lib/business";
 import { AuthAlert, AuthField } from "@/components/auth/auth-form";
@@ -114,11 +114,11 @@ export function BusinessSignupForm({ referredBy }: { referredBy?: string }) {
           type="tel"
           placeholder="+2348012345678"
           autoComplete="tel"
-          hint={
-            channel === "TELEGRAM"
-              ? "Your business contact number. A Telegram bot needs no SIM card or extra line."
-              : "Enter a new phone number (SIM) for your AI assistant. You will keep your existing WhatsApp number on your phone. This must be different from your personal WhatsApp number."
-          }
+            hint={
+              channel === "TELEGRAM"
+                ? "Your primary business contact number. (You will connect your AI line in the next step)."
+                : "Enter a new phone number (SIM) for your AI assistant. You will keep your existing WhatsApp number on your phone. This must be different from your personal WhatsApp number."
+            }
         />
 
         {/* Channel choice: saved on the Business row and used by the AI Line
@@ -161,17 +161,17 @@ export function BusinessSignupForm({ referredBy }: { referredBy?: string }) {
                     </span>
 
                     {option.badge && (
-                      <span className="whitespace-nowrap rounded-full bg-[#FF6600] px-2 py-0.5 text-[11px] font-semibold text-white">
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-full bg-[#FF6600] px-2.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
                         {option.badge}
                       </span>
                     )}
                   </span>
 
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-1.5 pr-2">
                     {option.bullets.map((bullet) => (
                       <li
                         key={bullet}
-                        className="flex items-start gap-2 text-[13px] text-gray-600"
+                        className="flex items-start gap-2 text-sm text-gray-600"
                       >
                         <Check
                           className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FF6600]"
@@ -266,15 +266,6 @@ export function BusinessSignupForm({ referredBy }: { referredBy?: string }) {
           Sign in
         </Link>
       </p>
-
-      <form action={logout} className="mt-4 border-t border-gray-200 pt-4 text-center">
-        <button
-          type="submit"
-          className="text-sm font-medium text-colly transition-colors hover:text-colly-hover"
-        >
-          Not you? Sign out
-        </button>
-      </form>
     </div>
   );
 }

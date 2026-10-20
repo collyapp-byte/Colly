@@ -94,6 +94,20 @@ export default function AiLinePage() {
   const connected = connectionStatus === "CONNECTED";
   const pendingSetup = connectionStatus === "PENDING_BSP_SETUP";
 
+  // Determine per-channel connection status (best effort: business.channel
+  // reflects the primary channel; Telegram is connected if we have a token
+  // or connectionStatus is CONNECTED; WhatsApp if connectionStatus is
+  // CONNECTED/PENDING). This keeps UI working across legacy rows.
+  const isWhatsAppConnected =
+    business?.channel === "WHATSAPP" && (connected || pendingSetup);
+  const isTelegramConnected =
+    Boolean(business?.telegramBotToken) || connected || business?.channel === "TELEGRAM";
+  const telegramConnected =
+    Boolean(business?.telegramBotToken) || business?.channel === "TELEGRAM";
+  // Prefer explicit flags: treat Telegram connected if token exists OR
+  // channel is TELEGRAM and not explicitly disconnected. Simpler: check token first.
+  const telegramIsConnected = Boolean(business?.telegramBotToken);
+
   // The owner's shareable bot link once the bot is connected.
   const shareLink =
     channel === "TELEGRAM" && business?.telegramBotUsername
@@ -283,9 +297,8 @@ export default function AiLinePage() {
 
       <h1 className="font-display text-2xl text-gray-900">AI Line</h1>
       <p className="mt-1 text-sm text-gray-500">
-        {channel === "TELEGRAM"
-          ? "Your Telegram bot, answered instantly by your Colly AI assistant."
-          : "Your dedicated Colly AI line — kept separate from your personal WhatsApp."}
+        Connect your WhatsApp or Telegram channels. The AI answers customers on
+        every channel you connect.
       </p>
 
       {loading && <AiLineSkeleton />}
@@ -305,237 +318,247 @@ export default function AiLinePage() {
           {/* CURRENT STATUS */}
           <section className={SECTION_CLASS}>
             <h2 className={HEADING_CLASS}>CURRENT STATUS</h2>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              {connected ? (
-                <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-3 py-1.5 text-[13px] font-medium text-green-700">
-                  <BadgeCheck className="h-4 w-4" aria-hidden />
-                  Connected &amp; Live
-                </span>
-              ) : pendingSetup ? (
-                <span className="inline-flex items-center gap-2 rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1.5 text-[13px] font-medium text-yellow-800">
-                  <Clock className="h-4 w-4" aria-hidden />
-                  Setup Pending
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#FF6600]/20 bg-[#FFF4EC] px-3 py-1.5 text-[13px] font-medium text-[#FF6600]">
-                  <Clock className="h-4 w-4" aria-hidden />
-                  Not Connected
-                </span>
-              )}
-
-              <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-900">
-                {channel === "TELEGRAM" ? (
-                  <Send className="h-4 w-4 text-gray-500" aria-hidden />
-                ) : (
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-900">
                   <Smartphone className="h-4 w-4 text-gray-500" aria-hidden />
+                  WhatsApp
+                </span>
+                {isWhatsAppConnected || (channel === "WHATSAPP" && (connected || pendingSetup)) ? (
+                  connected && channel === "WHATSAPP" ? (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
+                      <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                      Connected
+                    </span>
+                  ) : pendingSetup && channel === "WHATSAPP" ? (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-yellow-300 bg-yellow-100 px-2.5 py-0.5 text-[12px] font-medium text-yellow-800">
+                      <Clock className="h-3.5 w-3.5" aria-hidden />
+                      Pending
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 rounded-full border border-[#FF6600]/20 bg-[#FFF4EC] px-2.5 py-0.5 text-[12px] font-medium text-[#FF6600]">
+                      <Clock className="h-3.5 w-3.5" aria-hidden />
+                      Incomplete
+                    </span>
+                  )
+                ) : (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-[12px] font-medium text-gray-600">
+                    <Clock className="h-3.5 w-3.5" aria-hidden />
+                    Disconnected
+                  </span>
                 )}
-                {channel === "TELEGRAM" ? "Telegram" : "WhatsApp"}
-              </span>
-            </div>
+              </div>
 
-            <p className="mt-3 text-sm text-gray-600">
-              {connected
-                ? "Customers who message your channel are answered instantly by your AI assistant."
-                : pendingSetup
-                  ? "We have your details and are preparing your connection."
-                  : "Your channel is not connected yet, so your AI cannot reply to customers."}
-            </p>
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-900">
+                  <Send className="h-4 w-4 text-gray-500" aria-hidden />
+                  Telegram
+                </span>
+                {telegramIsConnected ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
+                    <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                    Connected
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-[12px] font-medium text-gray-600">
+                    <Clock className="h-3.5 w-3.5" aria-hidden />
+                    Disconnected
+                  </span>
+                )}
+              </div>
+            </div>
           </section>
 
-          {channel === "TELEGRAM" ? (
-            /* CONNECT TELEGRAM BOT */
-            <section className={SECTION_CLASS}>
-              <h2 className={HEADING_CLASS}>Connect your Telegram Bot</h2>
+          {/* WHATSAPP CONNECTION */}
+          <section className={SECTION_CLASS}>
+            <h2 className={HEADING_CLASS}>Connect your WhatsApp via Gupshup (BSP)</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              To keep your personal number on your phone and use Colly's AI, we
+              must route your number through Gupshup.
+            </p>
 
-              {connected ? (
-                <div
-                  role="status"
-                  className="mt-4 rounded-lg border border-green-200 bg-green-50 p-5"
-                >
-                  <div className="flex items-center gap-2">
-                    <BadgeCheck
-                      className="h-5 w-5 shrink-0 text-green-600"
-                      aria-hidden
-                    />
-                    <h3 className="font-display text-base font-semibold text-green-800">
-                      Your Telegram Bot is Live! 🎉
-                    </h3>
-                  </div>
+            {isWhatsAppConnected || (channel === "WHATSAPP" && pendingSetup) ? (
+              <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1.5 text-[13px] font-medium text-yellow-800">
+                <Clock className="h-4 w-4" aria-hidden />
+                Setup Pending - Our team will contact you within 24 hours.
+              </span>
+            ) : null}
 
-                  {shareLink ? (
-                    <>
-                      <a
-                        href={shareLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-3 block break-all font-display text-xl font-bold text-gray-900 underline decoration-green-300 underline-offset-4 transition-colors hover:text-green-800"
-                      >
-                        {shareLink}
-                      </a>
-
-                      <div className="mt-4 flex flex-wrap items-start gap-4">
-                        {qrSvg && (
-                          <div
-                            className="shrink-0 rounded-lg border border-green-200 bg-white p-2 [&>svg]:block"
-                            aria-hidden
-                            dangerouslySetInnerHTML={{ __html: qrSvg }}
-                          />
-                        )}
-
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              onClick={handleCopyLink}
-                            >
-                              <Copy className="h-3.5 w-3.5" aria-hidden />
-                              {copied ? "Copied!" : "Copy Link"}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              onClick={handleShareLink}
-                            >
-                              <Share2 className="h-3.5 w-3.5" aria-hidden />
-                              Share
-                            </Button>
-                          </div>
-                          <p className="mt-3 text-sm text-green-800">
-                            Share this link on Instagram, WhatsApp Status, and
-                            business cards.
-                          </p>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="mt-3 text-sm text-green-800">
-                      Your bot is connected. Message it and the AI will reply
-                      from your dashboard.
-                    </p>
-                  )}
+            {channel === "WHATSAPP" && connected ? (
+              <div
+                role="status"
+                className="mt-4 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700"
+              >
+                <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                <div>
+                  <p className="font-semibold text-green-800">
+                    Your WhatsApp line is connected!
+                  </p>
+                  <p className="mt-2 flex items-center gap-2 text-[15px] font-bold text-gray-900">
+                    <Smartphone className="h-4 w-4 text-gray-500" aria-hidden />
+                    {business.whatsappNumber}
+                  </p>
+                  <p className="mt-1">
+                    Customers who message this number are answered by your AI
+                    assistant.
+                  </p>
                 </div>
-              ) : (
-                <>
-                  <ol className="mt-4 space-y-2">
-                    {TELEGRAM_STEPS.map((step) => (
-                      <li
-                        key={step}
-                        className="flex items-start gap-3 text-sm text-gray-600"
-                      >
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#FFF4EC] text-[#FF6600]">
-                          <Send className="h-3 w-3" aria-hidden />
-                        </span>
-                        <span>{step}</span>
-                      </li>
-                    ))}
-                  </ol>
+              </div>
+            ) : (
+              <form
+                onSubmit={handleWhatsappConnect}
+                className="mt-5 space-y-4"
+              >
+                <div>
+                  <label
+                    htmlFor="whatsappNumber"
+                    className="mb-1 block text-sm font-medium text-gray-700"
+                  >
+                    WhatsApp Phone Number (e.g., 08012345678)
+                  </label>
+                  <input
+                    id="whatsappNumber"
+                    name="whatsappNumber"
+                    type="tel"
+                    value={whatsappNumber}
+                    onChange={(event) =>
+                      setWhatsappNumber(event.target.value)
+                    }
+                    placeholder="08012345678"
+                    autoComplete="tel"
+                    required
+                    className={INPUT_CLASS}
+                  />
+                </div>
 
-                  <form onSubmit={handleTelegramConnect} className="mt-5 space-y-4">
-                    <div>
-                      <label
-                        htmlFor="botToken"
-                        className="mb-1 block text-sm font-medium text-gray-700"
-                      >
-                        Bot Token
-                      </label>
-                      <input
-                        id="botToken"
-                        name="botToken"
-                        type="text"
-                        value={botToken}
-                        onChange={(event) => setBotToken(event.target.value)}
-                        placeholder="123456789:AA..."
-                        autoComplete="off"
-                        required
-                        className={INPUT_CLASS}
-                      />
-                    </div>
+                {formError && (
+                  <p role="alert" className="text-sm text-danger">
+                    {formError}
+                  </p>
+                )}
+                {notice && (
+                  <p role="status" className="text-sm text-success">
+                    {notice}
+                  </p>
+                )}
 
-                    {formError && (
-                      <p role="alert" className="text-sm text-danger">
-                        {formError}
-                      </p>
-                    )}
-                    {notice && (
-                      <p role="status" className="text-sm text-success">
-                        {notice}
-                      </p>
-                    )}
+                <Button
+                  type="submit"
+                  variant="primary"
+                  loading={submitting}
+                >
+                  Start WhatsApp Setup
+                </Button>
+              </form>
+            )}
+          </section>
 
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      loading={submitting}
+          {/* TELEGRAM CONNECTION */}
+          <section className={SECTION_CLASS}>
+            <h2 className={HEADING_CLASS}>Connect your Telegram Bot</h2>
+
+            {telegramIsConnected ? (
+              <div
+                role="status"
+                className="mt-4 rounded-lg border border-green-200 bg-green-50 p-5"
+              >
+                <div className="flex items-center gap-2">
+                  <BadgeCheck
+                    className="h-5 w-5 shrink-0 text-green-600"
+                    aria-hidden
+                  />
+                  <h3 className="font-display text-base font-semibold text-green-800">
+                    Your Telegram Bot is Live!
+                  </h3>
+                </div>
+
+                {shareLink ? (
+                  <>
+                    <a
+                      href={shareLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 block break-all font-display text-xl font-bold text-gray-900 underline decoration-green-300 underline-offset-4 transition-colors hover:text-green-800"
                     >
-                      Connect Bot
-                    </Button>
-                  </form>
-                </>
-              )}
-            </section>
-          ) : (
-            /* CONNECT WHATSAPP VIA GUPSHUP */
-            <section className={SECTION_CLASS}>
-              <h2 className={HEADING_CLASS}>
-                Connect your WhatsApp via Gupshup (BSP)
-              </h2>
-              <p className="mt-2 text-sm text-gray-600">
-                To keep your personal number on your phone and use Colly&apos;s
-                AI, we must route your number through Gupshup.
-              </p>
+                      {shareLink}
+                    </a>
 
-              {pendingSetup && (
-                <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1.5 text-[13px] font-medium text-yellow-800">
-                  <Clock className="h-4 w-4" aria-hidden />
-                  Setup Pending - Our team will contact you within 24 hours.
-                </span>
-              )}
+                    <div className="mt-4 flex flex-wrap items-start gap-4">
+                      {qrSvg && (
+                        <div
+                          className="shrink-0 rounded-lg border border-green-200 bg-white p-2 [&>svg]:block"
+                          aria-hidden
+                          dangerouslySetInnerHTML={{ __html: qrSvg }}
+                        />
+                      )}
 
-              {connected ? (
-                <div
-                  role="status"
-                  className="mt-4 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700"
-                >
-                  <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                  <div>
-                    <p className="font-semibold text-green-800">
-                      Your WhatsApp line is connected!
-                    </p>
-                    <p className="mt-2 flex items-center gap-2 text-[15px] font-bold text-gray-900">
-                      <Smartphone className="h-4 w-4 text-gray-500" aria-hidden />
-                      {business.whatsappNumber}
-                    </p>
-                    <p className="mt-1">
-                      Customers who message this number are answered by your AI
-                      assistant.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <form
-                  onSubmit={handleWhatsappConnect}
-                  className="mt-5 space-y-4"
-                >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={handleCopyLink}
+                          >
+                            <Copy className="h-3.5 w-3.5" aria-hidden />
+                            {copied ? "Copied!" : "Copy Link"}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={handleShareLink}
+                          >
+                            <Share2 className="h-3.5 w-3.5" aria-hidden />
+                            Share
+                          </Button>
+                        </div>
+                        <p className="mt-3 text-sm text-green-800">
+                          Share this link on Instagram, WhatsApp Status, and
+                          business cards.
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="mt-3 text-sm text-green-800">
+                    Your bot is connected. Message it and the AI will reply from
+                    your dashboard.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
+                <ol className="mt-4 space-y-2">
+                  {TELEGRAM_STEPS.map((step) => (
+                    <li
+                      key={step}
+                      className="flex items-start gap-3 text-sm text-gray-600"
+                    >
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#FFF4EC] text-[#FF6600]">
+                        <Send className="h-3 w-3" aria-hidden />
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+
+                <form onSubmit={handleTelegramConnect} className="mt-5 space-y-4">
                   <div>
                     <label
-                      htmlFor="whatsappNumber"
+                      htmlFor="botToken"
                       className="mb-1 block text-sm font-medium text-gray-700"
                     >
-                      WhatsApp Phone Number (e.g., 08012345678)
+                      Bot Token
                     </label>
                     <input
-                      id="whatsappNumber"
-                      name="whatsappNumber"
-                      type="tel"
-                      value={whatsappNumber}
-                      onChange={(event) =>
-                        setWhatsappNumber(event.target.value)
-                      }
-                      placeholder="08012345678"
-                      autoComplete="tel"
+                      id="botToken"
+                      name="botToken"
+                      type="text"
+                      value={botToken}
+                      onChange={(event) => setBotToken(event.target.value)}
+                      placeholder="123456789:AA..."
+                      autoComplete="off"
                       required
                       className={INPUT_CLASS}
                     />
@@ -557,12 +580,12 @@ export default function AiLinePage() {
                     variant="primary"
                     loading={submitting}
                   >
-                    Start WhatsApp Setup
+                    Connect Bot
                   </Button>
                 </form>
-              )}
-            </section>
-          )}
+              </>
+            )}
+          </section>
 
           {/* OWNER NOTIFICATIONS (personal Telegram) */}
           <section className={SECTION_CLASS}>

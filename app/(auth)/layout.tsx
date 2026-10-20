@@ -1,6 +1,34 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { Footer } from "@/components/ui/footer";
+import { getCurrentUser } from "@/lib/auth";
+import { logout } from "@/lib/auth-actions";
+
+/**
+ * The "Not you? Sign out" control. Only rendered when a real Supabase session
+ * maps to a user, so a brand-new visitor with no session never sees it. Kept in
+ * its own component and wrapped in <Suspense> because reading the session
+ * touches cookies(), which blocks prerendering otherwise.
+ */
+async function SessionSignOut() {
+  const user = await getCurrentUser();
+  if (!user) return null;
+
+  return (
+    <form
+      action={logout}
+      className="mt-4 border-t border-gray-200 pt-4 text-center"
+    >
+      <button
+        type="submit"
+        className="text-sm font-medium text-colly transition-colors hover:text-colly-hover"
+      >
+        Not you? Sign out
+      </button>
+    </form>
+  );
+}
 
 /**
  * Layout for the signed-out screens. The dashboard's sidebar and top bar don't
@@ -20,6 +48,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </div>
 
           {children}
+
+          <Suspense fallback={null}>
+            <SessionSignOut />
+          </Suspense>
         </div>
       </div>
 
