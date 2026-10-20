@@ -518,11 +518,19 @@ Log into your own Colly account. Click every menu item in the sidebar. Spend 10 
         durationMin: 5,
         bodyMarkdown: `There are two channels and six plans. There is also a Naira wallet. Here is how it works.
 
-**Two channels: WhatsApp and Telegram**
+**Telegram-first launch**
 
-Colly works on WhatsApp and on Telegram. WhatsApp is where most Nigerian businesses already sell. Telegram is newer, has no Meta fees, and gives far more messages for the same price.
+Colly is now **Telegram-first**. Telegram has **zero SIM requirements**, **zero Meta fees**, and **2,000+ messages** included on our entry plan - far more than WhatsApp for the same price. Setup takes just 30 seconds with your own bot - no BSP onboarding, no waiting for Meta verification.
 
-Plans are separate per channel, so you pick the channel that fits the business.
+**Plans**
+
+**Telegram plans (Recommended)**
+
+| Plan | Monthly | Yearly (2 months free) | Messages Included |
+|---|---|---|---|
+| Green | ₦15,000 | ₦150,000 | 2,000 per month |
+| Blue | ₦25,000 | ₦250,000 | 6,000 per month |
+| Black | ₦50,000 | ₦500,000 | Unlimited |
 
 **WhatsApp plans**
 
@@ -532,15 +540,7 @@ Plans are separate per channel, so you pick the channel that fits the business.
 | Business | ₦25,000 | ₦250,000 | 1,500 per month |
 | Pro | ₦50,000 | ₦500,000 | 2,500 per month |
 
-**Telegram plans**
-
-| Plan | Monthly | Yearly (2 months free) | Messages Included |
-|---|---|---|---|
-| Green | ₦15,000 | ₦150,000 | 2,000 per month |
-| Blue | ₦25,000 | ₦250,000 | 6,000 per month |
-| Black | ₦50,000 | ₦500,000 | Unlimited |
-
-Compare them. For the same money, Telegram gives more. ₦15,000 buys 500 WhatsApp messages or 2,000 Telegram messages. The ₦50,000 Black plan has no message limit at all.
+For the same money, Telegram gives more. ₦15,000 buys 500 WhatsApp messages or 2,000 Telegram messages. The ₦50,000 Black plan has no message limit at all.
 
 **The Wallet**
 
@@ -1726,9 +1726,9 @@ Do not explain everything. Show 3-4 things. Let them ask questions.
 
 Do not push. Do not discount. State the price. Shut up. Let them respond.
 
-**When to pitch Telegram instead**
+**When to pitch Telegram (now the default)**
 
-Some businesses are better on Telegram. If the business is a wholesaler, an electronics seller, or has high-volume VIP customers, pitch Telegram. It has zero Meta fees, so Colly can offer them 2,000+ messages for the same price as 500 WhatsApp messages. Same AI, same dashboard — just a cheaper channel with far more room.
+Telegram is our recommended channel for all businesses on the new launch. It has **zero SIM requirements**, **zero Meta fees**, and **2,000+ messages** included on the entry plan. Setup takes just 30 seconds with your own bot - no BSP onboarding, no waiting for Meta verification. Same AI, same dashboard, just faster setup and far more room to grow. For wholesalers, electronics sellers, or high-volume VIP customers, it's an especially strong fit.
 
 **What NOT to say:**
 
@@ -2051,6 +2051,34 @@ Colly Support
 **Do this now:**
 
 Save the support number. Save the escalation template. When you need it, you will not have time to look it up.`,
+      },
+      {
+        slug: "how-you-get-paid",
+        title: "How You Get Paid",
+        order: 7,
+        durationMin: 3,
+        bodyMarkdown: `**15% recurring commission**
+
+When you onboard a business to Colly using your agent ID, you earn **15% recurring commission** on every subscription charge for that business.
+
+**12-month cap**
+
+Commissions last for **exactly 12 months** from the date the business signs up. After the 12-month period ends, you will no longer earn commission from that business.
+
+**Payouts**
+
+- **Minimum threshold:** You can request a payout once your available commission balance reaches **₦5,000**.
+- **Instant via Paystack:** Payouts are processed instantly via Paystack directly to your bank account.
+- **Track everything:** Your earnings, bank details, and payout history are all available in the new **Wallet** tab under your agent dashboard.
+
+**Set up your bank details**
+
+1. Go to **Agents > Wallet** in your dashboard.
+2. Select your bank, enter your account number and account name.
+3. Click **Save bank details** to create your Paystack transfer recipient.
+4. Once your balance hits ₦5,000, click **Request payout** to withdraw your earnings.
+
+Keep your bank details up to date so you never miss a payout.`,
       },
     ],
     questions: [

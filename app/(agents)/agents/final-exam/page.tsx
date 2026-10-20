@@ -128,8 +128,11 @@ export default function FinalExamPage() {
           </p>
         )}
         <div className="flex gap-2">
-          <Link href="/agents/dashboard" className="rounded bg-gray-200 px-3 py-2 text-sm">
-            Back to Dashboard
+          <Link
+            href={result.passed ? "/agents/certified" : "/agents/dashboard"}
+            className="rounded bg-gray-200 px-3 py-2 text-sm"
+          >
+            {result.passed ? "Continue" : "Back to Dashboard"}
           </Link>
           <Link href="/agents/certificate" className="rounded bg-blue-600 px-3 py-2 text-sm text-white">
             View Certificate
