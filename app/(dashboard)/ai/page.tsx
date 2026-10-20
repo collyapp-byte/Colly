@@ -2,13 +2,14 @@ import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { getPlanLimits } from "@/lib/plans";
+import { TransactionRow } from "@/components/dashboard/transaction-row";
 import Link from "next/link";
 
 export default async function CollyAIPage() {
-  // Opt this page out of the static prerender. The transaction list below
-  // formats timestamps with `new Date(...)`, which Next reads as the unstable
-  // `Date.now()` value while prerendering and crashes the route. `connection()`
-  // forces a dynamic render on every request instead.
+  // Keep this page dynamic: it renders per-owner data (plan, usage, wallet,
+  // transactions) that must never be statically frozen. Date rendering lives
+  // in the client-only <TransactionRow /> so no clock value is read during
+  // prerendering.
   await connection();
 
   const user = await requireAuth();
@@ -251,20 +252,12 @@ export default async function CollyAIPage() {
               <p className="text-sm text-gray-500">No transactions yet.</p>
             ) : (
               transactions.map((t) => (
-                <div
+                <TransactionRow
                   key={t.id}
-                  className="flex items-center justify-between rounded-lg border border-gray-100 p-3 text-sm"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">{t.type}</p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(t.createdAt).toLocaleDateString("en-NG")}
-                    </p>
-                  </div>
-                  <span className="font-semibold text-gray-900">
-                    ₦{Number(t.amount).toLocaleString("en-NG")}
-                  </span>
-                </div>
+                  amount={Number(t.amount)}
+                  date={t.createdAt}
+                  status={t.type}
+                />
               ))
             )}
           </div>
