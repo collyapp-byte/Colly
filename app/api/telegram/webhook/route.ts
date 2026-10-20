@@ -45,31 +45,22 @@ export async function POST(request: Request) {
     const customerName =
       update.message?.from?.first_name?.trim() || telegramChatId;
 
-    const token = new URL(request.url).searchParams.get("token");
+    const token = new URL(request.url).searchParams.get("token")?.trim();
     console.log("[WEBHOOK] Resolving business for token:", token);
-    console.log(
-      `[DIAGNOSTIC] Incoming token: "${token}" | Length: ${token?.length}`,
-    );
 
-    const allBusinesses = await prisma.business.findMany({
-      select: { id: true, name: true, telegramBotToken: true },
-    });
-    allBusinesses.forEach((b) => {
-      console.log(
-        `[DIAGNOSTIC] DB Business: "${b.name}" | Token: "${b.telegramBotToken}" | Length: ${b.telegramBotToken?.length}`,
-      );
-    });
-
-    const diagnosticMatch = await prisma.business.findFirst({
+    let business = await prisma.business.findFirst({
       where: { telegramBotToken: token },
     });
-    console.log(
-      `[DIAGNOSTIC] Match found: ${diagnosticMatch ? diagnosticMatch.id : "NULL"}`,
-    );
 
-    const business = await resolveBusiness(request, telegramChatId);
+    // Fallback: if the token did not match, try the already-linked chat id.
     if (!business) {
-      console.log("[WEBHOOK] No business found. Exiting.");
+      business = await prisma.business.findFirst({
+        where: { telegramChatId },
+      });
+    }
+
+    if (!business) {
+      console.log("[WEBHOOK] No business found for token or chatId. Exiting.");
       return Response.json({ ok: true });
     }
     console.log("[WEBHOOK] Found business:", business.id);
@@ -135,71 +126,6 @@ export async function POST(request: Request) {
     // Telegram retries non-2xx responses, so failures are swallowed here.
     return Response.json({ ok: true });
   }
-}
-
-/**
- * Resolves the business a webhook update belongs to:
- *
- * 1. The `token` query param (bot token) registered at connect time — works
- *    from the very first message, before any chat is linked.
- * 2. The claimed `telegramChatId` — the fast path for every later message.
- * 3. The `secret_token` header (base64url bot token) as a fallback for bots
- *    whose webhook was registered by an older connect call without the query
- *    param; with several unlinked businesses there is nothing to tell them
- *    apart, so we link none rather than the wrong one.
- */
-async function resolveBusiness(
-  request: Request,
-  telegramChatId: string,
-): Promise<{
-  id: string;
-  telegramBotToken: string | null;
-  telegramChatId: string | null;
-} | null> {
-  const select = { id: true, telegramBotToken: true, telegramChatId: true } as const;
-
-  const token = new URL(request.url).searchParams.get("token");
-  if (token) {
-    const byToken = await prisma.business.findFirst({
-      where: { channel: "TELEGRAM", telegramBotToken: token },
-      select,
-    });
-    if (byToken) return byToken;
-  }
-
-  const byChat = await prisma.business.findFirst({
-    where: { telegramChatId, channel: "TELEGRAM" },
-    select,
-  });
-  if (byChat) return byChat;
-
-  const secret = request.headers.get("x-telegram-bot-api-secret-token");
-  if (secret) {
-    const secretToken = Buffer.from(secret, "base64url").toString("utf8");
-    if (secretToken) {
-      const bySecret = await prisma.business.findFirst({
-        where: {
-          channel: "TELEGRAM",
-          telegramBotToken: secretToken,
-          telegramChatId: null,
-        },
-        select,
-      });
-      if (bySecret) return bySecret;
-    }
-  }
-
-  const pending = await prisma.business.findMany({
-    where: {
-      channel: "TELEGRAM",
-      telegramBotToken: { not: null },
-      telegramChatId: null,
-    },
-    select,
-    take: 2,
-  });
-
-  return pending.length === 1 ? pending[0] : null;
 }
 
 async function sendTelegramMessage(args: {
