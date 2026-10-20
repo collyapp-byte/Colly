@@ -90,6 +90,25 @@ body {
   animation: colly-fade-in 0.3s ease-out both;
 }
 
+/* Slow drifting motion for the blurred gradient blobs behind the marketing
+   hero. Paired with blur-3xl for a soft Linear/Stripe-style glow. */
+@keyframes colly-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(24px, -20px) scale(1.06);
+  }
+  66% {
+    transform: translate(-16px, 16px) scale(0.96);
+  }
+}
+
+.animate-colly-float {
+  animation: colly-float 14s ease-in-out infinite;
+}
+
 /* Subtle dot texture for active nav item — mirrors the scattered dots on the
    Colly logo's cream circle. Two radial gradients at different sizes/opacities
    create a non-grid, organic pattern. */

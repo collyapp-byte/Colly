@@ -183,8 +183,9 @@ export async function POST(request: Request) {
         );
       }
 
-      // "paused" (human takeover) or "ai_disabled" (cap hit / plan expired):
-      // no AI reply is produced.
+      // "paused" (human takeover) or a plan/credit gate (cap_hit /
+      // plan_expired / no_credits): no AI reply is produced, but the customer
+      // message was still saved so the owner can answer manually.
       return Response.json({ reply: null, paused: true });
     }
 

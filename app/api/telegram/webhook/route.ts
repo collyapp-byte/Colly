@@ -82,8 +82,16 @@ export async function POST(request: Request) {
       message: text,
     });
 
-    // cap_hit / ai_disabled / paused: stay silent rather than send noise.
+    // The engine always saves the customer's message first (so the owner can
+    // reply manually from the dashboard). When replied is false the AI is
+    // gated off — human takeover, cap hit, expired plan — so we stay silent
+    // and just acknowledge the update to Telegram.
     if (result.blocked || !result.reply) {
+      if (!result.replied) {
+        console.log(
+          `[telegram webhook] message saved, AI reply skipped (reason: ${result.blocked ? result.reason : "no_reply"})`,
+        );
+      }
       return Response.json({ ok: true });
     }
 

@@ -6,11 +6,11 @@ import {
   BookOpenCheck,
   MessageCircle,
   Send,
-  Sparkles,
   UserRoundCog,
 } from "lucide-react";
 import { TELEGRAM_PLANS } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
+import { Hero } from "@/components/marketing/hero";
 
 export const metadata: Metadata = {
   title: { absolute: "Colly — The AI sales assistant for Telegram" },
@@ -67,39 +67,10 @@ export default function MarketingHomePage() {
 
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-[#FFF4EC] to-background">
-        <div className="mx-auto w-full max-w-5xl px-4 py-20 text-center sm:py-28">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#FF6600]/20 bg-white px-3 py-1 text-[13px] font-medium text-[#FF6600]">
-            <Sparkles className="h-3.5 w-3.5" aria-hidden />
-            Built for Nigerian businesses
-          </span>
-          <h1 className="mx-auto mt-6 max-w-3xl font-display text-3xl leading-tight tracking-tight text-gray-900 sm:text-5xl">
-            Stop losing sales to unanswered Telegram messages.
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-gray-600 sm:text-lg">
-            Colly is the AI sales assistant for Telegram. Connect a bot in 30
-            seconds. Zero SIM cards. 2,000+ messages.
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href="/signup"
-              className="w-full rounded-lg bg-[#FF6600] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#E65C00] sm:w-auto"
-            >
-              Start Free Trial
-            </Link>
-            <Link
-              href="/find-an-agent"
-              className="w-full rounded-lg border border-gray-200 bg-white px-8 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto"
-            >
-              Find an Agent
-            </Link>
-          </div>
-          <p className="mt-4 text-[13px] text-gray-500">
-            No SIM card required to start · Cancel anytime
-          </p>
-        </div>
-      </section>
+      {/* Hero — client component with Framer Motion stagger reveals,
+          smooth-scroll integration via the marketing layout's Lenis, and a
+          floating gradient background. See components/marketing/hero.tsx. */}
+      <Hero />
 
       {/* Channels */}
       <section className="mx-auto w-full max-w-5xl px-4 py-16 sm:py-20">

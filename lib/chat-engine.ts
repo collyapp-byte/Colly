@@ -145,10 +145,17 @@ type StoredNegotiation = NegotiationState & {
 };
 
 export type EngineResult =
-  | { reply: string; blocked: false; paused?: boolean }
-  | { reply: null; blocked: true; reason: "ai_disabled"; paused?: boolean }
-  | { reply: null; blocked: true; reason: "paused"; paused: true }
-  | { reply: null; blocked: true; reason: "no_message" };
+  | { reply: string; blocked: false; saved: true; replied: true; paused?: boolean }
+  | {
+      reply: null;
+      blocked: true;
+      /** True when the customer's inbound message was persisted (the owner can
+       * still see and answer it manually even though the AI is gated off). */
+      saved: boolean;
+      replied: false;
+      reason: "plan_expired" | "cap_hit" | "no_credits" | "paused" | "no_message";
+      paused?: boolean;
+    };
 
 export async function handleIncomingMessage({
   businessId,
@@ -168,7 +175,7 @@ export async function handleIncomingMessage({
 }): Promise<EngineResult> {
   const incoming = message.trim();
   if (!incoming) {
-    return { reply: null, blocked: true, reason: "no_message" };
+    return { reply: null, blocked: true, saved: false, replied: false, reason: "no_message" };
   }
 
   const customer = await prisma.customer.upsert({
@@ -197,13 +204,19 @@ export async function handleIncomingMessage({
     });
   }
 
+  // The inbound message is persisted from here on: even when the AI is gated
+  // off (human takeover, cap hit, expired plan) the owner must still see the
+  // customer's message in the dashboard so they can reply manually.
+
   if (conversation.pausedUntil && conversation.pausedUntil > new Date()) {
-    return { reply: null, blocked: true, reason: "paused", paused: true };
+    return { reply: null, blocked: true, saved: true, replied: false, reason: "paused", paused: true };
   }
 
   const aiCheck = await requireAiEnabled(businessId);
   if (!aiCheck.ok) {
-    return { reply: null, blocked: true, reason: "ai_disabled", paused: false };
+    // Message already saved — the AI just does not reply. The concrete reason
+    // (cap_hit / plan_expired / no_credits) is surfaced to the caller.
+    return { reply: null, blocked: true, saved: true, replied: false, reason: aiCheck.reason };
   }
 
   const business = await prisma.business.findUniqueOrThrow({
@@ -267,7 +280,7 @@ export async function handleIncomingMessage({
 
   await applyAiUsage(businessId);
 
-  return { reply, blocked: false, paused: false };
+  return { reply, blocked: false, saved: true, replied: true, paused: false };
 }
 
 async function applyAiUsage(businessId: string) {

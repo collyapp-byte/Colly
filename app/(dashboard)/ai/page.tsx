@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
+import { getPlanLimits } from "@/lib/plans";
 import Link from "next/link";
 
 export default async function CollyAIPage() {
@@ -13,6 +14,9 @@ export default async function CollyAIPage() {
       creditWalletBalanceNaira: true,
       messagesUsedThisMonth: true,
       manualMessagesUsedThisMonth: true,
+      plan: true,
+      planInterval: true,
+      channel: true,
     },
   });
 
@@ -34,11 +38,19 @@ export default async function CollyAIPage() {
     }),
   ]);
 
-  // Fallback plan limits (simplified display; can be refined later)
-  const includedMsgs = 500;
-  const includedManual = 500;
+  // Plan limits from the same source of truth the billing API uses
+  // (lib/plans.ts). Free plan = 0 included messages; paid tiers carry their
+  // real allowance (e.g. Telegram Green = 2000).
+  const limits = getPlanLimits(
+    business?.plan ?? "free",
+    business?.planInterval ?? "monthly",
+    business?.channel ?? null,
+  );
+  const includedMsgs = limits.includedMsgs;
+  const includedManual = limits.includedManualMessages;
   const aiUsed = business?.messagesUsedThisMonth ?? 0;
   const manualUsed = business?.manualMessagesUsedThisMonth ?? 0;
+  const isFreePlan = includedMsgs === 0 && includedManual === 0;
   const tone = business?.tone === "formal" ? "Formal" : "Friendly";
   const ownerAlertsActive = Boolean(business?.ownerTelegramChatId);
   const telegramConnected = Boolean(business?.telegramBotToken);
@@ -159,14 +171,17 @@ export default async function CollyAIPage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">AI Replies</span>
                 <span className="font-medium text-gray-900">
-                  {aiUsed} / {includedMsgs}
+                  {includedMsgs === 0 ? "0 / 0" : `${aiUsed} / ${includedMsgs}`}
                 </span>
               </div>
               <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
                 <div
                   className="h-2 rounded-full bg-[#FF6600]"
                   style={{
-                    width: `${Math.min(100, (aiUsed / includedMsgs) * 100)}%`,
+                    width:
+                      includedMsgs === 0
+                        ? "0%"
+                        : `${Math.min(100, (aiUsed / includedMsgs) * 100)}%`,
                   }}
                 />
               </div>
@@ -175,18 +190,35 @@ export default async function CollyAIPage() {
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600">Manual Replies</span>
                 <span className="font-medium text-gray-900">
-                  {manualUsed} / {includedManual}
+                  {includedManual === 0
+                    ? "0 / 0"
+                    : `${manualUsed} / ${includedManual}`}
                 </span>
               </div>
               <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
                 <div
                   className="h-2 rounded-full bg-[#FF6600]"
                   style={{
-                    width: `${Math.min(100, (manualUsed / includedManual) * 100)}%`,
+                    width:
+                      includedManual === 0
+                        ? "0%"
+                        : `${Math.min(100, (manualUsed / includedManual) * 100)}%`,
                   }}
                 />
               </div>
             </div>
+            {isFreePlan && (
+              <p className="rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm text-[#C2410C]">
+                You are on the Free plan.{" "}
+                <Link
+                  href="/settings/billing/plans"
+                  className="font-semibold underline underline-offset-2 hover:text-[#9A3412]"
+                >
+                  Upgrade
+                </Link>{" "}
+                to get included messages.
+              </p>
+            )}
             <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
               <span className="text-sm text-gray-600">Wallet Balance</span>
               <span className="font-semibold text-gray-900">

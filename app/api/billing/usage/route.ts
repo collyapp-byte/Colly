@@ -50,6 +50,7 @@ export async function GET() {
     return Response.json({
       aiRepliesUsed,
       aiRepliesLimit,
+      includedAiMessages: aiRepliesLimit,
       manualMessagesUsed: business.manualMessagesUsedThisMonth,
       includedManualMessages,
       creditWalletBalanceNaira: business.creditWalletBalanceNaira,
