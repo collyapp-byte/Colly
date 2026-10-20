@@ -70,6 +70,26 @@ export async function POST(request: Request) {
       return Response.json({ ok: true });
     }
 
+    // Owner-linking command. "/startowner" (or "/linkowner") claims this chat
+    // as the owner's personal alert inbox. Intercepted BEFORE the AI engine so
+    // it never reaches DeepSeek, and never creates a customer conversation.
+    const normalized = text.toLowerCase().replace(/[\s.]/g, "");
+    if (normalized === "/startowner" || normalized === "/linkowner") {
+      console.log("[WEBHOOK] Owner link command received for business", business.id);
+      await prisma.business.update({
+        where: { id: business.id },
+        data: { ownerTelegramChatId: telegramChatId },
+      });
+
+      await sendTelegramMessage({
+        botToken: business.telegramBotToken,
+        chatId: telegramChatId,
+        text: "✅ Success! You will now receive owner alerts for this business.",
+      });
+
+      return Response.json({ ok: true });
+    }
+
     // First message from a freshly connected bot: claim this chat for the
     // business so later updates resolve on the plain chat-id lookup.
     if (!business.telegramChatId) {

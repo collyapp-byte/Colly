@@ -73,16 +73,15 @@ export default function AiLinePage() {
   const [disconnecting, setDisconnecting] = useState(false);
 
   // Owner notifications (personal Telegram alerts).
-  const [ownerChatId, setOwnerChatId] = useState("");
-  const [ownerSaving, setOwnerSaving] = useState(false);
+  const [ownerChecking, setOwnerChecking] = useState(false);
   const [ownerError, setOwnerError] = useState<string | null>(null);
-  const [ownerNotice, setOwnerNotice] = useState<string | null>(null);
+  const [ownerLinked, setOwnerLinked] = useState(false);
 
   const loadBusiness = useCallback(async () => {
     try {
       const data = await fetchBusinessData();
       setBusiness(data);
-      setOwnerChatId(data.ownerTelegramChatId ?? "");
+      setOwnerLinked(Boolean(data.ownerTelegramChatId));
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -95,7 +94,7 @@ export default function AiLinePage() {
       .then((data) => {
         if (!active) return;
         setBusiness(data);
-        setOwnerChatId(data.ownerTelegramChatId ?? "");
+        setOwnerLinked(Boolean(data.ownerTelegramChatId));
       })
       .catch((err) => {
         if (!active) return;
@@ -269,50 +268,26 @@ export default function AiLinePage() {
     await loadBusiness();
   }
 
-  async function handleSaveOwnerAlerts(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleVerifyOwnerAlerts() {
     setOwnerError(null);
-    setOwnerNotice(null);
-    setOwnerSaving(true);
+    setOwnerChecking(true);
 
-    const trimmed = ownerChatId.trim();
-
-    // Only a network failure is caught here, matching postJson: a response
-    // that did arrive is read and reported as-is so the API's message (e.g.
-    // an invalid chat id) is never replaced by a generic one.
-    let res: Response;
     try {
-      res = await fetch("/api/business", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ownerTelegramChatId: trimmed }),
-      });
-    } catch {
-      setOwnerSaving(false);
+      const data = await fetchBusinessData();
+      setBusiness(data);
+      setOwnerLinked(Boolean(data.ownerTelegramChatId));
+      if (!data.ownerTelegramChatId) {
+        setOwnerError(
+          "Not linked yet. Make sure you sent /startowner to your bot.",
+        );
+      }
+    } catch (err) {
       setOwnerError(
-        "Could not reach the server. Check your connection and try again.",
+        err instanceof Error ? err.message : "Something went wrong",
       );
-      return;
+    } finally {
+      setOwnerChecking(false);
     }
-
-    const data = (await res.json().catch(() => null)) as {
-      business?: Business;
-      error?: string;
-    } | null;
-    setOwnerSaving(false);
-
-    if (!res.ok || !data?.business) {
-      setOwnerError(data?.error ?? "Something went wrong. Please try again.");
-      return;
-    }
-
-    setBusiness(data.business);
-    setOwnerChatId(data.business.ownerTelegramChatId ?? "");
-    setOwnerNotice(
-      trimmed
-        ? "Saved. You will get an alert on this chat whenever the AI needs you to step in."
-        : "Saved. Owner alerts are turned off.",
-    );
   }
 
   return (
@@ -401,51 +376,57 @@ export default function AiLinePage() {
               in — for example a waybill question or a custom quote. Alerts go
               to your personal Telegram chat, never to your customer chats.
             </p>
-            <p className="mt-2 text-sm text-gray-500">
-              Message <span className="font-medium text-gray-700">@userinfobot</span>{" "}
-              on Telegram to get your ID, then paste it below. Leave it empty to
-              turn alerts off.
-            </p>
 
-            <form onSubmit={handleSaveOwnerAlerts} className="mt-4 space-y-4">
-              <div>
-                <label
-                  htmlFor="ownerChatId"
-                  className="mb-1 block text-sm font-medium text-gray-700"
-                >
-                  Your Personal Telegram Chat ID
-                </label>
-                <input
-                  id="ownerChatId"
-                  name="ownerChatId"
-                  type="text"
-                  inputMode="numeric"
-                  value={ownerChatId}
-                  onChange={(event) => {
-                    setOwnerChatId(event.target.value);
-                    setOwnerNotice(null);
-                  }}
-                  placeholder="123456789"
-                  autoComplete="off"
-                  className={INPUT_CLASS}
-                />
-              </div>
+            <ol className="mt-3 space-y-2 text-sm text-gray-600">
+              <li className="flex items-start gap-2">
+                <span className="font-semibold text-gray-700">1.</span>
+                <span>
+                  Open your Telegram bot:{" "}
+                  <span className="font-medium text-gray-700">
+                    {business.telegramBotUsername
+                      ? `@${business.telegramBotUsername}`
+                      : "your bot"}
+                  </span>
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-semibold text-gray-700">2.</span>
+                <span>
+                  Send this command:{" "}
+                  <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[13px] text-gray-800">
+                    /startowner
+                  </span>
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-semibold text-gray-700">3.</span>
+                <span>Click Verify below.</span>
+              </li>
+            </ol>
+
+            <div className="mt-4 space-y-3">
+              {ownerLinked && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-[13px] font-medium text-green-700">
+                  <BadgeCheck className="h-4 w-4" aria-hidden />
+                  ✅ Owner Alerts Active
+                </span>
+              )}
 
               {ownerError && (
                 <p role="alert" className="text-sm text-danger">
                   {ownerError}
                 </p>
               )}
-              {ownerNotice && (
-                <p role="status" className="text-sm text-success">
-                  {ownerNotice}
-                </p>
-              )}
 
-              <Button type="submit" variant="primary" loading={ownerSaving}>
-                Save
+              <Button
+                type="button"
+                variant="primary"
+                loading={ownerChecking}
+                onClick={handleVerifyOwnerAlerts}
+              >
+                Verify Connection
               </Button>
-            </form>
+            </div>
           </section>
 
           {/* TELEGRAM CONNECTION */}
