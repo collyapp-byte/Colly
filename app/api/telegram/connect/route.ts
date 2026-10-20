@@ -6,19 +6,24 @@ type TelegramConnectBody = {
 };
 
 /**
- * The webhook URL Telegram must call back: the current request's origin + the
- * shared handler. Derived from the incoming request URL (which reflects the
- * deployed host, e.g. behind a proxy) instead of NEXT_PUBLIC_APP_URL, which is
- * baked at build time and often points at localhost. Reported as null when the
- * request has no public HTTPS origin to register (Telegram rejects localhost,
- * so connecting would only fail at setWebhook with an opaque error).
+ * The webhook URL Telegram must call back: the deployed app origin + the shared
+ * handler. Prefers NEXT_PUBLIC_APP_URL (set it to the live public origin,
+ * e.g. https://colly.com.ng) because behind a reverse proxy `request.url` is
+ * often http://localhost:3000. Falls back to the request's origin only when
+ * the env var is missing. Reported as null when there is no public HTTPS
+ * origin to register (Telegram rejects localhost, so connecting would only
+ * fail at setWebhook with an opaque error).
  */
 function webhookUrl(request: Request): string | null {
-  const origin = new URL(request.url).origin;
+  const envBase = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const base =
+    envBase && envBase.length > 0
+      ? envBase
+      : new URL(request.url).origin;
 
   let url: URL;
   try {
-    url = new URL(`${origin}/api/telegram/webhook`);
+    url = new URL(`${base.replace(/\/+$/, "")}/api/telegram/webhook`);
   } catch {
     return null;
   }
