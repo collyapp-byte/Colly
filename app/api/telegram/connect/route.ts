@@ -120,6 +120,9 @@ export async function POST(request: Request) {
             url: `${hookUrl}?token=${encodeURIComponent(botToken)}`,
             secret_token: Buffer.from(botToken, "utf8").toString("base64url"),
             allowed_updates: ["message"],
+            // Clear updates queued while the webhook was misconfigured so the
+            // bot does not immediately replay a backlog of stale messages.
+            drop_pending_updates: true,
           }),
           signal: AbortSignal.timeout(10_000),
           cache: "no-store",

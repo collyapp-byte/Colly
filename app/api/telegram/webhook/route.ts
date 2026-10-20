@@ -25,6 +25,11 @@ type TelegramUpdate = {
 export async function POST(request: Request) {
   try {
     const update = (await request.json()) as TelegramUpdate;
+    console.log(
+      "[WEBHOOK HIT] Received Telegram update:",
+      JSON.stringify(update, null, 2),
+    );
+
     const chatIdRaw = update.message?.chat?.id;
     const text = update.message?.text;
 
@@ -96,7 +101,7 @@ export async function POST(request: Request) {
           text: result.reply,
         });
       } catch (error) {
-        console.error("[telegram webhook] background processing failed:", error);
+        console.error("[WEBHOOK ERROR] Failed to process message:", error);
       }
     });
 

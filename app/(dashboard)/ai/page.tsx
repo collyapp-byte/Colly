@@ -1,9 +1,16 @@
+import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { getPlanLimits } from "@/lib/plans";
 import Link from "next/link";
 
 export default async function CollyAIPage() {
+  // Opt this page out of the static prerender. The transaction list below
+  // formats timestamps with `new Date(...)`, which Next reads as the unstable
+  // `Date.now()` value while prerendering and crashes the route. `connection()`
+  // forces a dynamic render on every request instead.
+  await connection();
+
   const user = await requireAuth();
   const business = await prisma.business.findUnique({
     where: { id: user.businessId },
