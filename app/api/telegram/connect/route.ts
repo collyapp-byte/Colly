@@ -172,3 +172,33 @@ export async function POST(request: Request) {
     );
   }
 }
+
+// DELETE /api/telegram/connect
+// Disconnect the owner's Telegram bot: clear the stored token/username and
+// flip the business back to DISCONNECTED so the AI Line page shows the
+// connect form again.
+export async function DELETE() {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return Response.json({ error: "Not signed in" }, { status: 401 });
+    }
+
+    await prisma.business.update({
+      where: { id: user.businessId },
+      data: {
+        telegramBotToken: null,
+        telegramBotUsername: null,
+        connectionStatus: "DISCONNECTED",
+      },
+    });
+
+    return Response.json({ ok: true });
+  } catch (error) {
+    console.error("[DELETE /api/telegram/connect]", error);
+    return Response.json(
+      { error: "Could not disconnect your bot. Please try again." },
+      { status: 500 },
+    );
+  }
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -35,7 +35,27 @@ const TELEGRAM_STEPS = [
   "3. Paste the API Token below.",
 ];
 
-type ConnectResponse = { ok?: boolean; error?: string };
+type ConnectResponse = {
+  ok?: boolean;
+  error?: string;
+  botUsername?: string | null;
+};
+
+/** Fetches the signed-in owner's business profile (throws on failure). */
+async function fetchBusinessData(): Promise<Business> {
+  const res = await fetch("/api/business");
+  if (res.status === 401) {
+    throw new Error("You need to sign in to view your AI line.");
+  }
+  if (!res.ok) {
+    throw new Error(`Request failed with status ${res.status}`);
+  }
+  const data: { business?: Business } = await res.json();
+  if (!data.business) {
+    throw new Error("Business not found");
+  }
+  return data.business;
+}
 
 export default function AiLinePage() {
   const [business, setBusiness] = useState<Business | null>(null);
@@ -50,6 +70,7 @@ export default function AiLinePage() {
   // Connected-bot share UI.
   const [copied, setCopied] = useState(false);
   const [qrSvg, setQrSvg] = useState<string | null>(null);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   // Owner notifications (personal Telegram alerts).
   const [ownerChatId, setOwnerChatId] = useState("");
@@ -57,39 +78,35 @@ export default function AiLinePage() {
   const [ownerError, setOwnerError] = useState<string | null>(null);
   const [ownerNotice, setOwnerNotice] = useState<string | null>(null);
 
+  const loadBusiness = useCallback(async () => {
+    try {
+      const data = await fetchBusinessData();
+      setBusiness(data);
+      setOwnerChatId(data.ownerTelegramChatId ?? "");
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    }
+  }, []);
+
   useEffect(() => {
     let active = true;
-
-    async function load() {
-      try {
-        const res = await fetch("/api/business");
-        if (res.status === 401) {
-          throw new Error("You need to sign in to view your AI line.");
-        }
-        if (!res.ok) {
-          throw new Error(`Request failed with status ${res.status}`);
-        }
-        const data: { business?: Business } = await res.json();
-        if (active && data.business) {
-          setBusiness(data.business);
-          setOwnerChatId(data.business.ownerTelegramChatId ?? "");
-        }
-      } catch (err) {
-        if (active) {
-          setError(err instanceof Error ? err.message : "Something went wrong");
-        }
-      }
-    }
-
-    load();
+    fetchBusinessData()
+      .then((data) => {
+        if (!active) return;
+        setBusiness(data);
+        setOwnerChatId(data.ownerTelegramChatId ?? "");
+      })
+      .catch((err) => {
+        if (!active) return;
+        setError(err instanceof Error ? err.message : "Something went wrong");
+      });
     return () => {
       active = false;
     };
   }, []);
 
   const loading = business === null && error === null;
-  const connectionStatus = business?.connectionStatus ?? "DISCONNECTED";
-  const connected = connectionStatus === "CONNECTED";
 
   // Per-channel connection state. Telegram is the only live channel; WhatsApp
   // is postponed until Meta verification clears.
@@ -104,7 +121,7 @@ export default function AiLinePage() {
   // same one the agent certificate uses). Generated in the browser after
   // connect; a stale or failed render just leaves the plain link visible.
   useEffect(() => {
-    if (!shareLink || !connected) return;
+    if (!shareLink || !telegramIsConnected) return;
 
     let active = true;
     import("qrcode")
@@ -121,7 +138,7 @@ export default function AiLinePage() {
     return () => {
       active = false;
     };
-  }, [shareLink, connected]);
+  }, [shareLink, telegramIsConnected]);
 
   async function handleCopyLink() {
     if (!shareLink) return;
@@ -151,27 +168,37 @@ export default function AiLinePage() {
     }
   }
 
-  async function postJson(url: string, payload: unknown): Promise<string | null> {
-    // Returns an error message, or null on success. Only the network failure is
-    // caught here: a response that did arrive is read and reported as-is, so
-    // the API's own message (e.g. an invalid bot token) is never replaced by
-    // "could not reach the server".
+  async function postJson(
+    url: string,
+    payload: unknown,
+    method: "POST" | "DELETE" = "POST",
+  ): Promise<{ failure: string | null; data: ConnectResponse | null }> {
+    // Returns an error message (or null on success) plus the parsed body. Only
+    // the network failure is caught here: a response that did arrive is read
+    // and reported as-is, so the API's own message (e.g. an invalid bot token)
+    // is never replaced by "could not reach the server".
     let res: Response;
     try {
       res = await fetch(url, {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: method === "POST" ? JSON.stringify(payload) : undefined,
       });
     } catch {
-      return "Could not reach the server. Check your connection and try again.";
+      return {
+        failure: "Could not reach the server. Check your connection and try again.",
+        data: null,
+      };
     }
 
     const data = (await res.json().catch(() => null)) as ConnectResponse | null;
     if (!res.ok || !data?.ok) {
-      return data?.error ?? "Something went wrong. Please try again.";
+      return {
+        failure: data?.error ?? "Something went wrong. Please try again.",
+        data,
+      };
     }
-    return null;
+    return { failure: null, data };
   }
 
   async function handleTelegramConnect(event: FormEvent<HTMLFormElement>) {
@@ -180,7 +207,9 @@ export default function AiLinePage() {
     setNotice(null);
     setSubmitting(true);
 
-    const failure = await postJson("/api/telegram/connect", { botToken });
+    const { failure, data } = await postJson("/api/telegram/connect", {
+      botToken,
+    });
 
     setSubmitting(false);
     if (failure) {
@@ -191,9 +220,53 @@ export default function AiLinePage() {
     setNotice(
       "Bot connected. New messages to your bot are now answered by your AI assistant.",
     );
+    // Optimistically flip the card to the connected state, then refetch so the
+    // stored token/username (not just the status) drive the UI.
     setBusiness((prev) =>
-      prev ? { ...prev, connectionStatus: "CONNECTED" } : prev,
+      prev
+        ? {
+            ...prev,
+            connectionStatus: "CONNECTED",
+            telegramBotToken: botToken,
+            telegramBotUsername: data?.botUsername ?? prev.telegramBotUsername,
+          }
+        : prev,
     );
+    await loadBusiness();
+  }
+
+  async function handleTelegramDisconnect() {
+    if (
+      !window.confirm(
+        "Disconnect your Telegram bot? Customers will no longer get AI replies until you reconnect.",
+      )
+    ) {
+      return;
+    }
+    setDisconnecting(true);
+    const { failure } = await postJson(
+      "/api/telegram/connect",
+      {},
+      "DELETE",
+    );
+    setDisconnecting(false);
+    if (failure) {
+      setFormError(failure);
+      return;
+    }
+    setNotice(null);
+    setQrSvg(null);
+    setBusiness((prev) =>
+      prev
+        ? {
+            ...prev,
+            connectionStatus: "DISCONNECTED",
+            telegramBotToken: null,
+            telegramBotUsername: null,
+          }
+        : prev,
+    );
+    await loadBusiness();
   }
 
   async function handleSaveOwnerAlerts(event: FormEvent<HTMLFormElement>) {
@@ -390,20 +463,46 @@ export default function AiLinePage() {
                     aria-hidden
                   />
                   <h3 className="font-display text-base font-semibold text-green-800">
-                    Your Telegram Bot is Live!
+                    ✅ Telegram Bot Connected
                   </h3>
                 </div>
 
+                {business.telegramBotUsername && (
+                  <p className="mt-2 text-sm font-medium text-green-800">
+                    @{business.telegramBotUsername}
+                  </p>
+                )}
+
                 {shareLink ? (
                   <>
-                    <a
-                      href={shareLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 block break-all font-display text-xl font-bold text-gray-900 underline decoration-green-300 underline-offset-4 transition-colors hover:text-green-800"
-                    >
-                      {shareLink}
-                    </a>
+                    <div className="mt-3 flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={shareLink}
+                        aria-label="Your bot link"
+                        onFocus={(event) => event.target.select()}
+                        className={`${INPUT_CLASS} bg-white`}
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleCopyLink}
+                      >
+                        <Copy className="h-3.5 w-3.5" aria-hidden />
+                        {copied ? "Copied!" : "Copy Link"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleShareLink}
+                      >
+                        <Share2 className="h-3.5 w-3.5" aria-hidden />
+                        Share
+                      </Button>
+                    </div>
 
                     <div className="mt-4 flex flex-wrap items-start gap-4">
                       {qrSvg && (
@@ -415,29 +514,10 @@ export default function AiLinePage() {
                       )}
 
                       <div className="min-w-0">
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={handleCopyLink}
-                          >
-                            <Copy className="h-3.5 w-3.5" aria-hidden />
-                            {copied ? "Copied!" : "Copy Link"}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={handleShareLink}
-                          >
-                            <Share2 className="h-3.5 w-3.5" aria-hidden />
-                            Share
-                          </Button>
-                        </div>
-                        <p className="mt-3 text-sm text-green-800">
+                        <p className="text-sm text-green-800">
                           Share this link on Instagram, WhatsApp Status, and
-                          business cards.
+                          business cards. Print the QR code and paste it in
+                          your shop so customers can scan and chat.
                         </p>
                       </div>
                     </div>
@@ -448,6 +528,25 @@ export default function AiLinePage() {
                     your dashboard.
                   </p>
                 )}
+
+                {formError && (
+                  <p role="alert" className="mt-3 text-sm text-danger">
+                    {formError}
+                  </p>
+                )}
+
+                <div className="mt-5 border-t border-green-100 pt-3">
+                  <button
+                    type="button"
+                    onClick={handleTelegramDisconnect}
+                    disabled={disconnecting}
+                    className="text-xs font-medium text-danger underline-offset-2 transition-colors hover:underline disabled:opacity-50"
+                  >
+                    {disconnecting
+                      ? "Disconnecting…"
+                      : "Disconnect Bot"}
+                  </button>
+                </div>
               </div>
             ) : (
               <>
