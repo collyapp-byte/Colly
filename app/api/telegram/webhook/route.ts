@@ -47,6 +47,25 @@ export async function POST(request: Request) {
 
     const token = new URL(request.url).searchParams.get("token");
     console.log("[WEBHOOK] Resolving business for token:", token);
+    console.log(
+      `[DIAGNOSTIC] Incoming token: "${token}" | Length: ${token?.length}`,
+    );
+
+    const allBusinesses = await prisma.business.findMany({
+      select: { id: true, name: true, telegramBotToken: true },
+    });
+    allBusinesses.forEach((b) => {
+      console.log(
+        `[DIAGNOSTIC] DB Business: "${b.name}" | Token: "${b.telegramBotToken}" | Length: ${b.telegramBotToken?.length}`,
+      );
+    });
+
+    const diagnosticMatch = await prisma.business.findFirst({
+      where: { telegramBotToken: token },
+    });
+    console.log(
+      `[DIAGNOSTIC] Match found: ${diagnosticMatch ? diagnosticMatch.id : "NULL"}`,
+    );
 
     const business = await resolveBusiness(request, telegramChatId);
     if (!business) {
