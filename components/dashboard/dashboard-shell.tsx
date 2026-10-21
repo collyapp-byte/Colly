@@ -42,7 +42,7 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
   }, []);
 
   return (
-    <div className="min-h-screen bg-(--background-page)">
+    <div className="min-h-screen bg-[#f8fafc] bg-radial-[ellipse_at_top] from-orange-100/40 via-gray-50 to-blue-100/20">
       {/* Mobile drawer */}
       {mobileNavOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
@@ -52,7 +52,7 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
             onClick={() => setMobileNavOpen(false)}
             className="absolute inset-0 h-full w-full cursor-default bg-black/40"
           />
-          <div className="absolute inset-y-0 left-0 w-[260px] bg-(--card-surface)">
+          <div className="absolute inset-y-0 left-0 w-[260px] bg-transparent">
             <Sidebar onClose={() => setMobileNavOpen(false)} />
           </div>
         </div>
@@ -66,8 +66,8 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
 
         {/* Right column */}
         <div className="flex min-w-0 flex-1 flex-col px-0 md:px-4 md:pt-4 md:pb-4 md:min-h-0">
-          {/* Top bar - on cream, no card */}
-          <header className="sticky top-0 z-20 flex h-14 items-center justify-between bg-(--background-page)">
+          {/* Top bar - glass, floats over the tinted page background */}
+          <header className="sticky top-0 z-20 flex h-14 items-center justify-between bg-white/40 backdrop-blur-md">
             <div className="flex items-center gap-3 px-3 md:px-0">
               <button
                 type="button"
@@ -98,8 +98,8 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
             </div>
           </header>
 
-          {/* Content card - white, rounded, below the top bar */}
-          <main className="flex-1 rounded-none bg-(--card-surface) shadow-none md:mt-3 md:rounded-(--card-radius) md:shadow-(--card-shadow) md:overflow-auto md:min-h-0">
+          {/* Content card - frosted glass, rounded, below the top bar */}
+          <main className="flex-1 rounded-none bg-white/60 backdrop-blur-md shadow-none md:mt-3 md:rounded-(--card-radius) md:shadow-(--card-shadow) md:overflow-auto md:min-h-0">
             <div className="w-full p-4 md:p-6">{children}</div>
           </main>
         </div>

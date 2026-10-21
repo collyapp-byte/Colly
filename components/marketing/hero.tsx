@@ -24,7 +24,7 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative mx-auto grid w-full max-w-5xl items-center gap-12 px-4 py-20 sm:py-28 lg:grid-cols-2">
+      <div className="relative mx-auto grid w-full max-w-5xl items-center gap-12 px-4 pt-32 pb-20 sm:pt-40 sm:pb-28 lg:grid-cols-2">
         <AnimatedSection className="text-center lg:text-left">
           <AnimatedItem>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[#FF6600]/20 bg-white px-3 py-1 text-[13px] font-medium text-[#FF6600]">

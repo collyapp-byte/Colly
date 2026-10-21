@@ -160,7 +160,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
   }, [switcherOpen]);
 
   return (
-    <div className="flex h-full w-[240px] flex-col border-r border-transparent bg-transparent">
+    <div className="flex h-full w-[240px] flex-col bg-white/60 backdrop-blur-md border-r border-white/40 shadow-sm">
       {/* Business switcher */}
       <div
         ref={switcherRef}
@@ -190,7 +190,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         {switcherOpen && (
           <div
             role="menu"
-            className="absolute left-2 right-2 top-[calc(100%+4px)] z-50 rounded-xl border border-gray-200 bg-white py-1.5 shadow-lg"
+            className="absolute left-2 right-2 top-[calc(100%+4px)] z-50 rounded-xl border border-white/50 bg-white/80 py-1.5 shadow-lg backdrop-blur-lg"
           >
             {/* Header */}
             <div className="mx-1.5 mb-1 border-b border-gray-100 px-3 pb-2">

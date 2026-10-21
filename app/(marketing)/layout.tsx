@@ -1,9 +1,7 @@
 import Script from "next/script";
-import Image from "next/image";
-import Link from "next/link";
 import { Footer } from "@/components/ui/footer"; 
 import { SmoothScroll } from "@/components/ui/smooth-scroll";
-import { NavbarAuthActions } from "@/components/marketing/navbar-auth-actions";
+import { MarketingHeader } from "@/components/marketing/marketing-header";
 
 export const metadata = {
   title: "Colly | AI Sales Assistant for Nigerian Businesses",
@@ -40,26 +38,8 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       )}
       
       <SmoothScroll>
-        <div className="flex min-h-screen flex-col">
-          <header className="sticky top-0 z-50 flex w-full items-center justify-between border-b border-gray-100 bg-white/80 px-4 py-4 backdrop-blur-md sm:px-8">
-            <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4">
-              <Link href="/" className="flex items-center gap-2">
-                <Image src="/logo.svg" alt="Colly" width={30} height={30} priority />
-                <span className="font-display text-lg tracking-tight text-gray-900">
-                  Colly
-                </span>
-              </Link>
-              <nav className="flex items-center gap-5">
-                <Link
-                  href="/find-an-agent"
-                  className="hidden text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 sm:block"
-                >
-                  Find an Agent
-                </Link>
-                <NavbarAuthActions />
-              </nav>
-            </div>
-          </header>
+        <div className="flex min-h-screen flex-col bg-[#f8fafc] bg-radial-[ellipse_at_top] from-orange-100/40 via-gray-50 to-blue-100/20 pt-20">
+          <MarketingHeader />
 
           <main className="flex-1">{children}</main>
           <Footer />

@@ -1,4 +1,6 @@
 import { AudioLines, Banknote, ShieldAlert, Sparkles } from "lucide-react";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { TiltCard } from "@/components/ui/tilt-card";
 
 export function Features() {
   const features = [
@@ -25,21 +27,25 @@ export function Features() {
   ];
 
   return (
-    <section className="bg-[#f5f5f5] py-20 sm:py-28">
+    <section className="bg-[#f5f5f5]/60 py-20 sm:py-28">
       <div className="mx-auto max-w-5xl px-4">
-        <div className="text-center mb-16">
+        <ScrollReveal className="text-center mb-16">
           <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">Built for the Nigerian market</h2>
           <p className="mt-4 text-gray-600 max-w-2xl mx-auto">Not a generic chatbot. A sales assistant that understands how we talk.</p>
-        </div>
+        </ScrollReveal>
         <div className="grid gap-6 sm:grid-cols-2">
           {features.map((f, i) => (
-            <div key={i} className="flex items-start gap-4 rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-md">
-              <div className="mt-1 shrink-0 rounded-lg bg-[#FFF4EC] p-2">{f.icon}</div>
-              <div>
-                <h3 className="font-semibold text-gray-900">{f.title}</h3>
-                <p className="mt-2 text-sm text-gray-600 leading-relaxed">{f.desc}</p>
-              </div>
-            </div>
+            <ScrollReveal key={i} delay={0.1 * i}>
+              <TiltCard className="border border-white/50 bg-white/60 backdrop-blur-md shadow-sm">
+                <div className="flex items-start gap-4 p-6">
+                  <div className="mt-1 shrink-0 rounded-lg bg-[#FFF4EC] p-2">{f.icon}</div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{f.title}</h3>
+                    <p className="mt-2 text-sm text-gray-600 leading-relaxed">{f.desc}</p>
+                  </div>
+                </div>
+              </TiltCard>
+            </ScrollReveal>
           ))}
         </div>
       </div>

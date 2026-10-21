@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { TiltCard } from "@/components/ui/tilt-card";
 
 export function Pricing() {
   const plans = [
@@ -42,7 +43,7 @@ export function Pricing() {
   ];
 
   return (
-    <section id="pricing" className="bg-white py-20 sm:py-28">
+    <section id="pricing" className="bg-white/60 py-20 sm:py-28">
       <div className="mx-auto max-w-5xl px-4">
         <div className="text-center mb-16">
           <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">Simple pricing. No hidden fees.</h2>
@@ -50,9 +51,9 @@ export function Pricing() {
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
-            <div key={plan.name} className={`relative flex flex-col rounded-2xl border p-6 ${plan.highlight ? 'border-[#FF6600] shadow-lg' : 'border-gray-200 shadow-sm'}`}>
+            <TiltCard key={plan.name} className={`flex flex-col p-6 ${plan.highlight ? 'border border-[#FF6600] bg-white shadow-lg' : 'border border-white/50 bg-white/60 backdrop-blur-md shadow-lg'}`}>
               {plan.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#FF6600] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">Most Popular</div>
+                <div className="absolute -top-3 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#FF6600] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">Most Popular</div>
               )}
               <div className="mb-4">
                 <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
@@ -75,7 +76,7 @@ export function Pricing() {
               >
                 {plan.cta}
               </Link>
-            </div>
+            </TiltCard>
           ))}
         </div>
       </div>
