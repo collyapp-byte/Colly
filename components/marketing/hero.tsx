@@ -20,7 +20,7 @@ export function Hero() {
       {/* Photo background sitting behind the fixed header and the hero copy. */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/hero-bg-orange.jpg"
+          src="/hero.jpg"
           alt="Hero Background"
           fill
           className="object-cover object-center opacity-30"
