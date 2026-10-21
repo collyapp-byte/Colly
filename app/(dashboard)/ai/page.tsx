@@ -156,7 +156,10 @@ export default async function CollyAIPage() {
                 </Link>
               </div>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 opacity-70">
+            <div
+              aria-disabled="true"
+              className="flex cursor-not-allowed flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 opacity-70"
+            >
               <div>
                 <p className="text-sm font-medium text-gray-500">WhatsApp</p>
                 <p className="text-xs text-gray-400">Customer-facing AI line</p>
