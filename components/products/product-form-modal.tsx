@@ -10,6 +10,7 @@ import {
 import { LoaderCircle, Minus, Plus, Upload, X, Mic, AlertCircle } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { deleteProductImage, uploadProductImage } from "@/lib/supabase/storage";
 import type { Product, ProductInput } from "@/lib/products";
 
@@ -389,9 +390,13 @@ export function ProductFormModal({
         description: description.trim(),
         images,
       });
+      toast.success(
+        mode === "create" ? "Product added!" : "Product updated!",
+      );
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
+      toast.error("Something went wrong. Please try again.");
       setSaving(false);
     }
   }
@@ -410,7 +415,7 @@ export function ProductFormModal({
           >
             Cancel
           </button>
-          <Button form="product-form" type="submit" variant="primary" loading={saving} className="flex-1 sm:flex-none">
+            <Button form="product-form" type="submit" variant="primary" isLoading={saving} className="flex-1 sm:flex-none">
             {mode === "create" ? "Save Product" : "Save Changes"}
           </Button>
         </div>

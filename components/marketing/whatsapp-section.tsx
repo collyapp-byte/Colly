@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { MessageCircle } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 export function WhatsAppSection() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -24,8 +26,10 @@ export function WhatsAppSection() {
       if (!res.ok) throw new Error("Failed");
       setStatus("success");
       (e.target as HTMLFormElement).reset();
+      toast.success("You're on the WhatsApp waitlist! We will message you soon.");
     } catch {
       setStatus("error");
+      toast.error("Could not join waitlist. Please try again.");
     }
   }
 
@@ -59,13 +63,13 @@ export function WhatsAppSection() {
               placeholder="Email (optional)"
               className="w-full rounded-lg bg-white/10 px-4 py-3 text-white placeholder-blue-200 outline-none ring-2 ring-transparent focus:ring-white/30 transition-all"
             />
-            <button
+            <Button
               type="submit"
-              disabled={status === "loading"}
-              className="rounded-lg bg-[#FF6600] px-6 py-3 font-semibold text-white transition-all hover:bg-[#E65C00] active:scale-95 disabled:opacity-50 whitespace-nowrap"
+              isLoading={status === "loading"}
+              className="w-full sm:w-auto bg-[#FF6600]"
             >
               {status === "loading" ? "Joining..." : "Join Waitlist"}
-            </button>
+            </Button>
           </form>
         )}
         {status === "error" && <p className="mt-4 text-red-300 text-sm">Something went wrong. Please try again.</p>}

@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SplashScreen } from "@/components/ui/splash-screen";
 import { TopLoader } from "@/components/ui/top-loader";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
@@ -29,6 +30,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </Suspense>
         <SplashScreen />
         {children}
+        <Toaster
+          position="bottom-right"
+          richColors
+          expand={true}
+          closeButton
+          duration={4000}
+        />
       </body>
     </html>
   );

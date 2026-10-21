@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { toast } from "sonner";
 import { formatNaira } from "@/lib/format";
 import type { Product } from "@/lib/products";
 
@@ -155,9 +156,11 @@ export function SaleFormModal({
 
     try {
       await onSubmit({ customerId, productId, quantity: quantityValue, status });
+      toast.success(editing ? "Sale updated!" : "Sale recorded!");
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
+      toast.error("Something went wrong. Please try again.");
       setSaving(false);
     }
   }
@@ -309,7 +312,7 @@ export function SaleFormModal({
           >
             Cancel
           </button>
-          <Button type="submit" variant="primary" loading={saving}>
+            <Button type="submit" variant="primary" isLoading={saving}>
             {editing ? "Save Changes" : "Record Sale"}
           </Button>
         </div>

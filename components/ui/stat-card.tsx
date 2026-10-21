@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 
 interface StatCardProps {
   label: string;
-  value: string | number;
+  value: string | number | ReactNode;
   icon?: ReactNode;
   href?: string;
   onClick?: () => void;

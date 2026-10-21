@@ -14,6 +14,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import type { Business } from "@/lib/business";
 
 const SECTION_CLASS = "rounded-lg border border-gray-200 bg-surface p-5 sm:p-6";
@@ -213,12 +214,14 @@ export default function AiLinePage() {
     setSubmitting(false);
     if (failure) {
       setFormError(failure);
+      toast.error(failure);
       return;
     }
     setBotToken("");
     setNotice(
       "Bot connected. New messages to your bot are now answered by your AI assistant.",
     );
+    toast.success("Telegram bot connected! Your AI assistant is now live.");
     // Optimistically flip the card to the connected state, then refetch so the
     // stored token/username (not just the status) drive the UI.
     setBusiness((prev) =>
@@ -251,10 +254,12 @@ export default function AiLinePage() {
     setDisconnecting(false);
     if (failure) {
       setFormError(failure);
+      toast.error(failure);
       return;
     }
     setNotice(null);
     setQrSvg(null);
+    toast.success("Telegram bot disconnected.");
     setBusiness((prev) =>
       prev
         ? {
@@ -280,11 +285,15 @@ export default function AiLinePage() {
         setOwnerError(
           "Not linked yet. Make sure you sent /startowner to your bot.",
         );
+        toast.error("Not linked yet. Send /startowner to your bot, then retry.");
+        return;
       }
+      toast.success("Owner alerts verified! You will get alerts in Telegram.");
     } catch (err) {
-      setOwnerError(
-        err instanceof Error ? err.message : "Something went wrong",
-      );
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
+      setOwnerError(message);
+      toast.error(message);
     } finally {
       setOwnerChecking(false);
     }
@@ -421,7 +430,7 @@ export default function AiLinePage() {
               <Button
                 type="button"
                 variant="primary"
-                loading={ownerChecking}
+                isLoading={ownerChecking}
                 onClick={handleVerifyOwnerAlerts}
               >
                 Verify Connection
@@ -580,7 +589,7 @@ export default function AiLinePage() {
                   <Button
                     type="submit"
                     variant="primary"
-                    loading={submitting}
+                    isLoading={submitting}
                   >
                     Connect Bot
                   </Button>

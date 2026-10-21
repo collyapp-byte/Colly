@@ -14,6 +14,7 @@ import {
 import { formatNaira } from "@/lib/format";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card } from "@/components/ui/card";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 
 type Stat = {
   label: string;
@@ -128,7 +129,27 @@ export default function OverviewPage() {
             <StatCard
               key={stat.label}
               label={stat.label}
-              value={stat.value}
+              value={
+                stat.label === "Today's Sales"
+                  ? (
+                      <AnimatedCounter
+                        value={today?.total ?? 0}
+                        prefix="₦"
+                      />
+                    )
+                  : (
+                      <AnimatedCounter
+                        value={
+                          stat.label === "Messages Handled" ||
+                          stat.label === "Active Conversations"
+                            ? 0
+                            : stat.label === "Pending Invoices"
+                              ? pendingInvoices ?? 0
+                              : 0
+                        }
+                      />
+                    )
+              }
               icon={<Icon className="h-[18px] w-[18px] stroke-[1.5]" aria-hidden />}
               href={stat.href}
             />

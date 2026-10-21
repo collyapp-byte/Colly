@@ -6,6 +6,7 @@ import { ArrowRight, CircleAlert, Info } from "lucide-react";
 import { formatNaira } from "@/lib/format";
 import { getCreditPackage, getCreditPrice } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type Usage = {
   aiRepliesUsed: number;
@@ -157,9 +158,12 @@ export default function BillingPage() {
         const body = await res.json().catch(() => null);
         throw new Error(body?.error ?? "Failed to cancel subscription");
       }
-      window.location.reload();
+      toast.success("Subscription cancelled. You keep access until renewal.");
+      // Give the toast a moment to be seen before the page refreshes.
+      window.setTimeout(() => window.location.reload(), 1200);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
+      toast.error("Something went wrong. Please try again.");
       setCancelling(false);
     }
   }
@@ -264,7 +268,7 @@ export default function BillingPage() {
                     type="button"
                     variant="danger"
                     size="sm"
-                    loading={cancelling}
+                    isLoading={cancelling}
                     onClick={handleCancel}
                   >
                     Cancel subscription (keeps access until renewal)

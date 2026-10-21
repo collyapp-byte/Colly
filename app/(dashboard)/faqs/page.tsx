@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { CircleAlert, LoaderCircle, Pencil, Plus, Trash } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type Faq = {
   id: string;
@@ -119,6 +120,7 @@ export default function FaqsPage() {
       throw new Error(body?.error ?? "Failed to create FAQ");
     }
 
+    toast.success("FAQ added!");
     refresh();
   }
 
@@ -134,6 +136,7 @@ export default function FaqsPage() {
       throw new Error(body?.error ?? "Failed to update FAQ");
     }
 
+    toast.success("FAQ updated!");
     refresh();
   }
 
@@ -150,9 +153,11 @@ export default function FaqsPage() {
       }
 
       setModal({ kind: "closed" });
+      toast.success("FAQ deleted!");
       refresh();
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Something went wrong");
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -382,6 +387,7 @@ function FaqFormModal({ mode, faq, onClose, onSubmit }: FaqFormModalProps) {
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
+      toast.error("Something went wrong. Please try again.");
       setSaving(false);
     }
   }
@@ -445,7 +451,7 @@ function FaqFormModal({ mode, faq, onClose, onSubmit }: FaqFormModalProps) {
           >
             Cancel
           </button>
-          <Button type="submit" variant="primary" loading={saving}>
+            <Button type="submit" variant="primary" isLoading={saving}>
             {mode === "create" ? "Save FAQ" : "Save Changes"}
           </Button>
         </div>
