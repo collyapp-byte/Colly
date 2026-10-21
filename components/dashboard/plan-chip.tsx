@@ -76,7 +76,7 @@ export function PlanChip() {
     <div className="flex items-center gap-2">
       <Link
         href="/settings/billing"
-        className={`inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors hover:opacity-80 ${classes}`}
+        className={`inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors hover:opacity-80 ${classes}`}
       >
         {label}
       </Link>
@@ -85,7 +85,7 @@ export function PlanChip() {
         <Link
           href="/settings/billing"
           title={`${formatNaira(balance)} in your credit wallet`}
-          className={`inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors hover:opacity-80 ${walletClasses}`}
+          className={`inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors hover:opacity-80 ${walletClasses}`}
         >
           <span className="hidden sm:inline">
             {formatNaira(balance)} credits

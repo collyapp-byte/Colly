@@ -42,7 +42,7 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] bg-radial-[ellipse_at_top] from-orange-100/40 via-gray-50 to-blue-100/20">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#f8fafc] bg-radial-[ellipse_at_top] from-orange-100/40 via-gray-50 to-blue-100/20">
       {/* Mobile drawer */}
       {mobileNavOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
@@ -58,17 +58,18 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
         </div>
       )}
 
-      <div className="flex min-h-screen md:h-screen md:overflow-hidden">
+      <div className="flex min-h-screen w-full max-w-full overflow-x-hidden md:h-screen md:overflow-hidden">
         {/* Desktop sidebar */}
         <aside className="hidden w-64 shrink-0 flex-col md:flex">
           <Sidebar />
         </aside>
 
         {/* Right column */}
-        <div className="flex min-w-0 flex-1 flex-col px-0 md:px-4 md:pt-4 md:pb-4 md:min-h-0">
-          {/* Top bar - glass, floats over the tinted page background */}
-          <header className="sticky top-0 z-20 flex h-14 items-center justify-between bg-white/40 backdrop-blur-md">
-            <div className="flex items-center gap-3 px-3 md:px-0">
+        <div className="flex w-full min-w-0 flex-1 flex-col overflow-x-hidden px-0 md:px-4 md:pt-4 md:pb-4 md:min-h-0">
+          {/* Top bar - glass, floats over the tinted page background. It scrolls
+              horizontally on narrow screens so the bar never widens the page. */}
+          <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 overflow-x-auto bg-white/40 backdrop-blur-md no-scrollbar">
+            <div className="flex shrink-0 items-center gap-3 px-3 md:px-0">
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
@@ -77,16 +78,16 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
               >
                 <PanelLeft className="h-[18px] w-[18px]" />
               </button>
-              <span className="max-w-[40vw] truncate text-[13px] font-medium text-gray-500 md:max-w-none">
+              <span className="max-w-[40vw] truncate text-[13px] font-medium whitespace-nowrap text-gray-500 md:max-w-none">
                 {label}
               </span>
               {aiLineConnected === false && (
-                <span className="rounded-full bg-[#FFF4EC] px-2 py-0.5 text-[11px] font-semibold tracking-wide text-[#FF6600]">
+                <span className="hidden rounded-full bg-[#FFF4EC] px-2 py-0.5 text-[11px] font-semibold tracking-wide whitespace-nowrap text-[#FF6600] sm:inline-block">
                   Setup Pending
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-3 px-3 md:px-0">
+            <div className="flex shrink-0 items-center gap-3 px-3 md:px-0">
               <PlanChip />
               <Link
                 href="/settings"

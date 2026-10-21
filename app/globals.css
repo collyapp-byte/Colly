@@ -249,3 +249,14 @@ a[role="button"]:active {
 button:active:not(:disabled) {
   transform: scale(0.98);
 }
+
+/* Hides the scrollbar on horizontally scrollable strips (e.g. the dashboard
+   top bar) while keeping the swipe/scroll behaviour intact. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
