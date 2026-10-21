@@ -6,11 +6,6 @@ export const alt = "Colly AI - Stop losing sales to missed replies.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Force Next.js to generate this ONCE at build time and serve it statically.
-// This prevents runtime OOM crashes on Pxxl.
-export const dynamic = "force-static";
-export const revalidate = false;
-
 export default async function Image() {
   // Read the font directly from the filesystem at build time
   const fontPath = path.join(process.cwd(), "app/(marketing)/Inter-Bold.ttf");
