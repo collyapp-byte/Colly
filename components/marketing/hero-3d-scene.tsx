@@ -1,64 +1,59 @@
 "use client";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, useGLTF } from "@react-three/drei";
+import { useGLTF, Billboard } from "@react-three/drei";
 import Image from "next/image";
 import { Suspense, useRef } from "react";
 import * as THREE from "three";
 
-// 1. Load individual GLB model
-function IconModel({ url, position }: { url: string, position: [number, number, number] }) {
+function OrbitingIcon({ url, radius, speed, offset }: { url: string, radius: number, speed: number, offset: number }) {
   const { scene } = useGLTF(url);
-  return (
-    <Float speed={3} rotationIntensity={2} floatIntensity={2}>
-      <primitive object={scene} scale={0.25} position={position} />
-    </Float>
-  );
-}
+  const ref = useRef<THREE.Group>(null);
 
-// 2. Create the Orbiting Ring
-function OrbitRing() {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame((state, delta) => {
-    if (groupRef.current) {
-      // Rotate the entire group to create the orbit effect
-      groupRef.current.rotation.y += delta * 0.3;
-      groupRef.current.rotation.x += delta * 0.1;
+  useFrame((state) => {
+    const t = state.clock.getElapsedTime();
+    if (ref.current) {
+      // Move in an independent circle
+      ref.current.position.x = Math.cos(t * speed + offset) * radius;
+      ref.current.position.y = Math.sin(t * speed + offset) * radius;
+      // A tiny bit of Z-wiggle to give it 3D depth
+      ref.current.position.z = Math.sin(t * 2 + offset) * 0.3;
     }
   });
 
   return (
-    <group ref={groupRef}>
-      {/* Positions array to space them in a circle */}
-      <IconModel url="/icon1.glb" position={[1.5, 0, 0]} />
-      <IconModel url="/icon2.glb" position={[-1.5, 0, 0]} />
-      <IconModel url="/icon3.glb" position={[0, 1.5, 0]} />
-      <IconModel url="/icon4.glb" position={[0, -1.5, 0]} />
-      <IconModel url="/icon5.glb" position={[0, 0, 1.5]} />
+    <group ref={ref}>
+      {/* Billboard ensures the icon always faces the camera */}
+      <Billboard>
+        <primitive object={scene} scale={0.4} />
+      </Billboard>
     </group>
   );
 }
 
 export function Hero3DScene() {
   return (
-    <div className="relative flex h-[300px] w-full max-w-md items-center justify-center lg:h-[400px]">
+    <div className="relative flex h-[350px] w-full max-w-md items-center justify-center lg:h-[450px]">
 
-      {/* Real 3D Canvas */}
-      <Canvas camera={{ position: [0, 0, 4.5], fov: 50 }} gl={{ alpha: true }} style={{ background: 'transparent' }}>
+      <Canvas camera={{ position: [0, 0, 5], fov: 50 }} gl={{ alpha: true }} style={{ background: 'transparent' }}>
         <ambientLight intensity={1.5} />
         <directionalLight position={[10, 10, 5]} intensity={2} />
         <Suspense fallback={null}>
-          <OrbitRing />
+          {/* 4 Independent Icons orbiting at different speeds and distances */}
+          <OrbitingIcon url="/icon1.glb" radius={2.0} speed={0.6} offset={0} />
+          <OrbitingIcon url="/icon2.glb" radius={2.2} speed={-0.5} offset={1.5} />
+          <OrbitingIcon url="/icon3.glb" radius={1.8} speed={0.7} offset={3.0} />
+          <OrbitingIcon url="/icon4.glb" radius={2.1} speed={-0.4} offset={4.5} />
+          {/* Removed icon5.glb as requested (likely the TikTok icon) */}
         </Suspense>
       </Canvas>
 
-      {/* Center Logo - HUGE, no white circle */}
+      {/* Center Logo - Larger, naked, glowing */}
       <div className="absolute z-10 flex items-center justify-center pointer-events-none">
         <Image
           src="/logo.png"
           alt="Colly Logo"
-          width={120}
-          height={120}
+          width={180}
+          height={180}
           className="object-contain drop-shadow-[0_0_30px_rgba(255,102,0,0.6)]"
         />
       </div>
