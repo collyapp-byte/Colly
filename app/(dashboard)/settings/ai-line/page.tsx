@@ -376,10 +376,12 @@ export default function AiLinePage() {
               <BellRing className="h-4 w-4 text-[#FF6600]" aria-hidden />
               <h2 className={HEADING_CLASS}>Owner Notifications (Telegram)</h2>
             </div>
-            <p className="mt-3 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm font-medium text-[#C2410C]">
-              ⚠️ Required for AI handoffs. If not set, you will not know when the
-              AI needs your help.
-            </p>
+            {!ownerLinked && (
+              <p className="mt-3 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm font-medium text-[#C2410C]">
+                ⚠️ Required for AI handoffs. If not set, you will not know when the
+                AI needs your help.
+              </p>
+            )}
             <p className="mt-3 text-sm text-gray-600">
               Get alerts on your personal phone when the AI needs you to step
               in — for example a waybill question or a custom quote. Alerts go

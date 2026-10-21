@@ -92,7 +92,7 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
               <Link
                 href="/settings"
                 aria-label="Settings"
-                className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
+                className="hidden items-center rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 md:flex"
               >
                 <Settings className="h-[18px] w-[18px]" />
               </Link>
