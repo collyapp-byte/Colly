@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Send, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { AnimatedItem, AnimatedSection } from "@/components/ui/animated-section";
+import { Hero3DScene } from "@/components/marketing/hero-3d-scene";
 
 /**
  * Marketing homepage hero. Client-only because of Framer Motion; the parent
  * page stays a Server Component so it can keep exporting `metadata`. The 3D
- * illustration is a gradient placeholder until a Shapefest/Khagwal render is
- * dropped into `public/hero-3d.png`.
+ * illustration is the `Hero3DScene` component — a floating logo ringed by
+ * orbiting icons — until a Shapefest/Khagwal render is dropped into
+ * `public/hero-3d.png`.
  */
 export function Hero() {
   return (
@@ -66,19 +68,9 @@ export function Hero() {
           </AnimatedItem>
         </AnimatedSection>
 
-        {/* 3D asset placeholder — swap the gradient block below for a real
-            <Image src="/hero-3d.png" ... /> once a Shapefest/Khagwal render is
-            dropped into public/. Kept as a styled div for now so production
-            never logs a 404 for a missing asset. */}
+        {/* 3D hero scene: floating Colly logo ringed by orbiting 3D icons. */}
         <div className="relative mx-auto hidden w-full max-w-md lg:block">
-          <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-[#FF6600]/90 via-[#FF8A3D]/80 to-amber-300 shadow-2xl">
-            <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/20 blur-2xl" />
-            <div className="absolute -bottom-12 -left-8 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-            <Send
-              className="h-24 w-24 text-white/90 drop-shadow-lg"
-              aria-hidden
-            />
-          </div>
+          <Hero3DScene />
         </div>
       </div>
     </section>
