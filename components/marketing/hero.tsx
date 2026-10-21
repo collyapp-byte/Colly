@@ -5,14 +5,12 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { AnimatedItem, AnimatedSection } from "@/components/ui/animated-section";
-import { Hero3DScene } from "@/components/marketing/hero-3d-scene";
 
 /**
  * Marketing homepage hero. Client-only because of Framer Motion; the parent
- * page stays a Server Component so it can keep exporting `metadata`. The 3D
- * illustration is the `Hero3DScene` component — a floating logo ringed by
- * orbiting icons — until a Shapefest/Khagwal render is dropped into
- * `public/hero-3d.png`.
+ * page stays a Server Component so it can keep exporting `metadata`. The hero
+ * is a single centered column: badge, headline, copy, CTAs and the photo
+ * background layered behind the fixed glass header.
  */
 export function Hero() {
   return (
@@ -40,8 +38,8 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto grid w-full max-w-5xl items-center gap-12 px-4 pt-24 pb-12 sm:pt-28 sm:pb-16 lg:grid-cols-2">
-        <AnimatedSection className="text-center lg:text-left">
+      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center justify-center px-4 pt-24 pb-12 text-center sm:pt-28 sm:pb-16">
+        <AnimatedSection className="text-center">
           <AnimatedItem>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[#FF6600]/20 bg-white px-3 py-1 text-[13px] font-medium text-[#FF6600]">
               <Sparkles className="h-3.5 w-3.5" aria-hidden />
@@ -53,12 +51,12 @@ export function Hero() {
             Stop losing sales to missed replies.
           </AnimatedItem>
 
-          <AnimatedItem as="p" className="mt-5 max-w-xl text-base text-gray-600 sm:text-lg lg:mx-0 mx-auto">
+          <AnimatedItem as="p" className="mx-auto mt-5 max-w-xl text-base text-gray-600 sm:text-lg">
             Colly is the AI sales assistant that replies 24/7. Keep your
             personal phone. Add a dedicated AI line.
           </AnimatedItem>
 
-          <AnimatedItem className="mt-8 flex w-full flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
+          <AnimatedItem className="mt-8 flex w-full flex-col items-center justify-center gap-4 sm:flex-row">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
               <Link
                 href="/signup"
@@ -81,11 +79,6 @@ export function Hero() {
             No SIM card required to start · Cancel anytime
           </AnimatedItem>
         </AnimatedSection>
-
-        {/* 3D hero scene: floating Colly logo ringed by orbiting 3D icons. */}
-        <div className="relative mx-auto hidden w-full max-w-md lg:block">
-          <Hero3DScene />
-        </div>
       </div>
     </section>
   );
