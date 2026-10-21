@@ -49,8 +49,8 @@ export function MarketingHeader() {
     <header
       className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/70 backdrop-blur-lg border-b border-gray-200/50 py-2 shadow-sm"
-          : "bg-transparent py-4 border-transparent"
+          ? "bg-white/80 backdrop-blur-md border-b border-white/30 shadow-sm py-2"
+          : "bg-white/60 backdrop-blur-md border-b border-white/30 shadow-sm py-4"
       }`}
     >
       <div className="max-w-5xl mx-auto px-4 flex items-center justify-between">

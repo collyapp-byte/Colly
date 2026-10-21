@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
@@ -16,6 +17,19 @@ import { Hero3DScene } from "@/components/marketing/hero-3d-scene";
 export function Hero() {
   return (
     <section className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-[#FFF4EC] to-background">
+      {/* Photo background sitting behind the fixed header and the hero copy. */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/hero-bg-orange.jpg"
+          alt="Hero Background"
+          fill
+          className="object-cover object-center opacity-30"
+          priority
+        />
+        {/* A soft gradient overlay so the text remains perfectly readable */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/50 to-transparent" />
+      </div>
+
       {/* Animated floating gradient background: two blurred brand blobs that
           drift slowly, giving the hero depth without stealing attention. */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>
@@ -26,7 +40,7 @@ export function Hero() {
         />
       </div>
 
-      <div className="relative mx-auto grid w-full max-w-5xl items-center gap-12 px-4 pt-24 pb-12 sm:pt-28 sm:pb-16 lg:grid-cols-2">
+      <div className="relative z-10 mx-auto grid w-full max-w-5xl items-center gap-12 px-4 pt-24 pb-12 sm:pt-28 sm:pb-16 lg:grid-cols-2">
         <AnimatedSection className="text-center lg:text-left">
           <AnimatedItem>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[#FF6600]/20 bg-white px-3 py-1 text-[13px] font-medium text-[#FF6600]">
