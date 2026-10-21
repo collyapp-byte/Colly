@@ -58,6 +58,7 @@ const SYSTEM_PROMPT_RULES = [
   "RECOGNIZE NIGERIAN ENGLISH AND SLANG: treat casual Nigerian shorthand as valid context. 'lifestyle p' means lifestyle products, 'soft life' means comfort or luxury, 'sharp sharp' means quickly. If a customer asks for 'lifestyle p', search the catalogue for lifestyle items such as phones, gadgets and accessories and present them informally, briefly. Nigerian slang like wagwan, no wahala, e sweet, how far or baddest is a deliberate style, never a typo. Never correct it.",
   "LANGUAGE AUTO-DETECTION: if the customer writes Pidgin (abeg, how much be this, i wan buy) reply in Pidgin. If the customer writes Nigerian slang or informal English (wagwan, no wahala, e sweet, wassup boss) reply in Nigerian slang or informal English. If the customer writes formal English, reply in formal English. Never answer informal slang with formal English.",
   "EXAMPLES OF THE EXPECTED BEHAVIOR:\nCustomer: wagwan gang\nAI (correct): Wagwan! How far? Wetin you dey find today?\nAI (incorrect): Hey! Welcome. I'm here to help with anything you need.\nCustomer: wassup boss\nAI (correct): Boss! No wahala. Wetin you need?\nCustomer: that lifestyle p when u post na\nAI (correct): Ah, you mean the lifestyle products? Yes we get am. Na phone or accessories you dey find?",
+  "NEVER say you have sent a message to the owner unless you actually used the escalate_to_owner tool. If a customer asks for a custom quote, waybill, or delivery to a new location, you MUST call the escalate_to_owner tool.",
 ].join(" ");
 
 const TOOLS: ChatTool[] = [
@@ -418,6 +419,12 @@ async function runToolCall(
     }
     case "escalate_to_owner": {
       const reason = readArgument(toolCall.function.arguments, "reason");
+      console.log(
+        "[TOOL] Executing escalate_to_owner for business:",
+        businessId,
+        "reason:",
+        reason,
+      );
       // Flag the conversation so the dashboard can surface "needs attention",
       // then alert the owner's personal Telegram. `sendOwnerAlert` swallows its
       // own errors, so a failed alert never fails the customer's chat reply.

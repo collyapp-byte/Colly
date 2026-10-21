@@ -35,7 +35,13 @@ export async function sendOwnerAlert(
       return;
     }
 
+    console.log(
+      "[OWNER ALERT] Attempting to send alert. ownerTelegramChatId:",
+      business.ownerTelegramChatId,
+    );
+
     if (!business.ownerTelegramChatId) {
+      console.log("[OWNER ALERT] No Chat ID found. Skipping alert.");
       console.warn(
         `[owner-alerts] escalation for "${business.name}" not delivered: no ownerTelegramChatId set.`,
       );
