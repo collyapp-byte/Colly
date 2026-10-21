@@ -134,10 +134,10 @@ export async function POST(request: Request) {
     }
 
     console.log("[WEBHOOK] Sending reply to Telegram");
-    await sendTelegramMessage({
+    await sendReplyToTelegram({
       botToken: business.telegramBotToken,
       chatId: telegramChatId,
-      text: result.reply,
+      reply: result.reply,
     });
 
     return Response.json({ ok: true });
@@ -145,6 +145,59 @@ export async function POST(request: Request) {
     console.error("[WEBHOOK ERROR] Failed to process message:", error);
     // Telegram retries non-2xx responses, so failures are swallowed here.
     return Response.json({ ok: true });
+  }
+}
+
+/**
+ * The tag the assistant uses to hand a product picture to the channel:
+ * `[IMAGE: https://.../photo.jpg]`. The picture itself is sent by the channel
+ * (Telegram `sendPhoto`), so the tag never reaches the customer as text.
+ */
+const IMAGE_TAG = /\[IMAGE:\s*([^\]]+?)\s*\]/i;
+
+/** Same tag, but matching every occurrence so none is left in the text. */
+const IMAGE_TAG_ALL = /\[IMAGE:\s*[^\]]+?\s*\]/gi;
+
+/**
+ * Split an assistant reply into the text the customer reads and the picture
+ * URL the channel should send as a photo. The tag is removed from the text;
+ * a reply without a tag is returned untouched.
+ */
+function splitImageTag(reply: string): { text: string; imageUrl: string | null } {
+  const match = reply.match(IMAGE_TAG);
+
+  if (!match) {
+    return { text: reply.trim(), imageUrl: null };
+  }
+
+  const imageUrl = match[1].trim();
+  const text = reply.replace(IMAGE_TAG_ALL, "").trim();
+
+  return { text, imageUrl: imageUrl.length > 0 ? imageUrl : null };
+}
+
+/** Send the assistant reply, as text and/or as a photo. */
+async function sendReplyToTelegram(args: {
+  botToken: string;
+  chatId: string;
+  reply: string;
+}): Promise<void> {
+  const { text, imageUrl } = splitImageTag(args.reply);
+
+  if (text.length > 0) {
+    await sendTelegramMessage({
+      botToken: args.botToken,
+      chatId: args.chatId,
+      text,
+    });
+  }
+
+  if (imageUrl) {
+    await sendTelegramPhoto({
+      botToken: args.botToken,
+      chatId: args.chatId,
+      photo: imageUrl,
+    });
   }
 }
 
@@ -166,6 +219,39 @@ async function sendTelegramMessage(args: {
     const detail = await response.text().catch(() => "");
     console.error(
       `[telegram] sendMessage failed (${response.status}): ${detail}`,
+    );
+  }
+}
+
+/** Send a picture to the customer (product photo by public URL). */
+async function sendTelegramPhoto(args: {
+  botToken: string;
+  chatId: string;
+  photo: string;
+  caption?: string;
+}): Promise<void> {
+  const body: Record<string, string> = {
+    chat_id: args.chatId,
+    photo: args.photo,
+  };
+
+  if (args.caption) {
+    body.caption = args.caption;
+  }
+
+  const response = await fetch(
+    `https://api.telegram.org/bot${args.botToken}/sendPhoto`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    console.error(
+      `[telegram] sendPhoto failed (${response.status}): ${detail}`,
     );
   }
 }

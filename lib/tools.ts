@@ -15,6 +15,12 @@ export type ProductMatch = {
   stock: number | null;
   description: string | null;
   /**
+   * Public URL of the product's picture (the first entry of the product's
+   * image list), or null when the product has no photo. The assistant hands
+   * this to the customer as a picture instead of escalating to the owner.
+   */
+  imageUrl: string | null;
+  /**
    * How confident we are that this is the product the customer asked for.
    * "exact" means a strong semantic match that also shares a model-specific
    * token; "fuzzy" means a keyword fallback hit or a weak/family-only semantic
@@ -159,6 +165,7 @@ type ProductVectorRow = {
   price: Prisma.Decimal;
   stock: number | null;
   description: string | null;
+  images: string[] | null;
   similarity: number;
 };
 
@@ -185,7 +192,7 @@ async function semanticSearchProducts(
   const literal = toVectorLiteral(await embedText(query, "retrieval.query"));
 
   const rows = await prisma.$queryRaw<ProductVectorRow[]>`
-    SELECT "id", "name", "price", "stock", "description",
+    SELECT "id", "name", "price", "stock", "description", "images",
            1 - ("embedding" <=> ${literal}::vector) AS "similarity"
     FROM "Product"
     WHERE "businessId" = ${businessId} AND "embedding" IS NOT NULL
@@ -201,6 +208,7 @@ async function semanticSearchProducts(
       price: Number(row.price),
       stock: row.stock,
       description: row.description,
+      imageUrl: row.images?.[0] ?? null,
       similarity: row.similarity,
     }));
 }
@@ -218,7 +226,7 @@ async function semanticFindSimilarProducts(
   const literal = toVectorLiteral(await embedText(query, "retrieval.query"));
 
   const rows = await prisma.$queryRaw<ProductVectorRow[]>`
-    SELECT "id", "name", "price", "stock", "description",
+    SELECT "id", "name", "price", "stock", "description", "images",
            1 - ("embedding" <=> ${literal}::vector) AS "similarity"
     FROM "Product"
     WHERE "businessId" = ${businessId} AND "embedding" IS NOT NULL
@@ -234,6 +242,7 @@ async function semanticFindSimilarProducts(
     price: Number(row.price),
     stock: row.stock,
     description: row.description,
+    imageUrl: row.images?.[0] ?? null,
   }));
 }
 
@@ -420,6 +429,7 @@ async function keywordSearchProducts(
       price: Number(product.price),
       stock: product.stock,
       description: product.description,
+      imageUrl: product.images?.[0] ?? null,
       // Keyword hits are never an exact guarantee of the requested model.
       confidence: "fuzzy" as const,
     }));
@@ -492,7 +502,9 @@ async function keywordSearchFAQs(
  * match carries a `confidence` of "exact" (strong semantic match that shares a
  * model-specific token with the query) or "fuzzy" (a weak/family-only semantic
  * neighbour, or a keyword fallback hit). The model is told to treat "fuzzy" as
- * not having the requested product and to suggest alternatives instead.
+ * not having the requested product and to suggest alternatives instead. Every
+ * match also carries the product's `imageUrl` when it has a picture, so the
+ * assistant can send the picture to the customer.
  */
 export async function searchProducts(
   businessId: string,
@@ -576,6 +588,7 @@ export async function findSimilarProducts(
       price: Number(product.price),
       stock: product.stock,
       description: product.description,
+      imageUrl: product.images?.[0] ?? null,
     }));
   } catch (error) {
     console.warn(
