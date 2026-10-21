@@ -15,11 +15,13 @@ export const metadata = {
     siteName: "Colly",
     locale: "en_NG",
     type: "website",
+    images: [{ url: "https://colly.com.ng/og-image.png" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Colly | AI Sales Assistant",
     description: "Stop losing sales to missed replies.",
+    images: ["https://colly.com.ng/og-image.png"],
   },
 };
 
