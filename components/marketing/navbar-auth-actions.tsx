@@ -50,7 +50,7 @@ export function NavbarAuthActions() {
       </Link>
       <Link
         href="/signup"
-        className="rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"
+        className="rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00] sm:px-6 sm:py-2.5"
       >
         Get Started
       </Link>

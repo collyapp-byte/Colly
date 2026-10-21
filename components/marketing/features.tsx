@@ -33,7 +33,7 @@ export function Features() {
         </div>
         <div className="grid gap-6 sm:grid-cols-2">
           {features.map((f, i) => (
-            <div key={i} className="flex gap-4 rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-md">
+            <div key={i} className="flex items-start gap-4 rounded-2xl bg-white p-6 shadow-sm transition-all hover:shadow-md">
               <div className="mt-1 shrink-0 rounded-lg bg-[#FFF4EC] p-2">{f.icon}</div>
               <div>
                 <h3 className="font-semibold text-gray-900">{f.title}</h3>

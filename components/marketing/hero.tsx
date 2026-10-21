@@ -34,7 +34,7 @@ export function Hero() {
           </AnimatedItem>
 
           <AnimatedItem as="h1" className="mt-6 font-display text-3xl leading-tight tracking-tight text-gray-900 sm:text-5xl">
-            Stop losing sales to missed Telegram messages.
+            Stop losing sales to missed replies.
           </AnimatedItem>
 
           <AnimatedItem as="p" className="mt-5 max-w-xl text-base text-gray-600 sm:text-lg lg:mx-0 mx-auto">
@@ -42,11 +42,11 @@ export function Hero() {
             personal phone. Add a dedicated AI line.
           </AnimatedItem>
 
-          <AnimatedItem className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
+          <AnimatedItem className="mt-8 flex w-full flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
               <Link
                 href="/signup"
-                className="w-full rounded-lg bg-[#FF6600] px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#E65C00] sm:w-auto"
+                className="flex w-full items-center justify-center rounded-lg bg-[#FF6600] px-8 py-3.5 text-sm font-semibold text-white transition-all hover:scale-105 hover:bg-[#E65C00] active:scale-95 sm:w-auto"
               >
                 Start Free Trial
               </Link>
@@ -54,7 +54,7 @@ export function Hero() {
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
               <Link
                 href="/find-an-agent"
-                className="w-full rounded-lg border border-gray-200 bg-white px-8 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-8 py-3.5 text-sm font-semibold text-gray-700 transition-all hover:scale-105 hover:bg-gray-50 active:scale-95 sm:w-auto"
               >
                 Find an Agent
               </Link>
