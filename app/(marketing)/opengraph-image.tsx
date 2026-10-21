@@ -1,20 +1,27 @@
 import { ImageResponse } from "next/og";
+import { readFile } from "fs/promises";
+import path from "path";
 
 export const alt = "Colly AI - Stop losing sales to missed replies.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+// Force Next.js to generate this ONCE at build time and serve it statically.
+// This prevents runtime OOM crashes on Pxxl.
+export const dynamic = "force-static";
+export const revalidate = false;
+
 export default async function Image() {
-  // Load the local font file to avoid network hangs
-  const fontData = await fetch(
-    new URL("./Inter-Bold.ttf", import.meta.url)
-  ).then((res) => res.arrayBuffer());
+  // Read the font directly from the filesystem at build time
+  const fontPath = path.join(process.cwd(), "app/(marketing)/Inter-Bold.ttf");
+  const fontData = await readFile(fontPath);
 
   return new ImageResponse(
     (
       <div
         style={{
-          background: "linear-gradient(to bottom right, #FF6600, #E65C00)",
+          // Solid color instead of gradient to save memory
+          background: "#FF6600", 
           width: "100%",
           height: "100%",
           display: "flex",
