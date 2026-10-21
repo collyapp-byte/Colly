@@ -26,7 +26,7 @@ import {
 } from "@/lib/language-detect";
 import { requireAiEnabled } from "@/lib/auth-guards";
 import { getCreditPrice, getPlanLimits, isActivePaidPlan } from "@/lib/plans";
-import { sendOwnerAlert } from "@/lib/owner-alerts";
+import { sendEscalationAlert, sendOwnerAlert } from "@/lib/owner-alerts";
 
 const ASSISTANT_INTRO =
   "You are a helpful business assistant for a Nigerian small business.";
@@ -51,6 +51,7 @@ const SYSTEM_PROMPT_RULES = [
   "PRODUCT FACTS — you may reason, not invent.\n\n- You may draw LOGICAL CONCLUSIONS from facts in the description. Example: description says '128GB' → you may say 'that holds plenty of photos and apps.'\n- You may NOT introduce NEW FACTS not present in the description. Example: description doesn't mention processor or GPU → do not claim the product is 'good for gaming.'\n- When a customer asks about something the description does NOT cover (warranty length, colour options, compatibility, dimensions, exact battery life in hours), say: 'I don't have that detail — let me check with the owner.' Then call escalate_to_owner with the customer's exact question.\n- NEVER use marketing words: sleek, premium, perfect for, built to last, easy to install, cutting-edge, powerful, versatile, innovative. Those are inventions, not facts.",
   "When a customer asks about several products or a bundle, put each product on its own line as the product name followed by its price, then give the total on its own separate line at the end. Write each line as the name then the price with nothing in between, like this: Hisense 32 inch LED TV 145000 Naira. Never put a hyphen, a dash, a colon or a bullet between the name and the price, and never start a line with a hyphen or a dash. Plain lines only, with no bullet points, no dashes and no bold.",
   "Escalate instead of guessing: when a customer asks about waybill or delivery logistics your FAQs do not cover, wants a custom or bulk quote, or asks for anything you cannot confirm from a tool, reply that you will check with the owner, then call escalate_to_owner with their exact question. Never invent prices, delivery fees, timelines or quotes. The owner is alerted the moment you call that tool, so only call it for the customer's live question.",
+  "ESCALATION: If a customer asks for a waybill, delivery to another city, custom quote, or an item you cannot find in the catalogue, you MUST call the escalate_to_owner tool. DO NOT tell the customer 'I will check with the owner' or 'I will contact the owner' UNLESS you are actively calling this tool in the same response. If you do not call the tool, you are lying to the customer.",
   "Nigerian Pidgin is a real language, not bad grammar. Words like 'dey', 'na', 'wey', 'abeg', 'sabi', 'wetin', 'wahala', 'oya', 'shey' are Pidgin, not typos or misspellings. Never correct them. Never rewrite the customer's message into standard English before replying.",
   "If the customer writes in Pidgin, you MUST reply in Pidgin. Use the same vocabulary they used. It is unacceptable to reply in formal English to a Pidgin-speaking customer.",
   "If the customer writes in English with occasional typos, do NOT switch to Pidgin. Reply in clear English. Do not correct their typos either, just answer the question.",
@@ -59,7 +60,7 @@ const SYSTEM_PROMPT_RULES = [
   "RECOGNIZE NIGERIAN ENGLISH AND SLANG: treat casual Nigerian shorthand as valid context. 'lifestyle p' means lifestyle products, 'soft life' means comfort or luxury, 'sharp sharp' means quickly. If a customer asks for 'lifestyle p', search the catalogue for lifestyle items such as phones, gadgets and accessories and present them informally, briefly. Nigerian slang like wagwan, no wahala, e sweet, how far or baddest is a deliberate style, never a typo. Never correct it.",
   "LANGUAGE AUTO-DETECTION: if the customer writes Pidgin (abeg, how much be this, i wan buy) reply in Pidgin. If the customer writes Nigerian slang or informal English (wagwan, no wahala, e sweet, wassup boss) reply in Nigerian slang or informal English. If the customer writes formal English, reply in formal English. Never answer informal slang with formal English.",
   "EXAMPLES OF THE EXPECTED BEHAVIOR:\nCustomer: wagwan gang\nAI (correct): Wagwan! How far? Wetin you dey find today?\nAI (incorrect): Hey! Welcome. I'm here to help with anything you need.\nCustomer: wassup boss\nAI (correct): Boss! No wahala. Wetin you need?\nCustomer: that lifestyle p when u post na\nAI (correct): Ah, you mean the lifestyle products? Yes we get am. Na phone or accessories you dey find?",
-  "NEVER say you have sent a message to the owner unless you actually used the escalate_to_owner tool. If a customer asks for a custom quote, waybill, or delivery to a new location, you MUST call the escalate_to_owner tool.",
+  "NEVER say you have sent a message to the owner, or that you will check with the owner, unless you actually used the escalate_to_owner tool in this same response. If a customer asks for a custom quote, waybill, or delivery to a new location, you MUST call the escalate_to_owner tool.",
 ].join(" ");
 
 const TOOLS: ChatTool[] = [
@@ -119,7 +120,7 @@ const TOOLS: ChatTool[] = [
     function: {
       name: "escalate_to_owner",
       description:
-        "Hand the conversation to the human owner. Call this when the customer asks something no other tool can answer: waybill or delivery logistics not covered by the FAQs, a custom or bulk quote, or a product detail the description does not include. The owner is alerted on their phone with the customer's exact question.",
+        "Hand the conversation to the human owner. Call this when the customer asks something no other tool can answer: waybill or delivery logistics not covered by the FAQs, a custom or bulk quote, or a product detail the description does not include. The owner is alerted on their phone with the customer's exact question, so only call it for the customer's live question and only promise to check with the owner when you call it.",
       parameters: {
         type: "object",
         properties: {
@@ -427,16 +428,26 @@ async function runToolCall(
         reason,
       );
       // Flag the conversation so the dashboard can surface "needs attention",
-      // then alert the owner's personal Telegram. `sendOwnerAlert` swallows its
-      // own errors, so a failed alert never fails the customer's chat reply.
+      // then alert the owner's personal Telegram. `sendEscalationAlert` swallows
+      // its own errors, so a failed alert never fails the customer's chat reply.
       await prisma.conversation.update({
         where: { id: conversationId },
         data: { escalatedAt: new Date() },
       });
-      await sendOwnerAlert(
+
+      // The owner's chat id and the bot that can message it.
+      const business = await prisma.business.findUnique({
+        where: { id: businessId },
+        select: { ownerTelegramChatId: true, telegramBotToken: true },
+      });
+
+      await sendEscalationAlert({
         businessId,
-        "🚨 AI needs help in a conversation. Customer asked: " + reason,
-      );
+        ownerChatId: business?.ownerTelegramChatId ?? null,
+        customerMessage: reason,
+        businessBotToken: business?.telegramBotToken ?? null,
+      });
+
       return { escalated: true, reason };
     }
     default:
