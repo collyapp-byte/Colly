@@ -19,14 +19,10 @@ type TelegramUpdate = {
 // webhook drop. This risks a Telegram timeout/retry on a slow DeepSeek call;
 // once the drop is fixed we can move the slow path back into `after()`.
 //
-// Always answers 200 so Telegram does not retry a non-2xx response.
+// Accepted updates answer 200 so Telegram does not retry them.
 export async function POST(request: Request) {
   try {
     const update = (await request.json()) as TelegramUpdate;
-    console.log(
-      "[WEBHOOK HIT] Received Telegram update:",
-      JSON.stringify(update, null, 2),
-    );
 
     const chatIdRaw = update.message?.chat?.id;
     const text = update.message?.text;
@@ -46,27 +42,19 @@ export async function POST(request: Request) {
       update.message?.from?.first_name?.trim() || telegramChatId;
 
     const token = new URL(request.url).searchParams.get("token")?.trim();
-    console.log("[WEBHOOK] Resolving business for token:", token);
+    if (!token) {
+      return new Response("Unauthorized", { status: 401 });
+    }
 
-    let business = await prisma.business.findFirst({
+    const business = await prisma.business.findFirst({
       where: { telegramBotToken: token },
     });
 
-    // Fallback: if the token did not match, try the already-linked chat id.
     if (!business) {
-      business = await prisma.business.findFirst({
-        where: { telegramChatId },
-      });
+      return new Response("Unauthorized", { status: 401 });
     }
-
-    if (!business) {
-      console.log("[WEBHOOK] No business found for token or chatId. Exiting.");
-      return Response.json({ ok: true });
-    }
-    console.log("[WEBHOOK] Found business:", business.id);
 
     if (!business.telegramBotToken) {
-      console.log("[WEBHOOK] Business has no bot token. Exiting.");
       return Response.json({ ok: true });
     }
 
@@ -75,7 +63,6 @@ export async function POST(request: Request) {
     // it never reaches DeepSeek, and never creates a customer conversation.
     const normalized = text.toLowerCase().replace(/[\s.]/g, "");
     if (normalized === "/startowner" || normalized === "/linkowner") {
-      console.log("[WEBHOOK] Owner link command received for business", business.id);
       await prisma.business.update({
         where: { id: business.id },
         data: { ownerTelegramChatId: telegramChatId },
@@ -90,10 +77,9 @@ export async function POST(request: Request) {
       return Response.json({ ok: true });
     }
 
-    // First message from a freshly connected bot: claim this chat for the
-    // business so later updates resolve on the plain chat-id lookup.
+    // First message from a freshly connected bot: record this chat for the
+    // business while every update continues to resolve by bot token.
     if (!business.telegramChatId) {
-      console.log("[WEBHOOK] Linking chat", telegramChatId, "to business", business.id);
       await prisma.business.update({
         where: { id: business.id },
         data: { telegramChatId },
@@ -113,27 +99,19 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log("[WEBHOOK] Calling chat engine for chat:", telegramChatId);
     const result = await handleIncomingMessage({
       businessId: business.id,
       customerPhone: telegramChatId,
       message: text,
     });
-    console.log("[WEBHOOK] Chat engine result:", JSON.stringify(result));
 
     // The engine always saves the customer's message first (so the owner can
     // reply manually from the dashboard). When replied is false the AI is
     // gated off — human takeover, cap hit, expired plan — so we stay silent.
     if (result.blocked || !result.reply) {
-      if (!result.replied) {
-        console.log(
-          `[WEBHOOK] message saved, AI reply skipped (reason: ${result.blocked ? result.reason : "no_reply"})`,
-        );
-      }
       return Response.json({ ok: true });
     }
 
-    console.log("[WEBHOOK] Sending reply to Telegram");
     await sendReplyToTelegram({
       botToken: business.telegramBotToken,
       chatId: telegramChatId,

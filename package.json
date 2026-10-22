@@ -28,7 +28,8 @@
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.8",
-    "three": "^0.186.1"
+    "three": "^0.186.1",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

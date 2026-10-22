@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "crypto";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
@@ -73,9 +74,16 @@ export async function GET(request: Request) {
  * through the Cloud API with the business's access token.
  */
 export async function POST(request: Request) {
+  const rawBody = await request.text();
+  const signature = request.headers.get("x-hub-signature-256");
+
+  if (!isValidMetaSignature(rawBody, signature)) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
   let payload: WhatsAppPayload;
   try {
-    payload = (await request.json()) as WhatsAppPayload;
+    payload = JSON.parse(rawBody) as WhatsAppPayload;
   } catch {
     return new Response("OK", { status: 200 });
   }
@@ -95,6 +103,34 @@ export async function POST(request: Request) {
   }
 
   return new Response("OK", { status: 200 });
+}
+
+function isValidMetaSignature(
+  rawBody: string,
+  signatureHeader: string | null,
+): boolean {
+  const appSecret = process.env.META_APP_SECRET;
+  if (!appSecret || !signatureHeader) return false;
+
+  const [scheme, receivedSignature] = signatureHeader.split("=");
+  if (
+    scheme !== "sha256" ||
+    !receivedSignature ||
+    !/^[a-f0-9]{64}$/i.test(receivedSignature)
+  ) {
+    return false;
+  }
+
+  const expectedSignature = createHmac("sha256", appSecret)
+    .update(rawBody, "utf8")
+    .digest("hex");
+  const expected = Buffer.from(expectedSignature, "hex");
+  const received = Buffer.from(receivedSignature, "hex");
+
+  return (
+    expected.length === received.length &&
+    timingSafeEqual(expected, received)
+  );
 }
 
 function collectMessages(payload: WhatsAppPayload): IncomingMessage[] {

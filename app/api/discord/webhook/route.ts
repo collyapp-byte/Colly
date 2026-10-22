@@ -1,3 +1,4 @@
+import nacl from "tweetnacl";
 import { after, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
@@ -45,9 +46,17 @@ type DiscordPayload = {
  * call runs in `after()`, which posts a follow-up webhook when it finishes.
  */
 export async function POST(request: Request) {
+  const rawBody = await request.text();
+  const signature = request.headers.get("x-signature-ed25519");
+  const timestamp = request.headers.get("x-signature-timestamp");
+
+  if (!isValidDiscordSignature(rawBody, signature, timestamp)) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
   let payload: DiscordPayload;
   try {
-    payload = (await request.json()) as DiscordPayload;
+    payload = JSON.parse(rawBody) as DiscordPayload;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
@@ -149,6 +158,25 @@ export async function POST(request: Request) {
   });
 
   return NextResponse.json({ type: 5 });
+}
+
+function isValidDiscordSignature(
+  rawBody: string,
+  signature: string | null,
+  timestamp: string | null,
+): boolean {
+  const publicKey = process.env.DISCORD_PUBLIC_KEY;
+  if (!publicKey || !signature || !timestamp) return false;
+
+  try {
+    return nacl.sign.detached.verify(
+      Buffer.from(timestamp + rawBody, "utf8"),
+      Buffer.from(signature, "hex"),
+      Buffer.from(publicKey, "hex"),
+    );
+  } catch {
+    return false;
+  }
 }
 
 type MessageArgs = {
