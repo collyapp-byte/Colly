@@ -9,6 +9,7 @@ import { INITIAL_AUTH_STATE, emailVerificationMessage } from "@/lib/auth-form";
 import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
 import type { Channel } from "@/lib/business";
 import { AuthAlert, AuthField } from "@/components/auth/auth-form";
+import { GoogleButton } from "@/components/auth/google-button";
 import { Button } from "@/components/ui/button";
 
 /** The single channel available at launch, with the facts that sell it. */
@@ -97,7 +98,19 @@ export function BusinessSignupForm({
         Set Colly up for your business. It takes a minute.
       </p>
 
-      <form action={formAction} onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+      <div className="mt-6">
+        <GoogleButton />
+      </div>
+
+      <div className="my-5 flex items-center gap-3">
+        <span className="h-px flex-1 bg-gray-200" aria-hidden />
+        <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          Or continue with
+        </span>
+        <span className="h-px flex-1 bg-gray-200" aria-hidden />
+      </div>
+
+      <form action={formAction} onSubmit={handleSubmit} className="flex flex-col gap-4">
         <AuthField
           id="businessName"
           label="Business name"

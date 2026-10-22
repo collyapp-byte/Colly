@@ -8,6 +8,7 @@ import { login, logout } from "@/lib/auth-actions";
 import { agentLogin, agentLogout } from "@/lib/agent-auth-actions";
 import { INITIAL_AUTH_STATE } from "@/lib/auth-form";
 import { AuthAlert, AuthField } from "@/components/auth/auth-form";
+import { GoogleButton } from "@/components/auth/google-button";
 import { RoleChooser, type AuthRole } from "@/components/auth/role-chooser";
 import { Button } from "@/components/ui/button";
 
@@ -29,7 +30,19 @@ function BusinessLoginForm() {
         Sign in to your Colly dashboard.
       </p>
 
-      <form action={formAction} className="mt-6 flex flex-col gap-4">
+      <div className="mt-6">
+        <GoogleButton />
+      </div>
+
+      <div className="my-5 flex items-center gap-3">
+        <span className="h-px flex-1 bg-gray-200" aria-hidden />
+        <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          Or continue with
+        </span>
+        <span className="h-px flex-1 bg-gray-200" aria-hidden />
+      </div>
+
+      <form action={formAction} className="flex flex-col gap-4">
         <AuthField
           id="email"
           label="Email"
@@ -191,9 +204,19 @@ function LoginContent() {
   const [view, setView] = useState<View>(() =>
     viewFromParam(searchParams.get("role")),
   );
+  const authError =
+    searchParams.get("error") === "auth_callback_failed"
+      ? "Google sign-in could not be completed. Please try again."
+      : null;
 
   return (
     <div>
+      {authError && (
+        <div className="mb-3">
+          <AuthAlert tone="error">{authError}</AuthAlert>
+        </div>
+      )}
+
       {view !== "chooser" && (
         <button
           type="button"

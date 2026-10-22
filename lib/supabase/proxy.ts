@@ -24,6 +24,7 @@ const AGENT_PUBLIC_PATHS = ["/agents/login", "/agents/signup"];
  */
 const PUBLIC_PATHS = [
   "/",
+  "/auth/callback",
   "/verify",
   "/verify-email",
   "/find-an-agent",
