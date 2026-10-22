@@ -9,7 +9,7 @@ type TelegramConnectBody = {
  * The webhook URL Telegram must call back: the deployed app origin + the shared
  * handler. Prefers NEXT_PUBLIC_APP_URL (set it to the live public origin,
  * e.g. https://colly.com.ng) because behind a reverse proxy `request.url` is
- * often http://localhost:3000. Falls back to the request's origin only when
+ * often a localhost origin. Falls back to the request's origin only when
  * the env var is missing. Reported as null when there is no public HTTPS
  * origin to register (Telegram rejects localhost, so connecting would only
  * fail at setWebhook with an opaque error).

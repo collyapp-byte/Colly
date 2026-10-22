@@ -25,6 +25,9 @@ const AGENT_PUBLIC_PATHS = ["/agents/login", "/agents/signup"];
 const PUBLIC_PATHS = [
   "/",
   "/auth/callback",
+  // Public website chat widget -- embedded on customer sites, so it must open
+  // for signed-out visitors (and inside an iframe).
+  "/chat",
   "/verify",
   "/verify-email",
   "/find-an-agent",

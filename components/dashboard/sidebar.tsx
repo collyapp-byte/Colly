@@ -220,6 +220,16 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
               Billing &amp; plan
             </Link>
 
+            <Link
+              href="/settings/web-chat"
+              role="menuitem"
+              onClick={() => setSwitcherOpen(false)}
+              className="mx-1.5 flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              <MessageSquare className="h-3.5 w-3.5" aria-hidden />
+              Web chat widget
+            </Link>
+
             <form action={logout} className="mx-1.5">
               <button
                 type="submit"
