@@ -124,11 +124,12 @@ function PlansContent() {
           Choose the plan that matches your message volume. Every plan includes
           the same AI features.
         </p>
-        <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-500">
-          <span className="inline-flex items-center rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-bold text-gray-600">
-            Coming Soon
+        <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+          <span className="inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
+            Requires CAC
           </span>
-          WhatsApp plans will be available soon.
+          WhatsApp plans require a CAC certificate for Meta Business
+          Verification.
         </p>
       </div>
 

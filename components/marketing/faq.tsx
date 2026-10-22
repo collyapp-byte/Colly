@@ -6,7 +6,7 @@ export function FAQ() {
     },
     {
       q: "My customers use WhatsApp, not Telegram.",
-      a: "We are currently in the final stages of Meta business verification. WhatsApp will be available soon."
+      a: "WhatsApp is available for businesses with a CAC certificate to pass Meta's Business Verification. Telegram and Web Chat are available instantly without a CAC."
     },
     {
       q: "₦15,000 is too much.",

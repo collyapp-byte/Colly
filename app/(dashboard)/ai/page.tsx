@@ -250,8 +250,8 @@ export default async function CollyAIPage() {
                   AI replies to comments and DMs.
                 </p>
               </div>
-              <span className="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-[11px] font-bold text-gray-600">
-                Coming Soon
+              <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
+                Requires CAC
               </span>
             </div>
             <div
@@ -267,8 +267,8 @@ export default async function CollyAIPage() {
                   Automate page posts and comment replies.
                 </p>
               </div>
-              <span className="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-[11px] font-bold text-gray-600">
-                Coming Soon
+              <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
+                Requires CAC
               </span>
             </div>
             <div
@@ -284,8 +284,8 @@ export default async function CollyAIPage() {
                   AI comment management and auto-posts.
                 </p>
               </div>
-              <span className="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-[11px] font-bold text-gray-600">
-                Coming Soon
+              <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
+                Requires CAC
               </span>
             </div>
           </div>
