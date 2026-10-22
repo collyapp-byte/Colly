@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // The slice of a Telegram update we care about.
 type TelegramUpdate = {
@@ -21,6 +22,13 @@ type TelegramUpdate = {
 //
 // Accepted updates answer 200 so Telegram does not retry them.
 export async function POST(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+
+  if (!checkRateLimit(ip, 60, 60000)) {
+    return new Response("Too many requests", { status: 429 });
+  }
+
   try {
     const update = (await request.json()) as TelegramUpdate;
 

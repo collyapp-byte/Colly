@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const GRAPH_API = "https://graph.facebook.com/v21.0";
 
@@ -74,6 +75,13 @@ export async function GET(request: Request) {
  * through the Cloud API with the business's access token.
  */
 export async function POST(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+
+  if (!checkRateLimit(ip, 60, 60000)) {
+    return new Response("Too many requests", { status: 429 });
+  }
+
   const rawBody = await request.text();
   const signature = request.headers.get("x-hub-signature-256");
 

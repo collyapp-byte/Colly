@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 /** Longest message a web visitor may send, matching the widget input. */
 const MAX_MESSAGE_LENGTH = 2000;
@@ -61,6 +62,16 @@ export async function GET(request: Request) {
 // Visitors are identified by a browser-generated `customerId`, stored as the
 // phone `web:<id>` so they never collide with real phone numbers.
 export async function POST(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+
+  if (!checkRateLimit(ip, 15, 60000)) {
+    return NextResponse.json(
+      { error: "Too many messages. Please wait a minute." },
+      { status: 429 },
+    );
+  }
+
   try {
     const body = (await request.json()) as {
       businessId?: unknown;

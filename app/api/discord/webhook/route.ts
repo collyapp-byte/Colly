@@ -2,6 +2,7 @@ import nacl from "tweetnacl";
 import { after, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const DISCORD_API = "https://discord.com/api/v10";
 const FALLBACK_REPLY =
@@ -46,6 +47,13 @@ type DiscordPayload = {
  * call runs in `after()`, which posts a follow-up webhook when it finishes.
  */
 export async function POST(request: Request) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+
+  if (!checkRateLimit(ip, 60, 60000)) {
+    return new Response("Too many requests", { status: 429 });
+  }
+
   const rawBody = await request.text();
   const signature = request.headers.get("x-signature-ed25519");
   const timestamp = request.headers.get("x-signature-timestamp");
