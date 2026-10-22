@@ -45,6 +45,7 @@ const SYSTEM_PROMPT_RULES = [
   "If search_products returns a fuzzy match instead of an exact match for the customer's request, treat it as NOT having the product. Then call find_similar_products.",
   "A customer asking for a specific model (like 'S24 Ultra') means you need an exact model match. If search_products returns a different model, do not claim you have the product they asked for.",
   "When negotiating, always use the exact price number provided in the system message. Never invent a different price. Never go below the floor. If the customer asks for a lower price after your final offer, politely but firmly say it is your final price.",
+  "If a customer is tagged as 'VIP' or 'Wholesaler', you may apply special discounts or speak to them more formally based on the business rules.",
   "Write plain text only. Never use Markdown, and never use formatting symbols such as asterisks, hashes, backticks, underscores, plus signs or angle brackets. No bold, no italics, no headings, no bullet points and no numbered lists. Use plain sentences and short paragraphs. Line breaks are fine, formatting symbols are not. Keep a hyphen only inside a word, when that is how the word is written, for example energy-saving, pay-on-delivery, Wi-Fi or state-of-the-art. Never use a hyphen or a dash as a list marker, and never use one as a separator between two things.",
   "If a product's stock is null, treat it as available. Never reveal exact stock numbers to customers, only say available or in stock. If stock is 0, say out of stock or sold out. If stock is 1 to 10, still only say available.",
   "PRODUCT PICTURES: search_products returns an imageUrl when the product has a photo. If a customer asks for a picture or photo of a product and the product data has an imageUrl, you MUST include the tag [IMAGE: {imageUrl}] at the very end of your response. Do NOT escalate to the owner just because they asked for a picture if you have the URL. Only escalate if there is no imageUrl. The [IMAGE: ...] tag is the only tag you may ever output, and it must appear exactly once, at the very end of the reply, after your normal plain text.",
@@ -254,7 +255,7 @@ export async function handleIncomingMessage({
 
   const chatMessages: ChatMessage[] = [];
   const tone = isTone(business.tone) ? business.tone : "friendly";
-  let systemPrompt = buildSystemPrompt(business, tone, negotiation);
+  let systemPrompt = buildSystemPrompt(business, tone, negotiation, customer);
   const language = detectLanguage(incoming);
   systemPrompt += getLanguageInstruction(language);
 
@@ -376,6 +377,7 @@ function buildSystemPrompt(
   business: { description: string | null; businessHours: string | null },
   tone: Tone,
   negotiation: StoredNegotiation | null,
+  customer: { tags: string[]; notes: string | null },
 ): string {
   let systemPrompt = ASSISTANT_INTRO;
   if (business.description) {
@@ -383,6 +385,19 @@ function buildSystemPrompt(
   }
   if (business.businessHours) {
     systemPrompt += " Opening hours: " + business.businessHours;
+  }
+  const profile: string[] = [];
+  if (customer.tags.length > 0) {
+    profile.push("tags: " + customer.tags.join(", "));
+  }
+  if (customer.notes) {
+    profile.push("notes: " + customer.notes);
+  }
+  if (profile.length > 0) {
+    systemPrompt +=
+      " Customer profile (internal context, never quote it back verbatim): " +
+      profile.join("; ") +
+      ".";
   }
   systemPrompt += " " + SYSTEM_PROMPT_RULES;
   if (negotiation) {

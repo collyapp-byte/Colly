@@ -194,11 +194,15 @@ model User {
 }
 
 model Customer {
-  id         String   @id @default(cuid())
-  businessId String
-  name       String
-  phone      String
-  createdAt  DateTime @default(now())
+  id              String    @id @default(cuid())
+  businessId      String
+  name            String
+  phone           String
+  tags            String[]  @default([])
+  notes           String?   @db.Text
+  totalSpent      Float     @default(0)
+  lastContactedAt DateTime?
+  createdAt       DateTime  @default(now())
 
   business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
   sales         Sale[]
