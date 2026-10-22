@@ -39,6 +39,38 @@ type ModalState =
 const EMPTY_STATE_TEXT =
   "No FAQs yet. Add answers to common customer questions so your AI can reply automatically.";
 
+type PresetFaq = FaqInput & { id: string };
+
+const PRESET_FAQS: PresetFaq[] = [
+  {
+    id: "delivery",
+    question: "Do you deliver to other states?",
+    answer:
+      "Yes, we deliver nationwide via waybill. Delivery fees depend on your location.",
+    category: "Delivery",
+  },
+  {
+    id: "payment",
+    question: "Do you accept POS or Bank Transfer?",
+    answer:
+      "Yes, we accept cash, POS, and bank transfers. Payment must be confirmed before dispatch.",
+    category: "Payment",
+  },
+  {
+    id: "original",
+    question: "Are your products original?",
+    answer:
+      "Yes, all our products are 100% original and come with a warranty.",
+    category: "Warranty",
+  },
+  {
+    id: "hours",
+    question: "What are your opening hours?",
+    answer: "We are open Monday to Saturday, 9am to 6pm.",
+    category: "Hours",
+  },
+];
+
 type FaqGroup = {
   label: string;
   faqs: Faq[];
@@ -75,6 +107,8 @@ export default function FaqsPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [dismissedPresets, setDismissedPresets] = useState<string[]>([]);
+  const [addingPresetId, setAddingPresetId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -124,6 +158,31 @@ export default function FaqsPage() {
     refresh();
   }
 
+  async function handleAddPreset(preset: PresetFaq) {
+    setAddingPresetId(preset.id);
+
+    try {
+      await handleCreate({
+        question: preset.question,
+        answer: preset.answer,
+        category: preset.category,
+      });
+      setDismissedPresets((prev) =>
+        prev.includes(preset.id) ? prev : [...prev, preset.id],
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setAddingPresetId(null);
+    }
+  }
+
+  function dismissPreset(id: string) {
+    setDismissedPresets((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  }
+
   async function handleUpdate(id: string, values: FaqInput) {
     const res = await fetch(`/api/faqs/${id}`, {
       method: "PATCH",
@@ -170,6 +229,9 @@ export default function FaqsPage() {
 
   const loading = faqs === null && error === null;
   const groups = faqs ? groupFaqs(faqs) : [];
+  const visiblePresets = PRESET_FAQS.filter(
+    (preset) => !dismissedPresets.includes(preset.id),
+  );
 
   return (
     <div className="mx-auto w-full max-w-5xl">
@@ -204,11 +266,63 @@ export default function FaqsPage() {
       )}
 
       {faqs && faqs.length === 0 && (
-        <div className="rounded-lg border border-dashed border-gray-200 bg-surface p-10 text-center">
-          <p className="mx-auto max-w-md text-sm text-gray-500">
-            {EMPTY_STATE_TEXT}
-          </p>
-        </div>
+        <section className="rounded-xl border border-gray-200 bg-surface p-5 sm:p-6">
+          <div className="mb-4">
+            <h2 className="font-display text-lg font-semibold text-gray-900">
+              Quick Start FAQ
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Add ready-made answers so your AI can start replying right away.
+            </p>
+          </div>
+
+          {visiblePresets.length > 0 ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {visiblePresets.map((preset) => {
+                const adding = addingPresetId === preset.id;
+                return (
+                  <article
+                    key={preset.id}
+                    className="flex flex-col rounded-lg border border-gray-200 bg-white p-4"
+                  >
+                    <p className="font-display text-sm font-semibold text-gray-900">
+                      {preset.question}
+                    </p>
+                    <p className="mt-1 flex-1 text-sm text-gray-600">
+                      {preset.answer}
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleAddPreset(preset)}
+                        disabled={addingPresetId !== null}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-colly-hover disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {adding && (
+                          <LoaderCircle
+                            className="h-3.5 w-3.5 animate-spin"
+                            aria-hidden
+                          />
+                        )}
+                        Add to my FAQs
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => dismissPreset(preset.id)}
+                        disabled={adding}
+                        className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Not applicable
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">{EMPTY_STATE_TEXT}</p>
+          )}
+        </section>
       )}
 
       {faqs && faqs.length > 0 && (

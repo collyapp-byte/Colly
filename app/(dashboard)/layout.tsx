@@ -48,10 +48,12 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
   await requireSiteAccess(user.businessId);
 
   return (
-    <DashboardShell businessName={user.businessName}>
-      {children}
-      <Footer />
+    <>
+      <DashboardShell businessName={user.businessName}>
+        {children}
+        <Footer />
+      </DashboardShell>
       <CollyAiWidget ownerName={user.name} />
-    </DashboardShell>
+    </>
   );
 }

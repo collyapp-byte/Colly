@@ -4,7 +4,7 @@ import { requireAuth } from "@/lib/auth";
 import { getPlanLimits } from "@/lib/plans";
 import { TransactionRow } from "@/components/dashboard/transaction-row";
 import Link from "next/link";
-import { Camera, MessageSquare, Music2, Smartphone, Users } from "lucide-react";
+import { MessageSquare, Smartphone } from "lucide-react";
 
 export default async function CollyAIPage() {
   // Keep this page dynamic: it renders per-owner data (plan, usage, wallet,
@@ -225,8 +225,8 @@ export default async function CollyAIPage() {
                     Connected
                   </span>
                 ) : (
-                  <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600">
-                    Disconnected
+                  <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
+                    Requires CAC
                   </span>
                 )}
                 <Link
@@ -237,57 +237,7 @@ export default async function CollyAIPage() {
                 </Link>
               </div>
             </div>
-            <div
-              aria-disabled="true"
-              className="flex cursor-not-allowed flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 opacity-70"
-            >
-              <div>
-                <p className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                  <Camera className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
-                  Instagram
-                </p>
-                <p className="text-xs text-gray-400">
-                  AI replies to comments and DMs.
-                </p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
-                Requires CAC
-              </span>
-            </div>
-            <div
-              aria-disabled="true"
-              className="flex cursor-not-allowed flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 opacity-70"
-            >
-              <div>
-                <p className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                  <Users className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
-                  Facebook
-                </p>
-                <p className="text-xs text-gray-400">
-                  Automate page posts and comment replies.
-                </p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
-                Requires CAC
-              </span>
-            </div>
-            <div
-              aria-disabled="true"
-              className="flex cursor-not-allowed flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 opacity-70"
-            >
-              <div>
-                <p className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                  <Music2 className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
-                  TikTok
-                </p>
-                <p className="text-xs text-gray-400">
-                  AI comment management and auto-posts.
-                </p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
-                Requires CAC
-              </span>
-            </div>
+
           </div>
         </section>
       </div>

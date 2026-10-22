@@ -96,10 +96,10 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
   const thread = [welcome, ...messages];
 
   return (
-    <>
+    <div className="fixed bottom-6 right-6 z-50">
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 flex h-[500px] w-96 max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/5">
+        <div className="absolute bottom-16 right-0 z-50 flex h-[500px] w-96 max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/5">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-100 bg-[#FF6600] px-4 py-3 text-white">
             <div className="flex items-center gap-2">
@@ -178,7 +178,7 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label={open ? "Close Colly AI" : "Open Colly AI"}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#FF6600] text-white shadow-lg transition-colors hover:bg-[#E65C00]"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FF6600] text-white shadow-lg transition-colors hover:bg-[#E65C00]"
       >
         {open ? (
           <X className="h-6 w-6" aria-hidden />
@@ -186,6 +186,6 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
           <Sparkles className="h-6 w-6" aria-hidden />
         )}
       </button>
-    </>
+    </div>
   );
 }
