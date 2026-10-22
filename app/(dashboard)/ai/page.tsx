@@ -156,6 +156,25 @@ export default async function CollyAIPage() {
                 </Link>
               </div>
             </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Web Chat</p>
+                <p className="text-xs text-gray-500">
+                  AI replies to website visitors.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[11px] font-medium text-green-700">
+                  Active
+                </span>
+                <Link
+                  href="/settings/web-chat"
+                  className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  Get Embed Code
+                </Link>
+              </div>
+            </div>
             <div
               aria-disabled="true"
               className="flex cursor-not-allowed flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 opacity-70"

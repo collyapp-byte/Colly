@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`h-full ${inter.variable}`}>
+    <html lang="en" className={`h-full scroll-smooth ${inter.variable}`}>
       <body className="min-h-full bg-background font-sans text-gray-900 antialiased">
         <Suspense fallback={null}>
           <TopLoader />
