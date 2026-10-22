@@ -64,6 +64,17 @@ export type Business = {
   /** Telegram bot token (private). Present on the API response only when
    * returned by the server; the client type is still fine. */
   telegramBotToken?: string | null;
+  /** Discord bot token (private). Present when the owner has connected a
+   * Discord bot. */
+  discordBotToken?: string | null;
+  /** Discord server ("guild") id the bot answers in. */
+  discordGuildId?: string | null;
+  /** Meta WhatsApp Cloud API phone number id. */
+  whatsappPhoneNumberId?: string | null;
+  /** Meta WhatsApp Cloud API access token (private). */
+  whatsappAccessToken?: string | null;
+  /** Shared secret used by Meta's webhook verification handshake. */
+  whatsappVerifyToken?: string | null;
   /** The OWNER'S personal Telegram chat id (from @userinfobot) — where
    * escalation alerts go. null means owner alerts are not connected yet. */
   ownerTelegramChatId: string | null;
@@ -96,6 +107,11 @@ export type BusinessRecord = {
   connectionStatus: string;
   telegramBotUsername: string | null;
   telegramBotToken?: string | null;
+  discordBotToken?: string | null;
+  discordGuildId?: string | null;
+  whatsappPhoneNumberId?: string | null;
+  whatsappAccessToken?: string | null;
+  whatsappVerifyToken?: string | null;
   ownerTelegramChatId: string | null;
   referredByAgentId: string | null;
   selectedPlan: string | null;
@@ -131,6 +147,11 @@ export function serializeBusiness(business: BusinessRecord): Business {
       : "DISCONNECTED",
     telegramBotUsername: business.telegramBotUsername,
     telegramBotToken: (business as any).telegramBotToken ?? null,
+    discordBotToken: (business as any).discordBotToken ?? null,
+    discordGuildId: (business as any).discordGuildId ?? null,
+    whatsappPhoneNumberId: (business as any).whatsappPhoneNumberId ?? null,
+    whatsappAccessToken: (business as any).whatsappAccessToken ?? null,
+    whatsappVerifyToken: (business as any).whatsappVerifyToken ?? null,
     ownerTelegramChatId: business.ownerTelegramChatId,
     referredByAgentId: business.referredByAgentId,
     selectedPlan: business.selectedPlan ?? null,

@@ -92,7 +92,7 @@ body {
 
 /* Slow drifting motion for the blurred gradient blobs behind the marketing
    hero. Translate only: scaling a blurred element forces the browser to
-   re-rasterize it every frame. Desktop only so touch devices stay static. */
+   re-rasterize it every frame. */
 @keyframes colly-float {
   0%,
   100% {
@@ -103,10 +103,8 @@ body {
   }
 }
 
-@media (min-width: 1024px) {
-  .animate-colly-float {
-    animation: colly-float 14s ease-in-out infinite;
-  }
+.animate-colly-float {
+  animation: colly-float 14s ease-in-out infinite;
 }
 
 /* Subtle dot texture for active nav item — mirrors the scattered dots on the

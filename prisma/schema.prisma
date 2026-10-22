@@ -103,6 +103,21 @@ model Business {
   /// a shareable t.me link once the bot is connected.
   telegramBotUsername String?
 
+  /// Discord integration. `discordBotToken` is the bot token copied from the
+  /// Discord developer portal; `discordGuildId` is the server ("guild") the
+  /// bot should answer in. Either one can identify the business on an
+  /// incoming interaction.
+  discordBotToken String?
+  discordGuildId  String?
+
+  /// Meta WhatsApp Cloud API integration. `whatsappPhoneNumberId` identifies
+  /// the business on incoming webhooks, `whatsappAccessToken` authorizes
+  /// outbound replies, and `whatsappVerifyToken` is the shared secret used
+  /// during Meta's webhook verification handshake.
+  whatsappPhoneNumberId String?
+  whatsappAccessToken   String?
+  whatsappVerifyToken   String?
+
   /// The OWNER'S personal Telegram chat id (from @userinfobot), NOT the
   /// customer chat (`telegramChatId` above). When set, escalation alerts from
   /// `escalate_to_owner` are delivered there via the Colly Admin Bot

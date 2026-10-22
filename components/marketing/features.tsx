@@ -37,7 +37,7 @@ export function Features() {
           {features.map((f, i) => (
             <TiltCard
               key={i}
-              className="border border-white/50 bg-white/60 shadow-sm md:backdrop-blur-md"
+              className="border border-white/50 bg-white/60 shadow-sm backdrop-blur-md"
             >
               <div className="flex items-start gap-4 p-6">
                 <div className="mt-1 shrink-0 rounded-lg bg-[#FFF4EC] p-2">{f.icon}</div>

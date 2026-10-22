@@ -8,12 +8,15 @@ import {
   BellRing,
   Clock,
   Copy,
+  MessageSquare,
   PhoneCall,
   Send,
   Share2,
   Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { saveDiscordBotToken } from "@/app/api/discord/actions";
+import { saveWhatsAppSettings } from "@/app/api/whatsapp/actions";
 import { toast } from "sonner";
 import type { Business } from "@/lib/business";
 
@@ -28,6 +31,9 @@ const HOW_IT_WORKS = [
   "Create a bot with @BotFather and share its link. No SIM card, no waiting.",
   "Share your bot link on Instagram, your status, and business cards so customers can reach your AI.",
 ];
+
+/** Paste this into the Meta Developer Dashboard's webhook field. */
+const WHATSAPP_WEBHOOK_URL = "https://colly.com.ng/api/whatsapp/webhook";
 
 /** Self-serve Telegram connection, straight from @BotFather. */
 const TELEGRAM_STEPS = [
@@ -78,6 +84,22 @@ export default function AiLinePage() {
   const [ownerError, setOwnerError] = useState<string | null>(null);
   const [ownerLinked, setOwnerLinked] = useState(false);
 
+  // Discord connection.
+  const [discordToken, setDiscordToken] = useState("");
+  const [discordGuildId, setDiscordGuildId] = useState("");
+  const [discordSaving, setDiscordSaving] = useState(false);
+  const [discordError, setDiscordError] = useState<string | null>(null);
+  const [discordNotice, setDiscordNotice] = useState<string | null>(null);
+
+  // WhatsApp Cloud API connection.
+  const [whatsappPhoneNumberId, setWhatsappPhoneNumberId] = useState("");
+  const [whatsappAccessToken, setWhatsappAccessToken] = useState("");
+  const [whatsappVerifyToken, setWhatsappVerifyToken] = useState("");
+  const [whatsappSaving, setWhatsappSaving] = useState(false);
+  const [whatsappError, setWhatsappError] = useState<string | null>(null);
+  const [whatsappNotice, setWhatsappNotice] = useState<string | null>(null);
+  const [webhookCopied, setWebhookCopied] = useState(false);
+
   const loadBusiness = useCallback(async () => {
     try {
       const data = await fetchBusinessData();
@@ -108,9 +130,10 @@ export default function AiLinePage() {
 
   const loading = business === null && error === null;
 
-  // Per-channel connection state. Telegram is the only live channel; WhatsApp
-  // is postponed until Meta verification clears.
+  // Per-channel connection state.
   const telegramIsConnected = Boolean(business?.telegramBotToken);
+  const discordIsConnected = Boolean(business?.discordBotToken);
+  const whatsappIsConnected = Boolean(business?.whatsappAccessToken);
 
   // The owner's shareable bot link once the bot is connected.
   const shareLink = business?.telegramBotUsername
@@ -273,6 +296,111 @@ export default function AiLinePage() {
     await loadBusiness();
   }
 
+  async function handleDiscordConnect(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setDiscordError(null);
+    setDiscordNotice(null);
+    setDiscordSaving(true);
+
+    const botToken = discordToken.trim();
+
+    try {
+      const result = await saveDiscordBotToken({
+        botToken,
+        guildId: discordGuildId,
+      });
+
+      if (!result.ok) {
+        setDiscordError(result.error);
+        toast.error(result.error);
+        return;
+      }
+
+      setDiscordToken("");
+      setDiscordNotice(
+        "Discord bot connected. Messages in your server are now answered by your AI assistant.",
+      );
+      toast.success("Discord bot connected!");
+      setBusiness((prev) =>
+        prev
+          ? {
+              ...prev,
+              discordBotToken: botToken,
+              discordGuildId: result.discordGuildId,
+            }
+          : prev,
+      );
+      await loadBusiness();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
+      setDiscordError(message);
+      toast.error(message);
+    } finally {
+      setDiscordSaving(false);
+    }
+  }
+
+  async function handleWhatsAppConnect(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setWhatsappError(null);
+    setWhatsappNotice(null);
+    setWhatsappSaving(true);
+
+    const phoneNumberId = whatsappPhoneNumberId.trim();
+    const accessToken = whatsappAccessToken.trim();
+    const verifyToken = whatsappVerifyToken.trim();
+
+    try {
+      const result = await saveWhatsAppSettings({
+        phoneNumberId,
+        accessToken,
+        verifyToken,
+      });
+
+      if (!result.ok) {
+        setWhatsappError(result.error);
+        toast.error(result.error);
+        return;
+      }
+
+      setWhatsappAccessToken("");
+      setWhatsappVerifyToken("");
+      setWhatsappNotice(
+        "WhatsApp connected. New messages to your number are now answered by your AI assistant.",
+      );
+      toast.success("WhatsApp connected!");
+      setBusiness((prev) =>
+        prev
+          ? {
+              ...prev,
+              whatsappPhoneNumberId: result.whatsappPhoneNumberId,
+              whatsappAccessToken: accessToken,
+              whatsappVerifyToken: verifyToken,
+            }
+          : prev,
+      );
+      await loadBusiness();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
+      setWhatsappError(message);
+      toast.error(message);
+    } finally {
+      setWhatsappSaving(false);
+    }
+  }
+
+  async function handleCopyWebhook() {
+    try {
+      await navigator.clipboard.writeText(WHATSAPP_WEBHOOK_URL);
+      setWebhookCopied(true);
+      setTimeout(() => setWebhookCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable (insecure context): the URL stays on screen.
+    }
+  }
+
   async function handleVerifyOwnerAlerts() {
     setOwnerError(null);
     setOwnerChecking(true);
@@ -311,8 +439,8 @@ export default function AiLinePage() {
 
       <h1 className="font-display text-2xl text-gray-900">AI Line</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Connect your Telegram bot and the AI answers customers on every message.
-        WhatsApp is coming soon.
+        Connect Telegram, Discord, or WhatsApp and the AI answers customers on
+        every message.
       </p>
 
       {/* HOW IT WORKS — compact orientation box right under the header. */}
@@ -356,13 +484,21 @@ export default function AiLinePage() {
                 href="#connect-whatsapp"
                 className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3 transition-colors hover:bg-gray-50"
               >
-                <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-400">
-                  <Smartphone className="h-4 w-4 text-gray-400" aria-hidden />
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-900">
+                  <Smartphone className="h-4 w-4 text-gray-500" aria-hidden />
                   WhatsApp
                 </span>
-                <span className="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-[11px] font-bold text-gray-600">
-                  Coming Soon
-                </span>
+                {whatsappIsConnected ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
+                    <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                    Connected
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-[12px] font-medium text-red-600">
+                    <Clock className="h-3.5 w-3.5" aria-hidden />
+                    Disconnected
+                  </span>
+                )}
               </a>
 
               <a
@@ -374,6 +510,27 @@ export default function AiLinePage() {
                   Telegram
                 </span>
                 {telegramIsConnected ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
+                    <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                    Connected
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-[12px] font-medium text-red-600">
+                    <Clock className="h-3.5 w-3.5" aria-hidden />
+                    Disconnected
+                  </span>
+                )}
+              </a>
+
+              <a
+                href="#connect-discord"
+                className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3 transition-colors hover:bg-gray-50"
+              >
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-900">
+                  <MessageSquare className="h-4 w-4 text-gray-500" aria-hidden />
+                  Discord
+                </span>
+                {discordIsConnected ? (
                   <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
                     <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
                     Connected
@@ -548,6 +705,121 @@ export default function AiLinePage() {
             )}
           </section>
 
+          {/* DISCORD CONNECTION — sits directly below Telegram. */}
+          <section id="connect-discord" className={SECTION_CLASS}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className={HEADING_CLASS}>Connect Discord</h2>
+              {discordIsConnected ? (
+                <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
+                  <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                  Connected
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-[12px] font-medium text-red-600">
+                  <Clock className="h-3.5 w-3.5" aria-hidden />
+                  Disconnected
+                </span>
+              )}
+            </div>
+
+            <p className="mt-3 text-sm text-gray-600">
+              Connect a Discord bot and your AI answers messages in your server.
+              Create an application at{" "}
+              <span className="font-medium text-gray-700">
+                discord.com/developers/applications
+              </span>
+              , add a Bot, then paste its token below.
+            </p>
+
+            {discordIsConnected && (
+              <div
+                role="status"
+                className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800"
+              >
+                <p className="font-semibold">Discord bot connected</p>
+                {business.discordGuildId && (
+                  <p className="mt-1">
+                    Server ID:{" "}
+                    <span className="font-mono text-[13px]">
+                      {business.discordGuildId}
+                    </span>
+                  </p>
+                )}
+                <p className="mt-1 text-green-700">
+                  Paste a new token below to replace the current one.
+                </p>
+              </div>
+            )}
+
+            <form onSubmit={handleDiscordConnect} className="mt-5 space-y-4">
+              <div>
+                <label
+                  htmlFor="discordBotToken"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Discord Bot Token
+                </label>
+                <input
+                  id="discordBotToken"
+                  name="discordBotToken"
+                  type="text"
+                  value={discordToken}
+                  onChange={(event) => setDiscordToken(event.target.value)}
+                  placeholder={
+                    discordIsConnected
+                      ? "Connected — paste a new token to replace"
+                      : "Paste your Discord bot token"
+                  }
+                  autoComplete="off"
+                  required
+                  className={INPUT_CLASS}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="discordGuildId"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Discord Server ID{" "}
+                  <span className="font-normal text-gray-400">(optional)</span>
+                </label>
+                <input
+                  id="discordGuildId"
+                  name="discordGuildId"
+                  type="text"
+                  inputMode="numeric"
+                  value={discordGuildId}
+                  onChange={(event) => setDiscordGuildId(event.target.value)}
+                  placeholder="e.g. 123456789012345678"
+                  autoComplete="off"
+                  className={INPUT_CLASS}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  The server the bot should answer in. Enable Developer Mode in
+                  Discord, right-click your server, and copy the server id.
+                </p>
+              </div>
+
+              {discordError && (
+                <p role="alert" className="text-sm text-danger">
+                  {discordError}
+                </p>
+              )}
+              {discordNotice && (
+                <p role="status" className="text-sm text-success">
+                  {discordNotice}
+                </p>
+              )}
+
+              <Button type="submit" variant="primary" isLoading={discordSaving}>
+                {discordIsConnected
+                  ? "Update Discord Token"
+                  : "Connect Discord"}
+              </Button>
+            </form>
+          </section>
+
           {/* OWNER NOTIFICATIONS (personal Telegram) — second, right after the
               bot connection. Highlighted with a thicker orange border while
               still unset. */}
@@ -627,27 +899,179 @@ export default function AiLinePage() {
             </div>
           </section>
 
-          {/* WHATSAPP CONNECTION — postponed until Meta verification clears */}
-          <section
-            id="connect-whatsapp"
-            className={`${SECTION_CLASS} opacity-80`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <h2 className={`${HEADING_CLASS} text-gray-500`}>
-                Connect your WhatsApp
-              </h2>
-              <span className="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-[11px] font-bold text-gray-600">
-                Coming Soon
-              </span>
+          {/* WHATSAPP CONNECTION — Meta WhatsApp Cloud API. */}
+          <section id="connect-whatsapp" className={SECTION_CLASS}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className={HEADING_CLASS}>Connect your WhatsApp</h2>
+              {whatsappIsConnected ? (
+                <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
+                  <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                  Connected
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-[12px] font-medium text-red-600">
+                  <Clock className="h-3.5 w-3.5" aria-hidden />
+                  Disconnected
+                </span>
+              )}
             </div>
 
-            <div className="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
-              <Smartphone className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              <p>
-                WhatsApp integration is pending Meta business verification. We
-                will notify you as soon as it is ready!
+            <p className="mt-3 text-sm text-gray-600">
+              Connect a WhatsApp number through the Meta WhatsApp Cloud API.
+              Open your Meta app, copy the phone number id and a permanent
+              access token, then paste them below.
+            </p>
+
+            <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+              <label
+                htmlFor="whatsappWebhookUrl"
+                className="mb-1 block text-sm font-medium text-gray-700"
+              >
+                Webhook URL
+              </label>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  id="whatsappWebhookUrl"
+                  type="text"
+                  readOnly
+                  value={WHATSAPP_WEBHOOK_URL}
+                  onFocus={(event) => event.target.select()}
+                  className={`${INPUT_CLASS} min-w-0 flex-1 bg-white font-mono text-[13px]`}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleCopyWebhook}
+                >
+                  <Copy className="h-3.5 w-3.5" aria-hidden />
+                  {webhookCopied ? "Copied!" : "Copy"}
+                </Button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Paste this into the Callback URL field under WhatsApp &rarr;
+                Configuration in the Meta Developer Dashboard.
               </p>
             </div>
+
+            {whatsappIsConnected && (
+              <div
+                role="status"
+                className="mt-4 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800"
+              >
+                <p className="font-semibold">WhatsApp connected</p>
+                {business.whatsappPhoneNumberId && (
+                  <p className="mt-1">
+                    Phone number ID:{" "}
+                    <span className="font-mono text-[13px]">
+                      {business.whatsappPhoneNumberId}
+                    </span>
+                  </p>
+                )}
+                <p className="mt-1 text-green-700">
+                  Paste new credentials below to replace the current ones.
+                </p>
+              </div>
+            )}
+
+            <form onSubmit={handleWhatsAppConnect} className="mt-5 space-y-4">
+              <div>
+                <label
+                  htmlFor="whatsappPhoneNumberId"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  WhatsApp Phone Number ID
+                </label>
+                <input
+                  id="whatsappPhoneNumberId"
+                  name="whatsappPhoneNumberId"
+                  type="text"
+                  inputMode="numeric"
+                  value={whatsappPhoneNumberId}
+                  onChange={(event) =>
+                    setWhatsappPhoneNumberId(event.target.value)
+                  }
+                  placeholder="e.g. 123456789012345"
+                  autoComplete="off"
+                  required
+                  className={INPUT_CLASS}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="whatsappAccessToken"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  WhatsApp Access Token
+                </label>
+                <input
+                  id="whatsappAccessToken"
+                  name="whatsappAccessToken"
+                  type="password"
+                  value={whatsappAccessToken}
+                  onChange={(event) =>
+                    setWhatsappAccessToken(event.target.value)
+                  }
+                  placeholder="EAAG..."
+                  autoComplete="new-password"
+                  required
+                  className={INPUT_CLASS}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  A permanent access token from your Meta app. Kept private and
+                  used only to send replies.
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="whatsappVerifyToken"
+                  className="mb-1 block text-sm font-medium text-gray-700"
+                >
+                  WhatsApp Verify Token
+                </label>
+                <input
+                  id="whatsappVerifyToken"
+                  name="whatsappVerifyToken"
+                  type="text"
+                  value={whatsappVerifyToken}
+                  onChange={(event) =>
+                    setWhatsappVerifyToken(event.target.value)
+                  }
+                  placeholder="A random string, e.g. colly-wa-8f2k9q"
+                  autoComplete="off"
+                  required
+                  minLength={8}
+                  className={INPUT_CLASS}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Generate any random string of at least 8 characters, then
+                  enter the same value in Meta&apos;s webhook setup.
+                </p>
+              </div>
+
+              {whatsappError && (
+                <p role="alert" className="text-sm text-danger">
+                  {whatsappError}
+                </p>
+              )}
+              {whatsappNotice && (
+                <p role="status" className="text-sm text-success">
+                  {whatsappNotice}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={whatsappSaving}
+              >
+                {whatsappIsConnected
+                  ? "Update WhatsApp"
+                  : "Connect WhatsApp"}
+              </Button>
+            </form>
           </section>
         </div>
       )}

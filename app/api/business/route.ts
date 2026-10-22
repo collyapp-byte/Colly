@@ -50,7 +50,7 @@ export async function GET() {
     ]);
 
     const pendingTasks: string[] = [];
-    if (!business.telegramBotToken) {
+    if (!business.telegramBotToken && !business.whatsappAccessToken) {
       pendingTasks.push("Connect a channel");
     }
     if (!business.ownerTelegramChatId) {
