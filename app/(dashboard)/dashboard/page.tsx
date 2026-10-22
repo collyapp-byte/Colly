@@ -21,6 +21,7 @@ type Stat = {
   value: string;
   icon: LucideIcon;
   href: string;
+  title?: string;
 };
 
 export default function OverviewPage() {
@@ -96,8 +97,20 @@ export default function OverviewPage() {
       icon: Wallet,
       href: "/sales",
     },
-    { label: "Messages Handled", value: "0", icon: MessageSquare, href: "/conversations" },
-    { label: "Active Conversations", value: "0", icon: MessagesSquare, href: "/conversations" },
+    {
+      label: "Messages Handled",
+      value: "—",
+      icon: MessageSquare,
+      href: "/conversations",
+      title: "Coming soon",
+    },
+    {
+      label: "Active Conversations",
+      value: "—",
+      icon: MessagesSquare,
+      href: "/conversations",
+      title: "Coming soon",
+    },
     { label: "Pending Invoices", value: String(pendingInvoices ?? 0), icon: Receipt, href: "/invoices" },
   ];
 
@@ -145,28 +158,17 @@ export default function OverviewPage() {
               key={stat.label}
               label={stat.label}
               value={
-                stat.label === "Today's Sales"
-                  ? (
-                      <AnimatedCounter
-                        value={today?.total ?? 0}
-                        prefix="₦"
-                      />
-                    )
-                  : (
-                      <AnimatedCounter
-                        value={
-                          stat.label === "Messages Handled" ||
-                          stat.label === "Active Conversations"
-                            ? 0
-                            : stat.label === "Pending Invoices"
-                              ? pendingInvoices ?? 0
-                              : 0
-                        }
-                      />
-                    )
+                stat.label === "Today's Sales" ? (
+                  <AnimatedCounter value={today?.total ?? 0} prefix="₦" />
+                ) : stat.label === "Pending Invoices" ? (
+                  <AnimatedCounter value={pendingInvoices ?? 0} />
+                ) : (
+                  stat.value
+                )
               }
               icon={<Icon className="h-[18px] w-[18px] stroke-[1.5]" aria-hidden />}
               href={stat.href}
+              title={stat.title}
             />
           );
         })}

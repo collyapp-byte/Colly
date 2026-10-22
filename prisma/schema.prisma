@@ -92,8 +92,8 @@ model Business {
   /// subscription still lives in `plan` above.
   selectedPlan String?
 
-  /// Dual channel. `channel` is which messaging channel this business runs on:
-  /// "WHATSAPP" | "TELEGRAM". Telegram businesses connect their own bot:
+  /// Messaging channel. `channel` is which channel this business runs on:
+  /// "WHATSAPP" | "TELEGRAM" | "DISCORD". Telegram businesses connect their own bot:
   /// `telegramBotToken` is the bot token from BotFather and `telegramChatId`
   /// is the chat the AI should answer in.
   channel             String  @default("WHATSAPP")

@@ -61,14 +61,17 @@ export async function signup(
   const password = readPassword(formData);
   // Optional: the agent who set the business up. Blank on most signups.
   const agentId = readField(formData, "agentId");
-  // Channel chosen on the signup form ("WHATSAPP" | "TELEGRAM"); anything
-  // missing or unrecognised falls back to the schema default.
+  // Channel chosen on the signup form ("WHATSAPP" | "TELEGRAM" | "DISCORD");
+  // anything missing or unrecognised falls back to the schema default.
   const channelField = readField(formData, "channel");
   const channel = isChannel(channelField) ? channelField : "WHATSAPP";
   // The tier picked on the pricing page (?plan=green). Kept only when it is a
   // real tier of the chosen channel, so the billing page can pre-select it.
   const planField = readField(formData, "plan");
-  const selectedPlan = isTierForChannel(planField, channel) ? planField : null;
+  const selectedPlan =
+    channel !== "DISCORD" && isTierForChannel(planField, channel)
+      ? planField
+      : null;
 
   // Google sign-ups arrive already authenticated: the OAuth callback created a
   // Supabase session, so there is no password to create. Reuse that identity

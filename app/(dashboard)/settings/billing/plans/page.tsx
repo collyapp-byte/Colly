@@ -14,9 +14,6 @@ import { Button } from "@/components/ui/button";
 
 const TELEGRAM_TIERS: TelegramPlanTier[] = ["green", "blue", "black"];
 
-// A reply count at or above this is treated as unlimited in the UI.
-const UNLIMITED = 999_999;
-
 type CardMeta = {
   name: string;
   tagline: string;
@@ -30,7 +27,7 @@ const TELEGRAM_META: Record<TelegramPlanTier, CardMeta> = {
   blue: { name: "Blue", tagline: "For growing businesses" },
   black: {
     name: "Black",
-    tagline: "Maximum reach, no limits",
+    tagline: "Maximum reach for high-volume teams",
     badge: "Best Value",
     dark: true,
   },
@@ -38,14 +35,8 @@ const TELEGRAM_META: Record<TelegramPlanTier, CardMeta> = {
 
 /** The bullet list under a card. Message counts come from the plan config. */
 function cardFeatures(tier: TelegramPlanTier, config: PlanConfig): string[] {
-  const messages =
-    config.includedMsgs >= UNLIMITED
-      ? "Unlimited Messages"
-      : `${config.includedMsgs.toLocaleString()} AI replies/month`;
-  const manual =
-    config.includedManualMessages >= UNLIMITED
-      ? "Unlimited manual replies"
-      : `${config.includedManualMessages.toLocaleString()} manual replies/month`;
+  const messages = `${config.includedMsgs.toLocaleString()} AI replies/month`;
+  const manual = `${config.includedManualMessages.toLocaleString()} manual replies/month`;
 
   if (tier === "green") {
     return [messages, manual, "Telegram bot connection", "Product catalogue", "FAQ knowledge base"];
@@ -130,8 +121,8 @@ function PlansContent() {
           Choose a plan
         </h1>
         <p className="mt-2 max-w-md text-center text-sm text-gray-500">
-          WhatsApp plans will be available soon. For now, enjoy Telegram with
-          drastically higher limits and zero Meta fees.
+          Choose the plan that matches your message volume. Every plan includes
+          the same AI features.
         </p>
       </div>
 

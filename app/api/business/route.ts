@@ -42,15 +42,18 @@ export async function GET() {
 
     // Onboarding checklist, surfaced as an orange dot in the sidebar and used
     // to highlight the relevant settings card. A channel counts as connected
-    // when the Telegram bot token is set (WhatsApp self-serve setup is paused
-    // until Meta verification clears).
+    // when any channel credential is stored.
     const [productsCount, faqsCount] = await Promise.all([
       prisma.product.count({ where: { businessId: user.businessId } }),
       prisma.faq.count({ where: { businessId: user.businessId } }),
     ]);
 
     const pendingTasks: string[] = [];
-    if (!business.telegramBotToken && !business.whatsappAccessToken) {
+    if (
+      !business.telegramBotToken &&
+      !business.discordBotToken &&
+      !business.whatsappAccessToken
+    ) {
       pendingTasks.push("Connect a channel");
     }
     if (!business.ownerTelegramChatId) {

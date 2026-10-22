@@ -81,8 +81,8 @@ export const TELEGRAM_PLANS: Record<TelegramPlanTier, PlanConfig> = {
   black: {
     monthly: 50_000,
     yearly: 500_000,
-    includedMsgs: 999_999,
-    includedManualMessages: 999_999,
+    includedMsgs: 30_000,
+    includedManualMessages: 30_000,
     aiCredit: 10,
     manualCredit: 0,
   },

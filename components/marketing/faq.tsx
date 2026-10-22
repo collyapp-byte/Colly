@@ -6,7 +6,7 @@ export function FAQ() {
     },
     {
       q: "My customers use WhatsApp, not Telegram.",
-      a: "Keep your WhatsApp for Status and casual chats. Use Telegram for high-volume wholesale buyers, VIPs, and your dedicated AI line. Telegram has zero message fees and requires no SIM card."
+      a: "You can connect your own WhatsApp API account to Colly now, though it requires a Meta business account and completed API setup. Telegram remains the fastest option because it needs no SIM card, no Meta approval, and has zero message fees."
     },
     {
       q: "₦15,000 is too much.",
@@ -14,7 +14,7 @@ export function FAQ() {
     },
     {
       q: "Why Telegram first?",
-      a: "Meta currently blocks Nigerian businesses from using their existing WhatsApp numbers on the API without a CAC certificate. Telegram gives you the exact same AI power instantly, with zero SIM cards and zero Meta fees. (WhatsApp is coming soon)."
+      a: "Telegram is still the fastest way to launch: it needs no SIM card, no Meta approval, and has zero message fees. Colly now supports the official WhatsApp API too, but connecting WhatsApp requires a Meta business account and completed WhatsApp API setup."
     }
   ];
 

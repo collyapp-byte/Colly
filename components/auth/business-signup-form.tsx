@@ -13,7 +13,6 @@ import { AuthAlert, AuthField } from "@/components/auth/auth-form";
 import { GoogleButton } from "@/components/auth/google-button";
 import { Button } from "@/components/ui/button";
 
-/** The single channel available at launch, with the facts that sell it. */
 const TELEGRAM_OPTION = {
   value: "TELEGRAM" as Channel,
   title: "Telegram",
@@ -26,11 +25,10 @@ const TELEGRAM_OPTION = {
   ],
 };
 
-/** WhatsApp is postponed until Meta business verification clears. */
 const WHATSAPP_OPTION = {
+  value: "WHATSAPP" as Channel,
   title: "WhatsApp",
-  badge: "Coming Soon",
-  note: "Pending Meta business verification.",
+  note: "Requires a Meta business account and WhatsApp API setup.",
 };
 
 /**
@@ -54,6 +52,7 @@ export function BusinessSignupForm({
     INITIAL_AUTH_STATE,
   );
   const [showPassword, setShowPassword] = useState(false);
+  const [channel, setChannel] = useState<Channel>("TELEGRAM");
 
   // Google sign-ups land here already authenticated by Supabase. In that case
   // the email and password fields are pointless (and a password would never be
@@ -207,25 +206,29 @@ export function BusinessSignupForm({
           <input type="hidden" name="plan" value={selectedPlan} />
         ) : null}
 
-        {/* Channel choice: Telegram is the only channel at launch. WhatsApp is
-            shown disabled until Meta verification clears. The hidden input
-            keeps submitting channel: "TELEGRAM" to the backend. */}
+        {/* Channel choice: the hidden input mirrors the selected card so the
+            signup action receives channel: "TELEGRAM" | "WHATSAPP". */}
         <fieldset>
           <legend className="mb-1 block text-sm font-medium text-gray-700">
             Which channel do you want to use?
           </legend>
-          <input type="hidden" name="channel" value={TELEGRAM_OPTION.value} />
+          <input type="hidden" name="channel" value={channel} />
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {/* Telegram — the only clickable option */}
-            <label className="relative flex cursor-pointer flex-col gap-3 rounded-xl border border-[#FF6600] bg-orange-50/50 p-4 ring-1 ring-[#FF6600] transition-colors">
+            <label
+              className={`relative flex cursor-pointer flex-col gap-3 rounded-xl border p-4 transition-colors ${
+                channel === TELEGRAM_OPTION.value
+                  ? "border-[#FF6600] bg-orange-50/50 ring-1 ring-[#FF6600]"
+                  : "border-gray-200 bg-white"
+              }`}
+            >
               <span className="flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2">
                   <input
                     type="radio"
                     name="channelChoice"
                     value={TELEGRAM_OPTION.value}
-                    checked
-                    readOnly
+                    checked={channel === TELEGRAM_OPTION.value}
+                    onChange={() => setChannel(TELEGRAM_OPTION.value)}
                     className="h-4 w-4 shrink-0 accent-[#FF6600]"
                   />
                   <span className="text-sm font-semibold text-gray-900">
@@ -256,32 +259,29 @@ export function BusinessSignupForm({
               </ul>
             </label>
 
-            {/* WhatsApp — disabled, coming soon */}
-            <div
-              aria-disabled="true"
-              className="relative flex cursor-not-allowed flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 opacity-70"
+            <label
+              className={`relative flex cursor-pointer flex-col gap-3 rounded-xl border p-4 transition-colors ${
+                channel === WHATSAPP_OPTION.value
+                  ? "border-[#FF6600] bg-orange-50/50 ring-1 ring-[#FF6600]"
+                  : "border-gray-200 bg-white"
+              }`}
             >
-              <span className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="channelChoice"
-                    value="WHATSAPP"
-                    disabled
-                    className="h-4 w-4 shrink-0 accent-gray-400"
-                  />
-                  <span className="text-sm font-semibold text-gray-400">
-                    {WHATSAPP_OPTION.title}
-                  </span>
-                </span>
-
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-full bg-gray-200 px-2.5 py-0.5 text-[10px] font-bold text-gray-600 shadow-sm">
-                  {WHATSAPP_OPTION.badge}
+              <span className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="channelChoice"
+                  value={WHATSAPP_OPTION.value}
+                  checked={channel === WHATSAPP_OPTION.value}
+                  onChange={() => setChannel(WHATSAPP_OPTION.value)}
+                  className="h-4 w-4 shrink-0 accent-[#FF6600]"
+                />
+                <span className="text-sm font-semibold text-gray-900">
+                  {WHATSAPP_OPTION.title}
                 </span>
               </span>
 
-              <p className="text-sm text-gray-400">{WHATSAPP_OPTION.note}</p>
-            </div>
+              <p className="text-sm text-gray-600">{WHATSAPP_OPTION.note}</p>
+            </label>
           </div>
         </fieldset>
 

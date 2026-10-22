@@ -35,7 +35,7 @@ export function Pricing() {
       name: "Black",
       price: "₦50,000",
       desc: "For high-volume wholesalers.",
-      features: ["30,000 AI messages/mo", "Unlimited fair use", "₦10/extra message", "Dedicated onboarding"],
+      features: ["30,000 AI messages/mo", "30,000 manual replies/mo", "₦10/extra message", "Dedicated onboarding"],
       cta: "Get Black",
       href: "/signup?role=business&plan=black",
       highlight: false

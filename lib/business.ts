@@ -13,7 +13,7 @@ export function isTone(value: unknown): value is Tone {
 }
 
 /** The messaging channels a business can run on. */
-export const CHANNELS = ["WHATSAPP", "TELEGRAM"] as const;
+export const CHANNELS = ["WHATSAPP", "TELEGRAM", "DISCORD"] as const;
 
 export type Channel = (typeof CHANNELS)[number];
 
@@ -53,7 +53,8 @@ export type Business = {
   description: string | null;
   /** Two-Number Model: false until the dedicated AI line is provisioned. */
   aiLineConnected: boolean;
-  /** Messaging channel this business runs on: "WHATSAPP" | "TELEGRAM". */
+  /** Messaging channel this business runs on: "WHATSAPP" | "TELEGRAM" |
+   * "DISCORD". */
   channel: Channel;
   /** Channel connection state: "DISCONNECTED" | "PENDING_BSP_SETUP" |
    * "CONNECTED". Drives the AI Line settings page. */

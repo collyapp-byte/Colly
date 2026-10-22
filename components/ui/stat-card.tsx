@@ -7,6 +7,7 @@ interface StatCardProps {
   icon?: ReactNode;
   href?: string;
   onClick?: () => void;
+  title?: string;
 }
 
 export function StatCard({
@@ -15,6 +16,7 @@ export function StatCard({
   icon,
   href,
   onClick,
+  title,
 }: StatCardProps) {
   const isClickable = href || onClick;
   const Tag = isClickable ? (href ? "a" : "button") : "div";
@@ -28,6 +30,7 @@ export function StatCard({
       }`}
       {...(href ? { href } : {})}
       {...(onClick ? { onClick } : {})}
+      title={title}
     >
       <div className="mb-1 flex items-center justify-between gap-2 md:mb-2">
         <p className="min-w-0 flex-1 truncate text-[11px] font-medium text-gray-500 md:text-[13px]">
