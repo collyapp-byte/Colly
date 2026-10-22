@@ -91,22 +91,22 @@ body {
 }
 
 /* Slow drifting motion for the blurred gradient blobs behind the marketing
-   hero. Paired with blur-3xl for a soft Linear/Stripe-style glow. */
+   hero. Translate only: scaling a blurred element forces the browser to
+   re-rasterize it every frame. Desktop only so touch devices stay static. */
 @keyframes colly-float {
   0%,
   100% {
-    transform: translate(0, 0) scale(1);
+    transform: translate3d(0, 0, 0);
   }
-  33% {
-    transform: translate(24px, -20px) scale(1.06);
-  }
-  66% {
-    transform: translate(-16px, 16px) scale(0.96);
+  50% {
+    transform: translate3d(0, -12px, 0);
   }
 }
 
-.animate-colly-float {
-  animation: colly-float 14s ease-in-out infinite;
+@media (min-width: 1024px) {
+  .animate-colly-float {
+    animation: colly-float 14s ease-in-out infinite;
+  }
 }
 
 /* Subtle dot texture for active nav item — mirrors the scattered dots on the

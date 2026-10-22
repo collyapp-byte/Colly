@@ -34,7 +34,7 @@ export function WhatsAppSection() {
   }
 
   return (
-    <section className="bg-[#1E3A8A]/90 py-16 backdrop-blur-md sm:py-24 text-white">
+    <section className="bg-[#1E3A8A]/90 py-16 md:backdrop-blur-md sm:py-24 text-white">
       <div className="mx-auto max-w-4xl px-4 text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-blue-100">
           <MessageCircle className="h-4 w-4" /> Coming Soon

@@ -27,7 +27,7 @@ export function HowItWorks() {
           <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">How Colly works</h2>
           <p className="mt-4 text-gray-600 max-w-2xl mx-auto">Set it up in 5 minutes. Keep your personal number safe.</p>
         </ScrollReveal>
-        <ScrollReveal delay={0.2} className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-3">
           {steps.map((step, i) => (
             <div key={i} className="relative rounded-2xl border border-gray-100 bg-[#f5f5f5] p-8 transition-all hover:-translate-y-1 hover:shadow-lg">
               <div className="mb-4 inline-flex rounded-xl bg-white p-3 shadow-sm">{step.icon}</div>
@@ -35,7 +35,7 @@ export function HowItWorks() {
               <p className="text-sm text-gray-600 leading-relaxed">{step.desc}</p>
             </div>
           ))}
-        </ScrollReveal>
+        </div>
       </div>
     </section>
   );

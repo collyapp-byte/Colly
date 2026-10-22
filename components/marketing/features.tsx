@@ -35,17 +35,18 @@ export function Features() {
         </ScrollReveal>
         <div className="grid gap-6 sm:grid-cols-2">
           {features.map((f, i) => (
-            <ScrollReveal key={i} delay={0.1 * i}>
-              <TiltCard className="border border-white/50 bg-white/60 backdrop-blur-md shadow-sm">
-                <div className="flex items-start gap-4 p-6">
-                  <div className="mt-1 shrink-0 rounded-lg bg-[#FFF4EC] p-2">{f.icon}</div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{f.title}</h3>
-                    <p className="mt-2 text-sm text-gray-600 leading-relaxed">{f.desc}</p>
-                  </div>
+            <TiltCard
+              key={i}
+              className="border border-white/50 bg-white/60 shadow-sm md:backdrop-blur-md"
+            >
+              <div className="flex items-start gap-4 p-6">
+                <div className="mt-1 shrink-0 rounded-lg bg-[#FFF4EC] p-2">{f.icon}</div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">{f.title}</h3>
+                  <p className="mt-2 text-sm text-gray-600 leading-relaxed">{f.desc}</p>
                 </div>
-              </TiltCard>
-            </ScrollReveal>
+              </div>
+            </TiltCard>
           ))}
         </div>
       </div>

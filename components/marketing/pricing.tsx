@@ -51,7 +51,7 @@ export function Pricing() {
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
-            <TiltCard key={plan.name} className={`flex flex-col p-6 ${plan.highlight ? 'border border-[#FF6600] bg-white shadow-lg' : 'border border-white/50 bg-white/60 backdrop-blur-md shadow-lg'}`}>
+            <TiltCard key={plan.name} className={`flex flex-col p-6 ${plan.highlight ? 'border border-[#FF6600] bg-white shadow-lg' : 'border border-white/50 bg-white/60 md:backdrop-blur-md shadow-lg'}`}>
               {plan.highlight && (
                 <div className="absolute -top-3 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#FF6600] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">Most Popular</div>
               )}
