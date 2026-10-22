@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState, type FormEvent } from "react";
+import { useActionState, useEffect, useState, type FormEvent } from "react";
 import { Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { signup } from "@/lib/auth-actions";
 import { INITIAL_AUTH_STATE, emailVerificationMessage } from "@/lib/auth-form";
 import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
+import { createClient } from "@/lib/supabase/client";
 import type { Channel } from "@/lib/business";
 import { AuthAlert, AuthField } from "@/components/auth/auth-form";
 import { GoogleButton } from "@/components/auth/google-button";
@@ -54,9 +55,52 @@ export function BusinessSignupForm({
   );
   const [showPassword, setShowPassword] = useState(false);
 
+  // Google sign-ups land here already authenticated by Supabase. In that case
+  // the email and password fields are pointless (and a password would never be
+  // used), so the form only asks for the business details.
+  const [isOAuth, setIsOAuth] = useState(false);
+  const [oauthEmail, setOauthEmail] = useState("");
+  const [oauthName, setOauthName] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!active || !session?.user) return;
+
+        const metadata = session.user.user_metadata ?? {};
+        const fullName =
+          typeof metadata.full_name === "string"
+            ? metadata.full_name
+            : typeof metadata.name === "string"
+              ? metadata.name
+              : "";
+
+        setIsOAuth(true);
+        setOauthEmail(session.user.email ?? "");
+        setOauthName(fullName);
+      } catch {
+        // Missing Supabase config or no session: use the normal signup form.
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Client-side password strength check. The server action re-checks the same
-  // rule, so this is a convenience rather than the security boundary.
+  // rule, so this is a convenience rather than the security boundary. OAuth
+  // users have no password to check.
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    if (isOAuth) return;
+
     const formData = new FormData(event.currentTarget);
     const password = formData.get("password");
 
@@ -93,22 +137,32 @@ export function BusinessSignupForm({
 
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
-      <h1 className="font-display text-2xl text-gray-900">Create your account</h1>
+      <h1 className="font-display text-2xl text-gray-900">
+        {isOAuth ? "Finish setting up your business" : "Create your account"}
+      </h1>
       <p className="mt-1 text-sm text-gray-500">
-        Set Colly up for your business. It takes a minute.
+        {isOAuth
+          ? `You're signed in with Google${
+              oauthEmail ? ` as ${oauthEmail}` : ""
+            }. Just tell us about your business.`
+          : "Set Colly up for your business. It takes a minute."}
       </p>
 
-      <div className="mt-6">
-        <GoogleButton />
-      </div>
+      {!isOAuth ? (
+        <>
+          <div className="mt-6">
+            <GoogleButton />
+          </div>
 
-      <div className="my-5 flex items-center gap-3">
-        <span className="h-px flex-1 bg-gray-200" aria-hidden />
-        <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
-          Or continue with
-        </span>
-        <span className="h-px flex-1 bg-gray-200" aria-hidden />
-      </div>
+          <div className="my-5 flex items-center gap-3">
+            <span className="h-px flex-1 bg-gray-200" aria-hidden />
+            <span className="text-xs font-medium uppercase tracking-wide text-gray-400">
+              Or continue with
+            </span>
+            <span className="h-px flex-1 bg-gray-200" aria-hidden />
+          </div>
+        </>
+      ) : null}
 
       <form action={formAction} onSubmit={handleSubmit} className="flex flex-col gap-4">
         <AuthField
@@ -119,20 +173,24 @@ export function BusinessSignupForm({
           autoComplete="organization"
         />
         <AuthField
+          key={oauthName}
           id="ownerName"
           label="Your name"
           name="ownerName"
           placeholder="Ada Obi"
           autoComplete="name"
+          defaultValue={oauthName}
         />
-        <AuthField
-          id="email"
-          label="Email"
-          name="email"
-          type="email"
-          placeholder="you@business.com"
-          autoComplete="email"
-        />
+        {!isOAuth ? (
+          <AuthField
+            id="email"
+            label="Email"
+            name="email"
+            type="email"
+            placeholder="you@business.com"
+            autoComplete="email"
+          />
+        ) : null}
         <AuthField
           id="phone"
           label="Business Phone Number"
@@ -256,43 +314,45 @@ export function BusinessSignupForm({
             </p>
           )}
         </div>
-        <div>
-          <label
-            htmlFor="password"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            Password
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="At least 8 characters"
-              autoComplete="new-password"
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((visible) => !visible)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              title={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 transition-colors hover:text-gray-600"
+        {!isOAuth ? (
+          <div>
+            <label
+              htmlFor="password"
+              className="mb-1 block text-sm font-medium text-gray-700"
             >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" aria-hidden />
-              ) : (
-                <Eye className="h-4 w-4" aria-hidden />
-              )}
-            </button>
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="At least 8 characters"
+                autoComplete="new-password"
+                required
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? "Hide password" : "Show password"}
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 transition-colors hover:text-gray-600"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" aria-hidden />
+                ) : (
+                  <Eye className="h-4 w-4" aria-hidden />
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {state.error && <AuthAlert tone="error">{state.error}</AuthAlert>}
 
         <Button type="submit" variant="primary" loading={pending} className="w-full">
-          Create account
+          {isOAuth ? "Create Business Profile" : "Create account"}
         </Button>
       </form>
 

@@ -56,7 +56,7 @@ export async function signup(
 ): Promise<AuthFormState> {
   const businessName = readField(formData, "businessName");
   const ownerName = readField(formData, "ownerName");
-  const email = readField(formData, "email").toLowerCase();
+  const formEmail = readField(formData, "email").toLowerCase();
   const phone = readField(formData, "phone");
   const password = readPassword(formData);
   // Optional: the agent who set the business up. Blank on most signups.
@@ -70,57 +70,112 @@ export async function signup(
   const planField = readField(formData, "plan");
   const selectedPlan = isTierForChannel(planField, channel) ? planField : null;
 
-  if (!businessName || !ownerName || !email || !phone || !password) {
+  // Google sign-ups arrive already authenticated: the OAuth callback created a
+  // Supabase session, so there is no password to create. Reuse that identity
+  // instead of calling signUp again.
+  let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
+  let sessionUser: { id: string; email: string | null } | null = null;
+
+  try {
+    supabase = await createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (session?.user) {
+      sessionUser = {
+        id: session.user.id,
+        email: session.user.email ?? null,
+      };
+    }
+  } catch (error) {
+    if (isMissingConfigError(error)) {
+      return { error: error.message, notice: null };
+    }
+
+    console.error("[signup] session:", error);
+    return {
+      error: "Could not create your account. Please try again.",
+      notice: null,
+    };
+  }
+
+  if (!supabase) {
+    return {
+      error: "Could not create your account. Please try again.",
+      notice: null,
+    };
+  }
+
+  const isOAuth = sessionUser !== null;
+  const email = (sessionUser?.email ?? formEmail).toLowerCase();
+
+  if (
+    !businessName ||
+    !ownerName ||
+    !phone ||
+    !email ||
+    (!isOAuth && !password)
+  ) {
     return { error: "Please fill in every field.", notice: null };
   }
   if (!isValidEmail(email)) {
     return { error: "Enter a valid email address.", notice: null };
   }
-  if (!isStrongPassword(password)) {
+  if (!isOAuth && !isStrongPassword(password)) {
     return { error: WEAK_PASSWORD_ERROR, notice: null };
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
 
   // Already claimed by a Supabase account: sign in instead of taking it over.
+  // The same Google user revisiting signup simply goes to their dashboard.
   if (existing?.supabaseUserId) {
+    if (sessionUser && existing.supabaseUserId === sessionUser.id) {
+      redirect("/dashboard");
+    }
     return { error: "That email is already registered. Sign in instead.", notice: null };
   }
 
   try {
-    const supabase = await createClient();
+    // OAuth users already have a Supabase identity; email sign-ups create one.
+    let authUserId: string;
+    let needsEmailVerification = false;
 
-    // Last line of defence before the account is created: the form checks the
-    // password strength too, but the client is never trusted for this.
-    if (!isStrongPassword(password)) {
-      return { error: WEAK_PASSWORD_ERROR, notice: null };
-    }
+    if (sessionUser) {
+      authUserId = sessionUser.id;
+    } else {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: ownerName, business_name: businessName },
+        },
+      });
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: ownerName, business_name: businessName },
-      },
-    });
+      if (error) {
+        console.error("[signup] supabase:", error.message);
+        return { error: error.message, notice: null };
+      }
 
-    if (error) {
-      console.error("[signup] supabase:", error.message);
-      return { error: error.message, notice: null };
-    }
+      if (!data.user) {
+        return { error: "Could not create your account. Please try again.", notice: null };
+      }
 
-    if (!data.user) {
-      return { error: "Could not create your account. Please try again.", notice: null };
-    }
+      // Held in a const so the narrowing survives below.
+      const authUser = data.user;
 
-    // Held in a const so the narrowing survives into the transaction callback.
-    const authUser = data.user;
+      // When the email is already registered Supabase returns a placeholder user
+      // with no identities (so the API can't be used to discover which emails
+      // exist). Bail out before creating a business for a stranger's account.
+      if (authUser.identities && authUser.identities.length === 0) {
+        return { error: "That email is already registered. Sign in instead.", notice: null };
+      }
 
-    // When the email is already registered Supabase returns a placeholder user
-    // with no identities (so the API can't be used to discover which emails
-    // exist). Bail out before creating a business for a stranger's account.
-    if (authUser.identities && authUser.identities.length === 0) {
-      return { error: "That email is already registered. Sign in instead.", notice: null };
+      authUserId = authUser.id;
+      // With "Confirm email" enabled there is no session yet, so the user has
+      // to confirm the address before they can sign in.
+      needsEmailVerification = !data.session;
     }
 
     // Optional referral: credit the agent whose ID was entered. An unknown ID is
@@ -139,7 +194,7 @@ export async function signup(
       // Adopt the pre-created tenant: link it to this new auth user.
       await prisma.user.update({
         where: { id: existing.id },
-        data: { supabaseUserId: authUser.id },
+        data: { supabaseUserId: authUserId },
       });
 
       // Record the referral on the adopted business when one was given and it
@@ -208,7 +263,7 @@ export async function signup(
             name: ownerName,
             password: UNUSED_PASSWORD,
             role: "owner",
-            supabaseUserId: authUser.id,
+            supabaseUserId: authUserId,
           },
         });
       });
@@ -216,8 +271,9 @@ export async function signup(
 
     // With "Confirm email" enabled in Supabase there is no session yet, so the
     // user has to confirm before they can sign in. The flag tells the form to
-    // show the "check your email" screen instead of the dashboard.
-    if (!data.session) {
+    // show the "check your email" screen instead of the dashboard. OAuth users
+    // already have a verified address, so this branch never applies to them.
+    if (needsEmailVerification) {
       return {
         error: null,
         notice: emailVerificationMessage(email),
