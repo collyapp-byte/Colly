@@ -78,6 +78,20 @@ model Business {
   paystackEmailToken       String?
   billingEmail             String?
 
+  /// Free trial. `trialEndsAt` is when the 7-day trial lapses (the trial is
+  /// free: no card, no paid tier). `aiMessagesUsed` and `manualMessagesUsed`
+  /// count the replies spent during the trial, so the trial allowance can be
+  /// shown next to the countdown. `onboardingEndsAt` above is the separate
+  /// onboarding window and is left untouched.
+  trialEndsAt        DateTime?
+  aiMessagesUsed     Int      @default(0)
+  manualMessagesUsed Int      @default(0)
+
+  /// The plan tier the customer picked before signing up (e.g. "green" from
+  /// /signup?plan=green). Pre-selects that tier on the plans page; the live
+  /// subscription still lives in `plan` above.
+  selectedPlan String?
+
   /// Dual channel. `channel` is which messaging channel this business runs on:
   /// "WHATSAPP" | "TELEGRAM". Telegram businesses connect their own bot:
   /// `telegramBotToken` is the bot token from BotFather and `telegramChatId`
@@ -567,4 +581,13 @@ model AgentPayout {
   agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@index([agentId, createdAt])
+}
+
+/// Leads from the WhatsApp waitlist form. Standalone (no tenant): a lead is
+/// not a business yet, it is a phone number waiting for WhatsApp to open.
+model WhatsappWaitlist {
+  id             String   @id @default(uuid())
+  whatsappNumber String
+  email          String?
+  createdAt      DateTime @default(now())
 }

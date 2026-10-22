@@ -33,8 +33,18 @@ const WHATSAPP_OPTION = {
  * The business half of the signup flow: profile, channel choice and password.
  * Submitted through the `signup` server action, which creates the auth user,
  * the Business row (with the chosen channel) and the owner User row.
+ *
+ * `selectedPlan` is the tier the customer picked on the pricing page
+ * ("?plan=green"). It rides along with the form so the server can store it on
+ * the Business row and the billing page can pre-select that plan.
  */
-export function BusinessSignupForm({ referredBy }: { referredBy?: string }) {
+export function BusinessSignupForm({
+  referredBy,
+  selectedPlan,
+}: {
+  referredBy?: string;
+  selectedPlan?: string;
+}) {
   const [state, formAction, pending] = useActionState(
     signup,
     INITIAL_AUTH_STATE,
@@ -101,6 +111,12 @@ export function BusinessSignupForm({ referredBy }: { referredBy?: string }) {
           autoComplete="tel"
           hint="Your primary business contact number. (You will connect your AI line in the next step)."
         />
+
+        {/* The tier picked on the pricing page (?plan=green). Hidden so it is
+            submitted with the form and stored on the Business row. */}
+        {selectedPlan ? (
+          <input type="hidden" name="plan" value={selectedPlan} />
+        ) : null}
 
         {/* Channel choice: Telegram is the only channel at launch. WhatsApp is
             shown disabled until Meta verification clears. The hidden input

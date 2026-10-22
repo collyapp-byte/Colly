@@ -27,9 +27,12 @@ export async function GET() {
         planStatus: true,
         planExpiresAt: true,
         onboardingEndsAt: true,
+        trialEndsAt: true,
         channel: true,
         creditWalletBalanceNaira: true,
         manualMessagesUsedThisMonth: true,
+        aiMessagesUsed: true,
+        manualMessagesUsed: true,
         subscriptionStatus: true,
         gracePeriodEndsAt: true,
       },
@@ -59,7 +62,12 @@ export async function GET() {
       planStatus: business.planStatus,
       planExpiresAt: business.planExpiresAt,
       channel: business.channel,
-      trialEndsAt: business.onboardingEndsAt,
+      // The 7-day trial window; `onboardingEndsAt` is the fallback for rows
+      // created before the trial column existed.
+      trialEndsAt: business.trialEndsAt ?? business.onboardingEndsAt,
+      // Replies spent during the trial.
+      trialAiMessagesUsed: business.aiMessagesUsed,
+      trialManualMessagesUsed: business.manualMessagesUsed,
       subscriptionStatus: business.subscriptionStatus,
       gracePeriodEndsAt: business.gracePeriodEndsAt,
     });

@@ -84,10 +84,15 @@ export async function POST(
     }
 
     const businessUpdate = withinAllowance
-      ? { manualMessagesUsedThisMonth: { increment: 1 } }
+      ? {
+          manualMessagesUsedThisMonth: { increment: 1 },
+          // Trial counter: how many manual replies the 7-day trial has spent.
+          manualMessagesUsed: { increment: 1 },
+        }
       : {
           creditWalletBalanceNaira: { decrement: manualCreditPrice },
           manualMessagesUsedThisMonth: { increment: 1 },
+          manualMessagesUsed: { increment: 1 },
         };
 
     // Charge the business and store the reply atomically, so a failed write

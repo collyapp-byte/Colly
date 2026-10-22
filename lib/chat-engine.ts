@@ -310,6 +310,7 @@ async function applyAiUsage(businessId: string) {
       planStatus: true,
       planInterval: true,
       onboardingEndsAt: true,
+      trialEndsAt: true,
       channel: true,
       creditWalletBalanceNaira: true,
     },
@@ -317,10 +318,14 @@ async function applyAiUsage(businessId: string) {
   if (!businessForTracking) return;
   const now = new Date();
   const activePaidPlan = isActivePaidPlan(businessForTracking);
+  // `trialEndsAt` is the 7-day trial window; `onboardingEndsAt` is the
+  // fallback for rows created before the trial column existed.
+  const trialEndsAt =
+    businessForTracking.trialEndsAt ?? businessForTracking.onboardingEndsAt;
   const isTrialActive =
     businessForTracking.planStatus === "trialing" &&
-    businessForTracking.onboardingEndsAt &&
-    businessForTracking.onboardingEndsAt > now;
+    trialEndsAt &&
+    trialEndsAt > now;
   const aiCreditPrice = getCreditPrice(businessForTracking, "ai");
   if (activePaidPlan || isTrialActive) {
     const limits = getPlanLimits(
@@ -339,7 +344,11 @@ async function applyAiUsage(businessId: string) {
     if (currentUsage <= included) {
       await prisma.business.update({
         where: { id: businessId },
-        data: { messagesUsedThisMonth: { increment: 1 } },
+        data: {
+          messagesUsedThisMonth: { increment: 1 },
+          // Trial counter: how many AI replies the 7-day trial has spent.
+          aiMessagesUsed: { increment: 1 },
+        },
       });
     } else if (businessForTracking.creditWalletBalanceNaira >= aiCreditPrice) {
       await prisma.business.update({
@@ -347,6 +356,7 @@ async function applyAiUsage(businessId: string) {
         data: {
           creditWalletBalanceNaira: { decrement: aiCreditPrice },
           messagesUsedThisMonth: { increment: 1 },
+          aiMessagesUsed: { increment: 1 },
         },
       });
     }
@@ -356,6 +366,7 @@ async function applyAiUsage(businessId: string) {
       data: {
         creditWalletBalanceNaira: { decrement: aiCreditPrice },
         messagesUsedThisMonth: { increment: 1 },
+        aiMessagesUsed: { increment: 1 },
       },
     });
   }

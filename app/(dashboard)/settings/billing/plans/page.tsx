@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Check, Star, Zap } from "lucide-react";
 import {
   TELEGRAM_PLANS,
@@ -55,10 +56,41 @@ function cardFeatures(tier: TelegramPlanTier, config: PlanConfig): string[] {
   return [messages, manual, "Everything in Blue", "Dedicated support", "Advanced analytics"];
 }
 
-export default function PlansPage() {
+function PlansContent() {
+  const searchParams = useSearchParams();
   const [interval, setInterval] = useState<PlanInterval>("monthly");
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The tier the customer picked before signing up. It is stored on the
+  // business row at signup, so it survives the signup -> confirm email ->
+  // dashboard journey; the ?plan= query param covers a direct visit.
+  const [storedPlan, setStoredPlan] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/business")
+      .then((res) => (res.ok ? res.json() : null))
+      .then(
+        (data: { business?: { selectedPlan?: string | null } } | null) => {
+          if (active) setStoredPlan(data?.business?.selectedPlan ?? null);
+        },
+      )
+      .catch(() => {
+        // The plans page works without the pre-selection; ignore the failure.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const urlPlan = (searchParams.get("plan") ?? "").trim();
+  const selectedTier = TELEGRAM_TIERS.includes(urlPlan as TelegramPlanTier)
+    ? urlPlan
+    : TELEGRAM_TIERS.includes(storedPlan as TelegramPlanTier)
+      ? storedPlan
+      : null;
 
   async function handleChoose(tier: string, chosenInterval: PlanInterval) {
     setCheckingOut(`${tier}-${chosenInterval}`);
@@ -140,6 +172,16 @@ export default function PlansPage() {
         </div>
       )}
 
+      {selectedTier && (
+        <div className="mx-auto mt-4 max-w-4xl rounded-lg border border-[#FF6600] bg-[#FFF4EC] px-4 py-3 text-sm text-gray-700">
+          You picked the{" "}
+          <span className="font-semibold text-gray-900">
+            {TELEGRAM_META[selectedTier as TelegramPlanTier].name}
+          </span>{" "}
+          plan. Choose it below to activate it.
+        </div>
+      )}
+
       {/* PLAN CARDS */}
       <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {tiers.map((tier) => {
@@ -149,13 +191,19 @@ export default function PlansPage() {
           const meta: CardMeta = TELEGRAM_META[tier];
           const isDark = Boolean(meta.dark);
           const isFeatured = Boolean(meta.featured);
+          const isSelected = tier === selectedTier;
           const Icon = isFeatured || isDark ? Star : Zap;
 
-          const cardClasses = isDark
-            ? "border-2 border-gray-900 bg-gray-900 text-white"
-            : isFeatured
-              ? "border-2 border-[#FF6600] bg-[#FFF4EC]"
-              : "border border-gray-200 bg-white";
+          const cardClasses = [
+            isDark
+              ? "border-2 border-gray-900 bg-gray-900 text-white"
+              : isFeatured
+                ? "border-2 border-[#FF6600] bg-[#FFF4EC]"
+                : "border border-gray-200 bg-white",
+            isSelected ? "ring-2 ring-[#FF6600] ring-offset-2" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
 
           return (
             <div key={tier} className={`relative rounded-2xl p-6 ${cardClasses}`}>
@@ -185,6 +233,11 @@ export default function PlansPage() {
               <p className={`mt-1 text-xs ${isDark ? "text-gray-300" : "text-gray-500"}`}>
                 {meta.tagline}
               </p>
+              {isSelected && (
+                <p className="mt-2 inline-flex items-center rounded-full bg-[#FF6600] px-2.5 py-0.5 text-[11px] font-semibold text-white">
+                  Your choice
+                </p>
+              )}
 
               <div className="mt-6">
                 <span className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
@@ -231,5 +284,15 @@ export default function PlansPage() {
         })}
       </div>
     </div>
+  );
+}
+
+export default function PlansPage() {
+  // `useSearchParams` needs a Suspense boundary around it, otherwise the page
+  // cannot be prerendered.
+  return (
+    <Suspense fallback={<div className="h-64" aria-hidden />}>
+      <PlansContent />
+    </Suspense>
   );
 }

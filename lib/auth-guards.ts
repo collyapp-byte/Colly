@@ -43,6 +43,7 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
       planInterval: true,
       planExpiresAt: true,
       onboardingEndsAt: true,
+      trialEndsAt: true,
       channel: true,
       creditWalletBalanceNaira: true,
       messagesUsedThisMonth: true,
@@ -89,11 +90,11 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
   // Active paid plan
   const activePaidPlan = isActivePaidPlan(business);
 
-  // Active trial
+  // Active trial. `trialEndsAt` is the 7-day trial window; `onboardingEndsAt`
+  // is the fallback for rows created before the trial column existed.
+  const trialEndsAt = business.trialEndsAt ?? business.onboardingEndsAt;
   const isTrialActive =
-    business.planStatus === "trialing" &&
-    business.onboardingEndsAt &&
-    business.onboardingEndsAt > now;
+    business.planStatus === "trialing" && trialEndsAt && trialEndsAt > now;
 
   // What one AI reply over the cap costs out of the Naira wallet.
   const aiCreditPrice = getCreditPrice(business, "ai");

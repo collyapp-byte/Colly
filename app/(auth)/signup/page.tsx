@@ -5,6 +5,7 @@ import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { NIGERIAN_STATES } from "@/lib/nigerian-states";
+import { isPlanTierName } from "@/lib/plans";
 import { AuthAlert } from "@/components/auth/auth-form";
 import { BusinessSignupForm } from "@/components/auth/business-signup-form";
 import { RoleChooser, type AuthRole } from "@/components/auth/role-chooser";
@@ -231,6 +232,11 @@ function SignupContent() {
   );
   // `?ref=AG-0001` from an agent's referral link; blank on a normal signup.
   const referredBy = (searchParams.get("ref") ?? "").trim();
+  // `?plan=green` from the pricing page: the tier the customer picked before
+  // signing up. It is carried through signup so the billing page can
+  // pre-select that plan. An unknown tier is ignored.
+  const planParam = (searchParams.get("plan") ?? "").trim();
+  const selectedPlan = isPlanTierName(planParam) ? planParam : "";
 
   return (
     <div>
@@ -246,7 +252,9 @@ function SignupContent() {
       )}
 
       {view === "chooser" && <RoleChooser variant="signup" onSelect={setView} />}
-      {view === "business" && <BusinessSignupForm referredBy={referredBy} />}
+      {view === "business" && (
+        <BusinessSignupForm referredBy={referredBy} selectedPlan={selectedPlan} />
+      )}
       {view === "agent" && <AgentSignupForm />}
     </div>
   );

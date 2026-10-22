@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { isMissingConfigError } from "@/lib/supabase/env";
-import { TRIAL_CONFIG } from "@/lib/plans";
+import { TRIAL_CONFIG, isTierForChannel } from "@/lib/plans";
 import { isChannel } from "@/lib/business";
 import { isValidEmail } from "@/lib/validators";
 import type { AuthFormState } from "@/lib/auth-form";
@@ -58,6 +58,10 @@ export async function signup(
   // missing or unrecognised falls back to the schema default.
   const channelField = readField(formData, "channel");
   const channel = isChannel(channelField) ? channelField : "WHATSAPP";
+  // The tier picked on the pricing page (?plan=green). Kept only when it is a
+  // real tier of the chosen channel, so the billing page can pre-select it.
+  const planField = readField(formData, "plan");
+  const selectedPlan = isTierForChannel(planField, channel) ? planField : null;
 
   if (!businessName || !ownerName || !email || !phone || !password) {
     return { error: "Please fill in every field.", notice: null };
@@ -136,9 +140,25 @@ export async function signup(
           },
         });
       }
+
+      // The tier picked on the pricing page is remembered for the adopted
+      // business too, so the billing page pre-selects it after signup.
+      if (selectedPlan) {
+        await prisma.business.update({
+          where: { id: existing.businessId },
+          data: { selectedPlan },
+        });
+      }
     } else {
       // A business and its owner must appear together, or neither.
       await prisma.$transaction(async (tx) => {
+        // Fresh accounts start the free trial from the moment they sign up, so
+        // the billing UI can count down to a real end date. The length comes
+        // from TRIAL_CONFIG so there is a single source of truth.
+        const trialEndsAt = new Date(
+          Date.now() + TRIAL_CONFIG.durationDays * 24 * 60 * 60 * 1000,
+        );
+
         const business = await tx.business.create({
           data: {
             name: businessName,
@@ -148,12 +168,18 @@ export async function signup(
             // Channel picked on the signup form; drives which connection flow
             // the AI Line settings page shows.
             channel,
+            // The trial plan itself: the AI replies with the trial allowance
+            // (TRIAL_CONFIG) until the trial lapses, with no card required.
+            plan: "trial",
+            planStatus: "trialing",
             // Fresh accounts start the free trial from the moment they sign up,
             // so the billing UI can count down to a real end date. The length
             // comes from TRIAL_CONFIG so there is a single source of truth.
-            onboardingEndsAt: new Date(
-              Date.now() + TRIAL_CONFIG.durationDays * 24 * 60 * 60 * 1000,
-            ),
+            onboardingEndsAt: trialEndsAt,
+            trialEndsAt,
+            // The tier picked on the pricing page (?plan=green): remembered so
+            // the billing page pre-selects it.
+            selectedPlan,
             referredByAgentId: referringAgent?.id ?? null,
             // Agents earn 15% for 12 months from signup when they refer a business.
             commissionEndsAt: referringAgent

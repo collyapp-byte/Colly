@@ -92,7 +92,7 @@ export const TELEGRAM_PLANS: Record<TelegramPlanTier, PlanConfig> = {
 export const TRIAL_CONFIG = {
   includedMsgs: 50,
   includedManualMessages: 50,
-  durationDays: 5,
+  durationDays: 7,
   whatsappNumbersLimit: 1,
   seatsLimit: 1,
   productsLimit: 50,
@@ -149,6 +149,26 @@ export function isChannel(value: unknown): value is Channel {
  */
 export function channelForTier(tier: string | null | undefined): Channel {
   return tier && tier in TELEGRAM_PLANS ? "TELEGRAM" : "WHATSAPP";
+}
+
+/**
+ * True when `value` is a plan tier name on any channel ("green" | "blue" |
+ * "black" | "starter" | "business" | "pro"). Used to validate the tier that
+ * comes in on a URL (e.g. /signup?plan=green).
+ */
+export function isPlanTierName(value: unknown): value is PlanTier {
+  return (
+    typeof value === "string" &&
+    (value in TELEGRAM_PLANS || value in WHATSAPP_PLANS)
+  );
+}
+
+/**
+ * True when `tier` is a plan tier of `channel`'s plan table. Tier names are
+ * disjoint across channels, so a Telegram tier is never a WhatsApp tier.
+ */
+export function isTierForChannel(tier: string, channel: Channel): boolean {
+  return channel === "TELEGRAM" ? tier in TELEGRAM_PLANS : tier in WHATSAPP_PLANS;
 }
 
 /** The plan table for a business's channel; anything but Telegram is WhatsApp. */

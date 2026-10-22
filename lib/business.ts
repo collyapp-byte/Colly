@@ -70,6 +70,9 @@ export type Business = {
   /** Agent ("AG-0001") that set the business up, if any — drives the
    * "your agent will set this up" note on the AI line page. */
   referredByAgentId: string | null;
+  /** The plan tier the customer picked before signing up ("?plan=green").
+   * Pre-selects that tier on the plans page. */
+  selectedPlan: string | null;
   createdAt: string;
   nrsTaxId: string | null;
   nrsRegistrationDate: string | null;
@@ -95,6 +98,7 @@ export type BusinessRecord = {
   telegramBotToken?: string | null;
   ownerTelegramChatId: string | null;
   referredByAgentId: string | null;
+  selectedPlan: string | null;
   createdAt: Date;
   nrsTaxId: string | null;
   nrsRegistrationDate: Date | null;
@@ -129,6 +133,7 @@ export function serializeBusiness(business: BusinessRecord): Business {
     telegramBotToken: (business as any).telegramBotToken ?? null,
     ownerTelegramChatId: business.ownerTelegramChatId,
     referredByAgentId: business.referredByAgentId,
+    selectedPlan: business.selectedPlan ?? null,
     createdAt: new Date(business.createdAt).toISOString(),
     nrsTaxId: business.nrsTaxId,
     nrsRegistrationDate: business.nrsRegistrationDate
