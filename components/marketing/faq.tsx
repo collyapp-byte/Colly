@@ -6,7 +6,7 @@ export function FAQ() {
     },
     {
       q: "My customers use WhatsApp, not Telegram.",
-      a: "You can connect your own WhatsApp API account to Colly now, though it requires a Meta business account and completed API setup. Telegram remains the fastest option because it needs no SIM card, no Meta approval, and has zero message fees."
+      a: "We are currently in the final stages of Meta business verification. WhatsApp will be available soon."
     },
     {
       q: "₦15,000 is too much.",
@@ -14,7 +14,7 @@ export function FAQ() {
     },
     {
       q: "Why Telegram first?",
-      a: "Telegram is still the fastest way to launch: it needs no SIM card, no Meta approval, and has zero message fees. Colly now supports the official WhatsApp API too, but connecting WhatsApp requires a Meta business account and completed WhatsApp API setup."
+      a: "Telegram is still the fastest way to launch: it needs no SIM card, no Meta approval, and has zero message fees. WhatsApp is coming soon once our Meta business verification clears."
     }
   ];
 
