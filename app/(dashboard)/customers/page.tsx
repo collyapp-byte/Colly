@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CircleAlert } from "lucide-react";
-import { formatRelativeTime } from "@/lib/format";
+import { formatNaira, formatRelativeTime } from "@/lib/format";
 
 type CustomerListItem = {
   id: string;
   name: string;
   phone: string;
+  tags: string[];
+  totalSpent: number;
   createdAt: string;
   conversationCount: number;
   lastMessageAt: string | null;
@@ -54,7 +56,7 @@ export default function CustomersPage() {
           Customers
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Everyone who has messaged your business on WhatsApp.
+          Everyone who has messaged your business, with their tags and spending.
         </p>
       </div>
 
@@ -85,16 +87,22 @@ export default function CustomersPage() {
             <table className="w-full border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
-                  <th scope="col" className="px-6 py-3 font-medium">
+                  <th scope="col" className="px-4 py-3 font-medium">
                     Name
                   </th>
-                  <th scope="col" className="px-6 py-3 font-medium">
+                  <th scope="col" className="px-4 py-3 font-medium">
                     Phone
                   </th>
-                  <th scope="col" className="px-6 py-3 font-medium">
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Tags
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Total Spent
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
                     Conversations
                   </th>
-                  <th scope="col" className="px-6 py-3 font-medium">
+                  <th scope="col" className="px-4 py-3 font-medium">
                     Last Active
                   </th>
                 </tr>
@@ -105,7 +113,7 @@ export default function CustomersPage() {
                     key={customer.id}
                     className="relative transition-colors hover:bg-gray-50"
                   >
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-4">
                       {/* Stretches the link over the whole row so the entire
                           customer row is clickable. */}
                       <Link
@@ -115,13 +123,19 @@ export default function CustomersPage() {
                         {customer.name}
                       </Link>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-600">
+                    <td className="whitespace-nowrap px-4 py-4 text-gray-600">
                       {customer.phone}
                     </td>
-                    <td className="px-6 py-4 text-gray-600">
+                    <td className="px-4 py-4">
+                      <TagPills tags={customer.tags} />
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-4 font-medium text-gray-900">
+                      {formatNaira(customer.totalSpent)}
+                    </td>
+                    <td className="px-4 py-4 text-gray-600">
                       {customer.conversationCount}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-500">
+                    <td className="whitespace-nowrap px-4 py-4 text-gray-500">
                       {formatRelativeTime(
                         customer.lastMessageAt ?? customer.createdAt,
                       )}
@@ -153,17 +167,54 @@ export default function CustomersPage() {
                   <p className="mt-0.5 text-xs text-gray-500">
                     {customer.phone}
                   </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {customer.conversationCount}{" "}
-                    {customer.conversationCount === 1
-                      ? "conversation"
-                      : "conversations"}
-                  </p>
+                  {customer.tags.length > 0 && (
+                    <div className="mt-2">
+                      <TagPills tags={customer.tags} />
+                    </div>
+                  )}
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p className="text-sm text-gray-500">
+                      {customer.conversationCount}{" "}
+                      {customer.conversationCount === 1
+                        ? "conversation"
+                        : "conversations"}
+                    </p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {formatNaira(customer.totalSpent)}
+                    </p>
+                  </div>
                 </Link>
               </li>
             ))}
           </ul>
         </>
+      )}
+    </div>
+  );
+}
+
+function TagPills({ tags }: { tags: string[] }) {
+  if (tags.length === 0) {
+    return <span className="text-gray-300">—</span>;
+  }
+
+  const visible = tags.slice(0, 3);
+  const extra = tags.length - visible.length;
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {visible.map((tag) => (
+        <span
+          key={tag}
+          className="inline-flex items-center rounded-full bg-[#FFF4EC] px-2 py-0.5 text-[11px] font-semibold text-[#C2410C]"
+        >
+          {tag}
+        </span>
+      ))}
+      {extra > 0 && (
+        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500">
+          +{extra}
+        </span>
       )}
     </div>
   );

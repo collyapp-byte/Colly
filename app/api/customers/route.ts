@@ -59,6 +59,8 @@ export async function GET() {
         id: row.id,
         name: row.name,
         phone: row.phone,
+        tags: row.tags,
+        totalSpent: row.totalSpent,
         createdAt: row.createdAt,
         conversationCount: row.conversations.length,
         lastMessageAt,
