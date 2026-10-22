@@ -6,8 +6,15 @@ import { createClient } from "@/lib/supabase/server";
 import { isMissingConfigError } from "@/lib/supabase/env";
 import { TRIAL_CONFIG, isTierForChannel } from "@/lib/plans";
 import { isChannel } from "@/lib/business";
-import { isValidEmail } from "@/lib/validators";
-import type { AuthFormState } from "@/lib/auth-form";
+import {
+  isValidEmail,
+  isStrongPassword,
+  WEAK_PASSWORD_ERROR,
+} from "@/lib/validators";
+import {
+  emailVerificationMessage,
+  type AuthFormState,
+} from "@/lib/auth-form";
 
 /**
  * `User.password` is still NOT NULL in the database, but Supabase Auth is now
@@ -69,8 +76,8 @@ export async function signup(
   if (!isValidEmail(email)) {
     return { error: "Enter a valid email address.", notice: null };
   }
-  if (password.length < 8) {
-    return { error: "Password must be at least 8 characters.", notice: null };
+  if (!isStrongPassword(password)) {
+    return { error: WEAK_PASSWORD_ERROR, notice: null };
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -82,6 +89,12 @@ export async function signup(
 
   try {
     const supabase = await createClient();
+
+    // Last line of defence before the account is created: the form checks the
+    // password strength too, but the client is never trusted for this.
+    if (!isStrongPassword(password)) {
+      return { error: WEAK_PASSWORD_ERROR, notice: null };
+    }
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -202,12 +215,14 @@ export async function signup(
     }
 
     // With "Confirm email" enabled in Supabase there is no session yet, so the
-    // user has to confirm before they can sign in.
+    // user has to confirm before they can sign in. The flag tells the form to
+    // show the "check your email" screen instead of the dashboard.
     if (!data.session) {
       return {
         error: null,
-        notice:
-          "Account created! Please check your email to confirm your address before logging in.",
+        notice: emailVerificationMessage(email),
+        requiresEmailVerification: true,
+        email,
       };
     }
   } catch (error) {

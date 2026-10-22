@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useState, type FormEvent } from "react";
 import { Check, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 import { signup } from "@/lib/auth-actions";
-import { INITIAL_AUTH_STATE } from "@/lib/auth-form";
+import { INITIAL_AUTH_STATE, emailVerificationMessage } from "@/lib/auth-form";
+import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
 import type { Channel } from "@/lib/business";
 import { AuthAlert, AuthField } from "@/components/auth/auth-form";
 import { Button } from "@/components/ui/button";
@@ -51,14 +53,30 @@ export function BusinessSignupForm({
   );
   const [showPassword, setShowPassword] = useState(false);
 
+  // Client-side password strength check. The server action re-checks the same
+  // rule, so this is a convenience rather than the security boundary.
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    const formData = new FormData(event.currentTarget);
+    const password = formData.get("password");
+
+    if (typeof password !== "string" || !isStrongPassword(password)) {
+      event.preventDefault();
+      toast.error(WEAK_PASSWORD_MESSAGE);
+    }
+  }
+
   // Email confirmation required: replace the form with a "check your email"
   // screen instead of sending the user to the dashboard.
-  if (state.notice) {
+  if (state.requiresEmailVerification || state.notice) {
     return (
       <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
         <h1 className="font-display text-2xl text-gray-900">Check your email</h1>
         <div className="mt-6">
-          <AuthAlert tone="success">{state.notice}</AuthAlert>
+          <AuthAlert tone="success">
+            {state.requiresEmailVerification
+              ? emailVerificationMessage(state.email ?? "")
+              : state.notice}
+          </AuthAlert>
         </div>
         <p className="mt-6 text-sm text-gray-500">
           <Link
@@ -79,7 +97,7 @@ export function BusinessSignupForm({
         Set Colly up for your business. It takes a minute.
       </p>
 
-      <form action={formAction} className="mt-6 flex flex-col gap-4">
+      <form action={formAction} onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
         <AuthField
           id="businessName"
           label="Business name"
@@ -239,7 +257,6 @@ export function BusinessSignupForm({
               type={showPassword ? "text" : "password"}
               placeholder="At least 8 characters"
               autoComplete="new-password"
-              minLength={8}
               required
               className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
             />

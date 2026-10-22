@@ -4,8 +4,10 @@ import Link from "next/link";
 import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 import { NIGERIAN_STATES } from "@/lib/nigerian-states";
 import { isPlanTierName } from "@/lib/plans";
+import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
 import { AuthAlert } from "@/components/auth/auth-form";
 import { BusinessSignupForm } from "@/components/auth/business-signup-form";
 import { RoleChooser, type AuthRole } from "@/components/auth/role-chooser";
@@ -37,6 +39,14 @@ function AgentSignupForm() {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
+
+    // Client-side password strength check. The API re-checks the same rule, so
+    // this is a convenience rather than the security boundary.
+    const password = data.get("password");
+    if (typeof password !== "string" || !isStrongPassword(password)) {
+      toast.error(WEAK_PASSWORD_MESSAGE);
+      return;
+    }
 
     setState({ kind: "submitting" });
 
@@ -183,7 +193,6 @@ function AgentSignupForm() {
               type={showPassword ? "text" : "password"}
               placeholder="At least 8 characters"
               autoComplete="new-password"
-              minLength={8}
               required
               className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
             />

@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { isMissingConfigError } from "@/lib/supabase/env";
 import { generateAgentNumber } from "@/lib/agent-id";
-import { isValidEmail } from "@/lib/validators";
+import { isValidEmail, isStrongPassword, WEAK_PASSWORD_ERROR } from "@/lib/validators";
 
 /**
  * Agent signup.
@@ -58,8 +58,8 @@ export async function POST(request: Request) {
   if (!isValidEmail(email)) {
     return badRequest("Enter a valid email address.");
   }
-  if (password.length < 8) {
-    return badRequest("Password must be at least 8 characters.");
+  if (!isStrongPassword(password)) {
+    return badRequest(WEAK_PASSWORD_ERROR);
   }
 
   try {
