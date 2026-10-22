@@ -14,7 +14,7 @@ type DashboardShellProps = {
 
 export function DashboardShell({ businessName, children }: DashboardShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [aiLineConnected, setAiLineConnected] = useState<boolean | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const pathname = usePathname();
   const segment = pathname === "/" ? "Dashboard" : (pathname.split("/")[1] || "Dashboard");
   const title = segment.charAt(0).toUpperCase() + segment.slice(1);
@@ -27,11 +27,26 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
 
     fetch("/api/business")
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: { business?: { aiLineConnected?: boolean } } | null) => {
-        if (active && data?.business) {
-          setAiLineConnected(data.business.aiLineConnected === true);
-        }
-      })
+      .then(
+        (
+          data: {
+            business?: {
+              telegramConnected?: boolean;
+              discordConnected?: boolean;
+              whatsappConnected?: boolean;
+            };
+          } | null,
+        ) => {
+          if (active && data?.business) {
+            const business = data.business;
+            setIsConnected(
+              business.telegramConnected === true ||
+                business.discordConnected === true ||
+                business.whatsappConnected === true,
+            );
+          }
+        },
+      )
       .catch(() => {
         // Without a status, show the plain business name only.
       });
@@ -81,7 +96,7 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
               <span className="max-w-[40vw] truncate text-[13px] font-medium whitespace-nowrap text-gray-500 md:max-w-none">
                 {label}
               </span>
-              {aiLineConnected === false && (
+              {isConnected === false && (
                 <span className="hidden rounded-full bg-[#FFF4EC] px-2 py-0.5 text-[11px] font-semibold tracking-wide whitespace-nowrap text-[#FF6600] sm:inline-block">
                   Setup Pending
                 </span>

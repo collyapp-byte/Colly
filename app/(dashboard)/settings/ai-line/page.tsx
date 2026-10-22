@@ -131,9 +131,9 @@ export default function AiLinePage() {
   const loading = business === null && error === null;
 
   // Per-channel connection state.
-  const telegramIsConnected = Boolean(business?.telegramBotToken);
-  const discordIsConnected = Boolean(business?.discordBotToken);
-  const whatsappIsConnected = Boolean(business?.whatsappAccessToken);
+  const telegramIsConnected = Boolean(business?.telegramConnected);
+  const discordIsConnected = Boolean(business?.discordConnected);
+  const whatsappIsConnected = Boolean(business?.whatsappConnected);
 
   // The owner's shareable bot link once the bot is connected.
   const shareLink = business?.telegramBotUsername
@@ -252,7 +252,7 @@ export default function AiLinePage() {
         ? {
             ...prev,
             connectionStatus: "CONNECTED",
-            telegramBotToken: botToken,
+            telegramConnected: true,
             telegramBotUsername: data?.botUsername ?? prev.telegramBotUsername,
           }
         : prev,
@@ -288,7 +288,7 @@ export default function AiLinePage() {
         ? {
             ...prev,
             connectionStatus: "DISCONNECTED",
-            telegramBotToken: null,
+            telegramConnected: false,
             telegramBotUsername: null,
           }
         : prev,
@@ -325,7 +325,7 @@ export default function AiLinePage() {
         prev
           ? {
               ...prev,
-              discordBotToken: botToken,
+              discordConnected: true,
               discordGuildId: result.discordGuildId,
             }
           : prev,
@@ -375,8 +375,7 @@ export default function AiLinePage() {
           ? {
               ...prev,
               whatsappPhoneNumberId: result.whatsappPhoneNumberId,
-              whatsappAccessToken: accessToken,
-              whatsappVerifyToken: verifyToken,
+              whatsappConnected: true,
             }
           : prev,
       );

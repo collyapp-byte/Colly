@@ -28,7 +28,7 @@ export default function OverviewPage() {
     null,
   );
   const [pendingInvoices, setPendingInvoices] = useState<number | null>(null);
-  const [aiLineConnected, setAiLineConnected] = useState<boolean | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -60,11 +60,26 @@ export default function OverviewPage() {
 
     fetch("/api/business")
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: { business?: { aiLineConnected?: boolean } } | null) => {
-        if (active && data?.business) {
-          setAiLineConnected(data.business.aiLineConnected === true);
-        }
-      })
+      .then(
+        (
+          data: {
+            business?: {
+              telegramConnected?: boolean;
+              discordConnected?: boolean;
+              whatsappConnected?: boolean;
+            };
+          } | null,
+        ) => {
+          if (active && data?.business) {
+            const business = data.business;
+            const isConnected =
+              business.telegramConnected === true ||
+              business.discordConnected === true ||
+              business.whatsappConnected === true;
+            setIsConnected(isConnected);
+          }
+        },
+      )
       .catch(() => {
         // Without a definite status, skip the banner rather than nag wrongly.
       });
@@ -94,7 +109,7 @@ export default function OverviewPage() {
         </h1>
       </div>
 
-      {aiLineConnected === false && (
+      {isConnected === false && (
         <div className="mb-6 flex flex-col gap-4 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] p-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FF6600]/10 text-[#FF6600]">

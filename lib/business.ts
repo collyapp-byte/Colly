@@ -61,20 +61,16 @@ export type Business = {
   /** Telegram bot handle (no "@") from getMe; renders the owner's shareable
    * t.me link once the bot is connected. */
   telegramBotUsername: string | null;
-  /** Telegram bot token (private). Present on the API response only when
-   * returned by the server; the client type is still fine. */
-  telegramBotToken?: string | null;
-  /** Discord bot token (private). Present when the owner has connected a
-   * Discord bot. */
-  discordBotToken?: string | null;
+  /** Whether a Telegram bot token is stored for this business. */
+  telegramConnected: boolean;
+  /** Whether a Discord bot token is stored for this business. */
+  discordConnected: boolean;
   /** Discord server ("guild") id the bot answers in. */
   discordGuildId?: string | null;
   /** Meta WhatsApp Cloud API phone number id. */
   whatsappPhoneNumberId?: string | null;
-  /** Meta WhatsApp Cloud API access token (private). */
-  whatsappAccessToken?: string | null;
-  /** Shared secret used by Meta's webhook verification handshake. */
-  whatsappVerifyToken?: string | null;
+  /** Whether a Meta WhatsApp Cloud API access token is stored. */
+  whatsappConnected: boolean;
   /** The OWNER'S personal Telegram chat id (from @userinfobot) — where
    * escalation alerts go. null means owner alerts are not connected yet. */
   ownerTelegramChatId: string | null;
@@ -146,12 +142,11 @@ export function serializeBusiness(business: BusinessRecord): Business {
       ? business.connectionStatus
       : "DISCONNECTED",
     telegramBotUsername: business.telegramBotUsername,
-    telegramBotToken: (business as any).telegramBotToken ?? null,
-    discordBotToken: (business as any).discordBotToken ?? null,
+    telegramConnected: Boolean(business.telegramBotToken),
+    discordConnected: Boolean(business.discordBotToken),
     discordGuildId: (business as any).discordGuildId ?? null,
     whatsappPhoneNumberId: (business as any).whatsappPhoneNumberId ?? null,
-    whatsappAccessToken: (business as any).whatsappAccessToken ?? null,
-    whatsappVerifyToken: (business as any).whatsappVerifyToken ?? null,
+    whatsappConnected: Boolean(business.whatsappAccessToken),
     ownerTelegramChatId: business.ownerTelegramChatId,
     referredByAgentId: business.referredByAgentId,
     selectedPlan: business.selectedPlan ?? null,
