@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Check, CircleAlert, LoaderCircle, Pencil, Plus, Trash } from "lucide-react";
+import { CircleAlert, LoaderCircle, Pencil, Plus, Trash } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/ui/back-button";
@@ -40,7 +40,7 @@ const FAQ_CATEGORIES = [
 
 type ModalState =
   | { kind: "closed" }
-  | { kind: "create" }
+  | { kind: "create"; preset?: PresetFaq }
   | { kind: "edit"; faq: Faq }
   | { kind: "delete"; faq: Faq };
 
@@ -174,8 +174,6 @@ export default function FaqsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [dismissedPresets, setDismissedPresets] = useState<string[]>([]);
-  const [addedPresets, setAddedPresets] = useState<string[]>([]);
-  const [addingPresetId, setAddingPresetId] = useState<string | null>(null);
 
   // "Not applicable" is permanent for this browser, so remember the hidden
   // presets across visits without needing a database column.
@@ -242,26 +240,10 @@ export default function FaqsPage() {
     refresh();
   }
 
-  async function handleAddPreset(preset: PresetFaq) {
-    setAddingPresetId(preset.id);
-
-    try {
-      await handleCreate({
-        question: preset.question,
-        answer: preset.answer,
-        category: preset.category,
-      });
-      // Keep every other preset visible; only this card flips to "Added".
-      setAddedPresets((prev) =>
-        prev.includes(preset.id) ? prev : [...prev, preset.id],
-      );
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Something went wrong. Please try again.",
-      );
-    } finally {
-      setAddingPresetId(null);
-    }
+  function handleAddPreset(preset: PresetFaq) {
+    // Do not auto-save. Open the create modal with the suggested question and
+    // category, leaving the answer blank for the owner to write.
+    setModal({ kind: "create", preset });
   }
 
   function dismissPreset(id: string) {
@@ -323,11 +305,6 @@ export default function FaqsPage() {
 
   const loading = faqs === null && error === null;
   const groups = faqs ? groupFaqs(faqs) : [];
-  // A preset counts as added when this session added it or an FAQ with the
-  // same question already exists in the database (so it survives a reload).
-  const existingQuestions = new Set(
-    (faqs ?? []).map((faq) => faq.question.trim().toLowerCase()),
-  );
   const visiblePresets = PRESET_FAQS.filter(
     (preset) => !dismissedPresets.includes(preset.id),
   );
@@ -365,74 +342,8 @@ export default function FaqsPage() {
         </div>
       )}
 
-      {faqs && visiblePresets.length > 0 && (
-        <section className="rounded-xl border border-gray-200 bg-surface p-5 sm:p-6">
-          <div className="mb-4">
-            <h2 className="font-display text-lg font-semibold text-gray-900">
-              Quick Start FAQ
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Add ready-made answers so your AI can start replying right away.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {visiblePresets.map((preset) => {
-              const adding = addingPresetId === preset.id;
-              const added =
-                addedPresets.includes(preset.id) ||
-                existingQuestions.has(preset.question.trim().toLowerCase());
-              return (
-                <article
-                  key={preset.id}
-                  className="flex flex-col rounded-lg border border-gray-200 bg-white p-4"
-                >
-                  <p className="font-display text-sm font-semibold text-gray-900">
-                    {preset.question}
-                  </p>
-                  <p className="mt-1 flex-1 text-sm text-gray-600">
-                    {preset.answer}
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {added ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
-                        <Check className="h-3.5 w-3.5" aria-hidden />
-                        Added
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleAddPreset(preset)}
-                        disabled={addingPresetId !== null}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-colly-hover disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {adding && (
-                          <LoaderCircle
-                            className="h-3.5 w-3.5 animate-spin"
-                            aria-hidden
-                          />
-                        )}
-                        Add to my FAQs
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => dismissPreset(preset.id)}
-                      disabled={adding}
-                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      Not applicable
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {faqs && faqs.length === 0 && visiblePresets.length === 0 && (
-        <p className="text-sm text-gray-500">{EMPTY_STATE_TEXT}</p>
+      {faqs && faqs.length === 0 && (
+        <p className="mb-6 text-sm text-gray-500">{EMPTY_STATE_TEXT}</p>
       )}
 
       {faqs && faqs.length > 0 && (
@@ -472,9 +383,61 @@ export default function FaqsPage() {
         </div>
       )}
 
+      {faqs && visiblePresets.length > 0 && (
+        <section className="mt-8 rounded-xl border border-gray-200 bg-surface p-5 sm:p-6">
+          <div className="mb-4">
+            <h2 className="font-display text-lg font-semibold text-gray-900">
+              Quick Start FAQ
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Add ready-made answers so your AI can start replying right away.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {visiblePresets.map((preset) => {
+              return (
+                <article
+                  key={preset.id}
+                  className="flex flex-col rounded-lg border border-gray-200 bg-white p-4"
+                >
+                  <p className="font-display text-sm font-semibold text-gray-900">
+                    {preset.question}
+                  </p>
+                  <p className="mt-1 flex-1 text-sm text-gray-600">
+                    {preset.answer}
+                  </p>
+                  <span className="mt-3 inline-block w-fit rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                    {preset.category ?? "Other"}
+                  </span>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleAddPreset(preset)}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-colly-hover"
+                    >
+                      Add to my FAQs
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => dismissPreset(preset.id)}
+                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                    >
+                      Not applicable
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {modal.kind === "create" && (
         <FaqFormModal
           mode="create"
+          initialQuestion={modal.preset?.question}
+          initialCategory={modal.preset?.category}
           onClose={closeModal}
           onSubmit={handleCreate}
         />
@@ -568,17 +531,32 @@ const INPUT_CLASS =
 type FaqFormModalProps = {
   mode: "create" | "edit";
   faq?: Faq;
+  initialQuestion?: string;
+  initialCategory?: string | null;
   onClose: () => void;
   /** Should throw with a message when the save fails. */
   onSubmit: (values: FaqInput) => Promise<void>;
 };
 
-function FaqFormModal({ mode, faq, onClose, onSubmit }: FaqFormModalProps) {
-  const [question, setQuestion] = useState(faq?.question ?? "");
+function FaqFormModal({
+  mode,
+  faq,
+  initialQuestion,
+  initialCategory,
+  onClose,
+  onSubmit,
+}: FaqFormModalProps) {
+  const initialCategoryValue = faq?.category ?? initialCategory ?? null;
+  const [question, setQuestion] = useState(
+    faq?.question ?? initialQuestion ?? "",
+  );
+  // Presets pre-fill the question and category but never the answer: the owner
+  // must write their own policy text before saving.
   const [answer, setAnswer] = useState(faq?.answer ?? "");
   const [category, setCategory] = useState<string>(
-    faq?.category && (FAQ_CATEGORIES as readonly string[]).includes(faq.category)
-      ? faq.category
+    initialCategoryValue &&
+      (FAQ_CATEGORIES as readonly string[]).includes(initialCategoryValue)
+      ? initialCategoryValue
       : "Other",
   );
   const [error, setError] = useState<string | null>(null);
