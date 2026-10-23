@@ -13,7 +13,7 @@ export function isTone(value: unknown): value is Tone {
 }
 
 /** The messaging channels a business can run on. */
-export const CHANNELS = ["WHATSAPP", "TELEGRAM", "DISCORD"] as const;
+export const CHANNELS = ["TELEGRAM", "DISCORD"] as const;
 
 export type Channel = (typeof CHANNELS)[number];
 
@@ -24,10 +24,9 @@ export function isChannel(value: unknown): value is Channel {
   );
 }
 
-/** Channel connection states, matching `Business.connectionStatus`. */
+  /** Channel connection states, matching `Business.connectionStatus`. */
 export const CONNECTION_STATUSES = [
   "DISCONNECTED",
-  "PENDING_BSP_SETUP",
   "CONNECTED",
 ] as const;
 
@@ -53,11 +52,10 @@ export type Business = {
   description: string | null;
   /** Two-Number Model: false until the dedicated AI line is provisioned. */
   aiLineConnected: boolean;
-  /** Messaging channel this business runs on: "WHATSAPP" | "TELEGRAM" |
-   * "DISCORD". */
+  /** Messaging channel this business runs on: "TELEGRAM" | "DISCORD". */
   channel: Channel;
-  /** Channel connection state: "DISCONNECTED" | "PENDING_BSP_SETUP" |
-   * "CONNECTED". Drives the AI Line settings page. */
+  /** Channel connection state: "DISCONNECTED" | "CONNECTED". Drives the AI
+   * Line settings page. */
   connectionStatus: ConnectionStatus;
   /** Telegram bot handle (no "@") from getMe; renders the owner's shareable
    * t.me link once the bot is connected. */
@@ -68,10 +66,6 @@ export type Business = {
   discordConnected: boolean;
   /** Discord server ("guild") id the bot answers in. */
   discordGuildId?: string | null;
-  /** Meta WhatsApp Cloud API phone number id. */
-  whatsappPhoneNumberId?: string | null;
-  /** Whether a Meta WhatsApp Cloud API access token is stored. */
-  whatsappConnected: boolean;
   /** The OWNER'S personal Telegram chat id (from @userinfobot) — where
    * escalation alerts go. null means owner alerts are not connected yet. */
   ownerTelegramChatId: string | null;
@@ -106,9 +100,6 @@ export type BusinessRecord = {
   telegramBotToken?: string | null;
   discordBotToken?: string | null;
   discordGuildId?: string | null;
-  whatsappPhoneNumberId?: string | null;
-  whatsappAccessToken?: string | null;
-  whatsappVerifyToken?: string | null;
   ownerTelegramChatId: string | null;
   referredByAgentId: string | null;
   selectedPlan: string | null;
@@ -138,7 +129,7 @@ export function serializeBusiness(business: BusinessRecord): Business {
     aiLineConnected: business.aiLineConnected,
     // Unknown stored values fall back to the defaults used at signup so the
     // client always gets a valid option back.
-    channel: isChannel(business.channel) ? business.channel : "WHATSAPP",
+    channel: isChannel(business.channel) ? business.channel : "TELEGRAM",
     connectionStatus: isConnectionStatus(business.connectionStatus)
       ? business.connectionStatus
       : "DISCONNECTED",
@@ -146,8 +137,6 @@ export function serializeBusiness(business: BusinessRecord): Business {
     telegramConnected: Boolean(business.telegramBotToken),
     discordConnected: Boolean(business.discordBotToken),
     discordGuildId: (business as any).discordGuildId ?? null,
-    whatsappPhoneNumberId: (business as any).whatsappPhoneNumberId ?? null,
-    whatsappConnected: Boolean(business.whatsappAccessToken),
     ownerTelegramChatId: business.ownerTelegramChatId,
     referredByAgentId: business.referredByAgentId,
     selectedPlan: business.selectedPlan ?? null,

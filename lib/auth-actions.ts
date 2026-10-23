@@ -61,10 +61,10 @@ export async function signup(
   const password = readPassword(formData);
   // Optional: the agent who set the business up. Blank on most signups.
   const agentId = readField(formData, "agentId");
-  // Channel chosen on the signup form ("WHATSAPP" | "TELEGRAM" | "DISCORD");
+  // Channel chosen on the signup form ("TELEGRAM" | "TELEGRAM" | "DISCORD");
   // anything missing or unrecognised falls back to the schema default.
   const channelField = readField(formData, "channel");
-  const channel = isChannel(channelField) ? channelField : "WHATSAPP";
+  const channel = isChannel(channelField) ? channelField : "TELEGRAM";
   // The tier picked on the pricing page (?plan=green). Kept only when it is a
   // real tier of the chosen channel, so the billing page can pre-select it.
   const planField = readField(formData, "plan");
@@ -234,8 +234,8 @@ export async function signup(
           data: {
             name: businessName,
             phone,
-            // Same number for now; a dedicated WhatsApp number can be set later.
-            whatsappNumber: phone,
+      // Contact number stored on the business.
+      whatsappNumber: phone,
             // Channel picked on the signup form; drives which connection flow
             // the AI Line settings page shows.
             channel,

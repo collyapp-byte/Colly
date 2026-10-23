@@ -18,18 +18,11 @@ const TELEGRAM_OPTION = {
   title: "Telegram",
   badge: "Instant Setup",
   bullets: [
-    "2,000 messages / month",
-    "₦10 per extra message",
+    "Shared message limit across all channels",
     "No SIM card required",
     "Instant self-serve setup",
+    "Works with Discord & Web Chat",
   ],
-};
-
-const WHATSAPP_OPTION = {
-  value: "WHATSAPP" as Channel,
-  title: "WhatsApp",
-  badge: "CAC Required",
-  note: "Requires a CAC certificate for Meta Business verification.",
 };
 
 /**
@@ -207,94 +200,8 @@ export function BusinessSignupForm({
           <input type="hidden" name="plan" value={selectedPlan} />
         ) : null}
 
-        {/* Channel choice: the hidden input mirrors the selected card so the
-            signup action receives channel: "TELEGRAM" | "WHATSAPP". */}
-        <fieldset>
-          <legend className="mb-1 block text-sm font-medium text-gray-700">
-            Which channel do you want to use?
-          </legend>
-          <input type="hidden" name="channel" value={channel} />
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {/* Telegram — instant, no CAC required */}
-            <label
-              className={`relative flex cursor-pointer flex-col gap-3 rounded-xl border p-4 transition-colors ${
-                channel === TELEGRAM_OPTION.value
-                  ? "border-[#FF6600] bg-orange-50/50 ring-1 ring-[#FF6600]"
-                  : "border-gray-200 bg-white"
-              }`}
-            >
-              <span className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="channelChoice"
-                    value={TELEGRAM_OPTION.value}
-                    checked={channel === TELEGRAM_OPTION.value}
-                    onChange={() => setChannel(TELEGRAM_OPTION.value)}
-                    className="h-4 w-4 shrink-0 accent-[#FF6600]"
-                  />
-                  <span className="text-sm font-semibold text-gray-900">
-                    {TELEGRAM_OPTION.title}
-                  </span>
-                </span>
-
-                {TELEGRAM_OPTION.badge && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-full bg-[#FF6600] px-2.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
-                    {TELEGRAM_OPTION.badge}
-                  </span>
-                )}
-              </span>
-
-              <ul className="space-y-1.5 pr-2">
-                {TELEGRAM_OPTION.bullets.map((bullet) => (
-                  <li
-                    key={bullet}
-                    className="flex items-start gap-2 text-sm text-gray-600"
-                  >
-                    <Check
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FF6600]"
-                      aria-hidden
-                    />
-                    <span>{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-            </label>
-
-            {/* WhatsApp — selectable, but requires a CAC for Meta verification */}
-            <label
-              className={`relative flex cursor-pointer flex-col gap-3 rounded-xl border p-4 transition-colors ${
-                channel === WHATSAPP_OPTION.value
-                  ? "border-[#FF6600] bg-orange-50/50 ring-1 ring-[#FF6600]"
-                  : "border-gray-200 bg-white"
-              }`}
-            >
-              <span className="flex items-center justify-between gap-2">
-                <span className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="channelChoice"
-                    value={WHATSAPP_OPTION.value}
-                    checked={channel === WHATSAPP_OPTION.value}
-                    onChange={() => setChannel(WHATSAPP_OPTION.value)}
-                    className="h-4 w-4 shrink-0 accent-[#FF6600]"
-                  />
-                  <span className="text-sm font-semibold text-gray-900">
-                    {WHATSAPP_OPTION.title}
-                  </span>
-                </span>
-
-                {WHATSAPP_OPTION.badge && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-full bg-amber-500 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
-                    {WHATSAPP_OPTION.badge}
-                  </span>
-                )}
-              </span>
-
-              <p className="text-sm text-gray-600">{WHATSAPP_OPTION.note}</p>
-            </label>
-          </div>
-        </fieldset>
+        {/* Channel choice: kept for compatibility with the signup action. */}
+        <input type="hidden" name="channel" value="TELEGRAM" />
 
         <div>
           <label

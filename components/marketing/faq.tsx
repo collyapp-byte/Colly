@@ -5,16 +5,16 @@ export function FAQ() {
       a: "No. Colly is strictly constrained by the floor prices and rules you set. It will never negotiate below your limit. If a customer asks for something complex like a custom waybill, Colly instantly alerts you to take over."
     },
     {
-      q: "My customers use WhatsApp, not Telegram.",
-      a: "WhatsApp is available for businesses with a CAC certificate to pass Meta's Business Verification. Telegram and Web Chat are available instantly without a CAC."
+      q: "Which channels are supported?",
+      a: "Colly works across Telegram, Discord, and Web Chat. Your message limit is shared globally across all connected channels."
     },
     {
       q: "₦15,000 is too much.",
       a: "It costs less than a part-time staff, but it works 24/7, doesn't sleep, and never misses a message. One saved sale usually covers the monthly subscription."
     },
     {
-      q: "Why Telegram first?",
-      a: "Telegram is still the fastest way to launch: it needs no SIM card, no Meta approval, and has zero message fees. WhatsApp is coming soon once our Meta business verification clears."
+      q: "How fast can I get started?",
+      a: "You can connect your Telegram bot or add Web Chat in minutes with no SIM card required. Add Discord just as easily from the dashboard."
     }
   ];
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -370,7 +370,7 @@ export default function AiLinePage() {
         message.
       </p>
 
-      {/* HOW IT WORKS — compact orientation box right under the header. */}
+      {/* HOW IT WORKS ΓÇö compact orientation box right under the header. */}
       <section className="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
         <h2 className="font-display text-base text-gray-900">How it works</h2>
         <ul className="mt-3 space-y-2">
@@ -407,18 +407,7 @@ export default function AiLinePage() {
           <section className={SECTION_CLASS}>
             <h2 className={HEADING_CLASS}>Channel Status</h2>
             <div className="mt-4 space-y-3">
-              <div
-                aria-disabled="true"
-                className="flex cursor-not-allowed flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3 opacity-70"
-              >
-                <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-500">
-                  <Smartphone className="h-4 w-4 text-gray-400" aria-hidden />
-                  WhatsApp
-                </span>
-                <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[12px] font-medium text-gray-600">
-                  Coming Soon
-                </span>
-              </div>
+
 
               <a
                 href="#connect-telegram"
@@ -478,7 +467,7 @@ export default function AiLinePage() {
             </div>
           </section>
 
-          {/* TELEGRAM CONNECTION — the primary section, always first. */}
+          {/* TELEGRAM CONNECTION ΓÇö the primary section, always first. */}
           <section id="connect-telegram" className={SECTION_CLASS}>
             <h2 className={HEADING_CLASS}>Connect your Telegram Bot</h2>
 
@@ -493,7 +482,7 @@ export default function AiLinePage() {
                     aria-hidden
                   />
                   <h3 className="font-display text-base font-semibold text-green-800">
-                    ✅ Telegram Bot Connected
+                    Γ£à Telegram Bot Connected
                   </h3>
                 </div>
 
@@ -544,11 +533,11 @@ export default function AiLinePage() {
                       )}
 
                       <div className="min-w-0">
-                        <p className="text-sm text-green-800">
-                          Share this link on Instagram, WhatsApp Status, and
-                          business cards. Print the QR code and paste it in
-                          your shop so customers can scan and chat.
-                        </p>
+              <p className="text-sm text-green-800">
+                Share this link on Instagram, your status, and business
+                cards. Print the QR code and paste it in your shop so
+                customers can scan and chat.
+              </p>
                       </div>
                     </div>
                   </>
@@ -573,7 +562,7 @@ export default function AiLinePage() {
                     className="text-xs font-medium text-danger underline-offset-2 transition-colors hover:underline disabled:opacity-50"
                   >
                     {disconnecting
-                      ? "Disconnecting…"
+                      ? "DisconnectingΓÇª"
                       : "Disconnect Bot"}
                   </button>
                 </div>
@@ -638,7 +627,7 @@ export default function AiLinePage() {
             )}
           </section>
 
-          {/* DISCORD CONNECTION — sits directly below Telegram. */}
+          {/* DISCORD CONNECTION ΓÇö sits directly below Telegram. */}
           <section id="connect-discord" className={SECTION_CLASS}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className={HEADING_CLASS}>Connect Discord</h2>
@@ -747,7 +736,7 @@ export default function AiLinePage() {
                   onChange={(event) => setDiscordToken(event.target.value)}
                   placeholder={
                     discordIsConnected
-                      ? "Connected — paste a new token to replace"
+                      ? "Connected ΓÇö paste a new token to replace"
                       : "Paste your Discord bot token"
                   }
                   autoComplete="off"
@@ -800,7 +789,7 @@ export default function AiLinePage() {
             </form>
           </section>
 
-          {/* WEB CHAT — always available, no connection required. */}
+          {/* WEB CHAT ΓÇö always available, no connection required. */}
           <section id="connect-web-chat" className={SECTION_CLASS}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className={HEADING_CLASS}>Web Chat Integration</h2>
@@ -825,7 +814,7 @@ export default function AiLinePage() {
             </div>
           </section>
 
-          {/* OWNER NOTIFICATIONS (personal Telegram) — second, right after the
+          {/* OWNER NOTIFICATIONS (personal Telegram) ΓÇö second, right after the
               bot connection. Highlighted with a thicker orange border while
               still unset. */}
           <section
@@ -842,13 +831,13 @@ export default function AiLinePage() {
             </div>
             {!ownerLinked && (
               <p className="mt-3 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm font-medium text-[#C2410C]">
-                ⚠️ Required for AI handoffs. If not set, you will not know when the
+                ΓÜá∩╕Å Required for AI handoffs. If not set, you will not know when the
                 AI needs your help.
               </p>
             )}
             <p className="mt-3 text-sm text-gray-600">
               Get alerts on your personal phone when the AI needs you to step
-              in — for example a waybill question or a custom quote. Alerts go
+              in ΓÇö for example a waybill question or a custom quote. Alerts go
               to your personal Telegram chat, never to your customer chats.
             </p>
 
@@ -883,7 +872,7 @@ export default function AiLinePage() {
               {ownerLinked && (
                 <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-[13px] font-medium text-green-700">
                   <BadgeCheck className="h-4 w-4" aria-hidden />
-                  ✅ Owner Alerts Active
+                  Γ£à Owner Alerts Active
                 </span>
               )}
 
@@ -904,49 +893,7 @@ export default function AiLinePage() {
             </div>
           </section>
 
-          {/* WHATSAPP — informational only while the backend is locked. */}
-          <section id="connect-whatsapp" className={SECTION_CLASS}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className={HEADING_CLASS}>WhatsApp Integration</h2>
-              <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[12px] font-medium text-gray-600">
-                Coming Soon
-              </span>
-            </div>
-            <p className="mt-3 text-sm text-gray-600">
-              To connect WhatsApp, Meta requires a CAC certificate for Business
-              Verification. We are currently onboarding businesses manually.
-              Please contact support if you have a CAC and want to connect your
-              WhatsApp account.
-            </p>
 
-            <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <summary className="cursor-pointer text-sm font-semibold text-gray-900">
-                How to get a CAC for WhatsApp
-              </summary>
-              <div className="mt-3 space-y-3 text-sm text-gray-600">
-                <p>To use the official WhatsApp API, Meta requires a CAC certificate.</p>
-                <p>
-                  Don&apos;t have one? You can register a Business Name on the{" "}
-                  <a
-                    href="https://pre.cac.gov.ng/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-colly underline underline-offset-2"
-                  >
-                    CAC Portal
-                  </a>{" "}
-                  for as low as ₦10,000.
-                </p>
-                <p>
-                  Once you have your CAC, you can verify your Meta Business Account
-                  and generate your API tokens.
-                </p>
-                <div className="w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 text-sm mt-4 border border-gray-200">
-                  YouTube Tutorial Coming Soon
-                </div>
-              </div>
-            </details>
-          </section>
         </div>
       )}
     </div>

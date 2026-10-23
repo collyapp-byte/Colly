@@ -93,10 +93,10 @@ model Business {
   selectedPlan String?
 
   /// Messaging channel. `channel` is which channel this business runs on:
-  /// "WHATSAPP" | "TELEGRAM" | "DISCORD". Telegram businesses connect their own bot:
+  /// "TELEGRAM" | "DISCORD". Telegram businesses connect their own bot:
   /// `telegramBotToken` is the bot token from BotFather and `telegramChatId`
   /// is the chat the AI should answer in.
-  channel             String  @default("WHATSAPP")
+  channel             String  @default("TELEGRAM")
   telegramBotToken    String?
   telegramChatId      String?
   /// Bot handle from the getMe response (without "@"), shown to the owner as
@@ -110,25 +110,15 @@ model Business {
   discordBotToken String?
   discordGuildId  String?
 
-  /// Meta WhatsApp Cloud API integration. `whatsappPhoneNumberId` identifies
-  /// the business on incoming webhooks, `whatsappAccessToken` authorizes
-  /// outbound replies, and `whatsappVerifyToken` is the shared secret used
-  /// during Meta's webhook verification handshake.
-  whatsappPhoneNumberId String?
-  whatsappAccessToken   String?
-  whatsappVerifyToken   String?
-
   /// The OWNER'S personal Telegram chat id (from @userinfobot), NOT the
   /// customer chat (`telegramChatId` above). When set, escalation alerts from
   /// `escalate_to_owner` are delivered there via the Colly Admin Bot
-  /// (COLLY_TELEGRAM_BOT_TOKEN). Independent of `channel` — a WhatsApp
-  /// business can still receive owner alerts on personal Telegram.
+  /// (COLLY_TELEGRAM_BOT_TOKEN).
   ownerTelegramChatId String?
 
   /// Channel connection state, set by the AI Line settings page:
   /// "DISCONNECTED" (default, nothing connected yet) |
-  /// "PENDING_BSP_SETUP" (WhatsApp number submitted, waiting on Gupshup onboarding) |
-  /// "CONNECTED" (Telegram bot verified, or WhatsApp line live).
+  /// "CONNECTED" (Telegram bot or Discord bot verified).
   connectionStatus String  @default("DISCONNECTED")
 
   /// Automated dunning. `subscriptionStatus` tracks the Paystack subscription
@@ -602,11 +592,4 @@ model AgentPayout {
   @@index([agentId, createdAt])
 }
 
-/// Leads from the WhatsApp waitlist form. Standalone (no tenant): a lead is
-/// not a business yet, it is a phone number waiting for WhatsApp to open.
-model WhatsappWaitlist {
-  id             String   @id @default(uuid())
-  whatsappNumber String
-  email          String?
-  createdAt      DateTime @default(now())
-}
+

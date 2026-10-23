@@ -17,11 +17,11 @@ export function Features() {
       <ScrollReveal className="mx-auto max-w-7xl px-4">
         <div className="mx-auto mb-16 max-w-3xl text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Built for the Nigerian market
+            One AI. Every channel. One limit.
           </h2>
           <p className="mt-4 text-gray-600">
-            Not a generic chatbot. A sales assistant that understands how we
-            talk, how we sell, and how we close.
+            Colly understands Nigerian buyers across Telegram, Discord, and Web
+            Chat while keeping a single shared message allowance.
           </p>
         </div>
 

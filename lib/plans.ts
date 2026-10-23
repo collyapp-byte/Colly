@@ -1,19 +1,11 @@
 // Colly's billing plans: the single source of truth for limits and prices.
 //
-// Colly sells on two channels — WhatsApp and Telegram — each with its own
-// tiers, monthly message allowances and per-reply credit prices. All tiers
-// get every feature (Pidgin, voice notes, image recognition, negotiation);
-// only the volume and capacity numbers differ. Prices are in Naira.
-//
-// Credits are a Naira wallet (`Business.creditWalletBalanceNaira`): money on
-// account that pays for replies over the plan's monthly allowance at the
-// channel's `aiCredit` / `manualCredit` rates.
+// A single "General" plan model applies across all connected channels
+// (Telegram, Discord, Web Chat). Message limits are shared globally.
 
-export type Channel = "WHATSAPP" | "TELEGRAM";
+export type Channel = "TELEGRAM" | "DISCORD";
 
-export type WhatsappPlanTier = "starter" | "business" | "pro";
-export type TelegramPlanTier = "green" | "blue" | "black";
-export type PlanTier = WhatsappPlanTier | TelegramPlanTier;
+export type PlanTier = "green" | "blue" | "black";
 
 export type PlanInterval = "monthly" | "yearly";
 
@@ -34,34 +26,7 @@ export type PlanConfig = {
   manualCredit: number;
 };
 
-export const WHATSAPP_PLANS: Record<WhatsappPlanTier, PlanConfig> = {
-  starter: {
-    monthly: 15_000,
-    yearly: 150_000,
-    includedMsgs: 500,
-    includedManualMessages: 500,
-    aiCredit: 20,
-    manualCredit: 15,
-  },
-  business: {
-    monthly: 25_000,
-    yearly: 250_000,
-    includedMsgs: 1_500,
-    includedManualMessages: 1_500,
-    aiCredit: 20,
-    manualCredit: 15,
-  },
-  pro: {
-    monthly: 50_000,
-    yearly: 500_000,
-    includedMsgs: 2_500,
-    includedManualMessages: 2_500,
-    aiCredit: 20,
-    manualCredit: 15,
-  },
-};
-
-export const TELEGRAM_PLANS: Record<TelegramPlanTier, PlanConfig> = {
+export const PLANS: Record<PlanTier, PlanConfig> = {
   green: {
     monthly: 15_000,
     yearly: 150_000,
@@ -87,6 +52,9 @@ export const TELEGRAM_PLANS: Record<TelegramPlanTier, PlanConfig> = {
     manualCredit: 0,
   },
 };
+
+export const TELEGRAM_PLANS = PLANS;
+export const WHATSAPP_PLANS = {} as Record<string, PlanConfig>;
 
 /** Free trial: a time box plus a one-off reply allowance, no card required. */
 export const TRIAL_CONFIG = {
@@ -132,48 +100,36 @@ export const CREDIT_PACKAGES = {
 export type CreditPackageId = keyof typeof CREDIT_PACKAGES;
 export type CreditPackage = (typeof CREDIT_PACKAGES)[CreditPackageId];
 
-/** A stored `Business.channel` that is not "TELEGRAM" means WhatsApp. */
-export function isTelegramChannel(channel: string | null | undefined): boolean {
-  return channel === "TELEGRAM";
+/** All messaging channels share the same unified plan limits. */
+export function isTelegramChannel(_channel: string | null | undefined): boolean {
+  return true;
 }
 
-/** True when the value is one of the two supported channels. */
+/** True when the value is one of the supported channels. */
 export function isChannel(value: unknown): value is Channel {
-  return value === "WHATSAPP" || value === "TELEGRAM";
+  return value === "TELEGRAM" || value === "DISCORD";
 }
 
 /**
- * The channel a plan tier belongs to. Tier names are disjoint across channels
- * (green/blue/black vs starter/business/pro), so a plan alone identifies its
- * channel — used when activating a subscription that did not store a channel.
+ * Unified plans apply to all channels. Keep for backward compatibility.
  */
-export function channelForTier(tier: string | null | undefined): Channel {
-  return tier && tier in TELEGRAM_PLANS ? "TELEGRAM" : "WHATSAPP";
+export function channelForTier(_tier: string | null | undefined): Channel {
+  return "TELEGRAM";
 }
 
-/**
- * True when `value` is a plan tier name on any channel ("green" | "blue" |
- * "black" | "starter" | "business" | "pro"). Used to validate the tier that
- * comes in on a URL (e.g. /signup?plan=green).
- */
+/** True when `value` is a plan tier name in the unified plan set. */
 export function isPlanTierName(value: unknown): value is PlanTier {
-  return (
-    typeof value === "string" &&
-    (value in TELEGRAM_PLANS || value in WHATSAPP_PLANS)
-  );
+  return typeof value === "string" && value in PLANS;
 }
 
-/**
- * True when `tier` is a plan tier of `channel`'s plan table. Tier names are
- * disjoint across channels, so a Telegram tier is never a WhatsApp tier.
- */
-export function isTierForChannel(tier: string, channel: Channel): boolean {
-  return channel === "TELEGRAM" ? tier in TELEGRAM_PLANS : tier in WHATSAPP_PLANS;
+/** All channels use the unified plan table. */
+export function isTierForChannel(tier: string, _channel: Channel): boolean {
+  return tier in PLANS;
 }
 
-/** The plan table for a business's channel; anything but Telegram is WhatsApp. */
-function plansFor(channel: string | null | undefined): Record<string, PlanConfig> {
-  return isTelegramChannel(channel) ? TELEGRAM_PLANS : WHATSAPP_PLANS;
+/** Returns the unified plan table regardless of channel. */
+function plansFor(_channel: string | null | undefined): Record<string, PlanConfig> {
+  return PLANS;
 }
 
 /** True when the business is on an active paid plan for its channel. */
@@ -255,17 +211,15 @@ export function getPlanPrice(
 }
 
 /**
- * The Paystack plan code for a channel + tier + billing interval, configured
- * via env vars like `PAYSTACK_PLAN_WA_STARTER_M` or `PAYSTACK_PLAN_TG_GREEN_Y`.
- * Returns null when the code has not been set up yet.
+ * The Paystack plan code for a tier + billing interval, configured via env
+ * vars like `PAYSTACK_PLAN_TG_GREEN_M`. Returns null when not configured.
  */
 export function getPaystackPlanCode(
   tier: string,
   interval: PlanInterval | string,
-  channel?: string | null,
+  _channel?: string | null,
 ): string | null {
-  const channelCode = isTelegramChannel(channel) ? "TG" : "WA";
   const intervalCode = interval === "yearly" ? "Y" : "M";
-  const envKey = `PAYSTACK_PLAN_${channelCode}_${tier.toUpperCase()}_${intervalCode}`;
-  return process.env[envKey] ?? null;
+  const envKey = `PAYSTACK_PLAN_TG_${tier.toUpperCase()}_${intervalCode}`;
+  return process.env[envKey] ?? process.env[`PAYSTACK_PLAN_GREEN_${tier.toUpperCase()}_${intervalCode}`] ?? null;
 }

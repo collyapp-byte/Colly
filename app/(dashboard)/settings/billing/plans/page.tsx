@@ -4,15 +4,15 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check, Star, Zap } from "lucide-react";
 import {
-  TELEGRAM_PLANS,
+  PLANS,
   type PlanConfig,
   type PlanInterval,
-  type TelegramPlanTier,
+  type PlanTier,
 } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 
-const TELEGRAM_TIERS: TelegramPlanTier[] = ["green", "blue", "black"];
+const PLAN_TIERS: PlanTier[] = ["green", "blue", "black"];
 
 type CardMeta = {
   name: string;
@@ -22,8 +22,8 @@ type CardMeta = {
   featured?: boolean;
 };
 
-const TELEGRAM_META: Record<TelegramPlanTier, CardMeta> = {
-  green: { name: "Green", tagline: "For new Telegram sellers" },
+const PLAN_META: Record<PlanTier, CardMeta> = {
+  green: { name: "Green", tagline: "For getting started" },
   blue: { name: "Blue", tagline: "For growing businesses" },
   black: {
     name: "Black",
@@ -34,17 +34,11 @@ const TELEGRAM_META: Record<TelegramPlanTier, CardMeta> = {
 };
 
 /** The bullet list under a card. Message counts come from the plan config. */
-function cardFeatures(tier: TelegramPlanTier, config: PlanConfig): string[] {
-  const messages = `${config.includedMsgs.toLocaleString()} AI replies/month`;
+function cardFeatures(config: PlanConfig): string[] {
+  const messages = `${config.includedMsgs.toLocaleString()} total AI messages/mo across all channels`;
   const manual = `${config.includedManualMessages.toLocaleString()} manual replies/month`;
 
-  if (tier === "green") {
-    return [messages, manual, "Telegram bot connection", "Product catalogue", "FAQ knowledge base"];
-  }
-  if (tier === "blue") {
-    return [messages, manual, "Everything in Green", "Analytics", "Priority support"];
-  }
-  return [messages, manual, "Everything in Blue", "Dedicated support", "Advanced analytics"];
+  return [messages, manual, "Telegram, Discord & Web Chat", "Product catalogue", "FAQ knowledge base", "Owner alerts"];
 }
 
 function PlansContent() {
@@ -77,9 +71,9 @@ function PlansContent() {
   }, []);
 
   const urlPlan = (searchParams.get("plan") ?? "").trim();
-  const selectedTier = TELEGRAM_TIERS.includes(urlPlan as TelegramPlanTier)
+  const selectedTier = PLAN_TIERS.includes(urlPlan as PlanTier)
     ? urlPlan
-    : TELEGRAM_TIERS.includes(storedPlan as TelegramPlanTier)
+    : PLAN_TIERS.includes(storedPlan as PlanTier)
       ? storedPlan
       : null;
 
@@ -90,7 +84,7 @@ function PlansContent() {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channel: "TELEGRAM", tier, interval: chosenInterval }),
+        body: JSON.stringify({ tier, interval: chosenInterval }),
       });
       const data = await res.json();
 
@@ -111,8 +105,8 @@ function PlansContent() {
     }
   }
 
-  const tiers = TELEGRAM_TIERS;
-  const plans = TELEGRAM_PLANS as Record<string, PlanConfig>;
+  const tiers = PLAN_TIERS;
+  const plans = PLANS as Record<string, PlanConfig>;
 
   return (
     <div className="mx-auto w-full max-w-4xl">
@@ -124,12 +118,8 @@ function PlansContent() {
           Choose the plan that matches your message volume. Every plan includes
           the same AI features.
         </p>
-        <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-          <span className="inline-flex items-center rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
-            Requires CAC
-          </span>
-          WhatsApp plans require a CAC certificate for Meta Business
-          Verification.
+        <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-1 text-xs font-medium text-[#C2410C]">
+          Your AI message limit is shared across all connected channels.
         </p>
       </div>
 
@@ -173,10 +163,10 @@ function PlansContent() {
       {selectedTier && (
         <div className="mx-auto mt-4 max-w-4xl rounded-lg border border-[#FF6600] bg-[#FFF4EC] px-4 py-3 text-sm text-gray-700">
           You picked the{" "}
-          <span className="font-semibold text-gray-900">
-            {TELEGRAM_META[selectedTier as TelegramPlanTier].name}
-          </span>{" "}
-          plan. Choose it below to activate it.
+            <span className="font-semibold text-gray-900">
+              {PLAN_META[selectedTier as PlanTier].name}
+            </span>{" "}
+            plan. Choose it below to activate it.
         </div>
       )}
 
@@ -186,7 +176,7 @@ function PlansContent() {
           const config = plans[tier];
           const price = interval === "monthly" ? config.monthly : config.yearly;
           const yearlySaving = config.monthly * 12 - config.yearly;
-          const meta: CardMeta = TELEGRAM_META[tier];
+          const meta: CardMeta = PLAN_META[tier];
           const isDark = Boolean(meta.dark);
           const isFeatured = Boolean(meta.featured);
           const isSelected = tier === selectedTier;
@@ -268,7 +258,7 @@ function PlansContent() {
               </Button>
 
               <div className="mt-6 space-y-2">
-                {cardFeatures(tier, config).map((feature) => (
+                {cardFeatures(config).map((feature) => (
                   <div key={feature} className="flex items-center gap-2">
                     <Check className="h-3.5 w-3.5 text-gray-400" />
                     <span className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>

@@ -18,7 +18,7 @@ export function Pricing() {
       name: "Green",
       price: "₦15,000",
       desc: "For small boutiques & vendors.",
-      features: ["2,000 AI messages/mo", "All AI features", "₦10/extra message", "Owner alerts"],
+      features: ["Includes Telegram, Discord & Web Chat", "2,000 total AI messages/mo across all channels", "All AI features", "₦10/extra message", "Owner alerts"],
       cta: "Get Green",
       href: "/signup?role=business&plan=green",
       highlight: true
@@ -27,7 +27,7 @@ export function Pricing() {
       name: "Blue",
       price: "₦25,000",
       desc: "For growing electronics shops.",
-      features: ["6,000 AI messages/mo", "All AI features", "₦10/extra message", "Priority support"],
+      features: ["Includes Telegram, Discord & Web Chat", "6,000 total AI messages/mo across all channels", "All AI features", "₦10/extra message", "Priority support"],
       cta: "Get Blue",
       href: "/signup?role=business&plan=blue",
       highlight: false
@@ -36,7 +36,7 @@ export function Pricing() {
       name: "Black",
       price: "₦50,000",
       desc: "For high-volume wholesalers.",
-      features: ["30,000 AI messages/mo", "30,000 manual replies/mo", "₦10/extra message", "Dedicated onboarding"],
+      features: ["Includes Telegram, Discord & Web Chat", "30,000 total AI messages/mo across all channels", "30,000 manual replies/mo", "₦10/extra message", "Dedicated onboarding"],
       cta: "Get Black",
       href: "/signup?role=business&plan=black",
       highlight: false
