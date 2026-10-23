@@ -21,7 +21,6 @@ export default async function CollyAIPage() {
       ownerTelegramChatId: true,
       telegramBotToken: true,
       discordBotToken: true,
-      whatsappAccessToken: true,
       creditWalletBalanceNaira: true,
       messagesUsedThisMonth: true,
       manualMessagesUsedThisMonth: true,
@@ -66,7 +65,6 @@ export default async function CollyAIPage() {
   const ownerAlertsActive = Boolean(business?.ownerTelegramChatId);
   const telegramConnected = Boolean(business?.telegramBotToken);
   const discordConnected = Boolean(business?.discordBotToken);
-  const whatsappConnected = Boolean(business?.whatsappAccessToken);
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
@@ -208,34 +206,25 @@ export default async function CollyAIPage() {
                 </Link>
               </div>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3">
+            <div
+              aria-disabled="true"
+              className="flex cursor-not-allowed flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3 opacity-70"
+            >
               <div>
-                <p className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                <p className="flex items-center gap-2 text-sm font-medium text-gray-500">
                   <Smartphone
-                    className="h-4 w-4 shrink-0 text-gray-500"
+                    className="h-4 w-4 shrink-0 text-gray-400"
                     aria-hidden
                   />
                   WhatsApp
                 </p>
-                <p className="text-xs text-gray-500">Customer-facing AI line</p>
+                <p className="text-xs text-gray-400">
+                  Customer-facing AI line
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                {whatsappConnected ? (
-                  <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[11px] font-medium text-green-700">
-                    Connected
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
-                    Requires CAC
-                  </span>
-                )}
-                <Link
-                  href="/settings/ai-line#connect-whatsapp"
-                  className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                >
-                  {whatsappConnected ? "Manage" : "Connect WhatsApp"}
-                </Link>
-              </div>
+              <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
+                Requires CAC
+              </span>
             </div>
 
           </div>
