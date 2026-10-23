@@ -49,11 +49,7 @@ export async function GET() {
     ]);
 
     const pendingTasks: string[] = [];
-    if (
-      !business.telegramBotToken &&
-      !business.discordBotToken &&
-      !business.whatsappAccessToken
-    ) {
+    if (!business.telegramBotToken && !business.discordBotToken) {
       pendingTasks.push("Connect a channel");
     }
     if (!business.ownerTelegramChatId) {
