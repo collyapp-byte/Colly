@@ -669,6 +669,53 @@ export default function AiLinePage() {
               </div>
             )}
 
+            <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-gray-900">
+                How to connect Discord (Step-by-Step)
+              </summary>
+              <div className="mt-3 space-y-3 text-sm text-gray-600">
+                <p>
+                  <span className="font-semibold text-gray-700">Step 1:</span>{" "}
+                  Go to the{" "}
+                  <a
+                    href="https://discord.com/developers/applications"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-colly underline underline-offset-2"
+                  >
+                    Discord Developer Portal
+                  </a>{" "}
+                  and click &quot;New Application&quot;.
+                </p>
+                <p>
+                  <span className="font-semibold text-gray-700">Step 2:</span>{" "}
+                  Go to the &quot;Bot&quot; tab, click &quot;Reset Token&quot;,
+                  and copy the token.
+                </p>
+                <p>
+                  <span className="font-semibold text-gray-700">Step 3:</span>{" "}
+                  Paste the token below and click &quot;Connect Discord&quot;.
+                </p>
+                <p>
+                  <span className="font-semibold text-gray-700">
+                    Step 4 (Important):
+                  </span>{" "}
+                  Go to the &quot;OAuth2&quot; tab, select &quot;bot&quot; in
+                  Scopes, give it &quot;Send Messages&quot; and &quot;Read
+                  Message History&quot; permissions, and use the generated link
+                  to invite the bot to your server.
+                </p>
+                <p>
+                  <span className="font-semibold text-gray-700">Step 5:</span>{" "}
+                  Copy your Server ID (Right-click your server icon -&gt; Copy
+                  Server ID) and paste it below.
+                </p>
+                <div className="w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 text-sm mt-4 border border-gray-200">
+                  YouTube Tutorial Coming Soon
+                </div>
+              </div>
+            </details>
+
             <form onSubmit={handleDiscordConnect} className="mt-5 space-y-4">
               <div>
                 <label
@@ -831,6 +878,34 @@ export default function AiLinePage() {
               Please contact support if you have a CAC and want to connect your
               WhatsApp account.
             </p>
+
+            <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-gray-900">
+                How to get a CAC for WhatsApp
+              </summary>
+              <div className="mt-3 space-y-3 text-sm text-gray-600">
+                <p>To use the official WhatsApp API, Meta requires a CAC certificate.</p>
+                <p>
+                  Don&apos;t have one? You can register a Business Name on the{" "}
+                  <a
+                    href="https://pre.cac.gov.ng/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-colly underline underline-offset-2"
+                  >
+                    CAC Portal
+                  </a>{" "}
+                  for as low as ₦10,000.
+                </p>
+                <p>
+                  Once you have your CAC, you can verify your Meta Business Account
+                  and generate your API tokens.
+                </p>
+                <div className="w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 text-sm mt-4 border border-gray-200">
+                  YouTube Tutorial Coming Soon
+                </div>
+              </div>
+            </details>
           </section>
         </div>
       )}
