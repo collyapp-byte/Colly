@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { CollyAiWidget } from "@/components/dashboard/colly-ai-widget";
 import { Footer } from "@/components/ui/footer";
+import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { requireSiteAccess } from "@/lib/auth-guards";
 
@@ -47,9 +48,33 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
   const user = await requireAuth();
   await requireSiteAccess(user.businessId);
 
+  const [business, pendingEscalations] = await Promise.all([
+    prisma.business.findUnique({
+      where: { id: user.businessId },
+      select: {
+        telegramBotToken: true,
+        discordBotToken: true,
+        _count: { select: { products: true, faqs: true } },
+      },
+    }),
+    prisma.conversation.count({
+      where: {
+        businessId: user.businessId,
+        escalatedAt: { not: null },
+        status: "OPEN",
+      },
+    }),
+  ]);
+
   return (
     <>
-      <DashboardShell businessName={user.businessName}>
+      <DashboardShell
+        businessName={user.businessName}
+        hasNoProducts={(business?._count.products ?? 0) === 0}
+        hasNoFaqs={(business?._count.faqs ?? 0) === 0}
+        hasPendingEscalations={pendingEscalations > 0}
+        hasNoChannels={!business?.telegramBotToken && !business?.discordBotToken}
+      >
         {children}
         <Footer />
       </DashboardShell>

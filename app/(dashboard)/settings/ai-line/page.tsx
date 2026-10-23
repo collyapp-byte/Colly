@@ -8,6 +8,7 @@ import {
   BellRing,
   Clock,
   Copy,
+  Globe,
   MessageSquare,
   PhoneCall,
   Send,
@@ -414,8 +415,8 @@ export default function AiLinePage() {
                   <Smartphone className="h-4 w-4 text-gray-400" aria-hidden />
                   WhatsApp
                 </span>
-                <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[12px] font-bold text-white">
-                  Requires CAC
+                <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[12px] font-medium text-gray-600">
+                  Coming Soon
                 </span>
               </div>
 
@@ -460,6 +461,20 @@ export default function AiLinePage() {
                   </span>
                 )}
               </a>
+
+              <Link
+                href="/settings/web-chat"
+                className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3 transition-colors hover:bg-gray-50"
+              >
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-900">
+                  <Globe className="h-4 w-4 text-gray-500" aria-hidden />
+                  Web Chat
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
+                  <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                  Active
+                </span>
+              </Link>
             </div>
           </section>
 
@@ -785,6 +800,31 @@ export default function AiLinePage() {
             </form>
           </section>
 
+          {/* WEB CHAT — always available, no connection required. */}
+          <section id="connect-web-chat" className={SECTION_CLASS}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className={HEADING_CLASS}>Web Chat Integration</h2>
+              <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
+                <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                Active
+              </span>
+            </div>
+
+            <p className="mt-3 text-sm text-gray-600">
+              Embed a chat widget on your website so visitors can talk to your
+              AI instantly. No tokens or API keys required.
+            </p>
+
+            <div className="mt-4">
+              <Link
+                href="/settings/web-chat"
+                className="inline-flex items-center justify-center rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"
+              >
+                Get Embed Code
+              </Link>
+            </div>
+          </section>
+
           {/* OWNER NOTIFICATIONS (personal Telegram) — second, right after the
               bot connection. Highlighted with a thicker orange border while
               still unset. */}
@@ -868,8 +908,8 @@ export default function AiLinePage() {
           <section id="connect-whatsapp" className={SECTION_CLASS}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className={HEADING_CLASS}>WhatsApp Integration</h2>
-              <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[12px] font-bold text-white">
-                Requires CAC
+              <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[12px] font-medium text-gray-600">
+                Coming Soon
               </span>
             </div>
             <p className="mt-3 text-sm text-gray-600">

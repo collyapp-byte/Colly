@@ -222,8 +222,8 @@ export default async function CollyAIPage() {
                   Customer-facing AI line
                 </p>
               </div>
-              <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
-                Requires CAC
+              <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600">
+                Coming Soon
               </span>
             </div>
 

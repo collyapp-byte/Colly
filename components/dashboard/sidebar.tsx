@@ -64,12 +64,35 @@ function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function Sidebar({ onClose }: { onClose?: () => void }) {
+type SidebarProps = {
+  onClose?: () => void;
+  hasNoProducts?: boolean;
+  hasNoFaqs?: boolean;
+  hasPendingEscalations?: boolean;
+  hasNoChannels?: boolean;
+};
+
+export function Sidebar({
+  onClose,
+  hasNoProducts = false,
+  hasNoFaqs = false,
+  hasPendingEscalations = false,
+  hasNoChannels = false,
+}: SidebarProps) {
   const pathname = usePathname();
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const switcherRef = useRef<HTMLDivElement>(null);
+
+  function shouldShowDot(href: string): boolean {
+    return (
+      (href === "/products" && hasNoProducts) ||
+      (href === "/faqs" && hasNoFaqs) ||
+      (href === "/ai" && hasNoChannels) ||
+      (href === "/conversations" && hasPendingEscalations)
+    );
+  }
 
   // The owner's name and email, shown in the switcher header and the bottom
   // user row. Fetched once; the menu still works (navigation + sign out) while
@@ -235,6 +258,9 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                       aria-hidden
                     />
                     <span>{item.label}</span>
+                    {shouldShowDot(item.href) && (
+                      <span className="ml-auto h-2 w-2 rounded-full bg-[#FF6600]" />
+                    )}
                   </Link>
                 </li>
               );
@@ -276,6 +302,9 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                       aria-hidden
                     />
                     <span>{item.label}</span>
+                    {shouldShowDot(item.href) && (
+                      <span className="ml-auto h-2 w-2 rounded-full bg-[#FF6600]" />
+                    )}
                   </Link>
                 </li>
               );
@@ -316,6 +345,9 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                       aria-hidden
                     />
                     <span>{item.label}</span>
+                    {shouldShowDot(item.href) && (
+                      <span className="ml-auto h-2 w-2 rounded-full bg-[#FF6600]" />
+                    )}
                   </Link>
                 </li>
               );

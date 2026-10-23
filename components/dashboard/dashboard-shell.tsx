@@ -9,10 +9,21 @@ import { PlanChip } from "./plan-chip";
 
 type DashboardShellProps = {
   businessName?: string;
+  hasNoProducts?: boolean;
+  hasNoFaqs?: boolean;
+  hasPendingEscalations?: boolean;
+  hasNoChannels?: boolean;
   children: ReactNode;
 };
 
-export function DashboardShell({ businessName, children }: DashboardShellProps) {
+export function DashboardShell({
+  businessName,
+  hasNoProducts = false,
+  hasNoFaqs = false,
+  hasPendingEscalations = false,
+  hasNoChannels = false,
+  children,
+}: DashboardShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const pathname = usePathname();
@@ -68,7 +79,13 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
             className="absolute inset-0 h-full w-full cursor-default bg-black/40"
           />
           <div className="absolute inset-y-0 left-0 w-[260px] bg-transparent">
-            <Sidebar onClose={() => setMobileNavOpen(false)} />
+            <Sidebar
+              onClose={() => setMobileNavOpen(false)}
+              hasNoProducts={hasNoProducts}
+              hasNoFaqs={hasNoFaqs}
+              hasPendingEscalations={hasPendingEscalations}
+              hasNoChannels={hasNoChannels}
+            />
           </div>
         </div>
       )}
@@ -76,7 +93,12 @@ export function DashboardShell({ businessName, children }: DashboardShellProps) 
       <div className="flex min-h-screen w-full max-w-full overflow-x-hidden md:h-screen md:overflow-hidden">
         {/* Desktop sidebar */}
         <aside className="hidden w-64 shrink-0 flex-col md:flex">
-          <Sidebar />
+          <Sidebar
+            hasNoProducts={hasNoProducts}
+            hasNoFaqs={hasNoFaqs}
+            hasPendingEscalations={hasPendingEscalations}
+            hasNoChannels={hasNoChannels}
+          />
         </aside>
 
         {/* Right column */}
