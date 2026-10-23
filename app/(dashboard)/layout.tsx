@@ -62,7 +62,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
       where: {
         businessId: user.businessId,
         escalatedAt: { not: null },
-        status: "OPEN",
+        status: { not: "CLOSED" },
       },
     }),
   ]);

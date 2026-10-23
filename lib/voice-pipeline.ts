@@ -40,7 +40,7 @@ export async function processVoiceNote(args: {
 
   if (!conversation) {
     conversation = await prisma.conversation.create({
-      data: { businessId, customerId, status: "OPEN" },
+      data: { businessId, customerId, status: "AI_HANDLING" },
     });
   }
 

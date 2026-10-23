@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     }
 
     // The chat id stands in for the customer's phone number.
-    await prisma.customer.upsert({
+    const customer = await prisma.customer.upsert({
       where: {
         businessId_phone: { businessId: business.id, phone: telegramChatId },
       },
@@ -106,6 +106,31 @@ export async function POST(request: Request) {
         phone: telegramChatId,
       },
     });
+
+    // AI kill switch: once a conversation is escalated or taken over by a
+    // human, the AI stays silent. Persist the inbound message so the owner can
+    // still see it and reply from the dashboard.
+    const activeConversation = await prisma.conversation.findFirst({
+      where: { businessId: business.id, customerId: customer.id },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, status: true },
+    });
+
+    if (
+      activeConversation &&
+      (activeConversation.status === "ESCALATED" ||
+        activeConversation.status === "HUMAN_TAKEOVER")
+    ) {
+      await prisma.message.create({
+        data: {
+          businessId: business.id,
+          conversationId: activeConversation.id,
+          sender: "customer",
+          content: text,
+        },
+      });
+      return Response.json({ ok: true });
+    }
 
     const result = await handleIncomingMessage({
       businessId: business.id,

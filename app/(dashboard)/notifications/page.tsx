@@ -18,7 +18,7 @@ export default async function NotificationsPage() {
     where: {
       businessId: user.businessId,
       escalatedAt: { not: null },
-      status: "OPEN",
+      status: { not: "CLOSED" },
     },
     orderBy: { escalatedAt: "desc" },
     include: {

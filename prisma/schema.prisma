@@ -35,7 +35,9 @@ model Business {
   /// Street address, used on invoices/receipts (optional).
   address       String?
   /// Short description of what the business sells, given to the AI as context.
-  description   String?
+  description       String?
+  /// Payment details (bank/transfer instructions) the AI can share to close sales.
+  paymentInstructions String? @db.Text
 
   /// Two-Number Model: the business keeps its own WhatsApp on the owner's
   /// phone; Colly assigns a separate dedicated AI line. `aiLineConnected` is
@@ -278,7 +280,8 @@ model Conversation {
   id         String   @id @default(cuid())
   businessId String
   customerId String
-  status     String
+  /// AI kill switch: "AI_HANDLING" | "ESCALATED" | "HUMAN_TAKEOVER".
+  status     String   @default("AI_HANDLING")
   createdAt  DateTime @default(now())
 
   /// Human takeover. null means the AI answers automatically; a future

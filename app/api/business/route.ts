@@ -10,6 +10,7 @@ type BusinessRequestBody = {
   businessHours?: unknown;
   address?: unknown;
   description?: unknown;
+  paymentInstructions?: unknown;
   ownerTelegramChatId?: unknown;
 };
 
@@ -111,6 +112,7 @@ export async function PATCH(request: Request) {
       businessHours?: string | null;
       address?: string | null;
       description?: string | null;
+      paymentInstructions?: string | null;
       ownerTelegramChatId?: string | null;
     } = {};
 
@@ -143,7 +145,12 @@ export async function PATCH(request: Request) {
     }
 
     // Optional free-text fields: an empty string clears them (stored as null).
-    for (const field of ["businessHours", "address", "description"] as const) {
+    for (const field of [
+      "businessHours",
+      "address",
+      "description",
+      "paymentInstructions",
+    ] as const) {
       const value = body[field];
       if (value === undefined) continue;
       if (typeof value !== "string") {

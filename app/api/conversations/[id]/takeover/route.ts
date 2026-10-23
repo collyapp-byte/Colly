@@ -43,7 +43,7 @@ export async function POST(
 
     await prisma.conversation.update({
       where: { id: conversation.id },
-      data: { pausedUntil },
+      data: { pausedUntil, status: "HUMAN_TAKEOVER" },
     });
 
     return Response.json({ pausedUntil });
@@ -85,7 +85,7 @@ export async function DELETE(
 
     await prisma.conversation.update({
       where: { id: conversation.id },
-      data: { pausedUntil: null },
+      data: { pausedUntil: null, status: "AI_HANDLING" },
     });
 
     return Response.json({ pausedUntil: null });

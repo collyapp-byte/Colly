@@ -1,5 +1,8 @@
 const STATUS_STYLES: Record<string, string> = {
   OPEN: "bg-green-100 text-green-700",
+  AI_HANDLING: "bg-green-100 text-green-700",
+  ESCALATED: "bg-amber-100 text-amber-700",
+  HUMAN_TAKEOVER: "bg-blue-100 text-blue-700",
   PENDING: "bg-amber-100 text-amber-700",
   CLOSED: "bg-gray-100 text-gray-600",
 };

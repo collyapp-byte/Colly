@@ -36,6 +36,7 @@ type FormState = {
   businessHours: string;
   address: string;
   description: string;
+  paymentInstructions: string;
 };
 
 /** Flattens an API Business into the editable string state of the form. */
@@ -48,6 +49,7 @@ function toFormState(business: Business): FormState {
     businessHours: business.businessHours ?? "",
     address: business.address ?? "",
     description: business.description ?? "",
+    paymentInstructions: business.paymentInstructions ?? "",
   };
 }
 
@@ -257,6 +259,45 @@ export default function SettingsPage() {
                     What does your business sell? The AI uses this for context.
                   </p>
                 </div>
+              </div>
+            </section>
+
+            {/* PAYMENT INSTRUCTIONS */}
+            <section className={SECTION_CLASS}>
+              <h2 className={HEADING_CLASS}>PAYMENT INSTRUCTIONS</h2>
+              <div className="mt-4">
+                <div className="mb-1 flex items-center gap-2">
+                  <label
+                    htmlFor="business-payment-instructions"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Bank details
+                  </label>
+                  <VoiceInput
+                    onTranscript={(transcript) =>
+                      update(
+                        "paymentInstructions",
+                        form.paymentInstructions
+                          ? `${form.paymentInstructions}\n${transcript}`
+                          : transcript,
+                      )
+                    }
+                  />
+                </div>
+                <textarea
+                  id="business-payment-instructions"
+                  rows={3}
+                  value={form.paymentInstructions}
+                  onChange={(event) =>
+                    update("paymentInstructions", event.target.value)
+                  }
+                  placeholder="Transfer to GTBank 0123456789, Colly Ltd"
+                  className={INPUT_CLASS}
+                />
+                <p className={HINT_CLASS}>
+                  The AI shares these details so customers can pay and close
+                  the sale automatically.
+                </p>
               </div>
             </section>
 

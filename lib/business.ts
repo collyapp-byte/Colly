@@ -50,6 +50,8 @@ export type Business = {
   businessHours: string | null;
   address: string | null;
   description: string | null;
+  /** Bank/transfer instructions the AI can share with customers. */
+  paymentInstructions: string | null;
   /** Two-Number Model: false until the dedicated AI line is provisioned. */
   aiLineConnected: boolean;
   /** Messaging channel this business runs on: "TELEGRAM" | "DISCORD". */
@@ -93,6 +95,7 @@ export type BusinessRecord = {
   businessHours: string | null;
   address: string | null;
   description: string | null;
+  paymentInstructions: string | null;
   aiLineConnected: boolean;
   channel: string;
   connectionStatus: string;
@@ -126,6 +129,7 @@ export function serializeBusiness(business: BusinessRecord): Business {
     businessHours: business.businessHours,
     address: business.address,
     description: business.description,
+    paymentInstructions: business.paymentInstructions,
     aiLineConnected: business.aiLineConnected,
     // Unknown stored values fall back to the defaults used at signup so the
     // client always gets a valid option back.

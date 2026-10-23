@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  AlertTriangle,
   MessagesSquare,
   MessageSquare,
   PhoneCall,
@@ -30,6 +31,9 @@ export default function OverviewPage() {
   );
   const [pendingInvoices, setPendingInvoices] = useState<number | null>(null);
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
+  const [paymentInstructions, setPaymentInstructions] = useState<
+    string | null | undefined
+  >(undefined);
 
   useEffect(() => {
     let active = true;
@@ -68,6 +72,7 @@ export default function OverviewPage() {
               telegramConnected?: boolean;
               discordConnected?: boolean;
               whatsappConnected?: boolean;
+              paymentInstructions?: string | null;
             };
           } | null,
         ) => {
@@ -78,6 +83,7 @@ export default function OverviewPage() {
               business.discordConnected === true ||
               business.whatsappConnected === true;
             setIsConnected(isConnected);
+            setPaymentInstructions(business.paymentInstructions ?? null);
           }
         },
       )
@@ -121,6 +127,32 @@ export default function OverviewPage() {
           Overview
         </h1>
       </div>
+
+      {paymentInstructions !== undefined && !paymentInstructions?.trim() && (
+        <div className="mb-6 flex flex-col gap-4 rounded-lg border border-amber-300 bg-amber-50 p-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <AlertTriangle className="h-[18px] w-[18px]" aria-hidden />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-amber-900">
+                ⚠️ Add your payment details so your AI can close sales
+                automatically.
+              </p>
+              <p className="mt-1 text-sm text-amber-800">
+                Customers need to know where to send payment before the AI can
+                complete an order.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/settings"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+          >
+            Add payment details
+          </Link>
+        </div>
+      )}
 
       {isConnected === false && (
         <div className="mb-6 flex flex-col gap-4 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] p-5 sm:flex-row sm:items-start sm:justify-between">

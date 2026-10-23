@@ -205,7 +205,7 @@ export async function handleIncomingMessage({
     conversation = latest;
   } else {
     conversation = await prisma.conversation.create({
-      data: { businessId, customerId: customer.id, status: "OPEN" },
+      data: { businessId, customerId: customer.id, status: "AI_HANDLING" },
     });
   }
 
@@ -218,6 +218,14 @@ export async function handleIncomingMessage({
   // The inbound message is persisted from here on: even when the AI is gated
   // off (human takeover, cap hit, expired plan) the owner must still see the
   // customer's message in the dashboard so they can reply manually.
+
+  // AI kill switch: escalated or human-taken-over conversations stay silent.
+  if (
+    conversation.status === "ESCALATED" ||
+    conversation.status === "HUMAN_TAKEOVER"
+  ) {
+    return { reply: null, blocked: true, saved: true, replied: false, reason: "paused", paused: true };
+  }
 
   if (conversation.pausedUntil && conversation.pausedUntil > new Date()) {
     return { reply: null, blocked: true, saved: true, replied: false, reason: "paused", paused: true };
@@ -457,7 +465,7 @@ async function runToolCall(
       // its own errors, so a failed alert never fails the customer's chat reply.
       await prisma.conversation.update({
         where: { id: conversationId },
-        data: { escalatedAt: new Date() },
+        data: { escalatedAt: new Date(), status: "ESCALATED" },
       });
 
       // The owner's chat id and the bot that can message it.
