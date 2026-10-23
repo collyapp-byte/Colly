@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { transcribeAudioFromBuffer } from "@/lib/stt";
 
 // The slice of a Telegram update we care about.
 type TelegramUpdate = {
@@ -8,6 +9,7 @@ type TelegramUpdate = {
     chat?: { id?: number | string };
     from?: { first_name?: string };
     text?: string;
+    voice?: { file_id?: string };
   };
 };
 
@@ -34,13 +36,13 @@ export async function POST(request: Request) {
 
     const chatIdRaw = update.message?.chat?.id;
     const text = update.message?.text;
+    const voiceFileId = update.message?.voice?.file_id;
 
-    // No chat, or no text (stickers, joins, edits, ...): nothing to answer.
+    // No chat, or no text/voice (stickers, joins, edits, ...): nothing to answer.
     if (
       chatIdRaw === undefined ||
       chatIdRaw === null ||
-      typeof text !== "string" ||
-      text.trim().length === 0
+      ((typeof text !== "string" || text.trim().length === 0) && !voiceFileId)
     ) {
       return new Response("OK", { status: 200 });
     }
@@ -69,7 +71,7 @@ export async function POST(request: Request) {
     // Owner-linking command. "/startowner" (or "/linkowner") claims this chat
     // as the owner's personal alert inbox. Intercepted BEFORE the AI engine so
     // it never reaches DeepSeek, and never creates a customer conversation.
-    const normalized = text.toLowerCase().replace(/[\s.]/g, "");
+    const normalized = (text ?? "").toLowerCase().replace(/[\s.]/g, "");
     if (normalized === "/startowner" || normalized === "/linkowner") {
       await prisma.business.update({
         where: { id: business.id },
@@ -83,6 +85,29 @@ export async function POST(request: Request) {
       });
 
       return Response.json({ ok: true });
+    }
+
+    // Voice notes: download the audio from Telegram, transcribe it, then treat
+    // the transcript as the customer's text. A failed transcription gets a
+    // friendly prompt instead of reaching the AI with empty input.
+    let messageText = typeof text === "string" ? text.trim() : "";
+    if (voiceFileId) {
+      try {
+        const transcript = await transcribeTelegramVoice(
+          business.telegramBotToken,
+          voiceFileId,
+        );
+        if (!transcript) throw new Error("Empty transcript");
+        messageText = `[Customer sent a voice note]: ${transcript}`;
+      } catch (error) {
+        console.error("[telegram] voice transcription failed:", error);
+        await sendTelegramMessage({
+          botToken: business.telegramBotToken,
+          chatId: telegramChatId,
+          text: "I couldn't hear that clearly. Please type your message.",
+        });
+        return Response.json({ ok: true });
+      }
     }
 
     // First message from a freshly connected bot: record this chat for the
@@ -126,7 +151,7 @@ export async function POST(request: Request) {
           businessId: business.id,
           conversationId: activeConversation.id,
           sender: "customer",
-          content: text,
+          content: messageText,
         },
       });
       return Response.json({ ok: true });
@@ -135,7 +160,7 @@ export async function POST(request: Request) {
     const result = await handleIncomingMessage({
       businessId: business.id,
       customerPhone: telegramChatId,
-      message: text,
+      message: messageText,
     });
 
     // The engine always saves the customer's message first (so the owner can
@@ -210,6 +235,46 @@ async function sendReplyToTelegram(args: {
       photo: imageUrl,
     });
   }
+}
+
+type TelegramGetFileResponse = {
+  ok?: boolean;
+  result?: { file_path?: string };
+  description?: string;
+};
+
+/** Fetch a Telegram voice note by file id and transcribe it to text. */
+async function transcribeTelegramVoice(
+  botToken: string,
+  fileId: string,
+): Promise<string> {
+  const fileResponse = await fetch(
+    `https://api.telegram.org/bot${botToken}/getFile?file_id=${encodeURIComponent(fileId)}`,
+    { cache: "no-store", signal: AbortSignal.timeout(15_000) },
+  );
+  const fileData = (await fileResponse
+    .json()
+    .catch(() => null)) as TelegramGetFileResponse | null;
+
+  if (!fileResponse.ok || !fileData?.ok || !fileData.result?.file_path) {
+    throw new Error(
+      fileData?.description ?? `getFile failed (${fileResponse.status})`,
+    );
+  }
+
+  const audioResponse = await fetch(
+    `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`,
+    { cache: "no-store", signal: AbortSignal.timeout(30_000) },
+  );
+  if (!audioResponse.ok) {
+    throw new Error(`File download failed (${audioResponse.status})`);
+  }
+
+  const buffer = Buffer.from(await audioResponse.arrayBuffer());
+  const rawType = audioResponse.headers.get("content-type") || "audio/ogg";
+  const mimeType = rawType.split(";")[0]?.trim().toLowerCase() || "audio/ogg";
+  const result = await transcribeAudioFromBuffer(buffer, mimeType);
+  return result.text.trim();
 }
 
 async function sendTelegramMessage(args: {

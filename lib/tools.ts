@@ -486,6 +486,69 @@ async function keywordSearchFAQs(
 }
 
 // ---------------------------------------------------------------------------
+// Trigram typo fallback
+// ---------------------------------------------------------------------------
+
+type TrigramProductRow = {
+  id: string;
+  name: string;
+  price: Prisma.Decimal;
+  stock: number | null;
+  description: string | null;
+  imageUrl: string | null;
+  similarity: number;
+};
+
+/**
+ * Typo-tolerant fallback powered by Postgres `pg_trgm`. Handles misspellings
+ * like "ipone" / "samsng" that neither embeddings nor `contains` reliably
+ * catch. If the extension is unavailable the query throws and this returns an
+ * empty list so the caller can use the plain keyword fallback.
+ */
+async function trigramSearchProducts(
+  businessId: string,
+  query: string,
+): Promise<ProductMatch[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  const like = `%${trimmed}%`;
+
+  try {
+    const rows = await prisma.$queryRaw<TrigramProductRow[]>`
+      SELECT "id", "name", "price", "stock", "description",
+             CASE WHEN array_length("images", 1) >= 1 THEN "images"[1] ELSE NULL END AS "imageUrl",
+             similarity("name", ${trimmed}) AS "similarity"
+      FROM "Product"
+      WHERE "businessId" = ${businessId}
+        AND (
+          similarity("name", ${trimmed}) > 0.3
+          OR "name" ILIKE ${like}
+          OR "description" ILIKE ${like}
+        )
+      ORDER BY "similarity" DESC, "name" ASC
+      LIMIT ${MAX_RESULTS}
+    `;
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      price: Number(row.price),
+      stock: row.stock,
+      description: row.description,
+      imageUrl: row.imageUrl,
+      confidence: "fuzzy" as const,
+    }));
+  } catch (error) {
+    console.warn(
+      "[search] trigram product search unavailable, using keyword fallback:",
+      error instanceof Error ? error.message : error,
+    );
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -526,6 +589,11 @@ export async function searchProducts(
       "[search] semantic product search unavailable, using keyword fallback:",
       error instanceof Error ? error.message : error,
     );
+  }
+
+  const trigramMatches = await trigramSearchProducts(businessId, query);
+  if (trigramMatches.length > 0) {
+    return trigramMatches;
   }
 
   return keywordSearchProducts(businessId, query);
