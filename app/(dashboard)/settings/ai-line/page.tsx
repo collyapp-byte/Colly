@@ -714,8 +714,16 @@ export default function AiLinePage() {
                   Copy your Server ID (Right-click your server icon -&gt; Copy
                   Server ID) and paste it below.
                 </p>
-                <div className="w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 text-sm mt-4 border border-gray-200">
-                  YouTube Tutorial Coming Soon
+                <div className="relative w-full aspect-video rounded-xl overflow-hidden mt-4 border border-gray-200 shadow-sm">
+                  <iframe
+                    src="https://www.youtube.com/embed/e8io27VGaO8?si=WajNqDsSW6gumYj6"
+                    title="How to connect Discord to Colly"
+                    className="absolute inset-0 w-full h-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  ></iframe>
                 </div>
               </div>
             </details>
