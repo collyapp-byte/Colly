@@ -137,35 +137,6 @@ const PRESET_FAQS: PresetFaq[] = [
   },
 ];
 
-type FaqGroup = {
-  label: string;
-  faqs: Faq[];
-};
-
-/** Groups FAQs by category, with uncategorised entries in a trailing "Other". */
-function groupFaqs(faqs: Faq[]): FaqGroup[] {
-  const groups = new Map<string, Faq[]>();
-
-  for (const faq of faqs) {
-    if (!faq.category) continue;
-    const list = groups.get(faq.category) ?? [];
-    list.push(faq);
-    groups.set(faq.category, list);
-  }
-
-  const result: FaqGroup[] = [...groups.entries()].map(([label, items]) => ({
-    label,
-    faqs: items,
-  }));
-
-  const uncategorised = faqs.filter((faq) => !faq.category);
-  if (uncategorised.length > 0) {
-    result.push({ label: "Other", faqs: uncategorised });
-  }
-
-  return result;
-}
-
 export default function FaqsPage() {
   const [faqs, setFaqs] = useState<Faq[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -304,7 +275,6 @@ export default function FaqsPage() {
   }
 
   const loading = faqs === null && error === null;
-  const groups = faqs ? groupFaqs(faqs) : [];
   const visiblePresets = PRESET_FAQS.filter(
     (preset) => !dismissedPresets.includes(preset.id),
   );
@@ -347,40 +317,28 @@ export default function FaqsPage() {
       )}
 
       {faqs && faqs.length > 0 && (
-        <div className="space-y-8">
-          {groups.map((group) => (
-            <section key={group.label}>
-              <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-500">
-                {group.label}
-              </h2>
-              <ul className="space-y-3">
-                {group.faqs.map((faq) => (
-                  <li
-                    key={faq.id}
-                    className="rounded-lg border border-gray-200 bg-surface p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-display font-semibold text-gray-900">
-                          {faq.question}
-                        </p>
-                        <p className="mt-1 text-sm text-gray-700">{faq.answer}</p>
-                        <span className="mt-3 inline-block rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-                          {faq.category ?? "Other"}
-                        </span>
-                      </div>
-                      <ActionButtons
-                        question={faq.question}
-                        onEdit={() => setModal({ kind: "edit", faq })}
-                        onDelete={() => openDelete(faq)}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
+        <ul className="space-y-3">
+          {faqs.map((faq) => (
+            <li
+              key={faq.id}
+              className="rounded-lg border border-gray-200 bg-surface p-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-display font-semibold text-gray-900">
+                    {faq.question}
+                  </p>
+                  <p className="mt-1 text-sm text-gray-700">{faq.answer}</p>
+                </div>
+                <ActionButtons
+                  question={faq.question}
+                  onEdit={() => setModal({ kind: "edit", faq })}
+                  onDelete={() => openDelete(faq)}
+                />
+              </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {faqs && visiblePresets.length > 0 && (
@@ -404,9 +362,6 @@ export default function FaqsPage() {
                   <p className="font-display text-sm font-semibold text-gray-900">
                     {preset.question}
                   </p>
-                  <span className="mt-3 inline-block w-fit rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-                    {preset.category ?? "Other"}
-                  </span>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       type="button"
