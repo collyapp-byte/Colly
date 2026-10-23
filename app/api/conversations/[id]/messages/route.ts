@@ -45,7 +45,7 @@ export async function POST(
 
     const conversation = await prisma.conversation.findFirst({
       where: { id, businessId },
-      select: { id: true },
+      include: { customer: true, business: true },
     });
 
     if (!conversation) {
@@ -105,6 +105,42 @@ export async function POST(
       }),
     ]);
 
+    // Relay the saved reply to the customer's Telegram chat. Telegram customers
+    // store their chat id in `Customer.phone` (see the Telegram webhook). A
+    // failed send must not fail the request: the dashboard message is saved.
+    try {
+      const chatId = conversation.customer.phone?.trim();
+      const botToken = conversation.business.telegramBotToken;
+
+      if (
+        conversation.business.channel === "TELEGRAM" &&
+        chatId &&
+        botToken
+      ) {
+        const telegramResponse = await fetch(
+          `https://api.telegram.org/bot${botToken}/sendMessage`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chatId, text: content }),
+            signal: AbortSignal.timeout(10_000),
+          },
+        );
+
+        if (!telegramResponse.ok) {
+          const detail = await telegramResponse.text().catch(() => "");
+          console.error(
+            `[POST /api/conversations/[id]/messages] Telegram send failed (${telegramResponse.status}): ${detail}`,
+          );
+        }
+      }
+    } catch (error) {
+      console.error(
+        "[POST /api/conversations/[id]/messages] Telegram relay failed:",
+        error,
+      );
+    }
+
     return Response.json(
       {
         message: {
@@ -114,7 +150,7 @@ export async function POST(
           createdAt: message.createdAt,
         },
       },
-      { status: 201 },
+      { status: 200 },
     );
   } catch (error) {
     console.error("[POST /api/conversations/[id]/messages]", error);
