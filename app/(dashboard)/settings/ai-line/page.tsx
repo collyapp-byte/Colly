@@ -370,7 +370,7 @@ export default function AiLinePage() {
         message.
       </p>
 
-      {/* HOW IT WORKS ΓÇö compact orientation box right under the header. */}
+      {/* HOW IT WORKS - compact orientation box right under the header. */}
       <section className="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
         <h2 className="font-display text-base text-gray-900">How it works</h2>
         <ul className="mt-3 space-y-2">
@@ -467,7 +467,7 @@ export default function AiLinePage() {
             </div>
           </section>
 
-          {/* TELEGRAM CONNECTION ΓÇö the primary section, always first. */}
+          {/* TELEGRAM CONNECTION - the primary section, always first. */}
           <section id="connect-telegram" className={SECTION_CLASS}>
             <h2 className={HEADING_CLASS}>Connect your Telegram Bot</h2>
 
@@ -562,7 +562,7 @@ export default function AiLinePage() {
                     className="text-xs font-medium text-danger underline-offset-2 transition-colors hover:underline disabled:opacity-50"
                   >
                     {disconnecting
-                      ? "DisconnectingΓÇª"
+                      ? "Disconnecting..."
                       : "Disconnect Bot"}
                   </button>
                 </div>
@@ -627,7 +627,86 @@ export default function AiLinePage() {
             )}
           </section>
 
-          {/* DISCORD CONNECTION ΓÇö sits directly below Telegram. */}
+          {/* OWNER NOTIFICATIONS (personal Telegram) - second, right after the
+              bot connection. Highlighted with a thicker orange border while
+              still unset. */}
+          <section
+            id="owner-alerts"
+            className={`${SECTION_CLASS} ${
+              !business.ownerTelegramChatId
+                ? "border-2 border-[#FF6600]"
+                : ""
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <BellRing className="h-4 w-4 text-[#FF6600]" aria-hidden />
+              <h2 className={HEADING_CLASS}>Owner Notifications (Telegram)</h2>
+            </div>
+            {!ownerLinked && (
+              <p className="mt-3 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm font-medium text-[#C2410C]">
+                Required for AI handoffs. If not set, you will not know when the
+                AI needs your help.
+              </p>
+            )}
+            <p className="mt-3 text-sm text-gray-600">
+              Get alerts on your personal phone when the AI needs you to step
+              in - for example a waybill question or a custom quote. Alerts go
+              to your personal Telegram chat, never to your customer chats.
+            </p>
+
+            <ol className="mt-3 space-y-2 text-sm text-gray-600">
+              <li className="flex items-start gap-2">
+                <span className="font-semibold text-gray-700">1.</span>
+                <span>
+                  Open your Telegram bot:{" "}
+                  <span className="font-medium text-gray-700">
+                    {business.telegramBotUsername
+                      ? `@${business.telegramBotUsername}`
+                      : "your bot"}
+                  </span>
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-semibold text-gray-700">2.</span>
+                <span>
+                  Send this command:{" "}
+                  <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[13px] text-gray-800">
+                    /startowner
+                  </span>
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-semibold text-gray-700">3.</span>
+                <span>Click Verify below.</span>
+              </li>
+            </ol>
+
+            <div className="mt-4 space-y-3">
+              {ownerLinked && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-[13px] font-medium text-green-700">
+                  <BadgeCheck className="h-4 w-4" aria-hidden />
+                  Owner Alerts Active
+                </span>
+              )}
+
+              {ownerError && (
+                <p role="alert" className="text-sm text-danger">
+                  {ownerError}
+                </p>
+              )}
+
+              <Button
+                type="button"
+                variant="primary"
+                isLoading={ownerChecking}
+                onClick={handleVerifyOwnerAlerts}
+              >
+                Verify Connection
+              </Button>
+            </div>
+          </section>
+
+          {/* DISCORD CONNECTION - below Owner Notifications. */}
           <section id="connect-discord" className={SECTION_CLASS}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className={HEADING_CLASS}>Connect Discord</h2>
@@ -744,7 +823,7 @@ export default function AiLinePage() {
                   onChange={(event) => setDiscordToken(event.target.value)}
                   placeholder={
                     discordIsConnected
-                      ? "Connected ΓÇö paste a new token to replace"
+                      ? "Connected - paste a new token to replace"
                       : "Paste your Discord bot token"
                   }
                   autoComplete="off"
@@ -797,7 +876,7 @@ export default function AiLinePage() {
             </form>
           </section>
 
-          {/* WEB CHAT ΓÇö always available, no connection required. */}
+          {/* WEB CHAT - always available, no connection required. */}
           <section id="connect-web-chat" className={SECTION_CLASS}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className={HEADING_CLASS}>Web Chat Integration</h2>
@@ -821,86 +900,6 @@ export default function AiLinePage() {
               </Link>
             </div>
           </section>
-
-          {/* OWNER NOTIFICATIONS (personal Telegram) ΓÇö second, right after the
-              bot connection. Highlighted with a thicker orange border while
-              still unset. */}
-          <section
-            id="owner-alerts"
-            className={`${SECTION_CLASS} ${
-              !business.ownerTelegramChatId
-                ? "border-2 border-[#FF6600]"
-                : ""
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <BellRing className="h-4 w-4 text-[#FF6600]" aria-hidden />
-              <h2 className={HEADING_CLASS}>Owner Notifications (Telegram)</h2>
-            </div>
-            {!ownerLinked && (
-              <p className="mt-3 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm font-medium text-[#C2410C]">
-                ΓÜá∩╕Å Required for AI handoffs. If not set, you will not know when the
-                AI needs your help.
-              </p>
-            )}
-            <p className="mt-3 text-sm text-gray-600">
-              Get alerts on your personal phone when the AI needs you to step
-              in ΓÇö for example a waybill question or a custom quote. Alerts go
-              to your personal Telegram chat, never to your customer chats.
-            </p>
-
-            <ol className="mt-3 space-y-2 text-sm text-gray-600">
-              <li className="flex items-start gap-2">
-                <span className="font-semibold text-gray-700">1.</span>
-                <span>
-                  Open your Telegram bot:{" "}
-                  <span className="font-medium text-gray-700">
-                    {business.telegramBotUsername
-                      ? `@${business.telegramBotUsername}`
-                      : "your bot"}
-                  </span>
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-semibold text-gray-700">2.</span>
-                <span>
-                  Send this command:{" "}
-                  <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[13px] text-gray-800">
-                    /startowner
-                  </span>
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-semibold text-gray-700">3.</span>
-                <span>Click Verify below.</span>
-              </li>
-            </ol>
-
-            <div className="mt-4 space-y-3">
-              {ownerLinked && (
-                <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-3 py-1 text-[13px] font-medium text-green-700">
-                  <BadgeCheck className="h-4 w-4" aria-hidden />
-                  Γ£à Owner Alerts Active
-                </span>
-              )}
-
-              {ownerError && (
-                <p role="alert" className="text-sm text-danger">
-                  {ownerError}
-                </p>
-              )}
-
-              <Button
-                type="button"
-                variant="primary"
-                isLoading={ownerChecking}
-                onClick={handleVerifyOwnerAlerts}
-              >
-                Verify Connection
-              </Button>
-            </div>
-          </section>
-
 
         </div>
       )}
