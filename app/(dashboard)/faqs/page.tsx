@@ -404,9 +404,6 @@ export default function FaqsPage() {
                   <p className="font-display text-sm font-semibold text-gray-900">
                     {preset.question}
                   </p>
-                  <p className="mt-1 flex-1 text-sm text-gray-600">
-                    {preset.answer}
-                  </p>
                   <span className="mt-3 inline-block w-fit rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
                     {preset.category ?? "Other"}
                   </span>

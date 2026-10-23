@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 type ModalProps = {
@@ -12,12 +13,17 @@ type ModalProps = {
 };
 
 export function Modal({ title, onClose, children, footer }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
   // Keep the latest onClose without re-subscribing the keydown listener on every
   // parent render (onClose is usually an inline arrow function).
   const onCloseRef = useRef(onClose);
   useEffect(() => {
     onCloseRef.current = onClose;
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -28,9 +34,20 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  return (
+  // Lock page scrolling while the dialog is open; the modal body scrolls instead.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 bg-gray-900/40"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm"
       onMouseDown={onClose}
       role="presentation"
     >
@@ -38,10 +55,10 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="h-full w-full max-w-lg mx-auto rounded-none bg-white border border-gray-200 shadow-xl flex flex-col sm:fixed sm:inset-auto sm:mx-auto sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-2xl"
+        className="mx-4 flex max-h-[90vh] w-full max-w-lg flex-col overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="flex-shrink-0 mb-4 flex items-center justify-between gap-4 p-4 sm:p-5 border-b border-gray-200">
+        <div className="mb-4 flex flex-shrink-0 items-center justify-between gap-4 border-b border-gray-200 p-4 sm:p-5">
           <h2 className="font-display text-lg text-gray-900">{title}</h2>
           <button
             type="button"
@@ -61,6 +78,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
