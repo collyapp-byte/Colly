@@ -482,7 +482,7 @@ export default function AiLinePage() {
                     aria-hidden
                   />
                   <h3 className="font-display text-base font-semibold text-green-800">
-                    Γ£à Telegram Bot Connected
+                    Telegram Bot Connected
                   </h3>
                 </div>
 
