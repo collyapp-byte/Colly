@@ -6,6 +6,7 @@ import { CheckCircle2, CircleAlert, LogOut } from "lucide-react";
 import { logout } from "@/lib/auth-actions";
 import type { Business, Tone } from "@/lib/business";
 import { Button } from "@/components/ui/button";
+import { VoiceInput } from "@/components/ui/voice-input";
 
 const SECTION_CLASS = "rounded-lg border border-gray-200 bg-surface p-5 sm:p-6";
 const HEADING_CLASS = "font-display text-base tracking-wide text-gray-900";
@@ -225,9 +226,24 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="business-description" className={LABEL_CLASS}>
-                    Description
-                  </label>
+                  <div className="mb-1 flex items-center gap-2">
+                    <label
+                      htmlFor="business-description"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Description
+                    </label>
+                    <VoiceInput
+                      onTranscript={(transcript) =>
+                        update(
+                          "description",
+                          form.description
+                            ? `${form.description}\n${transcript}`
+                            : transcript,
+                        )
+                      }
+                    />
+                  </div>
                   <textarea
                     id="business-description"
                     rows={3}

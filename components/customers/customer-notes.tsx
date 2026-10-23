@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { VoiceInput } from "@/components/ui/voice-input";
 import { updateCustomerDetails } from "@/app/api/customers/actions";
 
 const TEXTAREA_CLASS =
@@ -39,6 +40,14 @@ export function CustomerNotes({
 
   return (
     <div>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-gray-500">Notes</span>
+        <VoiceInput
+          onTranscript={(transcript) =>
+            setNotes((prev) => (prev ? `${prev}\n${transcript}` : transcript))
+          }
+        />
+      </div>
       <textarea
         value={notes}
         onChange={(event) => setNotes(event.target.value)}

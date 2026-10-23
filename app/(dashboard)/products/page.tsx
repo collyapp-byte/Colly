@@ -11,6 +11,7 @@ import {
   Trash,
 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
+import { BackButton } from "@/components/ui/back-button";
 import { ProductFormModal } from "@/components/products/product-form-modal";
 import { StockBadge } from "@/components/products/stock-badge";
 import { formatNaira } from "@/lib/format";
@@ -134,6 +135,7 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
+          <BackButton />
           <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
             Products
           </h1>

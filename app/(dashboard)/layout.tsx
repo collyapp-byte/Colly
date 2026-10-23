@@ -53,6 +53,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
       where: { id: user.businessId },
       select: {
         telegramBotToken: true,
+        ownerTelegramChatId: true,
         discordBotToken: true,
         _count: { select: { products: true, faqs: true } },
       },
@@ -73,6 +74,9 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
         hasNoProducts={(business?._count.products ?? 0) === 0}
         hasNoFaqs={(business?._count.faqs ?? 0) === 0}
         hasPendingEscalations={pendingEscalations > 0}
+        pendingEscalations={pendingEscalations}
+        telegramConnected={Boolean(business?.telegramBotToken)}
+        ownerAlertsLinked={Boolean(business?.ownerTelegramChatId)}
         hasNoChannels={!business?.telegramBotToken && !business?.discordBotToken}
       >
         {children}

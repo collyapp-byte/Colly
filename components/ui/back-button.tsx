@@ -1,0 +1,24 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+
+type BackButtonProps = {
+  className?: string;
+};
+
+/** Small "Back" control for sub-page headers. Uses browser history. */
+export function BackButton({ className = "" }: BackButtonProps) {
+  const router = useRouter();
+
+  return (
+    <button
+      type="button"
+      onClick={() => router.back()}
+      className={`mb-2 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 ${className}`}
+    >
+      <ArrowLeft className="h-4 w-4" aria-hidden />
+      Back
+    </button>
+  );
+}

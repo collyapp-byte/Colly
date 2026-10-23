@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CircleAlert } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
 import { formatNaira, formatRelativeTime } from "@/lib/format";
 
 type CustomerListItem = {
@@ -52,6 +53,7 @@ export default function CustomersPage() {
   return (
     <div className="mx-auto w-full max-w-5xl">
       <div className="mb-6">
+        <BackButton />
         <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
           Customers
         </h1>

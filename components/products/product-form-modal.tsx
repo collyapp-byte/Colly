@@ -7,9 +7,10 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { LoaderCircle, Minus, Plus, Upload, X, Mic, AlertCircle } from "lucide-react";
+import { LoaderCircle, Minus, Plus, Upload, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { VoiceInput } from "@/components/ui/voice-input";
 import { toast } from "sonner";
 import { deleteProductImage, uploadProductImage } from "@/lib/supabase/storage";
 import type { Product, ProductInput } from "@/lib/products";
@@ -32,36 +33,6 @@ const INPUT_CLASS =
  */
 function formatNairaInput(value: string): string {
   return value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-/**
- * Picks the first audio container the browser can actually record. iOS Safari
- * does not support "audio/webm", so a hard-coded webm mimeType throws there;
- * "audio/mp4" (AAC) is its native format. Returns "" when MediaRecorder is
- * missing or none of the candidates are supported, so the caller can omit the
- * option and let the browser choose its default.
- */
-function getSupportedMimeType(): string {
-  const candidates = [
-    "audio/webm;codecs=opus",
-    "audio/webm",
-    "audio/mp4",
-    "audio/aac",
-    "audio/mpeg",
-  ];
-  if (typeof MediaRecorder === "undefined") return "";
-  for (const type of candidates) {
-    if (MediaRecorder.isTypeSupported(type)) return type;
-  }
-  return "";
-}
-
-/** File extension to send for a detected mimeType (server reads the blob type). */
-function extensionForMimeType(mimeType: string): string {
-  if (mimeType.startsWith("audio/mp4")) return "m4a";
-  if (mimeType.startsWith("audio/aac")) return "aac";
-  if (mimeType.startsWith("audio/mpeg")) return "mp3";
-  return "webm";
 }
 
 export function ProductFormModal({
@@ -90,12 +61,6 @@ export function ProductFormModal({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
-  const [micState, setMicState] = useState<"idle" | "requesting" | "recording" | "transcribing" | "error">("idle");
-  const [micError, setMicError] = useState<string | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const streamRef = useRef<MediaStream | null>(null);
-  const errorTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   // A new product has no id yet, so uploads go under a generated folder. The
@@ -192,137 +157,6 @@ export function ProductFormModal({
       return String(Math.max(0, base + delta));
     });
   }
-
-  // Mic state machine for Description field
-  function clearErrorTimer() {
-    if (errorTimerRef.current) {
-      clearTimeout(errorTimerRef.current);
-      errorTimerRef.current = null;
-    }
-  }
-
-  function stopTracks() {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-  }
-
-  async function startRecording() {
-    clearErrorTimer();
-    setMicError(null);
-
-    // Early guards so the user gets a reason instead of a silent failure.
-    if (!window.isSecureContext) {
-      showMicError("Microphone needs HTTPS. Access this site over https://");
-      return;
-    }
-    if (!navigator.mediaDevices?.getUserMedia) {
-      showMicError("This browser does not support voice recording.");
-      return;
-    }
-
-    setMicState("requesting");
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      const mimeType = getSupportedMimeType();
-      const recorderOptions = mimeType ? { mimeType } : undefined;
-      const recorder = new MediaRecorder(stream, recorderOptions);
-      mediaRecorderRef.current = recorder;
-      audioChunksRef.current = [];
-
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      recorder.onstop = async () => {
-        stopTracks();
-        const blob = new Blob(audioChunksRef.current, {
-          type: mimeType || "audio/webm",
-        });
-        if (blob.size === 0) {
-          setMicState("idle");
-          return;
-        }
-
-        setMicState("transcribing");
-        try {
-          const formData = new FormData();
-          formData.append(
-            "audio",
-            blob,
-            `voice-note.${extensionForMimeType(mimeType)}`,
-          );
-          const res = await fetch("/api/voice/transcribe-description", {
-            method: "POST",
-            body: formData,
-          });
-          if (!res.ok) {
-            throw new Error("Transcription failed");
-          }
-          const data: { transcript: string } = await res.json();
-          const transcript = data.transcript.trim();
-          setDescription((prev) => (prev ? `${prev}\n${transcript}` : transcript));
-          setMicState("idle");
-        } catch {
-          showMicError("Could not transcribe the recording. Try again.");
-        }
-      };
-
-      recorder.start(100);
-      setMicState("recording");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("Permission") || msg.includes("NotAllowed")) {
-        showMicError(
-          "Microphone permission denied. Enable it in your browser settings.",
-        );
-      } else if (msg.includes("NotFound")) {
-        showMicError("No microphone found on this device.");
-      } else if (!window.isSecureContext) {
-        showMicError(
-          "Microphone needs HTTPS. Open this site over https:// not http://",
-        );
-      } else {
-        showMicError("Could not access microphone. Try again.");
-      }
-    }
-  }
-
-  /** Shows a specific mic error and auto-clears it back to idle. */
-  function showMicError(message: string) {
-    setMicError(message);
-    setMicState("error");
-    errorTimerRef.current = setTimeout(() => {
-      setMicState("idle");
-      setMicError(null);
-    }, 6000);
-  }
-
-  function handleMicClick() {
-    if (micState === "idle") {
-      void startRecording();
-    } else if (micState === "recording") {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        mediaRecorderRef.current.stop();
-      }
-    } else if (micState === "error") {
-      clearErrorTimer();
-      setMicError(null);
-      setMicState("idle");
-    }
-  }
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      clearErrorTimer();
-      stopTracks();
-    };
-  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -531,74 +365,14 @@ export function ProductFormModal({
             >
               Description
             </label>
-            <button
-              type="button"
-              onClick={handleMicClick}
-              disabled={micState === "requesting" || micState === "transcribing"}
-              className={`inline-flex items-center gap-1.5 ml-2 text-[13px] select-none transition-colors focus:outline-none focus:ring-2 focus:ring-colly/20 rounded px-2 py-1 ${
-                micState === "idle"
-                  ? "text-gray-500 hover:text-gray-700 cursor-pointer"
-                  : micState === "recording"
-                  ? "text-red-500 cursor-pointer"
-                  : "text-gray-500 cursor-not-allowed"
-              }`}
-              aria-label={
-                micState === "idle"
-                  ? "Start voice input"
-                  : micState === "recording"
-                  ? "Stop recording"
-                  : micState === "error"
-                  ? "Try again"
-                  : undefined
+            <VoiceInput
+              onTranscript={(transcript) =>
+                setDescription((prev) =>
+                  prev ? `${prev}\n${transcript}` : transcript,
+                )
               }
-              title={
-                micState === "idle"
-                  ? "Voice input"
-                  : micState === "recording"
-                  ? "Recording… tap to stop"
-                  : micState === "error"
-                  ? "Click to try again"
-                  : undefined
-              }
-            >
-              {micState === "idle" && (
-                <>
-                  <Mic className="h-4 w-4" aria-hidden />
-                  <span>Record</span>
-                </>
-              )}
-              {micState === "requesting" && (
-                <>
-                  <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
-                  <span>Connecting…</span>
-                </>
-              )}
-              {micState === "recording" && (
-                <>
-                  <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" aria-hidden />
-                  <span className="animate-pulse">Recording… tap to stop</span>
-                </>
-              )}
-              {micState === "transcribing" && (
-                <>
-                  <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
-                  <span>Transcribing…</span>
-                </>
-              )}
-              {micState === "error" && (
-                <>
-                  <AlertCircle className="h-4 w-4" aria-hidden />
-                  <span>Try again</span>
-                </>
-              )}
-            </button>
+            />
           </div>
-          {micState === "error" && micError && (
-            <p className="mb-1.5 flex items-start gap-1.5 text-[13px] text-danger">
-              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-              {micError}
-            </p>
-          )}
           <textarea
             id="product-description"
             value={description}

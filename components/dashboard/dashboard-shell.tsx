@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Settings, PanelLeft } from "lucide-react";
+import { AlertTriangle, Bell, Settings, PanelLeft } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { usePathname } from "next/navigation";
 import { PlanChip } from "./plan-chip";
@@ -12,6 +12,9 @@ type DashboardShellProps = {
   hasNoProducts?: boolean;
   hasNoFaqs?: boolean;
   hasPendingEscalations?: boolean;
+  pendingEscalations?: number;
+  telegramConnected?: boolean;
+  ownerAlertsLinked?: boolean;
   hasNoChannels?: boolean;
   children: ReactNode;
 };
@@ -21,6 +24,9 @@ export function DashboardShell({
   hasNoProducts = false,
   hasNoFaqs = false,
   hasPendingEscalations = false,
+  pendingEscalations = 0,
+  telegramConnected = true,
+  ownerAlertsLinked = true,
   hasNoChannels = false,
   children,
 }: DashboardShellProps) {
@@ -103,6 +109,29 @@ export function DashboardShell({
 
         {/* Right column */}
         <div className="flex w-full min-w-0 flex-1 flex-col overflow-x-hidden px-0 md:px-4 md:pt-4 md:pb-4 md:min-h-0">
+          {(!telegramConnected || !ownerAlertsLinked) && (
+            <div
+              role="alert"
+              className="mx-3 mt-3 flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between md:mx-0"
+            >
+              <span className="flex items-start gap-2">
+                <AlertTriangle
+                  className="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
+                  aria-hidden
+                />
+                <span>
+                  ⚠️ ACTION REQUIRED: Connect your Telegram bot and verify
+                  Owner Alerts to avoid missing sales.
+                </span>
+              </span>
+              <Link
+                href="/settings/ai-line"
+                className="shrink-0 rounded-md bg-amber-600 px-3 py-1.5 text-center text-xs font-semibold text-white transition-colors hover:bg-amber-700"
+              >
+                Complete setup
+              </Link>
+            </div>
+          )}
           {/* Top bar - glass, floats over the tinted page background. It scrolls
               horizontally on narrow screens so the bar never widens the page. */}
           <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 overflow-x-auto bg-white/40 backdrop-blur-md no-scrollbar">
@@ -126,6 +155,18 @@ export function DashboardShell({
             </div>
             <div className="flex shrink-0 items-center gap-3 px-3 md:px-0">
               <PlanChip />
+              <Link
+                href="/notifications"
+                aria-label="Notifications"
+                className="relative flex items-center rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
+              >
+                <Bell className="h-[18px] w-[18px]" />
+                {pendingEscalations > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                    {pendingEscalations > 9 ? "9+" : pendingEscalations}
+                  </span>
+                )}
+              </Link>
               <Link
                 href="/settings"
                 aria-label="Settings"

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft,
   BadgeCheck,
   BellRing,
   Clock,
@@ -16,6 +15,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
 import { saveDiscordBotToken } from "@/app/api/discord/actions";
 import { toast } from "sonner";
 import type { Business } from "@/lib/business";
@@ -356,13 +356,7 @@ export default function AiLinePage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <Link
-        href="/settings"
-        className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-colly"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Back to settings
-      </Link>
+      <BackButton />
 
       <h1 className="font-display text-2xl text-gray-900">AI Line</h1>
       <p className="mt-1 text-sm text-gray-500">

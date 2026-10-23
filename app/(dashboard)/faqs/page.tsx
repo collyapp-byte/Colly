@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { CircleAlert, LoaderCircle, Pencil, Plus, Trash } from "lucide-react";
+import { Check, CircleAlert, LoaderCircle, Pencil, Plus, Trash } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
+import { VoiceInput } from "@/components/ui/voice-input";
 import { toast } from "sonner";
 
 type Faq = {
@@ -24,9 +26,15 @@ const FAQ_CATEGORIES = [
   "Delivery",
   "Payment",
   "Returns",
-  "Warranty",
-  "Location",
+  "Originality",
+  "Wholesale",
   "Hours",
+  "Location",
+  "Warranty",
+  "Bulk Orders",
+  "Customization",
+  "Installation",
+  "Discounts",
   "Other",
 ] as const;
 
@@ -38,6 +46,8 @@ type ModalState =
 
 const EMPTY_STATE_TEXT =
   "No FAQs yet. Add answers to common customer questions so your AI can reply automatically.";
+
+const DISMISSED_PRESETS_KEY = "colly.dismissedFaqPresets";
 
 type PresetFaq = FaqInput & { id: string };
 
@@ -57,17 +67,73 @@ const PRESET_FAQS: PresetFaq[] = [
     category: "Payment",
   },
   {
-    id: "original",
+    id: "returns",
+    question: "What is your return policy?",
+    answer:
+      "Returns are accepted within 7 days of delivery if the item is unused and in its original packaging.",
+    category: "Returns",
+  },
+  {
+    id: "originality",
     question: "Are your products original?",
     answer:
       "Yes, all our products are 100% original and come with a warranty.",
-    category: "Warranty",
+    category: "Originality",
+  },
+  {
+    id: "wholesale",
+    question: "Do you sell wholesale?",
+    answer:
+      "Yes, we supply wholesale buyers. Send us the quantity you need and we will share our wholesale price.",
+    category: "Wholesale",
   },
   {
     id: "hours",
     question: "What are your opening hours?",
     answer: "We are open Monday to Saturday, 9am to 6pm.",
     category: "Hours",
+  },
+  {
+    id: "location",
+    question: "Where are you located?",
+    answer:
+      "We are based in Lagos. Send us your address and we will share directions or arrange delivery.",
+    category: "Location",
+  },
+  {
+    id: "warranty",
+    question: "Do your products come with a warranty?",
+    answer:
+      "Yes, eligible products come with a manufacturer warranty. Ask us about the warranty on the specific item you want.",
+    category: "Warranty",
+  },
+  {
+    id: "bulk-orders",
+    question: "Do you take bulk orders?",
+    answer:
+      "Yes, we handle bulk and corporate orders. Share the items and quantities you need for a quote.",
+    category: "Bulk Orders",
+  },
+  {
+    id: "customization",
+    question: "Can I customize my order?",
+    answer:
+      "Yes, some items can be customized. Tell us what you need and we will confirm what is possible.",
+    category: "Customization",
+  },
+  {
+    id: "installation",
+    question: "Do you install after purchase?",
+    answer:
+      "Yes, installation is available for selected products. Send us your location so we can confirm the installation fee.",
+    category: "Installation",
+  },
+  {
+    id: "discounts",
+    question: "Do you offer discounts?",
+    answer:
+      "Yes, we offer discounts on bulk orders and repeat customers. Let us know what you want to buy so we can check the best price.",
+    category: "Discounts",
   },
 ];
 
@@ -108,7 +174,25 @@ export default function FaqsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [dismissedPresets, setDismissedPresets] = useState<string[]>([]);
+  const [addedPresets, setAddedPresets] = useState<string[]>([]);
   const [addingPresetId, setAddingPresetId] = useState<string | null>(null);
+
+  // "Not applicable" is permanent for this browser, so remember the hidden
+  // presets across visits without needing a database column.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DISMISSED_PRESETS_KEY);
+      if (!raw) return;
+      const parsed: unknown = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setDismissedPresets(
+          parsed.filter((id): id is string => typeof id === "string"),
+        );
+      }
+    } catch {
+      // Ignore malformed or unavailable storage.
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -167,7 +251,8 @@ export default function FaqsPage() {
         answer: preset.answer,
         category: preset.category,
       });
-      setDismissedPresets((prev) =>
+      // Keep every other preset visible; only this card flips to "Added".
+      setAddedPresets((prev) =>
         prev.includes(preset.id) ? prev : [...prev, preset.id],
       );
     } catch (err) {
@@ -180,7 +265,16 @@ export default function FaqsPage() {
   }
 
   function dismissPreset(id: string) {
-    setDismissedPresets((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setDismissedPresets((prev) => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      try {
+        window.localStorage.setItem(DISMISSED_PRESETS_KEY, JSON.stringify(next));
+      } catch {
+        // Storage may be unavailable (private mode); hiding still works in-session.
+      }
+      return next;
+    });
   }
 
   async function handleUpdate(id: string, values: FaqInput) {
@@ -229,6 +323,11 @@ export default function FaqsPage() {
 
   const loading = faqs === null && error === null;
   const groups = faqs ? groupFaqs(faqs) : [];
+  // A preset counts as added when this session added it or an FAQ with the
+  // same question already exists in the database (so it survives a reload).
+  const existingQuestions = new Set(
+    (faqs ?? []).map((faq) => faq.question.trim().toLowerCase()),
+  );
   const visiblePresets = PRESET_FAQS.filter(
     (preset) => !dismissedPresets.includes(preset.id),
   );
@@ -238,6 +337,7 @@ export default function FaqsPage() {
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
+          <BackButton />
           <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">FAQs</h1>
           <p className="mt-1 text-sm text-gray-500">
             Answers to common questions. Colly uses these to reply automatically.
@@ -265,7 +365,7 @@ export default function FaqsPage() {
         </div>
       )}
 
-      {faqs && faqs.length === 0 && (
+      {faqs && visiblePresets.length > 0 && (
         <section className="rounded-xl border border-gray-200 bg-surface p-5 sm:p-6">
           <div className="mb-4">
             <h2 className="font-display text-lg font-semibold text-gray-900">
@@ -276,22 +376,30 @@ export default function FaqsPage() {
             </p>
           </div>
 
-          {visiblePresets.length > 0 ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {visiblePresets.map((preset) => {
-                const adding = addingPresetId === preset.id;
-                return (
-                  <article
-                    key={preset.id}
-                    className="flex flex-col rounded-lg border border-gray-200 bg-white p-4"
-                  >
-                    <p className="font-display text-sm font-semibold text-gray-900">
-                      {preset.question}
-                    </p>
-                    <p className="mt-1 flex-1 text-sm text-gray-600">
-                      {preset.answer}
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {visiblePresets.map((preset) => {
+              const adding = addingPresetId === preset.id;
+              const added =
+                addedPresets.includes(preset.id) ||
+                existingQuestions.has(preset.question.trim().toLowerCase());
+              return (
+                <article
+                  key={preset.id}
+                  className="flex flex-col rounded-lg border border-gray-200 bg-white p-4"
+                >
+                  <p className="font-display text-sm font-semibold text-gray-900">
+                    {preset.question}
+                  </p>
+                  <p className="mt-1 flex-1 text-sm text-gray-600">
+                    {preset.answer}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {added ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
+                        <Check className="h-3.5 w-3.5" aria-hidden />
+                        Added
+                      </span>
+                    ) : (
                       <button
                         type="button"
                         onClick={() => handleAddPreset(preset)}
@@ -306,23 +414,25 @@ export default function FaqsPage() {
                         )}
                         Add to my FAQs
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => dismissPreset(preset.id)}
-                        disabled={adding}
-                        className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
-                      >
-                        Not applicable
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500">{EMPTY_STATE_TEXT}</p>
-          )}
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => dismissPreset(preset.id)}
+                      disabled={adding}
+                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Not applicable
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </section>
+      )}
+
+      {faqs && faqs.length === 0 && visiblePresets.length === 0 && (
+        <p className="text-sm text-gray-500">{EMPTY_STATE_TEXT}</p>
       )}
 
       {faqs && faqs.length > 0 && (
@@ -523,9 +633,21 @@ function FaqFormModal({ mode, faq, onClose, onSubmit }: FaqFormModalProps) {
         </div>
 
         <div>
-          <label htmlFor="faq-answer" className={LABEL_CLASS}>
-            Answer
-          </label>
+          <div className="mb-1 flex items-center gap-2">
+            <label
+              htmlFor="faq-answer"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Answer
+            </label>
+            <VoiceInput
+              onTranscript={(transcript) =>
+                setAnswer((prev) =>
+                  prev ? `${prev}\n${transcript}` : transcript,
+                )
+              }
+            />
+          </div>
           <textarea
             id="faq-answer"
             rows={4}

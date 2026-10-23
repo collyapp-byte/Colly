@@ -11,6 +11,7 @@ import {
   Trash,
 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
+import { BackButton } from "@/components/ui/back-button";
 import { formatNaira } from "@/lib/format";
 
 const INVOICE_STATUSES = ["draft", "sent", "failed", "cancelled"] as const;
@@ -179,6 +180,7 @@ export default function InvoicesPage() {
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
+          <BackButton />
           <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
             Invoices
           </h1>

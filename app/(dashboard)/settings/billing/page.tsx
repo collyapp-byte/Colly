@@ -6,6 +6,7 @@ import { ArrowRight, CircleAlert, Info } from "lucide-react";
 import { formatNaira } from "@/lib/format";
 import { getCreditPackage, getCreditPrice } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/ui/back-button";
 import { toast } from "sonner";
 
 type Usage = {
@@ -183,14 +184,9 @@ export default function BillingPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
+      <BackButton />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl text-gray-900">Billing</h1>
-        <Link
-          href="/settings"
-          className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900"
-        >
-          ← Back to Settings
-        </Link>
       </div>
 
       {loading && <BillingSkeleton />}
