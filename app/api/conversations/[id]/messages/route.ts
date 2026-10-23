@@ -63,11 +63,7 @@ export async function POST(
       },
     });
 
-    const limits = getPlanLimits(
-      business.plan,
-      business.planInterval,
-      business.channel,
-    );
+    const limits = getPlanLimits(business.plan, business.planInterval);
     const includedManualMessages = limits.includedManualMessages;
     const manualCreditPrice = getCreditPrice(business, "manual");
 

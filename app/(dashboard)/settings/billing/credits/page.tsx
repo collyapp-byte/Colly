@@ -10,7 +10,6 @@ export default function CreditsPage() {
   const [balance, setBalance] = useState<number | null>(null);
   const [planStatus, setPlanStatus] = useState<string | null>(null);
   const [plan, setPlan] = useState<string | null>(null);
-  const [channel, setChannel] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,9 +30,6 @@ export default function CreditsPage() {
         if (active && typeof data.planStatus === "string") {
           setPlanStatus(data.planStatus);
         }
-        if (active && typeof data.channel === "string") {
-          setChannel(data.channel);
-        }
       } catch {
         // Balance stays hidden when usage can't be read; buying still works.
       }
@@ -48,7 +44,6 @@ export default function CreditsPage() {
   const creditPackage = getCreditPackage({
     plan: plan ?? "free",
     planStatus: planStatus ?? "inactive",
-    channel,
   });
 
   async function buy() {

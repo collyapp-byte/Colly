@@ -1,9 +1,7 @@
 // Colly's billing plans: the single source of truth for limits and prices.
 //
-// A single "General" plan model applies across all connected channels
-// (Telegram, Discord, Web Chat). Message limits are shared globally.
-
-export type Channel = "TELEGRAM" | "DISCORD";
+// One unified plan model applies across all connected channels (Telegram,
+// Discord, Web Chat). Message limits are shared globally.
 
 export type PlanTier = "green" | "blue" | "black";
 
@@ -53,9 +51,6 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
   },
 };
 
-export const TELEGRAM_PLANS = PLANS;
-export const WHATSAPP_PLANS = {} as Record<string, PlanConfig>;
-
 /** Free trial: a time box plus a one-off reply allowance, no card required. */
 export const TRIAL_CONFIG = {
   includedMsgs: 50,
@@ -100,60 +95,30 @@ export const CREDIT_PACKAGES = {
 export type CreditPackageId = keyof typeof CREDIT_PACKAGES;
 export type CreditPackage = (typeof CREDIT_PACKAGES)[CreditPackageId];
 
-/** All messaging channels share the same unified plan limits. */
-export function isTelegramChannel(_channel: string | null | undefined): boolean {
-  return true;
-}
-
-/** True when the value is one of the supported channels. */
-export function isChannel(value: unknown): value is Channel {
-  return value === "TELEGRAM" || value === "DISCORD";
-}
-
-/**
- * Unified plans apply to all channels. Keep for backward compatibility.
- */
-export function channelForTier(_tier: string | null | undefined): Channel {
-  return "TELEGRAM";
-}
-
 /** True when `value` is a plan tier name in the unified plan set. */
 export function isPlanTierName(value: unknown): value is PlanTier {
   return typeof value === "string" && value in PLANS;
 }
 
-/** All channels use the unified plan table. */
-export function isTierForChannel(tier: string, _channel: Channel): boolean {
-  return tier in PLANS;
-}
-
-/** Returns the unified plan table regardless of channel. */
-function plansFor(_channel: string | null | undefined): Record<string, PlanConfig> {
-  return PLANS;
-}
-
-/** True when the business is on an active paid plan for its channel. */
+/** True when the business is on an active paid plan. */
 export function isActivePaidPlan(business: {
   plan?: string | null;
   planStatus?: string | null;
-  channel?: string | null;
 }): boolean {
   if (business.planStatus !== "active") return false;
-  return Boolean(plansFor(business.channel)[business.plan ?? ""]);
+  return Boolean(PLANS[business.plan as PlanTier]);
 }
 
 /**
  * The Naira debited from the wallet for one reply over the monthly cap.
- * AI replies cost `aiCredit`, human (agent) replies `manualCredit`. The rates
- * live on the channel's plan tiers; every tier on a channel currently shares
- * the same rates, so free/expired businesses fall back to the entry tier.
+ * AI replies cost `aiCredit`, human (agent) replies `manualCredit`. Free or
+ * expired businesses fall back to the entry tier's rates.
  */
 export function getCreditPrice(
-  business: { channel?: string | null; plan?: string | null },
+  business: { plan?: string | null },
   type: CreditType = "ai",
 ): number {
-  const plans = plansFor(business.channel);
-  const config = plans[business.plan ?? ""] ?? plans[Object.keys(plans)[0]];
+  const config = PLANS[business.plan as PlanTier] ?? PLANS.green;
   return type === "manual" ? config.manualCredit : config.aiCredit;
 }
 
@@ -163,7 +128,6 @@ export function getCreditPrice(
 export function getCreditPackage(business: {
   plan?: string | null;
   planStatus?: string | null;
-  channel?: string | null;
 }): CreditPackage {
   return isActivePaidPlan(business)
     ? CREDIT_PACKAGES.paid_credits
@@ -171,16 +135,16 @@ export function getCreditPackage(business: {
 }
 
 /**
- * The limits that apply to a business given its stored plan and channel. The
- * trial is its own config, the free plan has no allowance, and a paid tier
- * resolves against the plan table of the business's channel. Unknown plans
- * degrade to the trial limits rather than throwing.
+ * The limits that apply to a business given its stored plan. The trial is its
+ * own config, the free plan has no allowance, and a paid tier resolves against
+ * the unified plan table. Unknown plans degrade to the trial limits rather
+ * than throwing.
  *
  * `planInterval` ("monthly" | "yearly") does not change the limits — both
  * billing intervals share a tier's numbers — but it is kept in the signature
  * so callers pass through the stored interval without a separate lookup.
  */
-export function getPlanLimits(plan: string, planInterval: string, channel?: string | null) {
+export function getPlanLimits(plan: string, planInterval: string) {
   // Both billing intervals share the same limits; the interval only changes
   // what Paystack charges, and is kept so callers surface the right price.
   void planInterval;
@@ -193,33 +157,18 @@ export function getPlanLimits(plan: string, planInterval: string, channel?: stri
     return FREE_PLAN_LIMITS;
   }
 
-  return plansFor(channel)[plan] ?? TRIAL_CONFIG;
+  return PLANS[plan as PlanTier] ?? TRIAL_CONFIG;
 }
 
 /**
- * The Naira price of a plan tier for one billing interval on a channel.
+ * The Naira price of a plan tier for one billing interval.
  * Unknown tiers cost 0 rather than throwing.
  */
 export function getPlanPrice(
   plan: string,
   interval: PlanInterval | string,
-  channel?: string | null,
 ): number {
-  const config = plansFor(channel)[plan];
+  const config = PLANS[plan as PlanTier];
   if (!config) return 0;
   return interval === "yearly" ? config.yearly : config.monthly;
-}
-
-/**
- * The Paystack plan code for a tier + billing interval, configured via env
- * vars like `PAYSTACK_PLAN_TG_GREEN_M`. Returns null when not configured.
- */
-export function getPaystackPlanCode(
-  tier: string,
-  interval: PlanInterval | string,
-  _channel?: string | null,
-): string | null {
-  const intervalCode = interval === "yearly" ? "Y" : "M";
-  const envKey = `PAYSTACK_PLAN_TG_${tier.toUpperCase()}_${intervalCode}`;
-  return process.env[envKey] ?? process.env[`PAYSTACK_PLAN_GREEN_${tier.toUpperCase()}_${intervalCode}`] ?? null;
 }

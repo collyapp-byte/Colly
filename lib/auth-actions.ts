@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { isMissingConfigError } from "@/lib/supabase/env";
-import { TRIAL_CONFIG, isTierForChannel } from "@/lib/plans";
+import { TRIAL_CONFIG, isPlanTierName } from "@/lib/plans";
 import { isChannel } from "@/lib/business";
 import {
   isValidEmail,
@@ -66,12 +66,9 @@ export async function signup(
   const channelField = readField(formData, "channel");
   const channel = isChannel(channelField) ? channelField : "TELEGRAM";
   // The tier picked on the pricing page (?plan=green). Kept only when it is a
-  // real tier of the chosen channel, so the billing page can pre-select it.
+  // real tier, so the billing page can pre-select it.
   const planField = readField(formData, "plan");
-  const selectedPlan =
-    channel !== "DISCORD" && isTierForChannel(planField, channel)
-      ? planField
-      : null;
+  const selectedPlan = isPlanTierName(planField) ? planField : null;
 
   // Google sign-ups arrive already authenticated: the OAuth callback created a
   // Supabase session, so there is no password to create. Reuse that identity

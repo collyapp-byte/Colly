@@ -86,10 +86,14 @@ function PlansContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tier, interval: chosenInterval }),
       });
-      const data = await res.json();
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        detail?: string;
+        authorization_url?: string;
+      };
 
       if (!res.ok) {
-        throw new Error(data.error || `HTTP ${res.status}`);
+        throw new Error(data.error || data.detail || `HTTP ${res.status}`);
       }
       if (!data.authorization_url) {
         throw new Error("No authorization_url in response");

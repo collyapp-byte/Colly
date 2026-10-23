@@ -63,7 +63,7 @@ async function paystackFetch<T>(
 export type InitializeTransactionInput = {
   email: string;
   amountKobo: number;
-  /** Plan code from `getPaystackPlanCode`; makes it a subscription checkout. */
+  /** Paystack plan code; makes it a subscription checkout. */
   planCode?: string;
   callbackUrl?: string;
   metadata?: Record<string, unknown>;

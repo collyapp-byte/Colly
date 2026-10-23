@@ -54,7 +54,6 @@ export default async function CollyAIPage() {
   const limits = getPlanLimits(
     business?.plan ?? "free",
     business?.planInterval ?? "monthly",
-    business?.channel ?? null,
   );
   const includedMsgs = limits.includedMsgs;
   const includedManual = limits.includedManualMessages;

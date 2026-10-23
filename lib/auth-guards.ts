@@ -100,7 +100,7 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
   const aiCreditPrice = getCreditPrice(business, "ai");
 
   if (activePaidPlan || isTrialActive) {
-    const limits = getPlanLimits(business.plan, business.planInterval, business.channel);
+    const limits = getPlanLimits(business.plan, business.planInterval);
     const included = limits.includedMsgs;
 
     if (business.messagesUsedThisMonth < included) {

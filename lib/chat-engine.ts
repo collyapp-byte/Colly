@@ -332,7 +332,6 @@ async function applyAiUsage(businessId: string) {
     const limits = getPlanLimits(
       businessForTracking.plan,
       businessForTracking.planInterval,
-      businessForTracking.channel,
     );
     const included = limits.includedMsgs;
     const currentUsage = await prisma.message.count({

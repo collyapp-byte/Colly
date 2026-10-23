@@ -46,7 +46,7 @@ export async function GET() {
         AND "createdAt" >= date_trunc('month', now())
     `;
 
-    const limits = getPlanLimits(business.plan, business.planInterval, business.channel);
+    const limits = getPlanLimits(business.plan, business.planInterval);
     const aiRepliesLimit = limits.includedMsgs;
     const includedManualMessages = limits.includedManualMessages;
 

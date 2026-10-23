@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { channelForTier } from "@/lib/plans";
 import {
   fetchSubscription,
   verifyTransaction,
@@ -97,7 +96,6 @@ export async function POST(request: Request) {
             plan: transaction.plan ?? undefined,
             planInterval: interval,
             planStatus: "active",
-            channel: channelForTier(transaction.plan),
             planStartedAt: new Date(),
             planExpiresAt: addDays(
               new Date(),

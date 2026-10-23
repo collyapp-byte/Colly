@@ -173,12 +173,12 @@ export default function BillingPage() {
   const isTrial = usage?.plan === "trial";
   const isFree = usage?.plan === "free";
   const creditPrice = usage
-    ? getCreditPrice({ channel: usage.channel, plan: usage.plan }, "ai")
+    ? getCreditPrice({ plan: usage.plan }, "ai")
     : 20;
   const creditPackage = getCreditPackage(
     usage
-      ? { channel: usage.channel, plan: usage.plan, planStatus: usage.planStatus }
-      : { plan: "free", planStatus: "inactive", channel: null },
+      ? { plan: usage.plan, planStatus: usage.planStatus }
+      : { plan: "free", planStatus: "inactive" },
   );
 
   return (

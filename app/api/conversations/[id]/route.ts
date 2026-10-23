@@ -53,11 +53,7 @@ export async function GET(
         manualMessagesUsedThisMonth: true,
       },
     });
-    const limits = getPlanLimits(
-      business.plan,
-      business.planInterval,
-      business.channel,
-    );
+    const limits = getPlanLimits(business.plan, business.planInterval);
     const includedManualMessages = limits.includedManualMessages;
     const manualMessagesRemaining = Math.max(
       includedManualMessages - business.manualMessagesUsedThisMonth,
