@@ -9,33 +9,31 @@ type TelegramConnectBody = {
  * The webhook URL Telegram must call back: the deployed app origin + the shared
  * handler. Prefers NEXT_PUBLIC_APP_URL (set it to the live public origin,
  * e.g. https://colly.com.ng) because behind a reverse proxy `request.url` is
- * often a localhost origin. Falls back to the request's origin only when
- * the env var is missing. Reported as null when there is no public HTTPS
- * origin to register (Telegram rejects localhost, so connecting would only
- * fail at setWebhook with an opaque error).
+ * often a localhost origin. Falls back to the forwarded host, then the
+ * request's own origin. Any invalid origin is left to Telegram to reject so
+ * the real API error is surfaced to the owner.
  */
-function webhookUrl(request: Request): string | null {
+function webhookUrl(request: Request): string {
   const envBase = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  const base =
-    envBase && envBase.length > 0
-      ? envBase
-      : new URL(request.url).origin;
+  const forwardedHost = request.headers
+    .get("x-forwarded-host")
+    ?.split(",")[0]
+    ?.trim();
+  const forwardedProto =
+    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim() || "https";
 
-  let url: URL;
-  try {
-    url = new URL(`${base.replace(/\/+$/, "")}/api/telegram/webhook`);
-  } catch {
-    return null;
-  }
+  const requestOrigin = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}`
+    : new URL(request.url).origin;
 
-  const isLocalhost =
-    url.hostname === "localhost" ||
-    url.hostname === "127.0.0.1" ||
-    url.hostname === "[::1]" ||
-    url.hostname === "0.0.0.0";
-  if (url.protocol !== "https:" || isLocalhost) return null;
+  const base = envBase && envBase.length > 0 ? envBase : requestOrigin;
+  const withScheme = /^https?:\/\//i.test(base)
+    ? base
+    : `https://${base.replace(/^\/+/, "")}`;
 
-  return url.toString();
+  return new URL(
+    `${withScheme.replace(/\/+$/, "")}/api/telegram/webhook`,
+  ).toString();
 }
 
 function badRequest(error: string) {
@@ -70,15 +68,10 @@ export async function POST(request: Request) {
       return Response.json({ error: "Business not found" }, { status: 404 });
     }
 
-    // Fail before calling Telegram when there is no public origin to register:
-    // setWebhook would reject localhost anyway, with an error that says nothing
-    // about why.
+    // Build the webhook URL and let Telegram validate it. Its setWebhook
+    // response contains the actionable reason, so there is no client-side
+    // public-URL gate that can wrongly reject a live domain.
     const hookUrl = webhookUrl(request);
-    if (!hookUrl) {
-      return badRequest(
-        "Telegram requires a public HTTPS URL. Please connect your bot on the live deployed site.",
-      );
-    }
 
     // 1. Verify the token against the Bot API. A bad token answers with
     //    { ok: false } (and a 401), never a valid result.

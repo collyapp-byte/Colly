@@ -1,0 +1,21 @@
+
+> colly@0.1.0 dev
+> next dev
+
+▲ Next.js 16.4.0 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.174:3000
+- Environments: .env.local, .env
+✓ Ready in 5.3s
+✓ Running next.config.ts took 996ms
+○ Compiling proxy ...
+- Cache Components enabled
+- Partial Prefetching enabled
+- Experiments (use with caution):
+  ✓ agentFeedback
+
+○ Compiling /signup ...
+ GET /signup?role=business 200 in 19.5s (next.js: 14.1s, proxy.ts: 2.3s, application-code: 3.1s)
+○ Compiling /verify-email ...
+ GET /verify-email 200 in 13.6s (next.js: 12.5s, proxy.ts: 52ms, application-code: 1014ms)
+ GET /verify-email?error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired 200 in 2.0s (next.js: 1150ms, proxy.ts: 134ms, application-code: 752ms)
