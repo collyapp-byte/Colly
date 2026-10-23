@@ -86,25 +86,32 @@ function PlansContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tier, interval: chosenInterval }),
       });
+
+      if (!res.ok) {
+        const errorData = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
+        throw new Error(
+          errorData.error || errorData.message || "Failed to start checkout",
+        );
+      }
+
       const data = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        detail?: string;
         authorization_url?: string;
       };
 
-      if (!res.ok) {
-        throw new Error(data.error || data.detail || `HTTP ${res.status}`);
-      }
       if (!data.authorization_url) {
         throw new Error("No authorization_url in response");
       }
 
       // Redirect to Paystack
       window.location.assign(data.authorization_url);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Checkout failed";
-      console.error("[checkout] error:", msg);
-      setError(msg);
+    } catch (error) {
+      console.error("[checkout] error:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to start checkout",
+      );
       setCheckingOut(null);
     }
   }

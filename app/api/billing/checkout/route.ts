@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { getAppUrl } from "@/lib/app-url";
-import { initializeTransaction } from "@/lib/paystack";
+import { initializeTransactionRaw } from "@/lib/paystack";
 import {
   getPlanPrice,
   isPlanTierName,
@@ -58,11 +57,6 @@ export async function POST(request: Request) {
       return unauthorized();
     }
 
-    const business = await prisma.business.findUniqueOrThrow({
-      where: { id: user.businessId },
-      select: { channel: true },
-    });
-
     const body = (await request
       .json()
       .catch(() => null)) as {
@@ -85,28 +79,28 @@ export async function POST(request: Request) {
     }
 
     const amountKobo = getPlanPrice(body.tier, body.interval) * 100;
-    const planCode = getPaystackPlanCode(body.tier, body.interval);
+    const paystackPlanCode = getPaystackPlanCode(body.tier, body.interval);
 
-    const callbackUrl = `${getAppUrl()}/billing/callback`;
-
-    const payload = await initializeTransaction({
+    const payload: Record<string, string> = {
       email: user.email,
-      amountKobo,
-      planCode,
-      callbackUrl,
-      metadata: {
-        businessId: user.businessId,
-        tier: body.tier,
-        interval: body.interval,
-        channel: business.channel,
-        type: "subscription",
-      },
-    });
+      callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing/callback`,
+      plan: paystackPlanCode,
+    };
+
+    console.log("PAYSTACK INIT PAYLOAD:", payload);
+
+    let initialized;
+    try {
+      initialized = await initializeTransactionRaw(payload);
+    } catch (error) {
+      console.error("PAYSTACK INIT ERROR:", error);
+      throw error;
+    }
 
     await prisma.transaction.create({
       data: {
         businessId: user.businessId,
-        reference: payload.reference,
+        reference: initialized.reference,
         amount: amountKobo / 100,
         status: "pending",
         type: "subscription",
@@ -116,8 +110,8 @@ export async function POST(request: Request) {
     });
 
     return Response.json({
-      authorization_url: payload.authorization_url,
-      reference: payload.reference,
+      authorization_url: initialized.authorization_url,
+      reference: initialized.reference,
     });
   } catch (error) {
     console.error("[POST /api/billing/checkout]", error);

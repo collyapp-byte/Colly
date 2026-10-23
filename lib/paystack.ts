@@ -126,12 +126,13 @@ export async function initializeTransaction({
   callbackUrl,
   metadata,
 }: InitializeTransactionInput): Promise<InitializeTransactionData> {
-  const body: Record<string, unknown> = {
-    email,
-    amount: amountKobo,
-  };
+  const body: Record<string, unknown> = { email };
 
-  if (planCode) {
+  // Paystack rejects a subscription initialize call that includes an amount;
+  // the plan itself defines the charge.
+  if (!planCode) {
+    body.amount = amountKobo;
+  } else {
     body.plan = planCode;
   }
   if (callbackUrl) {
@@ -141,9 +142,16 @@ export async function initializeTransaction({
     body.metadata = metadata;
   }
 
+  return initializeTransactionRaw(body);
+}
+
+/** Initialize a transaction from an already-built payload. */
+export async function initializeTransactionRaw(
+  payload: Record<string, unknown>,
+): Promise<InitializeTransactionData> {
   return paystackFetch<InitializeTransactionData>(
     "/transaction/initialize",
-    { method: "POST", body: JSON.stringify(body) },
+    { method: "POST", body: JSON.stringify(payload) },
   );
 }
 
