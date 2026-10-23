@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { TiltCard } from "@/components/ui/tilt-card";
 
 export function Pricing() {
@@ -44,7 +45,7 @@ export function Pricing() {
 
   return (
     <section id="pricing" className="bg-white/60 py-20 sm:py-28">
-      <div className="mx-auto max-w-5xl px-4">
+      <ScrollReveal className="mx-auto max-w-5xl px-4">
         <div className="text-center mb-16">
           <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">Simple pricing. No hidden fees.</h2>
           <p className="mt-4 text-gray-600">Billed monthly. Cancel anytime.</p>
@@ -79,7 +80,7 @@ export function Pricing() {
             </TiltCard>
           ))}
         </div>
-      </div>
+      </ScrollReveal>
     </section>
   );
 }

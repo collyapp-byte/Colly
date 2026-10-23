@@ -30,7 +30,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-gray-900/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 bg-gray-900/40"
       onMouseDown={onClose}
       role="presentation"
     >
@@ -38,7 +38,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="h-full w-full max-w-lg mx-auto rounded-none bg-white/80 backdrop-blur-lg border border-white/50 shadow-2xl flex flex-col sm:fixed sm:inset-auto sm:mx-auto sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-2xl"
+        className="h-full w-full max-w-lg mx-auto rounded-none bg-white border border-gray-200 shadow-xl flex flex-col sm:fixed sm:inset-auto sm:mx-auto sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-lg sm:rounded-2xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="flex-shrink-0 mb-4 flex items-center justify-between gap-4 p-4 sm:p-5 border-b border-gray-200">
@@ -56,7 +56,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
           {children}
         </div>
         {footer && (
-          <div className="flex-shrink-0 border-t border-gray-200 bg-white/60 p-4 backdrop-blur-md sm:p-5">
+          <div className="flex-shrink-0 border-t border-gray-200 bg-white p-4 sm:p-5">
             {footer}
           </div>
         )}

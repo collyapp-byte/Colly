@@ -1,84 +1,102 @@
-"use client";
-
-import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
-import { AnimatedItem, AnimatedSection } from "@/components/ui/animated-section";
+import { Check, Send } from "lucide-react";
+import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
-/**
- * Marketing homepage hero. Client-only because of Framer Motion; the parent
- * page stays a Server Component so it can keep exporting `metadata`. The hero
- * is a single centered column: badge, headline, copy, CTAs and the photo
- * background layered behind the fixed glass header.
- */
 export function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-b from-[#FFF4EC] to-background">
-      {/* Photo background sitting behind the fixed header and the hero copy. */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/hero.jpg"
-          alt="Hero Background"
-          fill
-          className="object-cover object-center opacity-30"
-          priority
-        />
-        {/* A soft gradient overlay so the text remains perfectly readable */}
-        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/50 to-transparent" />
-      </div>
-
-      {/* Animated floating gradient background: two blurred brand blobs that
-          drift slowly, giving the hero depth without stealing attention. */}
+    <section className="relative overflow-hidden bg-[#f5f5f5] pt-32 pb-20">
+      {/* Soft warm glow behind the visual, kept subtle so the copy stays crisp. */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="animate-colly-float absolute -top-32 -left-32 h-96 w-96 rounded-full bg-[#FF6600]/20 blur-3xl" />
-        <div
-          className="animate-colly-float absolute -right-32 top-16 h-96 w-96 rounded-full bg-amber-200/30 blur-3xl"
-          style={{ animationDelay: "-4s" }}
-        />
+        <div className="absolute -top-24 right-0 h-[28rem] w-[28rem] rounded-full bg-[#FF6600]/10 blur-3xl" />
+        <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl" />
       </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center justify-center px-4 pt-24 pb-12 text-center sm:pt-28 sm:pb-16">
-        <AnimatedSection className="text-center">
-          <AnimatedItem>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#FF6600]/20 bg-white px-3 py-1 text-[13px] font-medium text-[#FF6600]">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
-              Built for Nigerian businesses
-            </span>
-          </AnimatedItem>
+      <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 lg:grid-cols-2">
+        {/* Left column */}
+        <ScrollReveal>
+          <span className="inline-flex items-center rounded-full border border-[#FF6600]/30 bg-white px-4 py-1.5 text-[13px] font-semibold text-[#FF6600]">
+            Colly AI 2.0 is live
+          </span>
 
-          <AnimatedItem as="h1" className="mt-6 font-display text-3xl leading-tight tracking-tight text-gray-900 sm:text-5xl">
-            Stop losing sales to missed replies.
-          </AnimatedItem>
+          <h1 className="mt-6 text-5xl font-bold tracking-tight text-gray-900 lg:text-7xl">
+            Your AI sales assistant for{" "}
+            <span className="text-[#FF6600]">Nigerian businesses.</span>
+          </h1>
 
-          <AnimatedItem as="p" className="mx-auto mt-5 max-w-xl text-base text-gray-600 sm:text-lg">
-            Colly is the AI sales assistant that replies 24/7. Keep your
-            personal phone. Add a dedicated AI line.
-          </AnimatedItem>
+          <p className="mt-6 max-w-lg text-lg text-gray-600">
+            Stop losing sales to missed replies. Colly replies 24/7 in English or
+            Pidgin, quotes prices, and sends product images.
+          </p>
 
-          <AnimatedItem className="mt-8 flex w-full flex-col items-center justify-center gap-4 sm:flex-row">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-              <Link
-                href="/signup"
-                className="flex w-full items-center justify-center rounded-lg bg-[#FF6600] px-8 py-3.5 text-sm font-semibold text-white transition-all hover:scale-105 hover:bg-[#E65C00] active:scale-95 sm:w-auto"
-              >
-                Start Free Trial
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
-              <Link
-                href="/find-an-agent"
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-8 py-3.5 text-sm font-semibold text-gray-700 transition-all hover:scale-105 hover:bg-gray-50 active:scale-95 sm:w-auto"
-              >
-                Find an Agent
-              </Link>
-            </motion.div>
-          </AnimatedItem>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/signup?role=business"
+              className="inline-flex items-center justify-center rounded-xl bg-[#FF6600] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5 hover:bg-[#E65C00]"
+            >
+              Start Free Trial
+            </Link>
+            <Link
+              href="#how-it-works"
+              className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-7 py-3.5 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50"
+            >
+              See how it works
+            </Link>
+          </div>
 
-          <AnimatedItem className="mt-4 text-[13px] text-gray-500">
+          <p className="mt-4 text-[13px] text-gray-500">
             No SIM card required to start · Cancel anytime
-          </AnimatedItem>
-        </AnimatedSection>
+          </p>
+        </ScrollReveal>
+
+        {/* Right column: CSS-only chat mockup */}
+        <ScrollReveal delay={0.15} className="relative mx-auto w-full max-w-sm">
+          <div className="absolute -left-2 bottom-16 z-10 flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-xl sm:-left-10">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
+              <Check className="h-5 w-5" aria-hidden />
+            </span>
+            <div>
+              <p className="text-xs text-gray-500">Sale Closed</p>
+              <p className="text-sm font-bold text-gray-900">₦15,000</p>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl">
+            <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-5 py-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF6600] text-sm font-bold text-white">
+                C
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Colly AI</p>
+                <p className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  Online now
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 bg-white px-5 py-6">
+              <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-gray-100 px-4 py-3 text-sm text-gray-700">
+                How much is the Samsung Galaxy A15?
+              </div>
+              <div className="ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-[#FF6600] px-4 py-3 text-sm text-white">
+                The Samsung Galaxy A15 is ₦185,000. It has 128GB storage, 4GB
+                RAM, and a 50MP camera. Want to see pictures?
+              </div>
+              <div className="max-w-[70%] rounded-2xl rounded-tl-sm bg-gray-100 px-4 py-3 text-sm text-gray-700">
+                Yes please
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 border-t border-gray-100 px-4 py-3">
+              <div className="flex-1 rounded-full bg-gray-100 px-4 py-2 text-xs text-gray-400">
+                Type a message...
+              </div>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FF6600] text-white">
+                <Send className="h-4 w-4" aria-hidden />
+              </span>
+            </div>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );

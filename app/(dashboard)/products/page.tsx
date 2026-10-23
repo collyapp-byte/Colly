@@ -8,10 +8,8 @@ import {
   LoaderCircle,
   Pencil,
   Plus,
-  Sparkles,
   Trash,
 } from "lucide-react";
-import { toast } from "sonner";
 import { Modal } from "@/components/ui/modal";
 import { ProductFormModal } from "@/components/products/product-form-modal";
 import { StockBadge } from "@/components/products/stock-badge";
@@ -31,16 +29,6 @@ const QUICK_START_STEPS = [
   "Upload a clear picture of the product.",
 ];
 
-const SAMPLE_PRODUCT: ProductInput = {
-  name: "Samsung Galaxy A15",
-  price: 185000,
-  stock: 10,
-  description: "128GB storage, 4GB RAM, 50MP camera",
-  images: [
-    "https://placehold.co/600x600/e2e8f0/64748b?text=Samsung+Galaxy+A15",
-  ],
-};
-
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,8 +36,6 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [generatingSample, setGeneratingSample] = useState(false);
-  const [sampleError, setSampleError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -96,22 +82,6 @@ export default function ProductsPage() {
     }
 
     refresh();
-  }
-
-  async function handleGenerateSample() {
-    setGeneratingSample(true);
-    setSampleError(null);
-
-    try {
-      await handleCreate(SAMPLE_PRODUCT);
-      toast.success("Sample product added! Try asking your AI about it.");
-    } catch (err) {
-      setSampleError(
-        err instanceof Error ? err.message : "Something went wrong",
-      );
-    } finally {
-      setGeneratingSample(false);
-    }
   }
 
   async function handleUpdate(id: string, values: ProductInput) {
@@ -219,12 +189,6 @@ export default function ProductsPage() {
                 ))}
               </ol>
 
-              {sampleError && (
-                <p role="alert" className="mt-4 text-sm text-danger">
-                  {sampleError}
-                </p>
-              )}
-
               <div className="mt-6 flex flex-col gap-2 sm:flex-row">
                 <button
                   type="button"
@@ -233,24 +197,6 @@ export default function ProductsPage() {
                 >
                   <Plus className="h-4 w-4" aria-hidden />
                   Add Product
-                </button>
-                <button
-                  type="button"
-                  onClick={handleGenerateSample}
-                  disabled={generatingSample}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
-                >
-                  {generatingSample ? (
-                    <LoaderCircle
-                      className="h-4 w-4 animate-spin"
-                      aria-hidden
-                    />
-                  ) : (
-                    <Sparkles className="h-4 w-4" aria-hidden />
-                  )}
-                  {generatingSample
-                    ? "Creating sample…"
-                    : "Generate Sample Product"}
                 </button>
               </div>
             </div>
