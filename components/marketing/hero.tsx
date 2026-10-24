@@ -4,7 +4,7 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#f5f5f5] pt-32 pb-20">
+    <section className="relative overflow-hidden bg-[#f5f5f5] pt-32 pb-10 lg:pb-24">
       {/* Soft warm glow behind the visual, kept subtle so the copy stays crisp. */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute -top-24 right-0 h-[28rem] w-[28rem] rounded-full bg-[#FF6600]/10 blur-3xl" />
@@ -49,14 +49,14 @@ export function Hero() {
         </ScrollReveal>
 
         {/* Right column: customer conversation image */}
-        <ScrollReveal delay={0.15} className="relative w-full">
+        <ScrollReveal delay={0.15} className="relative mt-8 w-full lg:mt-0">
           <Image
             src="/man chatting daytime v.jpg"
             alt="Business owner chatting with a customer through Colly AI"
             width={900}
             height={700}
             priority
-            className="rounded-3xl shadow-2xl object-cover w-full h-[400px] lg:h-[500px] object-center border border-gray-100"
+            className="rounded-3xl shadow-2xl object-cover w-full aspect-[4/5] lg:aspect-auto lg:h-[500px] object-center border border-gray-100"
           />
         </ScrollReveal>
       </div>

@@ -2,8 +2,8 @@ import Image from "next/image";
 
 export function ProblemSection() {
   return (
-    <section className="bg-[#f5f5f5] py-24">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 lg:grid-cols-2">
+    <section className="bg-[#f5f5f5] pt-10 pb-24 lg:pt-24">
+      <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 lg:grid-cols-2 lg:gap-12">
         <div>
           <span className="inline-flex items-center rounded-full border border-[#FF6600]/30 bg-[#FFF4EC] px-4 py-1.5 text-[13px] font-semibold text-[#FF6600]">
             The 24/7 Reality
@@ -24,7 +24,7 @@ export function ProblemSection() {
             alt="Customer chatting with a business late at night"
             width={900}
             height={1100}
-            className="rounded-3xl shadow-xl object-cover w-full h-[400px] lg:h-[600px]"
+            className="rounded-3xl shadow-xl object-cover w-full aspect-[4/5] lg:aspect-auto lg:h-[600px]"
           />
         </div>
       </div>
