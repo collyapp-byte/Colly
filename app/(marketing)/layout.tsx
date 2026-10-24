@@ -13,7 +13,15 @@ export const metadata = {
     siteName: "Colly",
     locale: "en_NG",
     type: "website",
-    images: [{ url: "https://colly.com.ng/og-image.png" }],
+    images: [
+      {
+        url: "https://colly.com.ng/og-image.png",
+        width: 1200,
+        height: 630,
+        type: "image/png",
+        alt: "Colly AI Sales Assistant",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
