@@ -281,6 +281,16 @@ export function BusinessSignupForm({
           Sign in
         </Link>
       </p>
+
+      <p className="mt-3 text-center text-xs text-gray-400">
+        Want to sell Colly?{" "}
+        <Link
+          href="/signup?role=agent"
+          className="font-medium text-colly transition-colors hover:text-colly-hover"
+        >
+          Apply to our Agent Program here.
+        </Link>
+      </p>
     </div>
   );
 }

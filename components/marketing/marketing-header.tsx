@@ -67,6 +67,12 @@ export function MarketingHeader() {
           >
             Find an Agent
           </Link>
+          <Link
+            href="/signup?role=agent"
+            className="hidden text-sm font-medium text-gray-600 transition-colors hover:text-[#FF6600] sm:block"
+          >
+            Agent Program
+          </Link>
           <NavbarAuthActions />
         </nav>
       </div>

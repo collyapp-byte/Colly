@@ -3,26 +3,18 @@
 import Link from "next/link";
 import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { NIGERIAN_STATES } from "@/lib/nigerian-states";
 import { isPlanTierName } from "@/lib/plans";
 import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
 import { AuthAlert } from "@/components/auth/auth-form";
 import { BusinessSignupForm } from "@/components/auth/business-signup-form";
-import { RoleChooser, type AuthRole } from "@/components/auth/role-chooser";
 import { Button } from "@/components/ui/button";
-
-type View = "chooser" | AuthRole;
 
 const LABEL_CLASS = "mb-1 block text-sm font-medium text-gray-700";
 const INPUT_CLASS =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
-
-/** `?role=business|agent` skips the chooser; anything else shows it. */
-function viewFromParam(value: string | null): View {
-  return value === "business" || value === "agent" ? value : "chooser";
-}
 
 type SubmitState =
   | { kind: "idle" }
@@ -236,9 +228,7 @@ function AgentSignupForm() {
 
 function SignupContent() {
   const searchParams = useSearchParams();
-  const [view, setView] = useState<View>(() =>
-    viewFromParam(searchParams.get("role")),
-  );
+  const isAgentSignup = searchParams.get("role") === "agent";
   // `?ref=AG-0001` from an agent's referral link; blank on a normal signup.
   const referredBy = (searchParams.get("ref") ?? "").trim();
   // `?plan=green` from the pricing page: the tier the customer picked before
@@ -249,22 +239,14 @@ function SignupContent() {
 
   return (
     <div>
-      {view !== "chooser" && (
-        <button
-          type="button"
-          onClick={() => setView("chooser")}
-          className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-colly"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back
-        </button>
+      {isAgentSignup ? (
+        <AgentSignupForm />
+      ) : (
+        <BusinessSignupForm
+          referredBy={referredBy}
+          selectedPlan={selectedPlan}
+        />
       )}
-
-      {view === "chooser" && <RoleChooser variant="signup" onSelect={setView} />}
-      {view === "business" && (
-        <BusinessSignupForm referredBy={referredBy} selectedPlan={selectedPlan} />
-      )}
-      {view === "agent" && <AgentSignupForm />}
     </div>
   );
 }
