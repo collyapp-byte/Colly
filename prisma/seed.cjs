@@ -315,51 +315,22 @@ const AGENT_COURSES = [
     lessons: [
       {
         slug: "what-whatsapp-business-api-is",
-        title: "What WhatsApp Business API Is",
+        title: "The Multi-Channel AI (Telegram, Web Chat, Discord)",
         order: 0,
         durationMin: 5,
-        bodyMarkdown: `Every business in Nigeria uses WhatsApp. A customer sends a message. You reply. You make a sale.
+        bodyMarkdown: `Every business in Nigeria uses WhatsApp. But we are not starting with WhatsApp.
 
-So why pay for something that helps you reply to WhatsApp?
+Why? Because Meta requires a **CAC certificate** to use the official WhatsApp API. If we wait for every business owner to register their company, we will never launch.
 
-Here is the problem.
+Instead, Colly is built for the modern channels that work **instantly, for free, with zero CAC**:
+1. **Telegram:** Zero SIM card required. Zero message fees. A business owner can create a bot in 30 seconds using @BotFather.
+2. **Web Chat:** We give them a line of code. They paste it on their website. Visitors can talk to the AI instantly.
+3. **Discord:** For tech-savvy businesses or communities.
 
-The WhatsApp app on your phone is made for **one person. You.**
-
-You can only answer one message at a time.
-
-This is fine when you get 5 messages a day. It fails when you get 50.
-
-**What goes wrong:**
-
-- **Messages come at night.** A customer sends a message at 11pm. You are asleep. You wake up at 7am. The customer already bought from another shop.
-- **You cannot be in two places.** You are driving. You are cooking. You are in a meeting. Every message you do not answer is money you lose.
-- **You cannot remember everything.** "Do you deliver to Ikeja?" "Is this available in blue?" "How much for 3 cartons?" Every customer asks the same questions. Every answer takes 30 seconds of your day.
-- **You lose track.** Was it Chidi or Chinedu that bought 3 cartons last Tuesday? You scroll through 400 messages trying to find out.
-
-The **WhatsApp Business API** is a different thing. It is the version of WhatsApp used by GTBank, Konga, and Moniepoint. It lets a **computer program** answer messages instead of a human.
-
-Same WhatsApp. Same phone number. Customers message the same number they always have. But behind the scenes, software handles the conversations.
-
-**The API can:**
-
-- Answer 100 customers at once, 24 hours a day
-- Remember every customer
-- Send product images on request
-- Understand voice notes and photos
-- Know when to call a human
-
-**A real example.**
-
-Mrs. Adeyemi runs a provisions store in Surulere. Before Colly, she lost about 8 sales a week. Customers messaged at night. She did not reply. They bought elsewhere.
-
-With Colly, her WhatsApp answers instantly. Day or night. She does not reply to every message herself. She only steps in when a customer asks something the AI cannot handle.
-
-Same shop. Same products. About ₦180,000 more revenue a month. Just by not missing messages.
-
-**Do this now:**
-
-Open your own WhatsApp. Count how many messages you did not reply to yesterday. Every single one was a lost sale. Abeg, keep this number in your head. You will use it when you talk to a business owner.`,
+**Why this matters to you as an agent:**
+You can onboard a business in 5 minutes. No waiting. No Meta approval. No CAC.
+You set up the Telegram bot, paste the token into Colly, and the AI is live.
+When the business finally gets their CAC, we will switch on WhatsApp for them.`,
       },
       {
         slug: "what-colly-does",
@@ -507,6 +478,10 @@ Auto-generated from each sale. Sequential numbering. VAT calculated. Printed or 
 
 Auto-created from conversations. Name, phone, notes. Every customer the business has ever talked to.
 
+**CRM & Sales Pipeline**
+
+Every customer is tracked. The owner can move customers from 'Inquiry' to 'Negotiating' to 'Paid'. The AI also asks for payment details automatically if the owner sets up their 'Payment Instructions' in Settings.
+
 **Do this now:**
 
 Log into your own Colly account. Click every menu item in the sidebar. Spend 10 minutes in the dashboard. You cannot explain what you have not seen.`,
@@ -516,68 +491,15 @@ Log into your own Colly account. Click every menu item in the sidebar. Spend 10 
         title: "What Colly Costs",
         order: 4,
         durationMin: 5,
-        bodyMarkdown: `There are two channels and six plans. There is also a Naira wallet. Here is how it works.
+        bodyMarkdown: `**Unified Pricing (No more Telegram vs WhatsApp split)**
 
-**Telegram-first launch**
+We now have a single set of plans. The message limit is shared across **all** connected channels (Telegram, Discord, Web Chat).
 
-Colly is now **Telegram-first**. Telegram has **zero SIM requirements**, **zero Meta fees**, and **2,000+ messages** included on our entry plan - far more than WhatsApp for the same price. Setup takes just 30 seconds with your own bot - no BSP onboarding, no waiting for Meta verification.
-
-**Plans**
-
-**Telegram plans (Recommended)**
-
-| Plan | Monthly | Yearly (2 months free) | Messages Included |
-|---|---|---|---|
-| Green | ₦15,000 | ₦150,000 | 2,000 per month |
-| Blue | ₦25,000 | ₦250,000 | 6,000 per month |
-| Black | ₦50,000 | ₦500,000 | Unlimited |
-
-**WhatsApp plans**
-
-| Plan | Monthly | Yearly (2 months free) | Messages Included |
-|---|---|---|---|
-| Starter | ₦15,000 | ₦150,000 | 500 per month |
-| Business | ₦25,000 | ₦250,000 | 1,500 per month |
-| Pro | ₦50,000 | ₦500,000 | 2,500 per month |
-
-For the same money, Telegram gives more. ₦15,000 buys 500 WhatsApp messages or 2,000 Telegram messages. The ₦50,000 Black plan has no message limit at all.
-
-**The Wallet**
-
-Messages reset every month. When a business passes its monthly limit, Colly does not stop. The business keeps replying, and each extra message is paid from a Naira wallet.
-
-The wallet is money the business tops up. It does not expire. Buy ₦5,000, use ₦2,000 this month, ₦3,000 next month — all fine.
-
-How much each extra message deducts from the wallet:
-
-| Message type | WhatsApp | Telegram |
-|---|---|---|
-| AI message (automatic) | ₦20 | ₦10 |
-| Manual message (you reply) | ₦15 | ₦0 |
-
-On Telegram, your own manual replies are free — the wallet only pays for AI messages.
-
-**Why the limits exist**
-
-Every plan includes a monthly message allowance so pricing stays simple and predictable. If a business needs more, they top up the wallet — there is no hard stop.
-
-This is not Colly being greedy. This is Colly staying alive.
-
-**What the agent can charge**
-
-Colly has nothing to do with the agent's fee. Agents charge businesses separately for setup and training. This is called a "setup fee."
-
-Common amounts:
-
-- Small shop, one location: ₦25,000 to ₦50,000
-- Medium business, multiple products: ₦75,000 to ₦150,000
-- Large business, complex setup: ₦150,000+
-
-Colly does not track this money. Colly does not take a cut. The setup fee is 100% the agent's.
-
-**Do this now:**
-
-Look at the pricing plans on the Colly signup page. Compare the WhatsApp and Telegram plans. Then decide what setup fee you will charge. Write it down. Say it out loud. You will need to say it confidently when you meet a business owner.`,
+- **Green:** ₦15,000/month (2,000 messages)
+- **Blue:** ₦25,000/month (6,000 messages)
+- **Black:** ₦50,000/month (30,000 messages)
+- **Overages:** ₦10 per extra message deducted from the Naira Wallet.
+- **Trial:** 7 days free. No card required.`,
       },
       {
         slug: "what-colly-cannot-do",
@@ -746,59 +668,16 @@ Before your first sales pitch, memorize these 6 limits. When a business owner as
         title: "Before You Start",
         order: 0,
         durationMin: 5,
-        bodyMarkdown: `You do not walk into a shop and start tapping on your laptop. You walk in with a plan.
+        bodyMarkdown: `**Their Telegram Bot Token (or Web Chat Link)**
 
-**Before you meet the business owner, get these 5 things:**
+Since we are Telegram-first, you do not need a SIM card.
 
-**1. All their products.**
+1. Open Telegram and search for @BotFather.
+2. Send \`/newbot\` and follow the steps.
+3. Copy the Bot Token (e.g., 123456789:AAH...).
+4. Paste that into Colly.
 
-Not "some products." All. Or at least the top 30 that make up 90% of their sales.
-
-Ask them for a list. If they do not have one, sit with them and write it out. You will need:
-
-- Product name (as customers call it)
-- Price (what they sell it for today)
-- A description of what it is and what makes it good
-- A photo (more on this below)
-
-**2. Photos of each product.**
-
-Every product needs a photo. WhatsApp customers buy with their eyes.
-
-Ask the owner: "Do you have photos on your phone?" Most do. They already sent them to customers.
-
-Copy them to your laptop. If a product does not have a photo, take one on your phone. Stand near a window. Use a plain background. Take 2-3 shots. Done.
-
-**3. Their most-asked questions.**
-
-Ask: "What do customers ask you again and again?"
-
-Every owner has a list. Where are you located? Do you deliver? How much for delivery? Do you accept returns? What time do you close?
-
-Write down every question they say. Then write down their answer. This becomes the FAQ list.
-
-**4. Their WhatsApp number.**
-
-The one they use for business. If they use a personal number, note that — the AI will still answer on it.
-
-Ask: "Is this the number your customers message you on? Or a different one?"
-
-**5. Their CAC number (if they have one).**
-
-Nigerian regulation requires business registration for some things. If the shop is registered, get the CAC number. If not, no problem — Colly works without it. Meta verification comes later.
-
-**What you do NOT need:**
-
-- Their bank details
-- Their BVN
-- Any payment from you
-- Any physical paperwork to scan
-
-**Do this now:**
-
-Write out a checklist on paper. 5 items. Before every setup visit, go through it. If any item is missing, do not start the setup. Come back with the missing pieces.
-
-An incomplete setup wastes both your time and theirs.`,
+For Web Chat, there is no token. You just copy the embed link and paste it on their website.`,
       },
       {
         slug: "creating-the-account",
@@ -1123,45 +1002,18 @@ Send all 5 test messages. Screenshot the AI replies. Show the owner. If the owne
       },
       {
         slug: "handoff-to-colly",
-        title: "Handoff to Colly",
+        title: "Instant Activation",
         order: 6,
         durationMin: 5,
-        bodyMarkdown: `This is a short lesson. There is almost nothing for you to do here.
+        bodyMarkdown: `The truth: **You do not wait for Colly to connect Telegram.** You do it yourself in real-time.
 
-**The truth:** You do not connect the WhatsApp Business API. That is Colly's job.
+Since Telegram requires no Meta approval, the moment you paste the Bot Token into Colly, the AI goes live.
 
-The reason: The WhatsApp Cloud API requires a Meta Business Account, a WABA setup, phone number verification, and template approval. This is technical, risky, and one mistake can get the number banned.
+1. Paste the token.
+2. Send a test message to the bot.
+3. If the AI replies, you are done. Hand the phone back to the owner.
 
-Colly's team handles this for every business. You do not.
-
-**What you do:**
-
-1. Make sure all products, FAQs, and tone are set up correctly.
-2. Tell the owner: "Everything is ready. Colly will connect your WhatsApp in the next 24 hours."
-3. Share the owner's name, business name, and WhatsApp number with Colly support.
-4. Notify Colly via WhatsApp or email that the business is ready for connection.
-
-**What Colly does:**
-
-1. Registers the business's WhatsApp number with the Meta Cloud API.
-2. Verifies the connection.
-3. Notifies you when live.
-4. You go back to the owner with the news.
-
-**What to tell the owner while waiting:**
-
-> "In the next day or so, Colly's team will connect your WhatsApp. You will not need to do anything. When it is ready, your customers can message you as usual and the AI will reply. I will come back and show you."
-
-**Timeline expectations:**
-
-- Day 1: You finish setup. Send handoff to Colly.
-- Day 1-2: Colly connects the number.
-- Day 2: You visit or call the owner to confirm the connection works.
-- Day 3 onward: Owner uses the system. You are on standby for the first week.
-
-**Do this now:**
-
-Write down Colly's support contact. Save it in your phone. When the business is ready for handoff, you send one message. Colly handles the rest.`,
+(WhatsApp is the only channel that requires a handoff to Colly support and a CAC).`,
       },
     ],
     questions: [
@@ -1685,71 +1537,9 @@ Make 20 calls or visits this week. That is how you find your first customer.`,
         title: "The Pitch",
         order: 1,
         durationMin: 6,
-        bodyMarkdown: `You have 3 minutes before the shop owner loses interest. Here is the exact pitch.
+        bodyMarkdown: `The pitch:
 
-**The setup:**
-
-Do not pitch standing. Sit down. Ask one question first.
-
-> "How do you handle WhatsApp messages from customers right now?"
-
-Let them talk. Most owners will complain. "I answer all day." "I miss messages at night." "I have 500 unread messages." Let them vent.
-
-**The turn:**
-
-When they finish, ask:
-
-> "Do you lose sales because you cannot reply fast enough?"
-
-Almost every owner says yes.
-
-**The pitch:**
-
-> "I set up an AI assistant for your WhatsApp. It replies to your customers 24/7. Answers prices, sends product photos, even negotiates within a limit you set. You keep your WhatsApp. I just add a dedicated AI line next to it. You only talk to the customers the AI cannot handle."
-
-Pause. Let it land.
-
-**The demo:**
-
-Open Colly on your phone. Show them:
-
-1. A conversation where the AI answered a price question
-2. The AI sending a product photo
-3. You tapping "Take Over" and replying manually
-4. The owner's dashboard showing sales, customers, messages
-
-Do not explain everything. Show 3-4 things. Let them ask questions.
-
-**The close:**
-
-> "I can set this up for you this week. First 5 days are free. If you like it, you pay ₦15,000 a month. If you do not like it, we stop. No contract."
-
-Do not push. Do not discount. State the price. Shut up. Let them respond.
-
-**When to pitch Telegram (now the default)**
-
-Telegram is our recommended channel for all businesses on the new launch. It has **zero SIM requirements**, **zero Meta fees**, and **2,000+ messages** included on the entry plan. Setup takes just 30 seconds with your own bot - no BSP onboarding, no waiting for Meta verification. Same AI, same dashboard, just faster setup and far more room to grow. For wholesalers, electronics sellers, or high-volume VIP customers, it's an especially strong fit.
-
-**What NOT to say:**
-
-- "This is the best AI on the market." (Every salesperson says this. Meaningless.)
-- "It uses DeepSeek and Groq and pgvector." (Nobody cares. Speak business, not tech.)
-- "You will definitely make more money." (Do not promise specific outcomes.)
-- "It can do anything you want." (It cannot. See Lesson 6 of Course 1.)
-
-**The 3 things every owner cares about:**
-
-1. Will I make more sales?
-2. Will I lose control of my WhatsApp?
-3. How much does it cost?
-
-Answer those three. Everything else is noise.
-
-**Do this now:**
-
-Practice the pitch out loud. Record yourself on your phone. Listen back. Cut everything that sounds like a salesperson. Keep only what a real business owner would say.
-
-Do it 5 times. By the 5th, you will sound natural.`,
+> 'I set up an AI assistant for your business on Telegram and your website. It replies 24/7. It answers prices, sends photos, and closes sales. Because it's Telegram and Web Chat, there is no CAC required, and we can set it up in 5 minutes. Right now, you are losing sales because you sleep at night. Colly fixes that instantly.'`,
       },
       {
         slug: "objections",
