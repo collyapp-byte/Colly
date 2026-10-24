@@ -241,6 +241,7 @@ function SwipeableRow({
   onDelete: (id: string) => void;
 }) {
   const [offset, setOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const offsetRef = useRef(0);
   const startX = useRef<number | null>(null);
   const startOffset = useRef(0);
@@ -255,6 +256,7 @@ function SwipeableRow({
     startX.current = event.touches[0].clientX;
     startOffset.current = offsetRef.current;
     moved.current = false;
+    setDragging(true);
   }
 
   function handleTouchMove(event: TouchEvent<HTMLAnchorElement>) {
@@ -271,6 +273,7 @@ function SwipeableRow({
   function handleTouchEnd() {
     if (startX.current === null) return;
     startX.current = null;
+    setDragging(false);
     setRowOffset(offsetRef.current < -SWIPE_WIDTH / 2 ? -SWIPE_WIDTH : 0);
   }
 
@@ -304,9 +307,10 @@ function SwipeableRow({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
         style={{
           transform: `translateX(${offset}px)`,
-          transition: startX.current === null ? "transform 150ms" : "none",
+          transition: dragging ? "none" : "transform 150ms",
         }}
         className="relative z-10 flex touch-pan-y items-start gap-3 bg-surface px-4 py-4 transition-colors hover:bg-gray-50 sm:px-6"
       >

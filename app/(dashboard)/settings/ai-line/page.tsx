@@ -12,7 +12,6 @@ import {
   PhoneCall,
   Send,
   Share2,
-  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/ui/back-button";

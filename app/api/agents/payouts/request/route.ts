@@ -31,26 +31,45 @@ export async function POST() {
     }
 
     const amountNaira = agent.commissionBalanceNaira;
+    const agentId = agent.id;
+    const recipientCode = agent.paystackRecipientCode;
     const reference = `AP-${Date.now()}-${randomUUID().slice(0, 6).toUpperCase()}`;
 
+    // Atomically claim the balance before touching Paystack. This prevents two
+    // concurrent requests from both reading the same balance and paying twice.
+    const claimed = await prisma.agent.updateMany({
+      where: {
+        id: agentId,
+        commissionBalanceNaira: { gte: amountNaira },
+      },
+      data: { commissionBalanceNaira: { decrement: amountNaira } },
+    });
+
+    if (claimed.count === 0) {
+      return badRequest("Insufficient balance");
+    }
+
+    async function restoreBalance() {
+      await prisma.agent.update({
+        where: { id: agentId },
+        data: { commissionBalanceNaira: { increment: amountNaira } },
+      });
+    }
+
     // Paystack is the point of failure: network errors throw, and a 200 with
-    // `status: false` means the transfer was rejected. In both cases no money
-    // moved, so we must not deduct the agent's balance or record a payout —
-    // and we restore the balance to be safe (idempotent if it never changed).
+    // `status: false` means the transfer was rejected. The balance was already
+    // claimed above, so every failure path restores it exactly once.
     let transfer: { status?: string } | null = null;
     try {
       transfer = await initiateTransfer({
         amountKobo: amountNaira * 100,
-        recipient: agent.paystackRecipientCode,
+        recipient: recipientCode,
         reason: "Colly Agent Commission",
         reference,
       });
     } catch (error) {
       console.error("[POST /api/agents/payouts/request] transfer failed:", error);
-      await prisma.agent.update({
-        where: { id: agent.id },
-        data: { commissionBalanceNaira: { increment: amountNaira } },
-      });
+      await restoreBalance();
       return Response.json(
         { error: "Payout failed. Your balance has been restored." },
         { status: 502 },
@@ -58,33 +77,27 @@ export async function POST() {
     }
 
     if (!transfer || (transfer.status && transfer.status !== "success")) {
-      await prisma.agent.update({
-        where: { id: agent.id },
-        data: { commissionBalanceNaira: { increment: amountNaira } },
-      });
+      await restoreBalance();
       return Response.json(
         { error: "Payout failed. Your balance has been restored." },
         { status: 502 },
       );
     }
 
-    // Deduct the amount and record the payout.
-    await prisma.$transaction(async (tx) => {
-      await tx.agent.update({
-        where: { id: agent.id },
-        data: {
-          commissionBalanceNaira: { decrement: amountNaira },
-        },
-      });
+    // The balance was already deducted by the atomic claim; record the payout.
+    await prisma.agentPayout.create({
+      data: {
+        agentId: agentId,
+        amountNaira,
+        status: "success",
+        reference,
+      },
+    });
 
-      await tx.agentPayout.create({
-        data: {
-          agentId: agent.id,
-          amountNaira,
-          status: "success",
-          reference,
-        },
-      });
+    console.log("[payout] completed", {
+      agentId: agentId,
+      amountNaira,
+      reference,
     });
 
     return Response.json({

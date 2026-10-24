@@ -144,7 +144,7 @@ export function serializeBusiness(business: BusinessRecord): Business {
     telegramBotUsername: business.telegramBotUsername,
     telegramConnected: Boolean(business.telegramBotToken),
     discordConnected: Boolean(business.discordBotToken),
-    discordGuildId: (business as any).discordGuildId ?? null,
+    discordGuildId: business.discordGuildId ?? null,
     ownerTelegramChatId: business.ownerTelegramChatId,
     referredByAgentId: business.referredByAgentId,
     selectedPlan: business.selectedPlan ?? null,

@@ -68,6 +68,19 @@ export async function POST(request: Request) {
       return Response.json({ ok: true });
     }
 
+    // The connect route registers this exact value as Telegram's secret_token.
+    // Reject spoofed calls that know the bot token in the URL but not the header.
+    const telegramVerifyToken = Buffer.from(
+      business.telegramBotToken,
+      "utf8",
+    ).toString("base64url");
+    const providedVerifyToken = request.headers.get(
+      "x-telegram-bot-api-secret-token",
+    );
+    if (providedVerifyToken !== telegramVerifyToken) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
     // Owner-linking command. "/startowner" (or "/linkowner") claims this chat
     // as the owner's personal alert inbox. Intercepted BEFORE the AI engine so
     // it never reaches DeepSeek, and never creates a customer conversation.

@@ -8,22 +8,9 @@ import { signup } from "@/lib/auth-actions";
 import { INITIAL_AUTH_STATE, emailVerificationMessage } from "@/lib/auth-form";
 import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
 import { createClient } from "@/lib/supabase/client";
-import type { Channel } from "@/lib/business";
 import { AuthAlert, AuthField } from "@/components/auth/auth-form";
 import { GoogleButton } from "@/components/auth/google-button";
 import { Button } from "@/components/ui/button";
-
-const TELEGRAM_OPTION = {
-  value: "TELEGRAM" as Channel,
-  title: "Telegram",
-  badge: "Instant Setup",
-  bullets: [
-    "Shared message limit across all channels",
-    "No SIM card required",
-    "Instant self-serve setup",
-    "Works with Discord & Web Chat",
-  ],
-};
 
 /**
  * The business half of the signup flow: profile, channel choice and password.
@@ -46,7 +33,6 @@ export function BusinessSignupForm({
     INITIAL_AUTH_STATE,
   );
   const [showPassword, setShowPassword] = useState(false);
-  const [channel, setChannel] = useState<Channel>("TELEGRAM");
 
   // Google sign-ups land here already authenticated by Supabase. In that case
   // the email and password fields are pointless (and a password would never be

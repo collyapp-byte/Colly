@@ -71,7 +71,10 @@ export default function AgentWalletPage() {
   }, [router]);
 
   useEffect(() => {
-    void loadWallet();
+    const timer = setTimeout(() => {
+      void loadWallet();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [loadWallet]);
 
   async function handleSaveBankDetails(e: React.FormEvent) {

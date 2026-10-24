@@ -10,7 +10,10 @@ export function FounderAndCTA() {
           </div>
           <h2 className="font-display text-2xl font-bold text-gray-900">Built by Bryan Ifeanyi</h2>
           <p className="mt-4 text-lg text-gray-600 italic leading-relaxed">
-            "As a Nigerian CS student, I got tired of watching brilliant businesses lose money simply because they couldn't reply to messages fast enough. We built Colly so you can keep your personal phone, add a dedicated AI line, and never lose a sale again."
+            &quot;As a Nigerian CS student, I got tired of watching brilliant
+            businesses lose money simply because they couldn&apos;t reply to
+            messages fast enough. We built Colly so you can keep your personal
+            phone, add a dedicated AI line, and never lose a sale again.&quot;
           </p>
         </div>
       </section>

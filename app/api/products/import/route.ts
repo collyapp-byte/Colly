@@ -28,6 +28,20 @@ export async function POST(request: Request) {
       return Response.json({ error: "CSV file is required" }, { status: 400 });
     }
 
+    if (file.size > 2 * 1024 * 1024) {
+      return Response.json({ error: "File too large" }, { status: 400 });
+    }
+
+    if (
+      file.type !== "text/csv" &&
+      file.type !== "application/vnd.ms-excel"
+    ) {
+      return Response.json(
+        { error: "Only CSV files are allowed" },
+        { status: 400 },
+      );
+    }
+
     const csvText = await file.text();
     const parsed = Papa.parse<CsvRow>(csvText, {
       header: true,

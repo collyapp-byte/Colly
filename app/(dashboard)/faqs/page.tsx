@@ -133,18 +133,22 @@ export default function FaqsPage() {
   // "Not applicable" is permanent for this browser, so remember the hidden
   // presets across visits without needing a database column.
   useEffect(() => {
+    let ids: string[] | null = null;
     try {
       const raw = window.localStorage.getItem(DISMISSED_PRESETS_KEY);
-      if (!raw) return;
-      const parsed: unknown = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        setDismissedPresets(
-          parsed.filter((id): id is string => typeof id === "string"),
-        );
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          ids = parsed.filter((id): id is string => typeof id === "string");
+        }
       }
     } catch {
       // Ignore malformed or unavailable storage.
     }
+
+    if (!ids) return;
+    const timer = setTimeout(() => setDismissedPresets(ids), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
