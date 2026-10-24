@@ -62,7 +62,7 @@ export async function POST(
 // DELETE /api/conversations/[id]/takeover
 // Hands the conversation back to the AI.
 export async function DELETE(
-  _request: Request,
+  request: Request,
   context: RouteContext<"/api/conversations/[id]/takeover">,
 ) {
   try {
@@ -83,9 +83,20 @@ export async function DELETE(
       return notFound();
     }
 
+    // Optional per-chat context captured when the owner resumes the AI.
+    const body = (await request.json().catch(() => null)) as {
+      aiContext?: unknown;
+    } | null;
+    const aiContext =
+      typeof body?.aiContext === "string" ? body.aiContext.trim() : undefined;
+
     await prisma.conversation.update({
       where: { id: conversation.id },
-      data: { pausedUntil: null, status: "AI_HANDLING" },
+      data: {
+        pausedUntil: null,
+        status: "AI_HANDLING",
+        ...(aiContext !== undefined ? { aiContext: aiContext || null } : {}),
+      },
     });
 
     return Response.json({ pausedUntil: null });

@@ -138,23 +138,40 @@ export async function POST(request: Request) {
     const activeConversation = await prisma.conversation.findFirst({
       where: { businessId: business.id, customerId: customer.id },
       orderBy: { createdAt: "desc" },
-      select: { id: true, status: true },
+      select: { id: true, status: true, updatedAt: true },
     });
 
-    if (
-      activeConversation &&
-      (activeConversation.status === "ESCALATED" ||
-        activeConversation.status === "HUMAN_TAKEOVER")
-    ) {
-      await prisma.message.create({
-        data: {
-          businessId: business.id,
-          conversationId: activeConversation.id,
-          sender: "customer",
-          content: messageText,
-        },
-      });
-      return Response.json({ ok: true });
+    if (activeConversation) {
+      let conversationStatus = activeConversation.status;
+
+      // 24-hour auto-reactivation: a human takeover older than a day hands the
+      // conversation back to the AI. Shorter takeovers stay silent.
+      if (conversationStatus === "HUMAN_TAKEOVER") {
+        const takeoverAgeMs =
+          Date.now() - new Date(activeConversation.updatedAt).getTime();
+        if (takeoverAgeMs > 24 * 60 * 60 * 1000) {
+          await prisma.conversation.update({
+            where: { id: activeConversation.id },
+            data: { status: "AI_HANDLING", pausedUntil: null },
+          });
+          conversationStatus = "AI_HANDLING";
+        }
+      }
+
+      if (
+        conversationStatus === "ESCALATED" ||
+        conversationStatus === "HUMAN_TAKEOVER"
+      ) {
+        await prisma.message.create({
+          data: {
+            businessId: business.id,
+            conversationId: activeConversation.id,
+            sender: "customer",
+            content: messageText,
+          },
+        });
+        return Response.json({ ok: true });
+      }
     }
 
     const result = await handleIncomingMessage({
@@ -166,14 +183,15 @@ export async function POST(request: Request) {
     // The engine always saves the customer's message first (so the owner can
     // reply manually from the dashboard). When replied is false the AI is
     // gated off — human takeover, cap hit, expired plan — so we stay silent.
-    if (result.blocked || !result.reply) {
+    const reply = result.reply?.trim();
+    if (result.blocked || !reply || reply === "[SILENCE]") {
       return Response.json({ ok: true });
     }
 
     await sendReplyToTelegram({
       botToken: business.telegramBotToken,
       chatId: telegramChatId,
-      reply: result.reply,
+      reply,
     });
 
     return Response.json({ ok: true });

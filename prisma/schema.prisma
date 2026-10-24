@@ -283,6 +283,11 @@ model Conversation {
   /// AI kill switch: "AI_HANDLING" | "ESCALATED" | "HUMAN_TAKEOVER".
   status     String   @default("AI_HANDLING")
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  /// Per-chat instructions from the owner for the AI (for example a discount
+  /// they promised this specific customer). Injected into the system prompt.
+  aiContext String? @db.Text
 
   /// Human takeover. null means the AI answers automatically; a future
   /// timestamp means an agent has taken over and the AI stays quiet until then.

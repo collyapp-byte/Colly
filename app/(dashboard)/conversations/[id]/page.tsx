@@ -171,12 +171,20 @@ function ConversationDetail() {
   }
 
   async function handleResumeAi() {
+    const aiContext = window.prompt(
+      "Optional: Tell the AI what to do for this customer (e.g., 'I gave him a 10% discount').",
+    );
+    // Cancelling the prompt leaves the human takeover in place.
+    if (aiContext === null) return;
+
     setActionError(null);
     setBusy(true);
 
     try {
       const res = await fetch(`/api/conversations/${id}/takeover`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aiContext: aiContext.trim() }),
       });
       const data = (await res.json()) as {
         pausedUntil?: string | null;

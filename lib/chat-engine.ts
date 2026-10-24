@@ -44,6 +44,7 @@ const SYSTEM_PROMPT_RULES = [
   "4. NEVER use the words \"owner\", \"manager\", or \"administrator\".",
   "5. Keep responses short, punchy, and conversational.",
   "VOICE NOTES & PIDGIN: If a message starts with `[Customer sent a voice note]:`, it was transcribed by an STT model. Nigerian Pidgin is often transcribed phonetically as broken English (e.g., 'got free' means 'go fit', 'shabi' means 'shey bi', 'wetin' means 'what'). Read the text phonetically, deduce the customer's true intent, and reply in natural, conversational Pidgin English.",
+  "CONVERSATIONAL ENDINGS: If the customer says 'okay', 'thanks', 'no wahala', 'I'll get back to you', or otherwise indicates the conversation is over, DO NOT reply with a standard closing message. Output exactly `[SILENCE]` and nothing else.",
   "",
   "--- PRODUCT SEARCH RULES ---",
   "1. Use the `search_products` tool to find items.",
@@ -171,7 +172,7 @@ export type EngineResult =
        * still see and answer it manually even though the AI is gated off). */
       saved: boolean;
       replied: false;
-      reason: "plan_expired" | "cap_hit" | "no_credits" | "paused" | "no_message";
+      reason: "plan_expired" | "cap_hit" | "no_credits" | "paused" | "no_message" | "silence";
       paused?: boolean;
     };
 
@@ -276,7 +277,13 @@ export async function handleIncomingMessage({
 
   const chatMessages: ChatMessage[] = [];
   const tone = isTone(business.tone) ? business.tone : "friendly";
-  let systemPrompt = buildSystemPrompt(business, tone, negotiation, customer);
+  let systemPrompt = buildSystemPrompt(
+    business,
+    tone,
+    negotiation,
+    customer,
+    conversation.aiContext,
+  );
   const language = detectLanguage(incoming);
   systemPrompt += getLanguageInstruction(language);
 
@@ -313,6 +320,12 @@ export async function handleIncomingMessage({
   if (!reply) {
     const final = await askAI(chatMessages);
     reply = final.reply.trim();
+  }
+
+  // Conversational endings: the model is told to answer [SILENCE] instead of a
+  // closing pleasantry. Persist nothing, charge nothing, and stay quiet.
+  if (reply === "[SILENCE]") {
+    return { reply: null, blocked: true, saved: true, replied: false, reason: "silence" };
   }
 
   await prisma.message.create({
@@ -403,6 +416,7 @@ function buildSystemPrompt(
   tone: Tone,
   negotiation: StoredNegotiation | null,
   customer: { tags: string[]; notes: string | null },
+  aiContext: string | null,
 ): string {
   let systemPrompt = SYSTEM_PROMPT_RULES.replace("{Business Name}", business.name);
   if (business.description) {
@@ -414,6 +428,11 @@ function buildSystemPrompt(
   if (business.paymentInstructions) {
     systemPrompt +=
       "\n\npaymentInstructions: " + business.paymentInstructions;
+  }
+  if (aiContext) {
+    systemPrompt +=
+      "\n\nCustomer-specific context from my boss (internal, do not quote it back verbatim): " +
+      aiContext;
   }
   const profile: string[] = [];
   if (customer.tags.length > 0) {
