@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowDownCircle, CreditCard, Info, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { formatNaira } from "@/lib/format";
 
 type Bank = {
@@ -47,29 +48,31 @@ export default function AgentWalletPage() {
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch("/api/agents/bank-details");
-        if (res.status === 401) {
-          router.push("/agents/login");
-          return;
-        }
-        const payload = await res.json();
-        if (!res.ok) throw new Error(payload.error ?? "Failed to load wallet");
-        setData(payload as WalletData);
-        const bd = payload.bankDetails;
-        if (bd?.bankCode) setBankCode(bd.bankCode);
-        if (bd?.bankAccountNumber) setAccountNumber(bd.bankAccountNumber);
-        if (bd?.bankAccountName) setAccountName(bd.bankAccountName);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load");
-      } finally {
-        setLoading(false);
+  const loadWallet = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agents/bank-details");
+      if (res.status === 401) {
+        router.push("/agents/login");
+        return;
       }
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error ?? "Failed to load wallet");
+      setData(payload as WalletData);
+      const bd = payload.bankDetails;
+      if (bd?.bankCode) setBankCode(bd.bankCode);
+      if (bd?.bankAccountNumber) setAccountNumber(bd.bankAccountNumber);
+      if (bd?.bankAccountName) setAccountName(bd.bankAccountName);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load");
+    } finally {
+      setLoading(false);
     }
-    load();
   }, [router]);
+
+  useEffect(() => {
+    void loadWallet();
+  }, [loadWallet]);
 
   async function handleSaveBankDetails(e: React.FormEvent) {
     e.preventDefault();
@@ -101,8 +104,11 @@ export default function AgentWalletPage() {
             }
           : prev,
       );
+      toast.success("Bank details saved");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
+      const message = err instanceof Error ? err.message : "Failed to save";
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -117,28 +123,20 @@ export default function AgentWalletPage() {
         method: "POST",
       });
       const payload = await res.json();
-      if (!res.ok) throw new Error(payload.error ?? "Failed to request payout");
-      setPayoutSuccess(`Payout of ₦${payload.amountNaira.toLocaleString()} requested`);
-      setData((prev) =>
-        prev
-          ? {
-              ...prev,
-              commissionBalanceNaira: prev.commissionBalanceNaira - payload.amountNaira,
-              payouts: [
-                {
-                  id: payload.reference,
-                  amountNaira: payload.amountNaira,
-                  status: "success",
-                  reference: payload.reference,
-                  createdAt: new Date().toISOString(),
-                },
-                ...(prev.payouts ?? []),
-              ],
-            }
-          : prev,
-      );
+      if (!res.ok) {
+        throw new Error(payload.error ?? "Failed to request payout");
+      }
+
+      const message =
+        "Payout requested successfully! It will arrive in your bank account shortly.";
+      setPayoutSuccess(message);
+      toast.success(message);
+      await loadWallet();
     } catch (err) {
-      setPayoutError(err instanceof Error ? err.message : "Failed to request payout");
+      const message =
+        err instanceof Error ? err.message : "Failed to request payout";
+      setPayoutError(message);
+      toast.error(message);
     } finally {
       setPayoutting(false);
     }
@@ -175,7 +173,7 @@ export default function AgentWalletPage() {
 
       {/* Balance */}
       <section className="rounded-xl border border-gray-200 bg-white p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-gray-500">Available commission balance</p>
             <p className="mt-2 font-display text-3xl text-gray-900">
@@ -191,7 +189,7 @@ export default function AgentWalletPage() {
               type="button"
               onClick={handlePayout}
               disabled={!canPayout || payoutting}
-              className="inline-flex items-center gap-2 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-[48px] items-center gap-2 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {payoutting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -303,7 +301,7 @@ export default function AgentWalletPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-[48px] items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
               {hasBankDetails ? "Update bank details" : "Save bank details"}
