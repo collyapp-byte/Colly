@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function FounderAndCTA() {
   return (
@@ -18,10 +19,18 @@ export function FounderAndCTA() {
         </div>
       </section>
 
-      <section className="bg-white py-20 text-center">
-        <div className="mx-auto max-w-2xl px-4">
-          <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">Ready to stop losing sales?</h2>
-          <p className="mt-4 text-gray-600 mb-8">Set up your AI receptionist in 5 minutes. 50 AI messages free for 7 days. No card required.</p>
+      <section className="relative overflow-hidden py-20 text-center">
+        <Image
+          src="/a man chatting night time h.jpg"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gray-900/70" aria-hidden />
+        <div className="relative z-10 mx-auto max-w-2xl px-4">
+          <h2 className="font-display text-3xl font-bold text-white sm:text-4xl">Ready to stop losing sales?</h2>
+          <p className="mt-4 mb-8 text-gray-200">Set up your AI receptionist in 5 minutes. 50 AI messages free for 7 days. No card required.</p>
           <Link
             href="/signup?role=business"
             className="inline-block rounded-lg bg-[#FF6600] px-8 py-4 text-base font-semibold text-white transition-all hover:scale-105 hover:bg-[#E65C00] active:scale-95 shadow-lg shadow-orange-500/20"

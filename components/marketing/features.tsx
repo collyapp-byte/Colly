@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   AudioLines,
   BellRing,
@@ -6,10 +7,6 @@ import {
   Tag,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
-
-const WAVEFORM_HEIGHTS = [
-  14, 28, 20, 40, 24, 52, 34, 60, 30, 44, 18, 36, 22, 48, 26, 16,
-];
 
 export function Features() {
   return (
@@ -28,8 +25,8 @@ export function Features() {
         <div className="grid gap-6 md:grid-cols-3">
           {/* Card 1 — spans two columns */}
           <div className="rounded-3xl bg-[#1E3A8A] p-8 text-white md:col-span-2">
-            <div className="flex h-full flex-col justify-between gap-8 sm:flex-row sm:items-end">
-              <div className="max-w-sm">
+            <div className="flex h-full flex-col gap-8 md:flex-row md:items-center">
+              <div className="md:w-1/2">
                 <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white">
                   <AudioLines className="h-5 w-5" aria-hidden />
                 </span>
@@ -43,22 +40,14 @@ export function Features() {
                 </p>
               </div>
 
-              <div className="w-full max-w-[16rem] rounded-2xl bg-white/10 p-4">
-                <div className="flex items-center justify-between text-blue-100">
-                  <span className="text-[11px] font-medium uppercase tracking-wider">
-                    Voice note
-                  </span>
-                  <span className="text-[11px]">0:08</span>
-                </div>
-                <div className="mt-4 flex h-16 items-end gap-1.5">
-                  {WAVEFORM_HEIGHTS.map((height, index) => (
-                    <span
-                      key={index}
-                      className="w-1.5 rounded-full bg-white/80"
-                      style={{ height }}
-                    />
-                  ))}
-                </div>
+              <div className="md:w-1/2">
+                <Image
+                  src="/a screen with icons h.jpg"
+                  alt="Colly AI understanding voice notes and Pidgin"
+                  width={700}
+                  height={500}
+                  className="rounded-xl object-cover w-full h-[240px] md:h-[280px]"
+                />
               </div>
             </div>
           </div>

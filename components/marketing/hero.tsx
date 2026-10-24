@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, Send } from "lucide-react";
+import Image from "next/image";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export function Hero() {
@@ -48,54 +48,16 @@ export function Hero() {
           </p>
         </ScrollReveal>
 
-        {/* Right column: CSS-only chat mockup */}
-        <ScrollReveal delay={0.15} className="relative mx-auto w-full max-w-sm">
-          <div className="absolute -left-2 bottom-16 z-10 flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-xl sm:-left-10">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
-              <Check className="h-5 w-5" aria-hidden />
-            </span>
-            <div>
-              <p className="text-xs text-gray-500">Sale Closed</p>
-              <p className="text-sm font-bold text-gray-900">₦15,000</p>
-            </div>
-          </div>
-
-          <div className="relative overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl">
-            <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-5 py-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF6600] text-sm font-bold text-white">
-                C
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Colly AI</p>
-                <p className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                  Online now
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-4 bg-white px-5 py-6">
-              <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-gray-100 px-4 py-3 text-sm text-gray-700">
-                How much is the Samsung Galaxy A15?
-              </div>
-              <div className="ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-[#FF6600] px-4 py-3 text-sm text-white">
-                The Samsung Galaxy A15 is ₦185,000. It has 128GB storage, 4GB
-                RAM, and a 50MP camera. Want to see pictures?
-              </div>
-              <div className="max-w-[70%] rounded-2xl rounded-tl-sm bg-gray-100 px-4 py-3 text-sm text-gray-700">
-                Yes please
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 border-t border-gray-100 px-4 py-3">
-              <div className="flex-1 rounded-full bg-gray-100 px-4 py-2 text-xs text-gray-400">
-                Type a message...
-              </div>
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FF6600] text-white">
-                <Send className="h-4 w-4" aria-hidden />
-              </span>
-            </div>
-          </div>
+        {/* Right column: customer conversation image */}
+        <ScrollReveal delay={0.15} className="relative w-full">
+          <Image
+            src="/man chatting daytime v.jpg"
+            alt="Business owner chatting with a customer through Colly AI"
+            width={900}
+            height={700}
+            priority
+            className="rounded-3xl shadow-2xl object-cover w-full h-[400px] lg:h-[500px] object-center border border-gray-100"
+          />
         </ScrollReveal>
       </div>
     </section>

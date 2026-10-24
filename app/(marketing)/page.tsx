@@ -1,4 +1,5 @@
 import { Hero } from "@/components/marketing/hero";
+import { ProblemSection } from "@/components/marketing/problem-section";
 import { Features } from "@/components/marketing/features";
 import { HowItWorks } from "@/components/marketing/how-it-works";
 import { Pricing } from "@/components/marketing/pricing";
@@ -9,6 +10,7 @@ export default function MarketingPage() {
   return (
     <main>
       <Hero />
+      <ProblemSection />
       <Features />
       <HowItWorks />
       <Pricing />
