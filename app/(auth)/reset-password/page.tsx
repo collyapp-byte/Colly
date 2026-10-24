@@ -20,7 +20,6 @@ function ResetPasswordContent() {
   const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function handleVerify(event: FormEvent<HTMLFormElement>) {
@@ -61,10 +60,6 @@ function ResetPasswordContent() {
 
     if (password.length < 8) {
       toast.error("Password must be at least 8 characters.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match.");
       return;
     }
 
@@ -139,7 +134,7 @@ function ResetPasswordContent() {
             loading={saving}
             className="w-full"
           >
-            Verify code
+            Verify Code
           </Button>
 
           <Link
@@ -168,30 +163,13 @@ function ResetPasswordContent() {
             />
           </div>
 
-          <div>
-            <label htmlFor="confirm-password" className={LABEL_CLASS}>
-              Confirm password
-            </label>
-            <input
-              id="confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              placeholder="Re-enter your new password"
-              autoComplete="new-password"
-              minLength={8}
-              required
-              className={INPUT_CLASS}
-            />
-          </div>
-
           <Button
             type="submit"
             variant="primary"
             loading={saving}
             className="w-full"
           >
-            Update password
+            Save Password
           </Button>
         </form>
       )}

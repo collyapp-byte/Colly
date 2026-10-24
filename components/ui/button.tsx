@@ -27,14 +27,14 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const busy = isLoading || loading;
 
     const baseStyles =
-      "inline-flex min-h-[44px] items-center justify-center rounded-lg font-semibold transition-all duration-150 active:scale-[0.96] disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-4 focus:ring-[#FF6600]/30";
+      "inline-flex min-h-[44px] items-center justify-center rounded-lg font-semibold transition-all duration-150 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-4 focus:ring-[#FF6600]/30";
 
     const sizeStyles =
       size === "sm" ? "px-3 py-1.5 text-[13px]" : "px-6 py-3";
 
     const variants = {
       primary:
-        "bg-[#FF6600] text-white shadow-lg shadow-orange-500/30 hover:bg-[#E65C00] hover:shadow-orange-500/50",
+        "bg-[#FF6600] text-white shadow-lg shadow-orange-500/30 hover:bg-[#E65C00] hover:shadow-orange-500/50 active:shadow-none",
       secondary:
         "bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300",
       danger:

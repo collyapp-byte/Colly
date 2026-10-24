@@ -55,6 +55,13 @@ textarea {
   min-height: 44px;
 }
 
+/* Global pressed-state fallback for links/buttons without Tailwind utilities. */
+a:active,
+button:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
+}
+
 /* ---------------------------------------------------------------------------
    Branded loading animation
 ---------------------------------------------------------------------------- */

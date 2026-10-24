@@ -86,7 +86,7 @@ function BusinessLoginForm() {
         <div className="text-right">
           <Link
             href="/forgot-password"
-            className="text-sm font-medium text-colly transition-colors hover:text-colly-hover"
+            className="inline-block text-sm font-medium text-colly transition-all hover:text-colly-hover active:scale-95"
           >
             Forgot password?
           </Link>
@@ -103,7 +103,7 @@ function BusinessLoginForm() {
         New to Colly?{" "}
         <Link
           href="/signup?role=business"
-          className="font-medium text-colly transition-colors hover:text-colly-hover"
+          className="inline-block font-medium text-colly transition-all hover:text-colly-hover active:scale-95"
         >
           Create an account
         </Link>
@@ -179,7 +179,7 @@ function AgentLoginForm() {
         <div className="text-right">
           <Link
             href="/forgot-password"
-            className="text-sm font-medium text-colly transition-colors hover:text-colly-hover"
+            className="inline-block text-sm font-medium text-colly transition-all hover:text-colly-hover active:scale-95"
           >
             Forgot password?
           </Link>
@@ -196,7 +196,7 @@ function AgentLoginForm() {
         Not an agent yet?{" "}
         <Link
           href="/signup?role=agent"
-          className="font-medium text-colly transition-colors hover:text-colly-hover"
+          className="inline-block font-medium text-colly transition-all hover:text-colly-hover active:scale-95"
         >
           Become an agent
         </Link>
