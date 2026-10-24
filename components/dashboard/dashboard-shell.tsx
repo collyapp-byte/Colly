@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { AlertTriangle, Bell, Settings, PanelLeft } from "lucide-react";
 import { Sidebar } from "./sidebar";
+import { MobileNav } from "./mobile-nav";
 import { usePathname } from "next/navigation";
 import { PlanChip } from "./plan-chip";
 
@@ -179,10 +180,11 @@ export function DashboardShell({
 
           {/* Content card - frosted glass, rounded, below the top bar */}
           <main className="flex-1 rounded-none bg-white/60 backdrop-blur-md shadow-none md:mt-3 md:rounded-(--card-radius) md:shadow-(--card-shadow) md:overflow-auto md:min-h-0">
-            <div className="w-full p-4 md:p-6">{children}</div>
+            <div className="w-full p-4 pb-20 md:p-6 md:pb-8">{children}</div>
           </main>
         </div>
       </div>
+      <MobileNav />
     </div>
   );
 }

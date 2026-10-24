@@ -43,6 +43,18 @@ body {
   color: #111827;
 }
 
+/* Mobile bottom navigation respects the device safe area. */
+.pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+/* Touch-friendly form controls (Apple/Google minimum target height). */
+input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+select,
+textarea {
+  min-height: 44px;
+}
+
 /* ---------------------------------------------------------------------------
    Branded loading animation
 ---------------------------------------------------------------------------- */
