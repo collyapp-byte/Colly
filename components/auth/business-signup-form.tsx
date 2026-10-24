@@ -101,6 +101,12 @@ export function BusinessSignupForm({
     }
   }
 
+  async function handleSwitchAccount() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.reload();
+  }
+
   // Email confirmation required: replace the form with a "check your email"
   // screen instead of sending the user to the dashboard.
   if (state.requiresEmailVerification || state.notice) {
@@ -138,6 +144,15 @@ export function BusinessSignupForm({
             }. Just tell us about your business.`
           : "Set Colly up for your business. It takes a minute."}
       </p>
+      {isOAuth && (
+        <button
+          type="button"
+          onClick={() => void handleSwitchAccount()}
+          className="mt-2 text-sm font-medium text-red-600 transition-colors hover:text-red-700"
+        >
+          Not you? Sign out and use a different email
+        </button>
+      )}
 
       {!isOAuth ? (
         <>

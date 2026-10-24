@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { NIGERIAN_STATES } from "@/lib/nigerian-states";
 import { isPlanTierName } from "@/lib/plans";
 import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
+import { createClient } from "@/lib/supabase/client";
 import { AuthAlert } from "@/components/auth/auth-form";
 import { BusinessSignupForm } from "@/components/auth/business-signup-form";
 import { Button } from "@/components/ui/button";
@@ -229,6 +230,16 @@ function AgentSignupForm() {
 function SignupContent() {
   const searchParams = useSearchParams();
   const isAgentSignup = searchParams.get("role") === "agent";
+  const isFresh = searchParams.get("fresh") === "true";
+
+  // "Create an account" from login carries ?fresh=true. Clear any ghost
+  // Supabase session so the signup form cannot inherit a previous Google user.
+  useEffect(() => {
+    if (!isFresh) return;
+    const supabase = createClient();
+    void supabase.auth.signOut();
+  }, [isFresh]);
+
   // `?ref=AG-0001` from an agent's referral link; blank on a normal signup.
   const referredBy = (searchParams.get("ref") ?? "").trim();
   // `?plan=green` from the pricing page: the tier the customer picked before

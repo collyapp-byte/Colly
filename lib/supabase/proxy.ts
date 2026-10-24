@@ -28,9 +28,11 @@ const PUBLIC_PATHS = [
   // Public website chat widget -- embedded on customer sites, so it must open
   // for signed-out visitors (and inside an iframe).
   "/chat",
-  "/verify",
-  "/verify-email",
-  "/find-an-agent",
+   "/verify",
+   "/verify-email",
+   "/forgot-password",
+   "/reset-password",
+   "/find-an-agent",
   "/privacy",
   "/terms",
   "/account/delete",

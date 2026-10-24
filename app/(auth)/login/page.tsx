@@ -4,13 +4,23 @@ import Link from "next/link";
 import { Suspense, useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
-import { login, logout } from "@/lib/auth-actions";
-import { agentLogin, agentLogout } from "@/lib/agent-auth-actions";
+import { login } from "@/lib/auth-actions";
+import { agentLogin } from "@/lib/agent-auth-actions";
+import { createClient } from "@/lib/supabase/client";
 import { INITIAL_AUTH_STATE } from "@/lib/auth-form";
 import { AuthAlert, AuthField } from "@/components/auth/auth-form";
 import { GoogleButton } from "@/components/auth/google-button";
 import { RoleChooser, type AuthRole } from "@/components/auth/role-chooser";
 import { Button } from "@/components/ui/button";
+
+async function hardSignOut() {
+  try {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+  } finally {
+    window.location.href = "/login";
+  }
+}
 
 type View = "chooser" | AuthRole;
 
@@ -102,21 +112,22 @@ function BusinessLoginForm() {
       <p className="mt-6 text-sm text-gray-500">
         New to Colly?{" "}
         <Link
-          href="/signup?role=business"
+          href="/signup?fresh=true"
           className="inline-block font-medium text-colly transition-all hover:text-colly-hover active:scale-95"
         >
           Create an account
         </Link>
       </p>
 
-      <form action={logout} className="mt-4 border-t border-gray-200 pt-4 text-center">
+      <div className="mt-4 border-t border-gray-200 pt-4 text-center">
         <button
-          type="submit"
+          type="button"
+          onClick={() => void hardSignOut()}
           className="text-sm font-medium text-colly transition-colors hover:text-colly-hover"
         >
           Not you? Sign out
         </button>
-      </form>
+      </div>
     </div>
   );
 }
@@ -202,17 +213,15 @@ function AgentLoginForm() {
         </Link>
       </p>
 
-      <form
-        action={agentLogout}
-        className="mt-4 border-t border-gray-200 pt-4 text-center"
-      >
+      <div className="mt-4 border-t border-gray-200 pt-4 text-center">
         <button
-          type="submit"
+          type="button"
+          onClick={() => void hardSignOut()}
           className="text-sm font-medium text-colly transition-colors hover:text-colly-hover"
         >
           Not you? Sign out
         </button>
-      </form>
+      </div>
     </div>
   );
 }
