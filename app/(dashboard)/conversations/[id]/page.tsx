@@ -391,7 +391,7 @@ function ConversationDetail() {
           {showComposer && (
             <form
               onSubmit={handleSend}
-              className="mt-4 rounded-lg border border-gray-200 bg-surface p-3 sm:p-4"
+              className="sticky bottom-16 z-10 mt-4 rounded-lg border border-gray-200 bg-surface p-3 sm:p-4"
             >
               <label htmlFor="agent-reply" className="sr-only">
                 Reply as an agent

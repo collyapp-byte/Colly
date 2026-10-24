@@ -75,11 +75,11 @@ export default async function CollyAIPage() {
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+          <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-medium text-green-700 whitespace-nowrap">
             Active
           </span>
           {ownerAlertsActive && (
-            <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+            <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-medium text-green-700 whitespace-nowrap">
               Owner Alerts: Active
             </span>
           )}
@@ -106,7 +106,7 @@ export default async function CollyAIPage() {
         </Link>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* AI Persona */}
         <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h2 className="font-display text-base text-gray-900">AI Persona</h2>
@@ -133,7 +133,7 @@ export default async function CollyAIPage() {
           <h2 className="font-display text-base text-gray-900">
             Connected Apps
           </h2>
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3">
               <div>
                 <p className="text-sm font-medium text-gray-900">Telegram</p>
@@ -141,11 +141,11 @@ export default async function CollyAIPage() {
               </div>
               <div className="flex items-center gap-2">
                 {telegramConnected ? (
-                  <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[11px] font-medium text-green-700">
+                  <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[11px] font-medium text-green-700 whitespace-nowrap">
                     Connected
                   </span>
                 ) : (
-                  <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600">
+                  <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600 whitespace-nowrap">
                     Disconnected
                   </span>
                 )}
@@ -170,11 +170,11 @@ export default async function CollyAIPage() {
               </div>
               <div className="flex items-center gap-2">
                 {discordConnected ? (
-                  <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[11px] font-medium text-green-700">
+                  <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[11px] font-medium text-green-700 whitespace-nowrap">
                     Connected
                   </span>
                 ) : (
-                  <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600">
+                  <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600 whitespace-nowrap">
                     Disconnected
                   </span>
                 )}
@@ -194,7 +194,7 @@ export default async function CollyAIPage() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[11px] font-medium text-green-700">
+                <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[11px] font-medium text-green-700 whitespace-nowrap">
                   Active
                 </span>
                 <Link
@@ -211,7 +211,7 @@ export default async function CollyAIPage() {
         </section>
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Credits & Usage */}
         <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h2 className="font-display text-base text-gray-900">
@@ -318,7 +318,7 @@ export default async function CollyAIPage() {
       {/* Knowledge Base */}
       <section className="mt-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <h2 className="font-display text-base text-gray-900">Knowledge Base</h2>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
           <Link
             href="/products"
             className="flex items-center justify-between rounded-lg border border-gray-100 p-4 transition-colors hover:bg-gray-50"

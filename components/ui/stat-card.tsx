@@ -46,7 +46,7 @@ export function StatCard({
         )}
       </div>
       <div className="flex items-end justify-between">
-        <p className="font-display text-xl font-bold text-gray-900 md:text-2xl">
+        <p className="font-display text-2xl font-bold text-gray-900 md:text-3xl">
           {value}
         </p>
         {isClickable && (
