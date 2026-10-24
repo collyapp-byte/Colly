@@ -6,8 +6,45 @@ function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
 }
 
-// GET /api/conversations/[id]
-// A single conversation with its customer and every message (oldest -> newest).
+// DELETE /api/conversations/[id]
+// Deletes a conversation (and its messages via cascade) for the signed-in
+// business. Used by the swipe-to-delete action on the conversations list.
+export async function DELETE(
+  _request: Request,
+  context: RouteContext<"/api/conversations/[id]">,
+) {
+  try {
+    const businessId = await getCurrentBusinessId();
+    if (!businessId) {
+      return unauthorized();
+    }
+
+    const { id } = await context.params;
+    const conversation = await prisma.conversation.findFirst({
+      where: { id, businessId },
+      select: { id: true },
+    });
+
+    if (!conversation) {
+      return Response.json(
+        { error: "Conversation not found" },
+        { status: 404 },
+      );
+    }
+
+    await prisma.conversation.delete({ where: { id: conversation.id } });
+    return Response.json({ ok: true });
+  } catch (error) {
+    console.error("[DELETE /api/conversations/[id]]", error);
+    return Response.json(
+      {
+        error: "Failed to delete conversation",
+        detail: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
+    );
+  }
+}
 export async function GET(
   _request: Request,
   context: RouteContext<"/api/conversations/[id]">,

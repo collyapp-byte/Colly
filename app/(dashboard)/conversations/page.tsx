@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type TouchEvent,
+} from "react";
 import Link from "next/link";
 import { CircleAlert } from "lucide-react";
+import { toast } from "sonner";
 import { StatusBadge } from "@/components/conversations/status-badge";
 import { AiPausedBanner } from "@/components/dashboard/ai-paused-banner";
 import { formatRelativeTime } from "@/lib/format";
@@ -44,6 +51,7 @@ export default function ConversationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [hasLoadError, setHasLoadError] = useState(false);
   const [dismissedBanner, setDismissedBanner] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -109,6 +117,37 @@ export default function ConversationsPage() {
       ? "cap_hit"
       : null
     : null;
+
+  async function handleDelete(id: string) {
+    if (
+      !window.confirm(
+        "Delete this conversation? This cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/conversations/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to delete conversation");
+      }
+      setConversations((prev) =>
+        prev ? prev.filter((conversation) => conversation.id !== id) : prev,
+      );
+      toast.success("Conversation deleted");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not delete conversation",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -177,49 +216,131 @@ export default function ConversationsPage() {
       {conversations && conversations.length > 0 && (
         <ul className="overflow-hidden rounded-lg border border-gray-200 bg-surface">
           {conversations.map((conversation) => (
-            <li
+            <SwipeableRow
               key={conversation.id}
-              className="border-b border-gray-100 last:border-b-0"
-            >
-              <Link
-                href={`/conversations/${conversation.id}`}
-                className="flex items-start gap-3 px-4 py-4 transition-colors hover:bg-gray-50 sm:px-6"
-              >
-                <span
-                  aria-hidden
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-600"
-                >
-                  {initials(conversation.customer.name)}
-                </span>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate font-semibold text-gray-900">
-                      {conversation.customer.name}
-                    </p>
-                    <span className="shrink-0 text-xs text-gray-400">
-                      {formatRelativeTime(
-                        conversation.lastMessage?.createdAt ??
-                          conversation.createdAt,
-                      )}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    {conversation.customer.phone}
-                  </p>
-                  <p className="mt-1 truncate text-sm text-gray-500">
-                    {conversation.lastMessage?.content ?? "No messages yet"}
-                  </p>
-                </div>
-
-                <div className="pt-0.5">
-                  <StatusBadge status={conversation.status} />
-                </div>
-              </Link>
-            </li>
+              conversation={conversation}
+              deleting={deletingId === conversation.id}
+              onDelete={handleDelete}
+            />
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+const SWIPE_WIDTH = 88;
+
+function SwipeableRow({
+  conversation,
+  deleting,
+  onDelete,
+}: {
+  conversation: ConversationListItem;
+  deleting: boolean;
+  onDelete: (id: string) => void;
+}) {
+  const [offset, setOffset] = useState(0);
+  const offsetRef = useRef(0);
+  const startX = useRef<number | null>(null);
+  const startOffset = useRef(0);
+  const moved = useRef(false);
+
+  function setRowOffset(next: number) {
+    offsetRef.current = next;
+    setOffset(next);
+  }
+
+  function handleTouchStart(event: TouchEvent<HTMLAnchorElement>) {
+    startX.current = event.touches[0].clientX;
+    startOffset.current = offsetRef.current;
+    moved.current = false;
+  }
+
+  function handleTouchMove(event: TouchEvent<HTMLAnchorElement>) {
+    if (startX.current === null) return;
+    const delta = event.touches[0].clientX - startX.current;
+    if (Math.abs(delta) > 8) moved.current = true;
+    const next = Math.max(
+      -SWIPE_WIDTH,
+      Math.min(0, startOffset.current + delta),
+    );
+    setRowOffset(next);
+  }
+
+  function handleTouchEnd() {
+    if (startX.current === null) return;
+    startX.current = null;
+    setRowOffset(offsetRef.current < -SWIPE_WIDTH / 2 ? -SWIPE_WIDTH : 0);
+  }
+
+  function handleClick(event: ReactMouseEvent<HTMLAnchorElement>) {
+    if (moved.current) {
+      moved.current = false;
+      event.preventDefault();
+      return;
+    }
+    if (offsetRef.current !== 0) {
+      event.preventDefault();
+      setRowOffset(0);
+    }
+  }
+
+  return (
+    <li className="relative overflow-hidden border-b border-gray-100 last:border-b-0">
+      <button
+        type="button"
+        onClick={() => onDelete(conversation.id)}
+        disabled={deleting}
+        aria-label={`Delete conversation with ${conversation.customer.name}`}
+        className="absolute inset-y-0 right-0 flex w-[88px] items-center justify-center bg-red-600 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+      >
+        {deleting ? "..." : "Delete"}
+      </button>
+
+      <Link
+        href={`/conversations/${conversation.id}`}
+        onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: `translateX(${offset}px)`,
+          transition: startX.current === null ? "transform 150ms" : "none",
+        }}
+        className="relative z-10 flex touch-pan-y items-start gap-3 bg-surface px-4 py-4 transition-colors hover:bg-gray-50 sm:px-6"
+      >
+        <span
+          aria-hidden
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-600"
+        >
+          {initials(conversation.customer.name)}
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="truncate font-semibold text-gray-900">
+              {conversation.customer.name}
+            </p>
+            <span className="shrink-0 text-xs text-gray-400">
+              {formatRelativeTime(
+                conversation.lastMessage?.createdAt ??
+                  conversation.createdAt,
+              )}
+            </span>
+          </div>
+          <p className="text-xs text-gray-500">
+            {conversation.customer.phone}
+          </p>
+          <p className="mt-1 truncate text-sm text-gray-500">
+            {conversation.lastMessage?.content ?? "No messages yet"}
+          </p>
+        </div>
+
+        <div className="pt-0.5">
+          <StatusBadge status={conversation.status} />
+        </div>
+      </Link>
+    </li>
   );
 }
