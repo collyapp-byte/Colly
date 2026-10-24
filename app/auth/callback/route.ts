@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
 
   // The public production origin is required. Never silently fall back to
   // localhost: a deployed OAuth callback must return to the real domain.
@@ -20,7 +19,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      return NextResponse.redirect(`${appUrl}${next}`);
+      return NextResponse.redirect(`${appUrl}/dashboard`);
     }
   }
 
