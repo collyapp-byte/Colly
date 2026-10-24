@@ -22,22 +22,6 @@ type FaqInput = {
   category: string | null;
 };
 
-const FAQ_CATEGORIES = [
-  "Delivery",
-  "Payment",
-  "Returns",
-  "Originality",
-  "Wholesale",
-  "Hours",
-  "Location",
-  "Warranty",
-  "Bulk Orders",
-  "Customization",
-  "Installation",
-  "Discounts",
-  "Other",
-] as const;
-
 type ModalState =
   | { kind: "closed" }
   | { kind: "create"; preset?: PresetFaq }
@@ -389,7 +373,6 @@ export default function FaqsPage() {
         <FaqFormModal
           mode="create"
           initialQuestion={modal.preset?.question}
-          initialCategory={modal.preset?.category}
           onClose={closeModal}
           onSubmit={handleCreate}
         />
@@ -484,7 +467,6 @@ type FaqFormModalProps = {
   mode: "create" | "edit";
   faq?: Faq;
   initialQuestion?: string;
-  initialCategory?: string | null;
   onClose: () => void;
   /** Should throw with a message when the save fails. */
   onSubmit: (values: FaqInput) => Promise<void>;
@@ -494,23 +476,15 @@ function FaqFormModal({
   mode,
   faq,
   initialQuestion,
-  initialCategory,
   onClose,
   onSubmit,
 }: FaqFormModalProps) {
-  const initialCategoryValue = faq?.category ?? initialCategory ?? null;
   const [question, setQuestion] = useState(
     faq?.question ?? initialQuestion ?? "",
   );
-  // Presets pre-fill the question and category but never the answer: the owner
-  // must write their own policy text before saving.
+  // Presets pre-fill the question but never the answer: the owner must write
+  // their own policy text before saving.
   const [answer, setAnswer] = useState(faq?.answer ?? "");
-  const [category, setCategory] = useState<string>(
-    initialCategoryValue &&
-      (FAQ_CATEGORIES as readonly string[]).includes(initialCategoryValue)
-      ? initialCategoryValue
-      : "Other",
-  );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -536,7 +510,7 @@ function FaqFormModal({
       await onSubmit({
         question: trimmedQuestion,
         answer: trimmedAnswer,
-        category: category === "Other" ? null : category,
+        category: faq?.category ?? "General",
       });
       onClose();
     } catch (err) {
@@ -586,24 +560,6 @@ function FaqFormModal({
             placeholder="What should your AI tell customers?"
             className={INPUT_CLASS}
           />
-        </div>
-
-        <div>
-          <label htmlFor="faq-category" className={LABEL_CLASS}>
-            Category
-          </label>
-          <select
-            id="faq-category"
-            value={category}
-            onChange={(event) => setCategory(event.target.value)}
-            className={INPUT_CLASS}
-          >
-            {FAQ_CATEGORIES.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
         </div>
 
         {error && <p className="text-sm text-danger">{error}</p>}
