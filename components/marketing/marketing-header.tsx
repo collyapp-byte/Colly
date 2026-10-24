@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { NavbarAuthActions } from "@/components/marketing/navbar-auth-actions";
 
 /**
@@ -18,6 +19,7 @@ const SCROLL_THRESHOLD = 20;
 
 export function MarketingHeader() {
   const [scrollY, setScrollY] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     let frame = 0;
@@ -63,19 +65,55 @@ export function MarketingHeader() {
         <nav className="flex items-center gap-5">
           <Link
             href="/find-an-agent"
-            className="hidden text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 sm:block"
+            className="hidden text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 md:block"
           >
             Find an Agent
           </Link>
           <Link
             href="/signup?role=agent"
-            className="hidden text-sm font-medium text-gray-600 transition-colors hover:text-[#FF6600] sm:block"
+            className="hidden text-sm font-medium text-gray-600 transition-colors hover:text-[#FF6600] md:block"
           >
             Agent Program
           </Link>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-marketing-menu"
+            className="rounded-md p-2 text-gray-600 transition-colors hover:bg-gray-100 md:hidden"
+          >
+            {menuOpen ? (
+              <X className="h-5 w-5" aria-hidden />
+            ) : (
+              <Menu className="h-5 w-5" aria-hidden />
+            )}
+          </button>
           <NavbarAuthActions />
         </nav>
       </div>
+
+      {menuOpen && (
+        <div
+          id="mobile-marketing-menu"
+          className="absolute top-full left-0 w-full bg-white shadow-lg border-b border-gray-100 p-4 flex flex-col gap-4 z-50 md:hidden"
+        >
+          <Link
+            href="/signup?role=agent"
+            onClick={() => setMenuOpen(false)}
+            className="text-sm font-medium text-gray-600 transition-colors hover:text-[#FF6600]"
+          >
+            Agent Program
+          </Link>
+          <Link
+            href="/login"
+            onClick={() => setMenuOpen(false)}
+            className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+          >
+            Sign In
+          </Link>
+        </div>
+      )}
     </header>
   );
 }

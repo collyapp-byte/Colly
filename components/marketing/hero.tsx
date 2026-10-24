@@ -4,7 +4,7 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#f5f5f5] pt-32 pb-10 lg:pb-24">
+    <section className="relative overflow-hidden bg-[#f5f5f5] pt-8 pb-16 sm:pt-32 sm:pb-24">
       {/* Soft warm glow behind the visual, kept subtle so the copy stays crisp. */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>
         <div className="absolute -top-24 right-0 h-[28rem] w-[28rem] rounded-full bg-[#FF6600]/10 blur-3xl" />

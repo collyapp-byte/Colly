@@ -44,7 +44,7 @@ export function NavbarAuthActions() {
     <>
       <Link
         href="/login"
-        className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+        className="hidden text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 md:block"
       >
         Sign In
       </Link>
