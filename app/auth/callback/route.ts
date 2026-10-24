@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
 
@@ -30,9 +30,8 @@ export async function GET(request: Request) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (!error) {
-        // The cookieStore mutations above are picked up by Next.js
-        // and attached to the redirect response.
-        return NextResponse.redirect(`${origin}${next}`);
+        // HARDCODED PRODUCTION URL
+        return NextResponse.redirect(`https://colly.com.ng${next}`);
       }
 
       console.error("[AUTH_EXCHANGE_ERROR]", error.message);
@@ -41,5 +40,8 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
+  // HARDCODED PRODUCTION URL
+  return NextResponse.redirect(
+    `https://colly.com.ng/login?error=auth_callback_failed`,
+  );
 }
