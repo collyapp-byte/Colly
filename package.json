@@ -10,6 +10,7 @@
     "seed": "node prisma/seed.cjs"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "@prisma/client": "^6.19.3",
     "@react-pdf/renderer": "^4.9.0",
     "@react-three/drei": "^10.7.9",

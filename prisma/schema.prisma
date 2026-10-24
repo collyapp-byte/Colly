@@ -211,6 +211,8 @@ model Customer {
   tags            String[]  @default([])
   notes           String?   @db.Text
   totalSpent      Float     @default(0)
+  /// CRM pipeline stage: "INQUIRY" | "NEGOTIATING" | "PAID" | "DELIVERED".
+  dealStatus      String    @default("INQUIRY")
   lastContactedAt DateTime?
   createdAt       DateTime  @default(now())
 

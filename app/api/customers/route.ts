@@ -57,9 +57,11 @@ export async function GET() {
       })
       .map(({ row, lastMessageAt }) => ({
         id: row.id,
+        businessId: row.businessId,
         name: row.name,
         phone: row.phone,
         tags: row.tags,
+        dealStatus: row.dealStatus,
         totalSpent: row.totalSpent,
         createdAt: row.createdAt,
         conversationCount: row.conversations.length,
