@@ -25,6 +25,9 @@ model Business {
   phone          String
   whatsappNumber String
   createdAt      DateTime @default(now())
+  /// Last time the owner opened the Notifications page. Escalations newer than
+  /// this drive the unread bell badge.
+  lastNotificationsReadAt DateTime?
 
   /// AI writing style. One of "formal", "friendly" or "pidgin_friendly";
   /// stored as text so adding a tone is not a migration.

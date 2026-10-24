@@ -48,24 +48,28 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
   const user = await requireAuth();
   await requireSiteAccess(user.businessId);
 
-  const [business, pendingEscalations] = await Promise.all([
-    prisma.business.findUnique({
-      where: { id: user.businessId },
-      select: {
-        telegramBotToken: true,
-        ownerTelegramChatId: true,
-        discordBotToken: true,
-        _count: { select: { products: true, faqs: true } },
+  const business = await prisma.business.findUnique({
+    where: { id: user.businessId },
+    select: {
+      telegramBotToken: true,
+      ownerTelegramChatId: true,
+      discordBotToken: true,
+      lastNotificationsReadAt: true,
+      _count: { select: { products: true, faqs: true } },
+    },
+  });
+
+  // Unread escalations only: anything escalated after the owner last opened
+  // the Notifications page.
+  const unreadCount = await prisma.conversation.count({
+    where: {
+      businessId: user.businessId,
+      status: "ESCALATED",
+      escalatedAt: {
+        gt: business?.lastNotificationsReadAt ?? new Date(0),
       },
-    }),
-    prisma.conversation.count({
-      where: {
-        businessId: user.businessId,
-        escalatedAt: { not: null },
-        status: { not: "CLOSED" },
-      },
-    }),
-  ]);
+    },
+  });
 
   return (
     <>
@@ -73,8 +77,8 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
         businessName={user.businessName}
         hasNoProducts={(business?._count.products ?? 0) === 0}
         hasNoFaqs={(business?._count.faqs ?? 0) === 0}
-        hasPendingEscalations={pendingEscalations > 0}
-        pendingEscalations={pendingEscalations}
+        hasPendingEscalations={unreadCount > 0}
+        pendingEscalations={unreadCount}
         telegramConnected={Boolean(business?.telegramBotToken)}
         ownerAlertsLinked={Boolean(business?.ownerTelegramChatId)}
         hasNoChannels={!business?.telegramBotToken && !business?.discordBotToken}

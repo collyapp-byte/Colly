@@ -6,8 +6,14 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
 
-  // Force the use of the production URL. Fallback to localhost only if the env is missing.
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  // The public production origin is required. Never silently fall back to
+  // localhost: a deployed OAuth callback must return to the real domain.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_APP_URL is required for the auth callback redirect.",
+    );
+  }
 
   if (code) {
     const supabase = await createClient();

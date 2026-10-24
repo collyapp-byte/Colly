@@ -14,6 +14,12 @@ export const metadata = { title: "Notifications" };
 export default async function NotificationsPage() {
   const user = await requireAuth();
 
+  // Opening the page clears the unread bell badge.
+  await prisma.business.update({
+    where: { id: user.businessId },
+    data: { lastNotificationsReadAt: new Date() },
+  });
+
   const rows = await prisma.conversation.findMany({
     where: {
       businessId: user.businessId,

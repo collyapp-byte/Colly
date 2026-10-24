@@ -13,7 +13,7 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
       },
     });
     if (error) {
