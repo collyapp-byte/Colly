@@ -33,9 +33,6 @@ type WebhookEvent = { event: string; data: WebhookEventData };
 /** Length of the dunning grace period, in days, before the AI stops. */
 const GRACE_PERIOD_DAYS = 3;
 
-/** Where the owner updates their card (Paystack's hosted customer portal). */
-const BILLING_PORTAL_URL = "https://colly.com.ng/settings/billing";
-
 /**
  * Maps a webhook event back to a Business. The subscriber's Paystack customer
  * code is the most reliable link; the owner email (from the User table) and
@@ -169,7 +166,12 @@ export async function POST(request: Request) {
           if (businessId) {
             await prisma.business.update({
               where: { id: businessId },
-              data: { subscriptionStatus: "active", gracePeriodEndsAt: null },
+              data: {
+            subscriptionStatus: "active",
+            planStatus: "active",
+            paymentFailedAt: null,
+            gracePeriodEndsAt: null,
+          },
             });
 
             // Pay the referring agent 15% for up to 12 months from signup.
@@ -227,13 +229,14 @@ export async function POST(request: Request) {
           data: {
             subscriptionStatus: "past_due",
             planStatus: "past_due",
+            paymentFailedAt: new Date(),
             gracePeriodEndsAt,
           },
         });
 
         await sendOwnerAlert(
           businessId,
-          `🚨 Subscription payment failed. You have ${GRACE_PERIOD_DAYS} days to update your card before your AI stops replying. Update here: ${BILLING_PORTAL_URL}`,
+          "⚠️ Your Colly subscription payment failed. Please update your card to avoid losing access.",
         );
 
         await sendAlert(
@@ -286,8 +289,9 @@ export async function POST(request: Request) {
         break;
       }
 
-      // Legacy alias for the same failure/`invoice.update` flow above; kept so
+      // Legacy aliases for the same failure/`invoice.update` flow above; kept so
       // older Paystack subscriptions still start the dunning grace period.
+      case "charge.failed":
       case "invoice.payment_failed": {
         const businessId = await findBusinessId(data);
         if (!businessId) break;
@@ -301,13 +305,14 @@ export async function POST(request: Request) {
           data: {
             planStatus: "past_due",
             subscriptionStatus: "past_due",
+            paymentFailedAt: new Date(),
             gracePeriodEndsAt,
           },
         });
 
         await sendOwnerAlert(
           businessId,
-          `🚨 Subscription payment failed. You have ${GRACE_PERIOD_DAYS} days to update your card before your AI stops replying. Update here: ${BILLING_PORTAL_URL}`,
+          "⚠️ Your Colly subscription payment failed. Please update your card to avoid losing access.",
         );
 
         await sendAlert(
@@ -334,6 +339,7 @@ export async function POST(request: Request) {
           data: {
             planStatus: "active",
             subscriptionStatus: "active",
+            paymentFailedAt: null,
             gracePeriodEndsAt: null,
             planExpiresAt: addDays(
               new Date(),

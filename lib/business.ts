@@ -77,6 +77,8 @@ export type Business = {
   /** The plan tier the customer picked before signing up ("?plan=green").
    * Pre-selects that tier on the plans page. */
   selectedPlan: string | null;
+  planStatus: string;
+  paymentFailedAt: string | null;
   createdAt: string;
   nrsTaxId: string | null;
   nrsRegistrationDate: string | null;
@@ -106,6 +108,8 @@ export type BusinessRecord = {
   ownerTelegramChatId: string | null;
   referredByAgentId: string | null;
   selectedPlan: string | null;
+  planStatus: string;
+  paymentFailedAt: Date | null;
   createdAt: Date;
   nrsTaxId: string | null;
   nrsRegistrationDate: Date | null;
@@ -144,6 +148,10 @@ export function serializeBusiness(business: BusinessRecord): Business {
     ownerTelegramChatId: business.ownerTelegramChatId,
     referredByAgentId: business.referredByAgentId,
     selectedPlan: business.selectedPlan ?? null,
+    planStatus: business.planStatus,
+    paymentFailedAt: business.paymentFailedAt
+      ? new Date(business.paymentFailedAt).toISOString()
+      : null,
     createdAt: new Date(business.createdAt).toISOString(),
     nrsTaxId: business.nrsTaxId,
     nrsRegistrationDate: business.nrsRegistrationDate

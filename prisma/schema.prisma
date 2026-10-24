@@ -74,6 +74,8 @@ model Business {
   plan                     String    @default("free")
   planInterval             String    @default("monthly")
   planStatus               String    @default("trialing")
+  /// Set when a recurring payment fails; cleared on the next successful charge.
+  paymentFailedAt          DateTime?
   planStartedAt            DateTime  @default(now())
   planExpiresAt            DateTime?
   onboardingEndsAt         DateTime?

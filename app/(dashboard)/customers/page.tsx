@@ -24,6 +24,7 @@ type CustomerListItem = {
   dealStatus: DealStatus;
   totalSpent: number;
   createdAt: string;
+  lastContactedAt: string | null;
   conversationCount: number;
   lastMessageAt: string | null;
 };
@@ -43,6 +44,31 @@ const DEAL_COLUMNS: {
 
 function isDealStatus(value: string): value is DealStatus {
   return DEAL_COLUMNS.some((column) => column.status === value);
+}
+
+const AT_RISK_MS = 30 * 24 * 60 * 60 * 1000;
+
+function isAtRisk(customer: CustomerListItem): boolean {
+  if (
+    customer.dealStatus !== "INQUIRY" &&
+    customer.dealStatus !== "NEGOTIATING"
+  ) {
+    return false;
+  }
+
+  const date =
+    customer.lastContactedAt ??
+    customer.lastMessageAt ??
+    customer.createdAt;
+  return Date.now() - new Date(date).getTime() > AT_RISK_MS;
+}
+
+function AtRiskBadge() {
+  return (
+    <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
+      At Risk
+    </span>
+  );
 }
 
 const EMPTY_STATE_TEXT =
@@ -229,6 +255,11 @@ export default function CustomersPage() {
                       >
                         {customer.name}
                       </Link>
+                      {isAtRisk(customer) && (
+                        <span className="ml-2 align-middle">
+                          <AtRiskBadge />
+                        </span>
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 text-gray-600">
                       {customer.phone}
@@ -274,6 +305,11 @@ export default function CustomersPage() {
                   <p className="mt-0.5 text-xs text-gray-500">
                     {customer.phone}
                   </p>
+                  {isAtRisk(customer) && (
+                    <div className="mt-1">
+                      <AtRiskBadge />
+                    </div>
+                  )}
                   {customer.tags.length > 0 && (
                     <div className="mt-2">
                       <TagPills tags={customer.tags} />
@@ -346,6 +382,11 @@ export default function CustomersPage() {
                                   <p className="mt-0.5 text-xs text-gray-500">
                                     {customer.phone}
                                   </p>
+                                  {isAtRisk(customer) && (
+                                    <div className="mt-1">
+                                      <AtRiskBadge />
+                                    </div>
+                                  )}
                                   <p className="mt-2 text-sm font-semibold text-gray-900">
                                     {formatNaira(customer.totalSpent)}
                                   </p>

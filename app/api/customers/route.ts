@@ -64,6 +64,7 @@ export async function GET() {
         dealStatus: row.dealStatus,
         totalSpent: row.totalSpent,
         createdAt: row.createdAt,
+        lastContactedAt: row.lastContactedAt,
         conversationCount: row.conversations.length,
         lastMessageAt,
       }));

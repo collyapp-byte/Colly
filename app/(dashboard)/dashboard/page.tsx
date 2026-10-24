@@ -34,6 +34,10 @@ export default function OverviewPage() {
   const [paymentInstructions, setPaymentInstructions] = useState<
     string | null | undefined
   >(undefined);
+  const [planStatus, setPlanStatus] = useState<string | null>(null);
+  const [paymentFailedAt, setPaymentFailedAt] = useState<
+    string | null | undefined
+  >(undefined);
 
   useEffect(() => {
     let active = true;
@@ -73,6 +77,8 @@ export default function OverviewPage() {
               discordConnected?: boolean;
               whatsappConnected?: boolean;
               paymentInstructions?: string | null;
+              planStatus?: string;
+              paymentFailedAt?: string | null;
             };
           } | null,
         ) => {
@@ -84,6 +90,8 @@ export default function OverviewPage() {
               business.whatsappConnected === true;
             setIsConnected(isConnected);
             setPaymentInstructions(business.paymentInstructions ?? null);
+            setPlanStatus(business.planStatus ?? null);
+            setPaymentFailedAt(business.paymentFailedAt ?? null);
           }
         },
       )
@@ -127,6 +135,34 @@ export default function OverviewPage() {
           Overview
         </h1>
       </div>
+
+      {paymentFailedAt && planStatus === "past_due" && (
+        <div
+          role="alert"
+          className="mb-6 flex flex-col gap-4 rounded-lg border border-red-300 bg-red-50 p-5 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+              <AlertTriangle className="h-[18px] w-[18px]" aria-hidden />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-red-900">
+                Your last payment failed. Click here to update your card.
+              </p>
+              <p className="mt-1 text-sm text-red-800">
+                Update your payment method to avoid losing access to your AI
+                assistant.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/settings/billing"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+          >
+            Update card
+          </Link>
+        </div>
+      )}
 
       {paymentInstructions !== undefined && !paymentInstructions?.trim() && (
         <div className="mb-6 flex flex-col gap-4 rounded-lg border border-amber-300 bg-amber-50 p-5 sm:flex-row sm:items-start sm:justify-between">
