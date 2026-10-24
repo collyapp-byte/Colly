@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { BellRing, MessageSquare } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
@@ -12,6 +13,8 @@ export const metadata = { title: "Notifications" };
  * so these stay visible here until the conversation is handled or closed.
  */
 export default async function NotificationsPage() {
+  await connection();
+
   const user = await requireAuth();
 
   // Opening the page clears the unread bell badge.
