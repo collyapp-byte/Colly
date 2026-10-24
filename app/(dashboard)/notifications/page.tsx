@@ -4,6 +4,7 @@ import { BellRing, MessageSquare } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { BackButton } from "@/components/ui/back-button";
+import { RefreshOnMount } from "@/components/dashboard/refresh-on-mount";
 
 export const metadata = { title: "Notifications" };
 
@@ -42,6 +43,7 @@ export default async function NotificationsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
+      <RefreshOnMount />
       <BackButton />
       <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
         Notifications

@@ -96,7 +96,7 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
   const thread = [welcome, ...messages];
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-6 right-6 z-50 hidden md:flex">
       {/* Panel */}
       {open && (
         <div className="absolute bottom-16 right-0 z-50 flex h-[500px] w-96 max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/5">
