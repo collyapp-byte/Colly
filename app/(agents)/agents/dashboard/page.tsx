@@ -13,7 +13,14 @@ import {
 import { useAgentData } from "@/components/agents/use-agent-data";
 import { CourseBadge } from "@/components/agents/course-badge";
 import type { AgentBadgesResponse, AgentMeResponse } from "@/lib/agents-types";
-import { formatRelativeTime } from "@/lib/format";
+import { formatNaira, formatRelativeTime } from "@/lib/format";
+
+type LeaderboardEntry = {
+  agentNumber: string;
+  fullName: string;
+  referrals: number;
+  totalCommission: number;
+};
 
 export default function AgentDashboardPage() {
   const { data, error, loading } = useAgentData<AgentMeResponse>(
@@ -22,6 +29,9 @@ export default function AgentDashboardPage() {
   const { data: badgesData } = useAgentData<AgentBadgesResponse>(
     "/api/agents/badges",
   );
+  const { data: leaderboardData } = useAgentData<{
+    leaderboard: LeaderboardEntry[];
+  }>("/api/agents/leaderboard");
   const [copied, setCopied] = useState(false);
   // Which badge's Download menu is open (by course slug), and which badge's
   // share link was just copied (drives the "Copied!" tooltip).
@@ -364,6 +374,77 @@ export default function AgentDashboardPage() {
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      {/* Leaderboard */}
+      <section className="rounded-xl border border-[color:var(--outline-subtle)] bg-white p-5">
+        <div className="flex items-center gap-2 text-gray-500">
+          <Award className="h-4 w-4" aria-hidden />
+          <span className="text-[13px] font-medium">
+            Top Agents Leaderboard
+          </span>
+        </div>
+
+        {leaderboardData && leaderboardData.leaderboard.length > 0 ? (
+          <ol className="mt-4 space-y-2">
+            {leaderboardData.leaderboard.map((entry, index) => {
+              const podiumStyles = [
+                "border-yellow-300 bg-yellow-50",
+                "border-gray-300 bg-gray-50",
+                "border-orange-300 bg-orange-50",
+              ];
+              const rankStyles = [
+                "bg-yellow-400 text-yellow-950",
+                "bg-gray-300 text-gray-800",
+                "bg-orange-400 text-orange-950",
+              ];
+              return (
+                <li
+                  key={entry.agentNumber}
+                  className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 ${
+                    podiumStyles[index] ?? "border-gray-200 bg-white"
+                  }`}
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                        rankStyles[index] ?? "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-900">
+                        {entry.fullName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {entry.agentNumber}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-right">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {entry.referrals}
+                      </p>
+                      <p className="text-[11px] text-gray-500">Referrals</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {formatNaira(entry.totalCommission)}
+                      </p>
+                      <p className="text-[11px] text-gray-500">Commission</p>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        ) : (
+          <p className="mt-4 text-sm text-gray-500">
+            No referrals or commissions recorded this month yet.
+          </p>
         )}
       </section>
     </div>

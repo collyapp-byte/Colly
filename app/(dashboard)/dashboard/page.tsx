@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   AlertTriangle,
   MessagesSquare,
@@ -38,6 +39,36 @@ export default function OverviewPage() {
   const [paymentFailedAt, setPaymentFailedAt] = useState<
     string | null | undefined
   >(undefined);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [joiningWaitlist, setJoiningWaitlist] = useState(false);
+
+  async function handleJoinWaitlist(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!whatsappNumber.trim() || joiningWaitlist) return;
+
+    setJoiningWaitlist(true);
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ whatsappNumber: whatsappNumber.trim() }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to join the waitlist");
+      }
+
+      setWhatsappNumber("");
+      toast.success("You are on the WhatsApp waitlist!");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to join the waitlist",
+      );
+    } finally {
+      setJoiningWaitlist(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -257,6 +288,37 @@ export default function OverviewPage() {
             Record a sale
           </Link>
         </div>
+      </Card>
+
+      <Card className="mt-6 border-[color:var(--outline-subtle)]!">
+        <h2 className="text-sm font-semibold text-gray-900">
+          Want to use WhatsApp?
+        </h2>
+        <p className="mt-2 text-sm text-gray-500">
+          Meta requires a CAC for official API access. We are onboarding
+          businesses manually. Join the waitlist.
+        </p>
+        <form
+          onSubmit={handleJoinWaitlist}
+          className="mt-4 flex flex-col gap-2 sm:flex-row"
+        >
+          <input
+            type="tel"
+            value={whatsappNumber}
+            onChange={(event) => setWhatsappNumber(event.target.value)}
+            placeholder="+2348012345678"
+            aria-label="WhatsApp number"
+            required
+            className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20 sm:max-w-xs"
+          />
+          <button
+            type="submit"
+            disabled={joiningWaitlist}
+            className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#E65C00] disabled:opacity-60"
+          >
+            {joiningWaitlist ? "Joining…" : "Join Waitlist"}
+          </button>
+        </form>
       </Card>
     </div>
   );

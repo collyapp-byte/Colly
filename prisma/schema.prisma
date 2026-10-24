@@ -608,3 +608,10 @@ model AgentPayout {
 }
 
 
+
+model WhatsappWaitlist {
+  id             String   @id @default(uuid())
+  businessId     String?
+  whatsappNumber String
+  createdAt      DateTime @default(now())
+}
