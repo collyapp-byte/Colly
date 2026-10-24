@@ -2,32 +2,21 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { AuthAlert, AuthField } from "@/components/auth/auth-form";
+import { AuthAlert } from "@/components/auth/auth-form";
 import { Button } from "@/components/ui/button";
-
-/**
- * Landing page for the link in Supabase's confirmation email.
- *
- * Supabase redirects here after hitting its `/auth/v1/verify` endpoint. Two
- * shapes are supported:
- *  - `?code=...` (PKCE flow, the default with @supabase/ssr) — exchanged for a
- *    session, which also signs the user in.
- *  - `?token_hash=...&type=signup` — confirmed through `verifyOtp`.
- *
- * An expired or invalid link arrives as `?error=...&error_code=...`, or the
- * exchange itself fails; either way the page offers to resend the email.
- */
 
 type VerifyState =
   | { kind: "checking" }
+  | { kind: "otp" }
   | { kind: "verified" }
   | { kind: "error"; message: string };
 
 const GENERIC_ERROR =
-  "This verification link is invalid or has expired. Enter your email below to get a new one.";
+  "This verification link is invalid or has expired. Enter the 6-digit code from your email below.";
 
 function messageFromParams(params: URLSearchParams): string | null {
   const description = params.get("error_description");
@@ -42,19 +31,21 @@ function messageFromParams(params: URLSearchParams): string | null {
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const emailParam = searchParams.get("email") ?? "";
   const [state, setState] = useState<VerifyState>({ kind: "checking" });
-  const [resendPending, setResendPending] = useState(false);
-  const [resendNotice, setResendNotice] = useState<string | null>(null);
-  // Guards against React StrictMode running the effect twice in dev, which
-  // would consume the one-time code twice.
+  const [email, setEmail] = useState(emailParam);
+  const [code, setCode] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const started = useRef(false);
 
+  // Keep support for older link-based confirmation emails.
   useEffect(() => {
     if (started.current) return;
     started.current = true;
 
-    async function verify() {
-      const code = searchParams.get("code");
+    async function verifyLink() {
+      const linkCode = searchParams.get("code");
       const tokenHash = searchParams.get("token_hash");
       const type = searchParams.get("type");
       const paramError = messageFromParams(searchParams);
@@ -64,13 +55,19 @@ function VerifyEmailContent() {
         return;
       }
 
+      if (!linkCode && !tokenHash) {
+        setState({ kind: "otp" });
+        return;
+      }
+
       try {
         const supabase = createClient();
 
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (linkCode) {
+          const { error } = await supabase.auth.exchangeCodeForSession(
+            linkCode,
+          );
           if (error) {
-            console.error("[verify-email] exchange:", error.message);
             setState({ kind: "error", message: GENERIC_ERROR });
             return;
           }
@@ -84,56 +81,50 @@ function VerifyEmailContent() {
             token_hash: tokenHash,
           });
           if (error) {
-            console.error("[verify-email] verifyOtp:", error.message);
             setState({ kind: "error", message: GENERIC_ERROR });
             return;
           }
           setState({ kind: "verified" });
-          return;
         }
-
-        setState({ kind: "error", message: GENERIC_ERROR });
       } catch (error) {
         console.error("[verify-email]", error);
         setState({ kind: "error", message: GENERIC_ERROR });
       }
     }
 
-    void verify();
+    void verifyLink();
   }, [searchParams]);
 
-  async function handleResend(event: FormEvent<HTMLFormElement>) {
+  async function handleVerify(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = event.currentTarget;
-    const value = new FormData(form).get("email");
-    const trimmed = typeof value === "string" ? value.trim() : "";
-    if (!trimmed) return;
+    const trimmedEmail = email.trim();
+    const token = code.trim();
 
-    setResendPending(true);
-    setResendNotice(null);
+    if (!trimmedEmail || token.length !== 6) {
+      toast.error("Enter your email and the 6-digit code.");
+      return;
+    }
 
+    setSubmitting(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.resend({
+      const { error } = await supabase.auth.verifyOtp({
+        email: trimmedEmail,
+        token,
         type: "signup",
-        email: trimmed,
       });
 
       if (error) {
-        setState({ kind: "error", message: error.message });
+        toast.error(error.message || "Invalid or expired code");
         return;
       }
 
-      setResendNotice(
-        "Verification email sent! Check your inbox and click the new link.",
-      );
+      toast.success("Email verified!");
+      router.push("/dashboard");
     } catch {
-      setState({
-        kind: "error",
-        message: "Could not reach the server. Check your connection and try again.",
-      });
+      toast.error("Could not verify the code. Please try again.");
     } finally {
-      setResendPending(false);
+      setSubmitting(false);
     }
   }
 
@@ -165,30 +156,66 @@ function VerifyEmailContent() {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
-      <h1 className="font-display text-2xl text-gray-900">
-        Verification failed
-      </h1>
-      <div className="mt-6">
-        <AuthAlert tone="error">{state.message}</AuthAlert>
-      </div>
+      <h1 className="font-display text-2xl text-gray-900">Verify your email</h1>
+      <p className="mt-1 text-sm text-gray-500">
+        Enter the 6-digit code we sent to your email.
+      </p>
 
-      <form onSubmit={handleResend} className="mt-6 flex flex-col gap-4">
-        <AuthField
-          id="email"
-          label="Email"
-          name="email"
-          type="email"
-          placeholder="you@business.com"
-          autoComplete="email"
-        />
-        {resendNotice && <AuthAlert tone="success">{resendNotice}</AuthAlert>}
+      {state.kind === "error" && (
+        <div className="mt-6">
+          <AuthAlert tone="error">{state.message}</AuthAlert>
+        </div>
+      )}
+
+      <form onSubmit={handleVerify} className="mt-6 flex flex-col gap-4">
+        <div>
+          <label
+            htmlFor="email"
+            className="mb-1 block text-sm font-medium text-gray-700"
+          >
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@business.com"
+            autoComplete="email"
+            required
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="otp-code"
+            className="mb-1 block text-sm font-medium text-gray-700"
+          >
+            6-digit code
+          </label>
+          <input
+            id="otp-code"
+            value={code}
+            onChange={(event) =>
+              setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
+            }
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            placeholder="Enter 6-digit code"
+            required
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-center text-lg tracking-[0.4em] text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
+          />
+        </div>
+
         <Button
           type="submit"
           variant="primary"
-          loading={resendPending}
+          loading={submitting}
           className="w-full"
         >
-          Resend Verification Email
+          Verify email
         </Button>
       </form>
 

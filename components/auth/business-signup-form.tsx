@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState, type FormEvent } from "react";
 import { Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
@@ -32,7 +33,18 @@ export function BusinessSignupForm({
     signup,
     INITIAL_AUTH_STATE,
   );
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+
+  // Send email-confirmation signups straight to the OTP screen, carrying the
+  // address so the user only has to type the 6-digit code.
+  useEffect(() => {
+    if (state.requiresEmailVerification && state.email) {
+      router.replace(
+        `/verify-email?email=${encodeURIComponent(state.email)}`,
+      );
+    }
+  }, [state.requiresEmailVerification, state.email, router]);
 
   // Google sign-ups land here already authenticated by Supabase. In that case
   // the email and password fields are pointless (and a password would never be

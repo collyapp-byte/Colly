@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -10,38 +11,77 @@ const LABEL_CLASS = "mb-1 block text-sm font-medium text-gray-700";
 const INPUT_CLASS =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
 
-export default function ResetPasswordPage() {
+type Step = "verify" | "reset";
+
+function ResetPasswordContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [step, setStep] = useState<Step>("verify");
+  const [email, setEmail] = useState(searchParams.get("email") ?? "");
+  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!success) return;
-    const timer = setTimeout(() => router.push("/dashboard"), 2000);
-    return () => clearTimeout(timer);
-  }, [success, router]);
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleVerify(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSaving(true);
-    setError(null);
+    const trimmedEmail = email.trim();
+    const token = code.trim();
 
+    if (!trimmedEmail || token.length !== 6) {
+      toast.error("Enter your email and the 6-digit code.");
+      return;
+    }
+
+    setSaving(true);
     try {
       const supabase = createClient();
-      const { error: updateError } = await supabase.auth.updateUser({
-        password,
+      const { error } = await supabase.auth.verifyOtp({
+        email: trimmedEmail,
+        token,
+        type: "recovery",
       });
 
-      if (updateError) {
-        setError(updateError.message);
+      if (error) {
+        toast.error(error.message || "Invalid or expired code");
         return;
       }
 
-      setSuccess(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      toast.success("Code verified. Choose a new password.");
+      setStep("reset");
+    } catch {
+      toast.error("Could not verify the code. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({ password });
+
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      toast.success("Password updated. Please sign in.");
+      router.push("/login");
+    } catch {
+      toast.error("Could not update your password. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -51,23 +91,66 @@ export default function ResetPasswordPage() {
     <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
       <h1 className="font-display text-2xl text-gray-900">Reset password</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Choose a new password for your account.
+        {step === "verify"
+          ? "Enter your email and the 6-digit code we sent you."
+          : "Choose a new password for your account."}
       </p>
 
-      {success ? (
-        <div className="mt-6 space-y-4">
-          <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-            Password updated. Taking you to your dashboard…
+      {step === "verify" ? (
+        <form onSubmit={handleVerify} className="mt-6 flex flex-col gap-4">
+          <div>
+            <label htmlFor="reset-email" className={LABEL_CLASS}>
+              Email
+            </label>
+            <input
+              id="reset-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@business.com"
+              autoComplete="email"
+              required
+              className={INPUT_CLASS}
+            />
           </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex text-sm font-medium text-colly transition-colors hover:text-colly-hover"
+
+          <div>
+            <label htmlFor="reset-code" className={LABEL_CLASS}>
+              6-digit code
+            </label>
+            <input
+              id="reset-code"
+              value={code}
+              onChange={(event) =>
+                setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
+              }
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              placeholder="Enter 6-digit code"
+              required
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-center text-lg tracking-[0.4em] text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            variant="primary"
+            loading={saving}
+            className="w-full"
           >
-            Go to dashboard
+            Verify code
+          </Button>
+
+          <Link
+            href="/forgot-password"
+            className="text-center text-sm font-medium text-colly transition-colors hover:text-colly-hover"
+          >
+            Send a new code
           </Link>
-        </div>
+        </form>
       ) : (
-        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
+        <form onSubmit={handleReset} className="mt-6 flex flex-col gap-4">
           <div>
             <label htmlFor="new-password" className={LABEL_CLASS}>
               New password
@@ -85,7 +168,22 @@ export default function ResetPasswordPage() {
             />
           </div>
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          <div>
+            <label htmlFor="confirm-password" className={LABEL_CLASS}>
+              Confirm password
+            </label>
+            <input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="Re-enter your new password"
+              autoComplete="new-password"
+              minLength={8}
+              required
+              className={INPUT_CLASS}
+            />
+          </div>
 
           <Button
             type="submit"
@@ -95,15 +193,31 @@ export default function ResetPasswordPage() {
           >
             Update password
           </Button>
-
-          <Link
-            href="/login"
-            className="text-center text-sm font-medium text-colly transition-colors hover:text-colly-hover"
-          >
-            Back to sign in
-          </Link>
         </form>
       )}
+
+      <p className="mt-6 text-sm text-gray-500">
+        <Link
+          href="/login"
+          className="font-medium text-colly transition-colors hover:text-colly-hover"
+        >
+          Back to sign in
+        </Link>
+      </p>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="rounded-lg border border-gray-200 bg-surface p-6 text-center text-sm text-gray-500 sm:p-8">
+          Loading…
+        </div>
+      }
+    >
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
