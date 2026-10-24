@@ -172,7 +172,7 @@ function ConversationDetail() {
 
   async function handleResumeAi() {
     const aiContext = window.prompt(
-      "Optional: Tell the AI what to do for this customer (e.g., 'I gave him a 10% discount').",
+      "Optional: Tell the AI what to do for this customer",
     );
     // Cancelling the prompt leaves the human takeover in place.
     if (aiContext === null) return;
@@ -267,7 +267,7 @@ function ConversationDetail() {
       {conversation && (
         <>
           {/* Header */}
-          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-surface px-4 py-4 sm:px-6">
+          <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <h1 className="truncate font-display text-xl text-gray-900">
@@ -280,20 +280,36 @@ function ConversationDetail() {
               </p>
             </div>
 
-            {!paused && (
+            {conversation.status === "HUMAN_TAKEOVER" ? (
               <button
                 type="button"
-                onClick={handleTakeOver}
+                onClick={handleResumeAi}
                 disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-60"
               >
                 {busy ? (
                   <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
                 ) : (
                   <Hand className="h-4 w-4" aria-hidden />
                 )}
-                Take Over
+                Return to AI
               </button>
+            ) : (
+              !paused && (
+                <button
+                  type="button"
+                  onClick={handleTakeOver}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                >
+                  {busy ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Hand className="h-4 w-4" aria-hidden />
+                  )}
+                  Take Over
+                </button>
+              )
             )}
           </div>
 
@@ -315,17 +331,19 @@ function ConversationDetail() {
                 </span>
                 . You are replying manually.
               </p>
-              <button
-                type="button"
-                onClick={handleResumeAi}
-                disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
-              >
-                {busy && (
-                  <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
-                )}
-                Resume AI
-              </button>
+              {conversation.status !== "HUMAN_TAKEOVER" && (
+                <button
+                  type="button"
+                  onClick={handleResumeAi}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                >
+                  {busy && (
+                    <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                  )}
+                  Resume AI
+                </button>
+              )}
             </div>
           )}
 

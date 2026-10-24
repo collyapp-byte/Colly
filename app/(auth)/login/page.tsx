@@ -83,6 +83,15 @@ function BusinessLoginForm() {
           </div>
         </div>
 
+        <div className="text-right">
+          <Link
+            href="/forgot-password"
+            className="text-sm font-medium text-colly transition-colors hover:text-colly-hover"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
         {state.error && <AuthAlert tone="error">{state.error}</AuthAlert>}
 
         <Button type="submit" variant="primary" loading={pending} className="w-full">
@@ -165,6 +174,15 @@ function AgentLoginForm() {
               )}
             </button>
           </div>
+        </div>
+
+        <div className="text-right">
+          <Link
+            href="/forgot-password"
+            className="text-sm font-medium text-colly transition-colors hover:text-colly-hover"
+          >
+            Forgot password?
+          </Link>
         </div>
 
         {state.error && <AuthAlert tone="error">{state.error}</AuthAlert>}

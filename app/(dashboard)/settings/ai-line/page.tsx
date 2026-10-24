@@ -27,9 +27,10 @@ const INPUT_CLASS =
 
 /** How the Telegram AI line works today. */
 const HOW_IT_WORKS = [
-  "Connect your Telegram bot and the AI answers customers on every message it receives.",
-  "Create a bot with @BotFather and share its link. No SIM card, no waiting.",
-  "Share your bot link on Instagram, your status, and business cards so customers can reach your AI.",
+  "Telegram: Connect your bot token to reply instantly.",
+  "Discord: Connect your Discord bot to answer server members.",
+  "Web Chat: Embed the chat widget on your website.",
+  "WhatsApp: Connect via Meta (Requires a CAC certificate).",
 ];
 
 /** Self-serve Telegram connection, straight from @BotFather. */
@@ -366,7 +367,9 @@ export default function AiLinePage() {
 
       {/* HOW IT WORKS - compact orientation box right under the header. */}
       <section className="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
-        <h2 className="font-display text-base text-gray-900">How it works</h2>
+        <h2 className="font-display text-base text-gray-900">
+          How Colly AI works across channels:
+        </h2>
         <ul className="mt-3 space-y-2">
           {HOW_IT_WORKS.map((line) => (
             <li
