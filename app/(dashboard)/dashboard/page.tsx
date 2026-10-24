@@ -320,6 +320,16 @@ export default function OverviewPage() {
           </button>
         </form>
       </Card>
+
+      <p className="mt-4 text-center text-xs text-gray-400">
+        Want a weekly email report?{" "}
+        <Link
+          href="/settings"
+          className="font-medium text-colly transition-colors hover:text-colly-hover"
+        >
+          Ensure your email is verified in settings.
+        </Link>
+      </p>
     </div>
   );
 }

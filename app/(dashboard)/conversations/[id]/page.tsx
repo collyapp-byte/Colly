@@ -6,11 +6,13 @@ import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   CircleAlert,
+  Download,
   Hand,
   LoaderCircle,
   PauseCircle,
   Send,
 } from "lucide-react";
+import { toast } from "sonner";
 import { ChatBubble } from "@/components/conversations/chat-bubble";
 import { StatusBadge } from "@/components/conversations/status-badge";
 import { formatClockTime, isInFuture } from "@/lib/format";
@@ -203,8 +205,35 @@ function ConversationDetail() {
     }
   }
 
-  async function handleSend(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function handleDownloadTranscript() {
+    if (!conversation || !messages) return;
+
+    const lines = messages.map((message) => {
+      const sender =
+        message.sender === "customer"
+          ? conversation.customer.name
+          : message.sender === "agent"
+            ? "Agent"
+            : "Colly AI";
+      return `[${new Date(message.createdAt).toLocaleString("en-NG")}] ${sender}: ${message.content}`;
+    });
+
+    const header = `Conversation with ${conversation.customer.name} (${conversation.customer.phone})\n\n`;
+    const blob = new Blob([header + lines.join("\n")], {
+      type: "text/plain;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `transcript-${conversation.id}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast.success("Transcript downloaded");
+  }
+
+  async function handleSend(event: FormEvent<HTMLFormElement>) {    event.preventDefault();
 
     const content = draft.trim();
     if (!content || sending) return;
@@ -280,37 +309,55 @@ function ConversationDetail() {
               </p>
             </div>
 
-            {conversation.status === "HUMAN_TAKEOVER" ? (
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
-                onClick={handleResumeAi}
-                disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-60"
+                onClick={handleDownloadTranscript}
+                aria-label="Download transcript"
+                title="Download transcript"
+                className="rounded-lg border border-gray-200 p-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
               >
-                {busy ? (
-                  <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
-                ) : (
-                  <Hand className="h-4 w-4" aria-hidden />
-                )}
-                Return to AI
+                <Download className="h-4 w-4" aria-hidden />
               </button>
-            ) : (
-              !paused && (
+
+              {conversation.status === "HUMAN_TAKEOVER" ? (
                 <button
                   type="button"
-                  onClick={handleTakeOver}
+                  onClick={handleResumeAi}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-60"
                 >
                   {busy ? (
-                    <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                    <LoaderCircle
+                      className="h-4 w-4 animate-spin"
+                      aria-hidden
+                    />
                   ) : (
                     <Hand className="h-4 w-4" aria-hidden />
                   )}
-                  Take Over
+                  Return to AI
                 </button>
-              )
-            )}
+              ) : (
+                !paused && (
+                  <button
+                    type="button"
+                    onClick={handleTakeOver}
+                    disabled={busy}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                  >
+                    {busy ? (
+                      <LoaderCircle
+                        className="h-4 w-4 animate-spin"
+                        aria-hidden
+                      />
+                    ) : (
+                      <Hand className="h-4 w-4" aria-hidden />
+                    )}
+                    Take Over
+                  </button>
+                )
+              )}
+            </div>
           </div>
 
           {actionError && (
