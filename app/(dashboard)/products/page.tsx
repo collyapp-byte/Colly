@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import {
   Camera,
   CircleAlert,
@@ -9,7 +15,9 @@ import {
   Pencil,
   Plus,
   Trash,
+  Upload,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Modal } from "@/components/ui/modal";
 import { BackButton } from "@/components/ui/back-button";
 import { ProductFormModal } from "@/components/products/product-form-modal";
@@ -37,6 +45,8 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -71,6 +81,15 @@ export default function ProductsPage() {
   const closeModal = useCallback(() => setModal({ kind: "closed" }), []);
 
   async function handleCreate(values: ProductInput) {
+    const duplicate = products?.some(
+      (product) =>
+        product.name.trim().toLowerCase() === values.name.trim().toLowerCase(),
+    );
+    if (duplicate) {
+      toast.error("A product with this name already exists. Are you sure?");
+      throw new Error("A product with this name already exists.");
+    }
+
     const res = await fetch("/api/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -83,6 +102,46 @@ export default function ProductsPage() {
     }
 
     refresh();
+  }
+
+  async function handleImport(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/products/import", {
+        method: "POST",
+        body: formData,
+      });
+      const data = (await res.json().catch(() => null)) as {
+        imported?: number;
+        duplicates?: number;
+        errors?: number;
+        error?: string;
+      } | null;
+
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Failed to import products");
+      }
+
+      toast.success(
+        `Imported ${data?.imported ?? 0} products. Skipped ${data?.duplicates ?? 0} duplicates.`,
+      );
+      refresh();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to import products",
+      );
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   }
 
   async function handleUpdate(id: string, values: ProductInput) {
@@ -143,14 +202,39 @@ export default function ProductsPage() {
             Your catalogue. Colly uses these details to answer customer questions.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setModal({ kind: "create" })}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
-        >
-          <Plus className="h-4 w-4" aria-hidden />
-          Add Product
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={handleImport}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {importing ? (
+              <LoaderCircle
+                className="h-4 w-4 animate-spin"
+                aria-hidden
+              />
+            ) : (
+              <Upload className="h-4 w-4" aria-hidden />
+            )}
+            {importing ? "Importing..." : "Import CSV"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setModal({ kind: "create" })}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            Add Product
+          </button>
+        </div>
       </div>
 
       {loading && <ProductSkeleton />}
