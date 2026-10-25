@@ -6,6 +6,8 @@ import { Check, Star, Zap } from "lucide-react";
 import {
   CREDIT_ECONOMY_DESCRIPTION,
   PLANS,
+  REPLY_CREDIT_COSTS,
+  bonusCreditsBadge,
   creditReplyCalculator,
   type PlanConfig,
   type PlanInterval,
@@ -38,9 +40,10 @@ const PLAN_META: Record<PlanTier, CardMeta> = {
 /** The bullet list under a card. Credit grants come from the plan config. */
 function cardFeatures(config: PlanConfig): string[] {
   return [
-    `${config.credits.toLocaleString()} credits every month`,
-    "5 credits per Telegram, Discord & Web Chat reply",
-    "40 credits per WhatsApp reply",
+    `${config.credits.toLocaleString()} credits every month (${config.baseCredits.toLocaleString()} base + ${config.bonusCredits.toLocaleString()} bonus)`,
+    config.bonusDescription,
+    `${REPLY_CREDIT_COSTS.standard} credits per Telegram, Discord & Web Chat reply`,
+    `${REPLY_CREDIT_COSTS.whatsapp} credits per WhatsApp reply`,
     "Product catalogue",
     "FAQ knowledge base",
     "Owner alerts",
@@ -132,7 +135,7 @@ function PlansContent() {
           Choose a plan
         </h1>
         <p className="mt-2 max-w-md text-center text-sm text-gray-500">
-          Choose the plan that matches your message volume. Every plan includes
+          Choose the plan that matches your credit volume. Every plan includes
           the same AI features.
         </p>
         <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-1 text-xs font-medium text-[#C2410C]">
@@ -261,9 +264,23 @@ function PlansContent() {
                     {formatNaira(config.yearly)} if billed yearly
                   </p>
                 )}
-                <p className={`mt-1 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                <p className={`mt-3 text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                  {config.credits.toLocaleString()} credits / month
+                </p>
+                <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                   {creditReplyCalculator(config.credits)}
                 </p>
+                {config.bonusCredits > 0 && (
+                  <p
+                    className={`mt-2 inline-flex rounded-lg px-2.5 py-1.5 text-[11px] font-semibold ${
+                      isDark
+                        ? "bg-[#FF6600] text-white"
+                        : "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200"
+                    }`}
+                  >
+                    {bonusCreditsBadge(config.bonusCredits)}
+                  </p>
+                )}
               </div>
 
               <Button

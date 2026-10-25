@@ -177,9 +177,11 @@ export async function POST(request: Request) {
             });
 
             // Credit Economy: a successful charge (first payment or a renewal)
-            // grants the tier's credits. Recurring charges have no Transaction
-            // row of their own, so the business's stored tier is the fallback.
-            const planCredits = getMonthlyCredits(
+            // credits the plan's TOTAL grant — baseCredits plus the bonus
+            // WhatsApp credits (Green 23,000, Blue 44,000, Black 100,000).
+            // Recurring charges have no Transaction row of their own, so the
+            // business's stored tier is the fallback.
+            const totalCredits = getMonthlyCredits(
               transaction?.plan ?? business?.plan ?? null,
             );
 
@@ -190,8 +192,8 @@ export async function POST(request: Request) {
                 planStatus: "active",
                 paymentFailedAt: null,
                 gracePeriodEndsAt: null,
-                ...(planCredits > 0
-                  ? { creditBalance: { increment: planCredits } }
+                ...(totalCredits > 0
+                  ? { creditBalance: { increment: totalCredits } }
                   : {}),
               },
             });

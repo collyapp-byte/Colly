@@ -6,7 +6,7 @@ export function FAQ() {
     },
     {
       q: "Which channels are supported?",
-      a: "Colly works across Telegram, Discord, and Web Chat. Your message limit is shared globally across all connected channels."
+      a: "Colly works across Telegram, Discord, and Web Chat. Your credits are shared globally across all connected channels, and every paid plan includes bonus credits for free WhatsApp messages."
     },
     {
       q: "₦15,000 is too much.",

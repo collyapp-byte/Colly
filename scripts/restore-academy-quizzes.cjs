@@ -9,7 +9,7 @@ const COURSE_QUIZZES = {
     { q: "Mrs. Adeyemi's store lost about how much extra revenue per month before Colly?", o: ["₦18,000", "₦180,000", "₦1,800", "₦18"], c: 1 },
     { q: "What does Colly do when a customer asks a question it cannot answer?", o: ["Ignores the message", "Answers with a generic reply", "Hands the conversation to the business owner", "Ends the chat"], c: 2 },
     { q: "Which of these can Colly understand?", o: ["Only English", "Only English and French", "English, Pidgin, voice notes, and photos", "Only text messages"], c: 2 },
-    { q: "What is the Starter plan's monthly price and included messages?", o: ["₦10,000 / 1,000 messages", "₦15,000 / 500 messages", "₦25,000 / 1,500 messages", "₦50,000 / 2,500 messages"], c: 0 }
+    { q: "What does the Green plan cost per month, and how many credits does it include?", o: ["₦10,000 / 10,000 credits", "₦15,000 / 23,000 credits", "₦25,000 / 44,000 credits", "₦50,000 / 100,000 credits"], c: 1 }
   ],
   "setting-up-a-business": [
     { q: "Before a setup visit, which of these is NOT required?", o: ["Product list and photos", "The owner's bank details", "Common customer questions", "The owner's WhatsApp number"], c: 1 },
@@ -38,7 +38,7 @@ const FINAL_EXAM_QUESTIONS = [
   { s: "Understanding Colly", q: "Mrs. Adeyemi's store lost about how much extra revenue per month before Colly?", o: ["₦18,000", "₦180,000", "₦1,800", "₦18"], c: 1 },
   { s: "Understanding Colly", q: "What does Colly do when a customer asks a question it cannot answer?", o: ["Ignores the message", "Answers with a generic reply", "Hands the conversation to the business owner", "Ends the chat"], c: 2 },
   { s: "Understanding Colly", q: "Which of these can Colly understand?", o: ["Only English", "Only English and French", "English, Pidgin, voice notes, and photos", "Only text messages"], c: 2 },
-  { s: "Understanding Colly", q: "What is the Starter plan's monthly price and included messages?", o: ["₦10,000 / 1,000 messages", "₦15,000 / 500 messages", "₦25,000 / 1,500 messages", "₦50,000 / 2,500 messages"], c: 0 },
+  { s: "Understanding Colly", q: "What does the Green plan cost per month, and how many credits does it include?", o: ["₦10,000 / 10,000 credits", "₦15,000 / 23,000 credits", "₦25,000 / 44,000 credits", "₦50,000 / 100,000 credits"], c: 1 },
   { s: "Understanding Colly", q: "What is Colly's primary purpose for small businesses?", o: ["To replace human agents entirely", "To automate customer service and increase sales", "To manage inventory only", "To create social media posts"], c: 1 },
   { s: "Understanding Colly", q: "How does Colly handle multiple customers simultaneously?", o: ["One at a time, in a queue", "It can handle many customers at once, automatically", "It requires manual intervention for each", "It only works with one customer per day"], c: 1 },
   { s: "Understanding Colly", q: "What is the 'tone' setting in Colly used for?", o: ["To change the font style in messages", "To adjust the personality of the AI responses", "To set the volume of voice notes", "To control the speed of typing indicators"], c: 1 },

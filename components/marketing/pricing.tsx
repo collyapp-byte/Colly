@@ -5,6 +5,8 @@ import { TiltCard } from "@/components/ui/tilt-card";
 import {
   CREDIT_ECONOMY_DESCRIPTION,
   PLANS,
+  REPLY_CREDIT_COSTS,
+  bonusCreditsBadge,
   creditReplyCalculator,
 } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
@@ -16,6 +18,7 @@ export function Pricing() {
       price: "₦0",
       desc: "For testing the waters.",
       credits: 0,
+      bonusCredits: 0,
       features: ["Unlimited manual replies", "Dashboard inbox", "Product catalogue"],
       cta: "Start Free",
       href: "/signup?role=business",
@@ -26,7 +29,8 @@ export function Pricing() {
       price: formatNaira(PLANS.green.monthly),
       desc: PLANS.green.description,
       credits: PLANS.green.credits,
-      features: ["Telegram, Discord & Web Chat", "5 credits per Telegram reply", "40 credits per WhatsApp reply", "All AI features", "Owner alerts"],
+      bonusCredits: PLANS.green.bonusCredits,
+      features: [PLANS.green.bonusDescription, "Telegram, Discord & Web Chat", `${REPLY_CREDIT_COSTS.standard} credits per Telegram reply`, `${REPLY_CREDIT_COSTS.whatsapp} credits per WhatsApp reply`, "All AI features", "Owner alerts"],
       cta: "Get Green",
       href: "/signup?role=business&plan=green",
       highlight: true
@@ -36,7 +40,8 @@ export function Pricing() {
       price: formatNaira(PLANS.blue.monthly),
       desc: PLANS.blue.description,
       credits: PLANS.blue.credits,
-      features: ["Telegram, Discord & Web Chat", "5 credits per Telegram reply", "40 credits per WhatsApp reply", "All AI features", "Priority support"],
+      bonusCredits: PLANS.blue.bonusCredits,
+      features: [PLANS.blue.bonusDescription, "Telegram, Discord & Web Chat", `${REPLY_CREDIT_COSTS.standard} credits per Telegram reply`, `${REPLY_CREDIT_COSTS.whatsapp} credits per WhatsApp reply`, "All AI features", "Priority support"],
       cta: "Get Blue",
       href: "/signup?role=business&plan=blue",
       highlight: false
@@ -46,7 +51,8 @@ export function Pricing() {
       price: formatNaira(PLANS.black.monthly),
       desc: PLANS.black.description,
       credits: PLANS.black.credits,
-      features: ["Telegram, Discord & Web Chat", "5 credits per Telegram reply", "40 credits per WhatsApp reply", "Unlimited manual replies", "Dedicated onboarding"],
+      bonusCredits: PLANS.black.bonusCredits,
+      features: [PLANS.black.bonusDescription, "Telegram, Discord & Web Chat", `${REPLY_CREDIT_COSTS.standard} credits per Telegram reply`, `${REPLY_CREDIT_COSTS.whatsapp} credits per WhatsApp reply`, "Unlimited manual replies", "Dedicated onboarding"],
       cta: "Get Black",
       href: "/signup?role=business&plan=black",
       highlight: false
@@ -75,9 +81,24 @@ export function Pricing() {
                 <span className="text-3xl font-extrabold text-gray-900">{plan.price}</span>
                 <span className="text-sm text-gray-500">/mo</span>
                 {plan.credits > 0 ? (
-                  <p className="mt-1 text-xs text-gray-500">
-                    {creditReplyCalculator(plan.credits)}
-                  </p>
+                  <>
+                    <p className="mt-2 flex items-baseline gap-1.5">
+                      <span className="text-2xl font-extrabold text-[#FF6600]">
+                        {plan.credits.toLocaleString()}
+                      </span>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                        Credits / month
+                      </span>
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {creditReplyCalculator(plan.credits)}
+                    </p>
+                    {plan.bonusCredits > 0 && (
+                      <p className="mt-2 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[11px] font-semibold leading-snug text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                        {bonusCreditsBadge(plan.bonusCredits)}
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <p className="mt-1 text-xs text-gray-500">
                     Manual replies are always free

@@ -493,13 +493,14 @@ Log into your own Colly account. Click every menu item in the sidebar. Spend 10 
         durationMin: 5,
         bodyMarkdown: `**Unified Pricing (No more Telegram vs WhatsApp split)**
 
-We now have a single set of plans. The message limit is shared across **all** connected channels (Telegram, Discord, Web Chat).
+We now have a single set of plans. Credits are shared across **all** connected channels (Telegram, Discord, Web Chat). 1 credit = ₦1.
 
-- **Green:** ₦15,000/month (2,000 messages)
-- **Blue:** ₦25,000/month (6,000 messages)
-- **Black:** ₦50,000/month (30,000 messages)
-- **Overages:** ₦10 per extra message deducted from the Naira Wallet.
-- **Trial:** 7 days free. No card required.`,
+- **Green:** ₦15,000/month — 23,000 credits (15,000 base + 8,000 bonus = 200 free WhatsApp messages)
+- **Blue:** ₦25,000/month — 44,000 credits (28,000 base + 16,000 bonus = 400 free WhatsApp messages)
+- **Black:** ₦50,000/month — 100,000 credits (60,000 base + 40,000 bonus = 1,000 free WhatsApp messages)
+- **Reply costs:** Telegram/Discord replies cost 5 credits. WhatsApp replies cost 40 credits. Manual replies are free.
+- **Top-ups:** buy more credits any time; they never expire.
+- **Trial:** 7 days free with 250 credits. No card required.`,
       },
       {
         slug: "what-colly-cannot-do",
@@ -584,29 +585,29 @@ Before your first sales pitch, memorize these 6 limits. When a business owner as
       },
       {
         question:
-          "What is the Starter plan's monthly price and included messages?",
+          "What does the Green plan cost per month, and how many credits does it include?",
         options: [
-          "₦10,000 / 1,000 messages",
-          "₦15,000 / 500 messages",
-          "₦25,000 / 1,500 messages",
-          "₦50,000 / 2,500 messages",
+          "₦10,000 / 10,000 credits",
+          "₦15,000 / 23,000 credits",
+          "₦25,000 / 44,000 credits",
+          "₦50,000 / 100,000 credits",
         ],
         correctIndex: 1,
       },
       {
         question:
-          "Which Telegram plan has no message limit at all?",
-        options: ["Green", "Blue", "Black", "Starter"],
+          "Which plan includes the most credits?",
+        options: ["Green", "Blue", "Black", "Free"],
         correctIndex: 2,
       },
       {
         question:
-          "A business is over its monthly limit. How much does one extra AI message deduct from the wallet?",
+          "How much does one AI reply cost in credits?",
         options: [
-          "₦20 on WhatsApp and ₦10 on Telegram",
-          "₦10 on WhatsApp and ₦20 on Telegram",
-          "₦5 on both channels",
-          "₦35 on both channels",
+          "40 credits on WhatsApp and 5 credits on Telegram or Discord",
+          "5 credits on WhatsApp and 40 credits on Telegram or Discord",
+          "Manual replies cost credits too",
+          "0 credits because replies are included in the plan",
         ],
         correctIndex: 0,
       },

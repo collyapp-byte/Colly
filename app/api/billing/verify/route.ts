@@ -102,8 +102,10 @@ export async function POST(request: Request) {
               new Date(),
               interval === "yearly" ? 365 : 30,
             ),
-            // Credit Economy: the tier's credits are granted on every
-            // successful charge (monthly and yearly alike).
+            // Credit Economy: the plan's TOTAL grant is credited on every
+            // successful charge — baseCredits plus the bonus WhatsApp credits
+            // (Green 23,000, Blue 44,000, Black 100,000) — monthly and yearly
+            // alike. `getMonthlyCredits` returns that total.
             creditBalance: { increment: getMonthlyCredits(transaction.plan) },
             paystackCustomerCode:
               data.customer?.customer_code ?? undefined,
