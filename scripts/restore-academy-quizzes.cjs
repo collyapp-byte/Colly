@@ -98,10 +98,18 @@ async function main() {
       console.log(`No quiz data for course slug: ${slug}`);
       continue;
     }
+    // Find the course by slug to get its id
+    const courseRecord = await prisma.agentCourse.findUnique({
+      where: { slug: slug },
+    });
+    if (!courseRecord) {
+      console.log(`Course not found for slug: ${slug}`);
+      continue;
+    }
     for (const q of questions) {
       await prisma.agentQuizQuestion.create({
         data: {
-          courseSlug: slug,
+          courseId: courseRecord.id,
           question: q.q,
           options: q.o,
           correctIndex: q.c,
