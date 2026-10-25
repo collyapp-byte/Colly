@@ -95,7 +95,7 @@ async function main() {
     const slug = course.slug;
     const questions = COURSE_QUIZZES[slug];
     if (!questions) {
-      console.log(\`No quiz data for course slug: \${slug}\`);
+      console.log(`No quiz data for course slug: ${slug}`);
       continue;
     }
     for (const q of questions) {
@@ -108,7 +108,7 @@ async function main() {
         },
       });
     }
-    console.log(\`Inserted \${questions.length} quiz questions for course: \${slug}\`);
+    console.log(`Inserted ${questions.length} quiz questions for course: ${slug}`);
   }
 
   // Insert final exam questions
@@ -122,7 +122,7 @@ async function main() {
       },
     });
   }
-  console.log(\`Inserted \${FINAL_EXAM_QUESTIONS.length} final exam questions\`);
+  console.log(`Inserted ${FINAL_EXAM_QUESTIONS.length} final exam questions`);
 }
 
 main()
