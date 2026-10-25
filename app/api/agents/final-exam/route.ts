@@ -4,6 +4,10 @@ import { hasAllBadges } from "@/lib/badges";
 import { issueCertificateIfEligible } from "@/lib/certification";
 
 const PASS_MARK = 80;
+/** A failed attempt locks the exam for this long before another try. */
+const RETRY_COOLDOWN_MS = 15 * 60 * 1000;
+/** Attempts allowed per calendar day (since local midnight). */
+const DAILY_ATTEMPT_LIMIT = 3;
 
 type SubmitBody = {
   answers?: unknown;
@@ -54,6 +58,40 @@ export async function POST(request: Request) {
       return Response.json(
         { error: "Earn all four course badges to unlock the final exam." },
         { status: 403 },
+      );
+    }
+    // Attempt gating. The daily cap is evaluated first because it is the
+    // stricter of the two: telling an agent to wait 15 minutes when they have
+    // already used all three attempts today would be misleading.
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const [latestAttempt, attemptsToday] = await Promise.all([
+      prisma.agentFinalExamAttempt.findFirst({
+        where: { agentId: agent.id },
+        orderBy: { attemptedAt: "desc" },
+        select: { attemptedAt: true, passed: true },
+      }),
+      prisma.agentFinalExamAttempt.count({
+        where: { agentId: agent.id, attemptedAt: { gte: startOfToday } },
+      }),
+    ]);
+    if (attemptsToday >= DAILY_ATTEMPT_LIMIT) {
+      return Response.json(
+        {
+          error:
+            "You have reached your daily limit of 3 attempts. Please try again tomorrow.",
+        },
+        { status: 429 },
+      );
+    }
+    if (
+      latestAttempt &&
+      !latestAttempt.passed &&
+      Date.now() - latestAttempt.attemptedAt.getTime() < RETRY_COOLDOWN_MS
+    ) {
+      return Response.json(
+        { error: "Please wait 15 minutes before trying again." },
+        { status: 429 },
       );
     }
     let body: SubmitBody;
