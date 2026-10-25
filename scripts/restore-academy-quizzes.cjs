@@ -123,7 +123,7 @@ async function main() {
   for (const q of FINAL_EXAM_QUESTIONS) {
     await prisma.agentFinalExamQuestion.create({
       data: {
-        section: q.s,
+        sectionTitle: q.s,
         question: q.q,
         options: q.o,
         correctIndex: q.c,
