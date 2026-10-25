@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Check, Star, Zap } from "lucide-react";
 import {
   CREDIT_ECONOMY_DESCRIPTION,
+  CREDITS_RESET_DISCLAIMER,
   PLANS,
   REPLY_CREDIT_COSTS,
   bonusCreditsBadge,
@@ -24,16 +25,41 @@ type CardMeta = {
   badge?: string;
   dark?: boolean;
   featured?: boolean;
+  /** Tint for a light card; Black keeps the dark theme instead. */
+  tone?: CardTone;
 };
 
+/** Light plans are tinted with their own colour: emerald Green, blue Blue. */
+type CardTone = "emerald" | "blue";
+
 const PLAN_META: Record<PlanTier, CardMeta> = {
-  green: { name: "Green", tagline: "For getting started" },
-  blue: { name: "Blue", tagline: "For growing businesses" },
+  green: { name: "Green", tagline: "For getting started", tone: "emerald" },
+  blue: { name: "Blue", tagline: "For growing businesses", tone: "blue" },
   black: {
     name: "Black",
     tagline: "Maximum reach for high-volume teams",
     badge: "Best Value",
     dark: true,
+  },
+};
+
+/**
+ * Per-plan card tint. The class strings are literals (never interpolated) so
+ * Tailwind's scanner keeps them; text stays dark for contrast.
+ */
+const LIGHT_CARD_STYLES: Record<
+  CardTone,
+  { card: string; credit: string; check: string }
+> = {
+  emerald: {
+    card: "border border-emerald-100 bg-emerald-50/50",
+    credit: "text-emerald-700",
+    check: "text-emerald-600",
+  },
+  blue: {
+    card: "border border-blue-100 bg-blue-50/50",
+    credit: "text-blue-700",
+    check: "text-blue-600",
   },
 };
 
@@ -200,6 +226,7 @@ function PlansContent() {
           const isDark = Boolean(meta.dark);
           const isFeatured = Boolean(meta.featured);
           const isSelected = tier === selectedTier;
+          const tone = meta.tone ? LIGHT_CARD_STYLES[meta.tone] : null;
           const Icon = isFeatured || isDark ? Star : Zap;
 
           const cardClasses = [
@@ -207,7 +234,9 @@ function PlansContent() {
               ? "border-2 border-gray-900 bg-gray-900 text-white"
               : isFeatured
                 ? "border-2 border-[#FF6600] bg-[#FFF4EC]"
-                : "border border-gray-200 bg-white",
+                : tone
+                  ? tone.card
+                  : "border border-gray-200 bg-white",
             isSelected ? "ring-2 ring-[#FF6600] ring-offset-2" : "",
           ]
             .filter(Boolean)
@@ -220,7 +249,7 @@ function PlansContent() {
                   isDark ? "border-gray-700 bg-gray-800 text-white" : "bg-white"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className={`h-3.5 w-3.5 ${tone ? tone.check : ""}`} />
               </div>
 
               {meta.badge && (
@@ -264,11 +293,22 @@ function PlansContent() {
                     {formatNaira(config.yearly)} if billed yearly
                   </p>
                 )}
-                <p className={`mt-3 text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                <p
+                  className={`mt-3 text-lg font-bold ${
+                    isDark ? "text-white" : tone ? tone.credit : "text-gray-900"
+                  }`}
+                >
                   {config.credits.toLocaleString()} credits / month
                 </p>
                 <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                   {creditReplyCalculator(config.credits)}
+                </p>
+                <p
+                  className={`mt-1 text-[11px] leading-snug ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  {CREDITS_RESET_DISCLAIMER}
                 </p>
                 {config.bonusCredits > 0 && (
                   <p
@@ -297,7 +337,11 @@ function PlansContent() {
               <div className="mt-6 space-y-2">
                 {cardFeatures(config).map((feature) => (
                   <div key={feature} className="flex items-center gap-2">
-                    <Check className="h-3.5 w-3.5 text-gray-400" />
+                    <Check
+                      className={`h-3.5 w-3.5 ${
+                        isDark ? "text-gray-400" : tone ? tone.check : "text-gray-400"
+                      }`}
+                    />
                     <span className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                       {feature}
                     </span>

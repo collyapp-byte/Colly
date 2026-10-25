@@ -33,6 +33,14 @@ export const REPLY_CREDIT_COSTS = {
 export const CREDIT_ECONOMY_DESCRIPTION =
   "1 Credit = 1 Naira. Telegram/Discord AI replies cost 5 credits. WhatsApp replies cost 40 credits.";
 
+/**
+ * Shown right under a plan's monthly credit allowance: a subscription buys an
+ * allowance that resets every renewal, while top-up credits were paid for and
+ * stay on the balance forever.
+ */
+export const CREDITS_RESET_DISCLAIMER =
+  "(Credits reset on renewal. Top-up credits never expire).";
+
 /** Owner alert sent when the AI cannot afford a reply. */
 export const LOW_CREDIT_MESSAGE =
   "Your credit balance is low. Please top up to continue replying.";
@@ -140,26 +148,55 @@ export const FREE_PLAN_LIMITS = {
   credits: 0, // 0 AI credits
 };
 
-/** Credit top-ups: never expire, used once the balance runs out. */
-export const CREDIT_PACKAGES = {
-  free_credits: {
-    id: "free_credits",
-    credits: 3_000,
-    price: 5_250,
-    currency: "NGN",
-    label: "3,000 credits",
-  },
-  paid_credits: {
-    id: "paid_credits",
-    credits: 3_000,
-    price: 3_000,
-    currency: "NGN",
-    label: "3,000 credits",
-  },
-} as const;
+/**
+ * Naira charged for one credit. Top-ups are sold at face value — 1 credit =
+ * ₦1 — so a 3,000-credit pack always costs ₦3,000, never ₦5,250. The rate lives
+ * here so the checkout, the credit grant and the UI read the same number.
+ */
+export const NAIRA_PER_CREDIT = 1;
 
-export type CreditPackageId = keyof typeof CREDIT_PACKAGES;
-export type CreditPackage = (typeof CREDIT_PACKAGES)[CreditPackageId];
+/** Naira a credit amount costs (and is worth) at the 1:1 top-up rate. */
+export function creditsToNaira(credits: number): number {
+  return credits * NAIRA_PER_CREDIT;
+}
+
+export type CreditPackageId = "free_credits" | "paid_credits";
+
+/**
+ * A top-up pack. `price` is derived from `credits` at the 1:1 rate, so the
+ * advertised price and the amount Paystack charges can never drift apart.
+ */
+export type CreditPackage = {
+  id: CreditPackageId;
+  credits: number;
+  price: number;
+  currency: "NGN";
+  label: string;
+};
+
+function defineCreditPackage(
+  id: CreditPackageId,
+  credits: number,
+): CreditPackage {
+  return {
+    id,
+    credits,
+    price: creditsToNaira(credits),
+    currency: "NGN",
+    label: `${credits.toLocaleString("en-NG")} credits`,
+  };
+}
+
+/**
+ * Credit top-ups: never expire, used once the monthly allowance runs out.
+ * Both packs are 3,000 credits for ₦3,000 now that top-ups are sold at face
+ * value; the two ids are kept because the plan state still decides which one a
+ * business is offered.
+ */
+export const CREDIT_PACKAGES: Record<CreditPackageId, CreditPackage> = {
+  free_credits: defineCreditPackage("free_credits", 3_000),
+  paid_credits: defineCreditPackage("paid_credits", 3_000),
+};
 
 /** True when `value` is a plan tier name in the unified plan set. */
 export function isPlanTierName(value: unknown): value is PlanTier {

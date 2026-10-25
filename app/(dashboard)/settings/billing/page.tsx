@@ -364,8 +364,8 @@ export default function BillingPage() {
                   </p>
                   <p className="mt-2">
                     Buy {creditPackage.label} for{" "}
-                    {formatNaira(creditPackage.price)} to try the AI without
-                    subscribing.
+                    {formatNaira(creditPackage.price)} (1 credit = ₦1) to try the
+                    AI without subscribing. Top-up credits never expire.
                   </p>
                 </div>
               </div>

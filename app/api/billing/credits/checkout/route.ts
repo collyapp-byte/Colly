@@ -2,19 +2,18 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getAppUrl } from "@/lib/app-url";
 import { initializeTransaction } from "@/lib/paystack";
-import { getCreditPackage } from "@/lib/plans";
+import { creditsToNaira, getCreditPackage } from "@/lib/plans";
 
 function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
 }
 
 // POST /api/billing/credits/checkout
-// Starts a Paystack checkout for a one-off credit top-up. The package (and
-// price) depends on the business's plan state: free/expired plans buy 3,000
-// credits for ₦5,250, active paid plans buy 3,000 credits for ₦3,000 (1 credit
-// = ₦1 face value). Unlike a subscription checkout there is no plan code: the
-// payment is a single charge and the credits are added to the balance by
-// /api/billing/verify.
+// Starts a Paystack checkout for a one-off credit top-up. Every pack is sold at
+// face value — 1 credit = ₦1 — so the charge is simply the credit amount
+// multiplied by 1 (3,000 credits = ₦3,000, with no markup). Unlike a
+// subscription checkout there is no plan code: the payment is a single charge
+// and the credits are added to the balance by /api/billing/verify.
 export async function POST() {
   try {
     const user = await getCurrentUser();
@@ -33,11 +32,14 @@ export async function POST() {
       planStatus: business.planStatus,
     });
 
+    // 1 credit = ₦1: the Naira amount is the credit amount times 1.
+    const amountNaira = creditsToNaira(creditPackage.credits);
+
     const callbackUrl = `${getAppUrl()}/billing/callback`;
 
     const payload = await initializeTransaction({
       email: user.email,
-      amountKobo: creditPackage.price * 100,
+      amountKobo: amountNaira * 100,
       callbackUrl,
       metadata: {
         businessId: user.businessId,
@@ -50,7 +52,7 @@ export async function POST() {
       data: {
         businessId: user.businessId,
         reference: payload.reference,
-        amount: creditPackage.price,
+        amount: amountNaira,
         status: "pending",
         type: "credits",
         creditsPurchased: creditPackage.credits,
