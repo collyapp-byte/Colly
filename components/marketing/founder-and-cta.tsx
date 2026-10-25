@@ -30,12 +30,12 @@ export function FounderAndCTA() {
         <div className="absolute inset-0 bg-gray-900/70" aria-hidden />
         <div className="relative z-10 mx-auto max-w-2xl px-4">
           <h2 className="font-display text-3xl font-bold text-white sm:text-4xl">Ready to stop losing sales?</h2>
-          <p className="mt-4 mb-8 text-gray-200">Set up your AI receptionist in 5 minutes. 50 AI messages free for 7 days. No card required.</p>
+          <p className="mt-4 mb-8 text-gray-200">Set up your AI receptionist in 5 minutes. 50 AI credits free every month. No card required.</p>
           <Link
             href="/signup?role=business"
             className="inline-block rounded-lg bg-[#FF6600] px-8 py-4 text-base font-semibold text-white transition-all hover:scale-105 hover:bg-[#E65C00] active:scale-95 shadow-lg shadow-orange-500/20"
           >
-            Start Your Free Trial
+            Start Free
           </Link>
         </div>
       </section>

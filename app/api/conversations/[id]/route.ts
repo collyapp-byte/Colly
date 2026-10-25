@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
-import { getAiReplyCreditCost, getPlanLimits } from "@/lib/plans";
+import { getAiReplyCreditCost, getPlanLimits, totalAvailableCredits } from "@/lib/plans";
 
 function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
@@ -86,12 +86,14 @@ export async function GET(
         planInterval: true,
         channel: true,
         planStatus: true,
-        creditBalance: true,
+        planCredits: true,
+        topUpCredits: true,
       },
     });
     const limits = getPlanLimits(business.plan, business.planInterval);
     const aiCreditCost = getAiReplyCreditCost(business.channel);
-    const aiPaused = business.creditBalance < aiCreditCost;
+    // Split wallet: the AI can reply while the allowance plus top-ups cover it.
+    const aiPaused = totalAvailableCredits(business) < aiCreditCost;
 
     return Response.json({
       conversation: meta,
@@ -104,8 +106,10 @@ export async function GET(
       plan: {
         plan: business.plan,
         aiPaused,
-        creditBalance: business.creditBalance,
-        planCredits: limits.credits,
+        planCredits: business.planCredits,
+        topUpCredits: business.topUpCredits,
+        creditBalance: totalAvailableCredits(business),
+        planMonthlyCredits: limits.credits,
         aiCreditCost,
         manualCreditCost: 0,
       },

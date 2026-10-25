@@ -33,7 +33,7 @@ export function Hero() {
               href="/signup?role=business"
               className="inline-flex items-center justify-center rounded-xl bg-[#FF6600] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5 hover:bg-[#E65C00]"
             >
-              Start Free Trial
+              Start Free
             </Link>
             <Link
               href="#how-it-works"

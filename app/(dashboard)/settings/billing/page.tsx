@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, CircleAlert, Info } from "lucide-react";
 import { formatNaira } from "@/lib/format";
 import {
+  CREDITS_RESET_DISCLAIMER,
   LOW_CREDIT_MESSAGE,
   REPLY_CREDIT_COSTS,
   getCreditPackage,
@@ -16,10 +17,14 @@ import { toast } from "sonner";
 type Usage = {
   aiRepliesUsed: number;
   manualMessagesUsed: number;
-  /** Credit Economy: 1 credit = ₦1. */
+  /** Credit Economy: 1 credit = ₦1. Spendable now = plan + top-up credits. */
   creditBalance: number;
-  /** Credits the current plan grants each billing month. */
+  /** Monthly plan allowance; reset on every renewal. */
   planCredits: number;
+  /** Paid top-ups; never expire. */
+  topUpCredits: number;
+  /** Credits the current plan grants each billing month (a grant, not a balance). */
+  planMonthlyCredits: number;
   /** Credits one AI reply costs on this business's channel. */
   aiCreditCost: number;
   manualCreditCost: number;
@@ -28,8 +33,6 @@ type Usage = {
   planStatus: string;
   planExpiresAt: string | null;
   channel: string;
-  trialEndsAt: string | null;
-  onboardingEndsAt?: string | null;
   subscriptionStatus: string | null;
   gracePeriodEndsAt: string | null;
 };
@@ -47,14 +50,12 @@ type BillingTransaction = {
 
 const PLAN_NAMES: Record<string, string> = {
   free: "Free",
-  trial: "Trial",
   starter: "Starter",
   business: "Business",
   pro: "Pro",
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  trialing: "Trialing",
   active: "Active",
   past_due: "Past due",
   cancelled: "Cancelled",
@@ -62,7 +63,6 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  trialing: "bg-blue-100 text-blue-700",
   active: "bg-green-100 text-green-700",
   past_due: "bg-amber-100 text-amber-700",
   cancelled: "bg-gray-100 text-gray-600",
@@ -184,14 +184,20 @@ export default function BillingPage() {
   }
 
   const loading = usage === null && error === null;
-  const planName = usage ? PLAN_NAMES[usage.plan] ?? capitalize(usage.plan) : "";
-  const isTrial = usage?.plan === "trial";
-  const isFree = usage?.plan === "free";
+  // The trial plan was retired: a business row still stored as "trial" is a
+  // Free tier account now, so the page treats it as one everywhere.
+  const plan = usage?.plan === "trial" ? "free" : usage?.plan;
+  const planName = usage ? PLAN_NAMES[plan ?? ""] ?? capitalize(plan ?? "") : "";
+  const isFree = plan === "free";
+  const storedStatus = usage?.planStatus ?? "inactive";
+  // A legacy row may still carry the retired "trialing" status: show it as a
+  // plain Free account instead.
+  const planStatus = storedStatus === "trialing" ? "inactive" : storedStatus;
   const aiCreditCost = usage?.aiCreditCost ?? REPLY_CREDIT_COSTS.standard;
   const channelLabel = CHANNEL_LABELS[usage?.channel ?? ""] ?? "this channel";
   const creditPackage = getCreditPackage(
     usage
-      ? { plan: usage.plan, planStatus: usage.planStatus }
+      ? { plan: plan ?? usage.plan, planStatus }
       : { plan: "free", planStatus: "inactive" },
   );
 
@@ -234,30 +240,21 @@ export default function BillingPage() {
                   </h3>
                   <span
                     className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${
-                      STATUS_BADGE[usage.planStatus] ?? "bg-gray-100 text-gray-600"
+                      STATUS_BADGE[planStatus] ?? "bg-gray-100 text-gray-600"
                     }`}
                   >
-                    {STATUS_LABELS[usage.planStatus] ?? capitalize(usage.planStatus)}
+                    {STATUS_LABELS[planStatus] ?? capitalize(planStatus)}
                   </span>
-                  {!isTrial && (
+                  {!isFree && (
                     <span className="text-sm text-gray-500">
                       {usage.planInterval}
                     </span>
                   )}
                 </div>
 
-                {isTrial ? (
-                  daysUntil(usage.trialEndsAt ?? usage.onboardingEndsAt ?? null) !== null && (
-                    <p className="mt-1 text-sm text-gray-500">
-                      Trial ends in{" "}
-                      {daysUntil(usage.trialEndsAt ?? usage.onboardingEndsAt ?? null) === 0
-                        ? "less than a day"
-                        : `${daysUntil(usage.trialEndsAt ?? usage.onboardingEndsAt ?? null)} days`}
-                    </p>
-                  )
-                ) : (
+                {!isFree && (
                   <p className="mt-1 text-sm text-gray-500">
-                    {usage.planStatus === "active"
+                    {planStatus === "active"
                       ? `Renews on ${formatDate(usage.planExpiresAt)}`
                       : `Expires on ${formatDate(usage.planExpiresAt)}`}
                   </p>
@@ -269,10 +266,10 @@ export default function BillingPage() {
                   href="/settings/billing/plans"
                   className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
                 >
-                  {isTrial ? "Choose a plan" : "Manage subscription"}
+                  {isFree ? "Upgrade plan" : "Manage subscription"}
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
-                {!isTrial && usage.planStatus === "active" && (
+                {!isFree && planStatus === "active" && (
                   <Button
                     type="button"
                     variant="danger"
@@ -286,24 +283,45 @@ export default function BillingPage() {
               </div>
             </div>
 
-            {/* CREDITS */}
+            {/* CREDITS — split wallet: plans reset monthly, top-ups persist */}
             <div className="mt-4 rounded-lg border border-gray-100 bg-background p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span className="text-sm font-medium text-gray-900">
-                  Credit balance
+                  Credits available
                 </span>
                 <span className="font-display text-xl text-gray-900">
                   {usage.creditBalance.toLocaleString()} credits
                 </span>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                {usage.planCredits > 0
-                  ? `${usage.planCredits.toLocaleString()} credits are included ${
-                      usage.plan === "trial"
-                        ? "with your 7-day trial."
-                        : "with your plan each billing month."
-                    }`
-                  : "Your current plan does not add credits — top up to keep the AI replying."}
+
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="rounded-lg border border-gray-200 bg-surface p-3">
+                  <p className="text-xs text-gray-400">Plan Credits</p>
+                  <p className="mt-0.5 text-sm font-semibold text-gray-900">
+                    {usage.planCredits.toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    Resets every month
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-surface p-3">
+                  <p className="text-xs text-gray-400">Top-Up Credits</p>
+                  <p className="mt-0.5 text-sm font-semibold text-gray-900">
+                    {usage.topUpCredits.toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-[11px] text-gray-500">Never expire</p>
+                </div>
+              </div>
+
+              <p className="mt-2 text-[11px] text-gray-500">
+                {CREDITS_RESET_DISCLAIMER}
+              </p>
+
+              <p className="mt-2 text-xs text-gray-500">
+                {usage.planMonthlyCredits > 0
+                  ? `${usage.planMonthlyCredits.toLocaleString()} plan credits are included with your plan each billing month.`
+                  : "Your current plan does not add credits — top up to keep the AI replying."}{" "}
+                AI replies spend plan credits first, then top-ups.
               </p>
               <p className="mt-1 text-xs text-gray-500">
                 {aiCreditCost} credits per AI reply on {channelLabel} · manual
@@ -338,7 +356,9 @@ export default function BillingPage() {
                   {usage.creditBalance.toLocaleString()} credits available
                 </p>
                 <p className="text-xs text-gray-500">
-                  1 Credit = 1 Naira · credits never expire
+                  {usage.planCredits.toLocaleString()} plan +{" "}
+                  {usage.topUpCredits.toLocaleString()} top-up · 1 Credit = 1
+                  Naira
                 </p>
               </div>
               <Link
@@ -350,7 +370,7 @@ export default function BillingPage() {
               </Link>
             </div>
 
-            {(isFree || isTrial) && (
+            {isFree && (
               <div className="mt-5 flex items-start gap-3 rounded-lg border border-gray-200 bg-background p-4">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden />
                 <div className="text-sm text-gray-600">

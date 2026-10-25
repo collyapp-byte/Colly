@@ -5,6 +5,7 @@ import {
   LOW_CREDIT_MESSAGE,
   getAiReplyCreditCost,
   getPlanLimits,
+  totalAvailableCredits,
 } from "@/lib/plans";
 import { TransactionRow } from "@/components/dashboard/transaction-row";
 import Link from "next/link";
@@ -25,7 +26,8 @@ export default async function CollyAIPage() {
       ownerTelegramChatId: true,
       telegramBotToken: true,
       discordBotToken: true,
-      creditBalance: true,
+      planCredits: true,
+      topUpCredits: true,
       plan: true,
       planInterval: true,
       channel: true,
@@ -78,11 +80,16 @@ export default async function CollyAIPage() {
     business?.plan ?? "free",
     business?.planInterval ?? "monthly",
   );
-  const creditBalance = business?.creditBalance ?? 0;
+  const planCredits = business?.planCredits ?? 0;
+  const topUpCredits = business?.topUpCredits ?? 0;
+  // Split wallet: the AI can spend the monthly allowance plus permanent top-ups.
+  const creditBalance = totalAvailableCredits({ planCredits, topUpCredits });
   const aiReplyCost = getAiReplyCreditCost(business?.channel);
   const aiUsed = aiRepliesThisMonth;
   const manualUsed = manualRepliesThisMonth;
-  const isFreePlan = limits.credits === 0;
+  // The Free tier includes 50 credits every month, so "Free" is decided by the
+  // plan name rather than by a zero credit grant.
+  const isFreePlan = (business?.plan ?? "free") === "free";
   const tone = business?.tone === "formal" ? "Formal" : "Friendly";
   const ownerAlertsActive = Boolean(business?.ownerTelegramChatId);
   const telegramConnected = Boolean(business?.telegramBotToken);
@@ -241,19 +248,32 @@ export default async function CollyAIPage() {
             Credits & Usage
           </h2>
           <div className="mt-4 space-y-4">
-            <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
-              <span className="text-sm text-gray-600">Credit balance</span>
-              <span className="font-semibold text-gray-900">
-                {creditBalance.toLocaleString()} credits
-              </span>
+            <div className="rounded-lg border border-gray-100 p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Credit balance</span>
+                <span className="font-semibold text-gray-900">
+                  {creditBalance.toLocaleString()} credits
+                </span>
+              </div>
+              {/* Split wallet: the two buckets that make up the total. */}
+              <div className="mt-2 space-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500">
+                <div className="flex items-center justify-between">
+                  <span>Plan credits (monthly)</span>
+                  <span className="font-medium text-gray-700">
+                    {planCredits.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Top-up credits (never expire)</span>
+                  <span className="font-medium text-gray-700">
+                    {topUpCredits.toLocaleString()}
+                  </span>
+                </div>
+              </div>
             </div>
             <p className="text-xs text-gray-500">
               {limits.credits > 0
-                ? `${limits.credits.toLocaleString()} credits are included ${
-                    business?.plan === "trial"
-                      ? "with your 7-day trial."
-                      : "with your plan each billing month."
-                  }`
+                ? `${limits.credits.toLocaleString()} credits are included with your plan each billing month.`
                 : "Your plan does not add credits — top up to keep the AI replying."}{" "}
               1 credit = ₦1. An AI reply costs {aiReplyCost} credits on this
               channel; manual replies are free.
@@ -284,7 +304,7 @@ export default async function CollyAIPage() {
                 >
                   Upgrade
                 </Link>{" "}
-                to get monthly credits.
+                to get more monthly credits.
               </p>
             )}
             <Link

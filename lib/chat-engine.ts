@@ -25,7 +25,12 @@ import {
   getLanguageInstruction,
 } from "@/lib/language-detect";
 import { requireAiEnabled } from "@/lib/auth-guards";
-import { getAiReplyCreditCost, LOW_CREDIT_MESSAGE } from "@/lib/plans";
+import {
+  getAiReplyCreditCost,
+  LOW_CREDIT_MESSAGE,
+  splitCreditCost,
+  totalAvailableCredits,
+} from "@/lib/plans";
 import { sendEscalationAlert, sendOwnerAlert } from "@/lib/owner-alerts";
 
 const TONE_INSTRUCTIONS: Record<Tone, string> = {
@@ -155,6 +160,12 @@ const MAX_TOOL_ROUNDS = 2;
 // call, so we cap it at the last 10 messages.
 const HISTORY_LIMIT = 10;
 const NEGOTIATION_INACTIVITY_MS = 24 * 60 * 60 * 1000;
+/**
+ * How many times `chargeAiReply` re-reads the wallet after a lost race. Three
+ * attempts is plenty: each retry only loses when another reply debited in the
+ * same millisecond, and the wallet re-read makes the next attempt land.
+ */
+const CHARGE_MAX_ATTEMPTS = 3;
 
 type ToolResult =
   | { query: string; count: number; products: ProductMatch[] }
@@ -287,16 +298,16 @@ export async function handleIncomingMessage({
       businessHours: true,
       paymentInstructions: true,
       channel: true,
-      creditBalance: true,
+      planCredits: true,
+      topUpCredits: true,
     },
   });
 
-  // Credit Economy: the balance is re-read here (not only in
-  // requireAiEnabled) so a balance drained by a concurrent reply is caught
-  // before the AI spends money on a model call. Nothing below is charged
-  // until the reply is actually saved.
+  // Credit Economy: the wallet is re-read here (not only in requireAiEnabled)
+  // so credits drained by a concurrent reply are caught before the AI spends
+  // money on a model call. Nothing below is charged until the reply is saved.
   const replyCreditCost = getAiReplyCreditCost(business.channel);
-  if (business.creditBalance < replyCreditCost) {
+  if (totalAvailableCredits(business) < replyCreditCost) {
     await sendOwnerAlert(businessId, LOW_CREDIT_MESSAGE);
     return { reply: null, blocked: true, saved: true, replied: false, reason: "no_credits" };
   }
@@ -374,30 +385,71 @@ export async function handleIncomingMessage({
 
 /**
  * Spend credits for one AI reply: 5 credits on Telegram, Discord and Web Chat,
- * 40 credits on WhatsApp. The `creditBalance: { gte: cost }` filter makes the
- * decrement conditional, so two replies racing on the same balance can never
- * push it negative — the losing update matches 0 rows and is logged instead.
- * Manual (agent) replies never reach this function: they are free.
+ * 40 credits on WhatsApp. Manual (agent) replies never reach this function: they
+ * are free.
+ *
+ * Split wallet: the monthly plan allowance (`planCredits`) is spent first and
+ * `topUpCredits` only cover what is left of the cost, so the credits a business
+ * paid for outlive the allowance that resets every month.
+ *
+ * The read and the debit run inside one transaction, and the debit is a
+ * compare-and-swap on the two balances it just read (`planCredits` and
+ * `topUpCredits` must still hold those exact values). Two replies racing on the
+ * same wallet therefore cannot double-spend or push a bucket negative: the loser
+ * matches 0 rows, re-reads the wallet and tries again.
  */
 async function chargeAiReply(
   businessId: string,
   channel: string | null,
 ): Promise<void> {
   const cost = getAiReplyCreditCost(channel);
-  const charged = await prisma.business.updateMany({
-    where: { id: businessId, creditBalance: { gte: cost } },
-    data: {
-      creditBalance: { decrement: cost },
-      messagesUsedThisMonth: { increment: 1 },
-      // Trial counter: how many AI replies the 7-day trial has spent.
-      aiMessagesUsed: { increment: 1 },
-    },
-  });
-  if (charged.count === 0) {
-    console.warn(
-      `[chat-engine] credit charge skipped for business ${businessId}: balance below ${cost}`,
-    );
+
+  for (let attempt = 0; attempt < CHARGE_MAX_ATTEMPTS; attempt++) {
+    const outcome = await prisma.$transaction(async (tx) => {
+      const wallet = await tx.business.findUniqueOrThrow({
+        where: { id: businessId },
+        select: { planCredits: true, topUpCredits: true },
+      });
+
+      // Neither bucket alone may cover a reply; the two together must.
+      if (totalAvailableCredits(wallet) < cost) {
+        return "insufficient" as const;
+      }
+
+      const { fromPlanCredits, fromTopUpCredits } = splitCreditCost(wallet, cost);
+
+      const charged = await tx.business.updateMany({
+        where: {
+          id: businessId,
+          // Compare-and-swap: skip the debit if either bucket moved since read.
+          planCredits: wallet.planCredits,
+          topUpCredits: wallet.topUpCredits,
+        },
+        data: {
+          planCredits: { decrement: fromPlanCredits },
+          topUpCredits: { decrement: fromTopUpCredits },
+          messagesUsedThisMonth: { increment: 1 },
+          // Lifetime AI reply counter, kept for reporting.
+          aiMessagesUsed: { increment: 1 },
+        },
+      });
+
+      return charged.count === 1 ? ("charged" as const) : ("retry" as const);
+    });
+
+    if (outcome === "charged") return;
+
+    if (outcome === "insufficient") {
+      console.warn(
+        `[chat-engine] credit charge skipped for business ${businessId}: wallet below ${cost}`,
+      );
+      return;
+    }
   }
+
+  console.warn(
+    `[chat-engine] credit charge skipped for business ${businessId}: wallet changed under ${CHARGE_MAX_ATTEMPTS} attempts`,
+  );
 }
 
 function buildSystemPrompt(

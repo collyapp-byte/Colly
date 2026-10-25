@@ -20,7 +20,7 @@ export function AiPausedBanner({
   const getMessage = () => {
     switch (reason) {
       case "plan_expired":
-        return "Your trial has ended. Subscribe to restore AI replies.";
+        return "AI replies are paused. Choose a plan or add credits to restore them.";
       case "cap_hit":
         return `You've used ${used.toLocaleString()}/${cap.toLocaleString()} messages this month. Buy credits or upgrade.`;
       case "no_credits":

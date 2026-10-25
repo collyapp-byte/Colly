@@ -62,13 +62,22 @@ model Business {
   nrsLastDismissedAt  DateTime?
 
   /// Billing. `plan` is the tier name for the business's channel:
-  /// "free" | "trial" | "starter" | "business" | "pro" (WhatsApp) or
-  /// "green" | "blue" | "black" (Telegram); `planInterval` is "monthly" |
-  /// "yearly" (or "trial"); `planStatus` is "trialing" | "active" |
-  /// "past_due" | "cancelled" | "expired".
-  /// `creditBalance` is the credit balance: 1 credit = ₦1. Plans grant credits
-  /// each billing month and each AI reply spends them (5 credits on Telegram,
-  /// Discord or Web Chat; 40 credits on WhatsApp). Manual replies are free.
+  /// "free" | "starter" | "business" | "pro" (WhatsApp) or "green" | "blue" |
+  /// "black" (Telegram); `planInterval` is "monthly" | "yearly"; `planStatus`
+  /// is "inactive" (Free) | "active" | "past_due" | "cancelled" | "expired".
+  /// The old trial plan ("trial" / "trialing") is retired: signup no longer
+  /// sets it, and every reader treats such a row as Free. The permanent Free
+  /// tier grants 50 `planCredits` every month and never expires.
+  /// Credits are a SPLIT WALLET (1 credit = ₦1), so a monthly allowance can
+  /// never be hoarded:
+  /// - `planCredits` is the plan's monthly allowance. Every successful plan
+  ///   charge OVERWRITES it with that plan's grant (it is never added to), so
+  ///   unused allowance resets at each renewal instead of stacking up.
+  /// - `topUpCredits` are credits the business paid for. They are never reset,
+  ///   so they keep paying for replies after the monthly allowance is gone.
+  /// Each AI reply spends 5 credits on Telegram, Discord or Web Chat and 40 on
+  /// WhatsApp, always drawing from `planCredits` first, then `topUpCredits`.
+  /// Manual replies are free.
   /// `paystackCustomerCode` / `paystackSubscriptionCode` / `paystackEmailToken`
   /// identify the business in Paystack; `paystackEmailToken` is needed to
   /// pause/resume a Paystack subscription. `billingEmail` receives receipts.
@@ -80,17 +89,17 @@ model Business {
   planStartedAt            DateTime  @default(now())
   planExpiresAt            DateTime?
   onboardingEndsAt         DateTime?
-  creditBalance            Int       @default(0)
+  planCredits              Int       @default(0)
+  topUpCredits             Int       @default(0)
   paystackCustomerCode     String?
   paystackSubscriptionCode String?
   paystackEmailToken       String?
   billingEmail             String?
 
-  /// Free trial. `trialEndsAt` is when the 7-day trial lapses (the trial is
-  /// free: no card, no paid tier). `aiMessagesUsed` and `manualMessagesUsed`
-  /// count the replies spent during the trial, so the trial allowance can be
-  /// shown next to the countdown. `onboardingEndsAt` above is the separate
-  /// onboarding window and is left untouched.
+  /// Legacy trial columns, kept so old rows need no data migration. The trial
+  /// is retired: `trialEndsAt` is no longer set at signup, and
+  /// `aiMessagesUsed` / `manualMessagesUsed` are lifetime reply counters only.
+  /// `onboardingEndsAt` above is the separate onboarding window.
   trialEndsAt        DateTime?
   aiMessagesUsed     Int      @default(0)
   manualMessagesUsed Int      @default(0)

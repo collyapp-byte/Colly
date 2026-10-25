@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { getMonthlyCredits } from "@/lib/plans";
+import { getMonthlyCredits, totalAvailableCredits } from "@/lib/plans";
 import {
   fetchSubscription,
   verifyTransaction,
@@ -25,9 +25,10 @@ function addDays(date: Date, days: number): Date {
 
 // POST /api/billing/verify
 // Confirms a checkout that just came back through the Paystack callback URL.
-// On success the pending Transaction is marked paid and the business's plan or
-// credit balance is applied (Credit Economy: 1 credit = ₦1). Idempotent: an
-// already-finalized transaction is left alone.
+// On success the pending Transaction is marked paid and the wallet is applied:
+// a subscription charge OVERWRITES `planCredits` with the plan's monthly grant,
+// and a top-up ADD its credits to `topUpCredits` (Credit Economy: 1 credit =
+// ₦1). Idempotent: an already-finalized transaction is left alone.
 export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
@@ -59,14 +60,14 @@ export async function POST(request: Request) {
     }
 
     let plan = transaction.plan;
-    let creditBalance = await getCreditBalance(user.businessId);
+    let wallet = await getWallet(user.businessId);
 
     // Already fulfilled (e.g. the webhook beat this browser callback): the
     // payment is confirmed, so report success without re-applying anything.
     // Without this, the fall-through below would return ok:false and the client
     // would show a false "could not be confirmed" error.
     if (data.status === "success" && transaction.status === "success") {
-      return Response.json({ ok: true, plan, creditBalance });
+      return Response.json({ ok: true, plan, ...wallet });
     }
 
     if (data.status === "success" && transaction.status === "pending") {
@@ -85,8 +86,8 @@ export async function POST(request: Request) {
 
       if (claim.count === 0) {
         // Already fulfilled by the webhook (or a prior verify call).
-        creditBalance = await getCreditBalance(user.businessId);
-        return Response.json({ ok: true, plan, creditBalance });
+        wallet = await getWallet(user.businessId);
+        return Response.json({ ok: true, plan, ...wallet });
       }
 
       if (transaction.type === "subscription") {
@@ -102,11 +103,12 @@ export async function POST(request: Request) {
               new Date(),
               interval === "yearly" ? 365 : 30,
             ),
-            // Credit Economy: the plan's TOTAL grant is credited on every
-            // successful charge — baseCredits plus the bonus WhatsApp credits
-            // (Green 23,000, Blue 44,000, Black 100,000) — monthly and yearly
-            // alike. `getMonthlyCredits` returns that total.
-            creditBalance: { increment: getMonthlyCredits(transaction.plan) },
+            // Credit Economy: the plan's TOTAL grant fills the monthly bucket
+            // (baseCredits plus the bonus WhatsApp credits: Green 23,000, Blue
+            // 44,000, Black 100,000) — monthly and yearly alike. It is SET, not
+            // incremented, so an allowance that was not fully spent last month
+            // cannot be hoarded. `topUpCredits` (paid credits) is left alone.
+            planCredits: getMonthlyCredits(transaction.plan),
             paystackCustomerCode:
               data.customer?.customer_code ?? undefined,
             billingEmail: data.customer?.email ?? user.email,
@@ -137,28 +139,31 @@ export async function POST(request: Request) {
           });
         }
 
-        return Response.json({ ok: true, plan, creditBalance });
+        wallet = await getWallet(user.businessId);
+        return Response.json({ ok: true, plan, ...wallet });
       }
 
-      // Credit top-ups: add the credits that were bought (1 credit = ₦1) to the
-      // balance. The Transaction row is authoritative; the paid amount is the
-      // fallback for rows created before credits were recorded.
+      // Credit top-ups: ADD the credits that were bought (1 credit = ₦1) to the
+      // permanent bucket. Top-ups never expire, so a renewal later on only
+      // resets `planCredits` and leaves this balance untouched. The Transaction
+      // row is authoritative; the paid amount is the fallback for rows created
+      // before credits were recorded.
       await prisma.business.update({
         where: { id: user.businessId },
         data: {
-          creditBalance: {
+          topUpCredits: {
             increment:
               transaction.creditsPurchased ?? Number(transaction.amount),
           },
         },
       });
 
-      creditBalance = await getCreditBalance(user.businessId);
-      return Response.json({ ok: true, plan, creditBalance });
+      wallet = await getWallet(user.businessId);
+      return Response.json({ ok: true, plan, ...wallet });
     }
 
     // Not a successful, pending payment (already handled, abandoned, failed...).
-    return Response.json({ ok: false, plan, creditBalance });
+    return Response.json({ ok: false, plan, ...wallet });
   } catch (error) {
     console.error("[POST /api/billing/verify]", error);
     return Response.json(
@@ -171,11 +176,28 @@ export async function POST(request: Request) {
   }
 }
 
-async function getCreditBalance(businessId: string): Promise<number> {
+/**
+ * The split wallet as the client needs it: both buckets plus their total, so a
+ * caller can report "spendable now" without re-deriving the rule.
+ */
+type WalletResponse = {
+  /** Monthly plan allowance; reset on every renewal. */
+  planCredits: number;
+  /** Paid top-ups; never expire. */
+  topUpCredits: number;
+  /** `planCredits + topUpCredits` — what the AI can actually spend. */
+  creditBalance: number;
+};
+
+async function getWallet(businessId: string): Promise<WalletResponse> {
   const business = await prisma.business.findUniqueOrThrow({
     where: { id: businessId },
-    select: { creditBalance: true },
+    select: { planCredits: true, topUpCredits: true },
   });
 
-  return business.creditBalance;
+  return {
+    planCredits: business.planCredits,
+    topUpCredits: business.topUpCredits,
+    creditBalance: totalAvailableCredits(business),
+  };
 }

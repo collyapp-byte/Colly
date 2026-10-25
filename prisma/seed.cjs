@@ -500,7 +500,7 @@ We now have a single set of plans. Credits are shared across **all** connected c
 - **Black:** ₦50,000/month — 100,000 credits (60,000 base + 40,000 bonus = 1,000 free WhatsApp messages)
 - **Reply costs:** Telegram/Discord replies cost 5 credits. WhatsApp replies cost 40 credits. Manual replies are free.
 - **Top-ups:** buy more credits any time; they never expire.
-- **Trial:** 7 days free with 250 credits. No card required.`,
+- **Free:** ₦0/month — 50 credits every month, forever. No card required.`,
       },
       {
         slug: "what-colly-cannot-do",
@@ -701,13 +701,13 @@ For Web Chat, there is no token. You just copy the embed link and paste it on th
 
 **What happens next:**
 
-The owner has 5 days of free trial. That means for 5 days, everything works — AI replies, dashboard, sales. No payment needed.
+Every new account starts on the permanent Free plan: 50 credits every month, forever. That is enough to try AI replies, the dashboard and real sales, with no payment and no card.
 
-After 5 days, the trial ends. The account is not deleted. The owner can still log in, see their dashboard, chat with customers manually. But the AI stops replying until they subscribe.
+When the 50 credits are spent, the AI pauses until the owner subscribes or tops up. The account is never deleted: the owner can still log in, see the dashboard and chat with customers manually, because manual replies are always free.
 
 **Tell the owner this clearly:**
 
-> "For the first 5 days, everything is free. On day 6, if you like it, you pay ₦15,000 to keep the AI working. If you do not like it, the account stays but the AI stops. No charge."
+> "It is free to start. You get 50 credits every month, and replying by hand is always free. If you like it, you pay ₦15,000 to get more AI credits. No charge today."
 
 This removes the fear of "being locked in."
 
@@ -1029,8 +1029,8 @@ Since Telegram requires no Meta approval, the moment you paste the Bot Token int
         correctIndex: 1,
       },
       {
-        question: "What happens when the free trial ends?",
-        options: ["The account is deleted","The owner is charged automatically","The AI stops replying until they subscribe, but the account stays","Nothing changes"],
+        question: "What happens when the free monthly credits run out?",
+        options: ["The account is deleted","The owner is charged automatically","The AI stops replying until they subscribe or top up, but the account stays","Nothing changes"],
         correctIndex: 2,
       },
       {
@@ -1567,7 +1567,7 @@ Make 20 calls or visits this week. That is how you find your first customer.`,
 
 **Objection 5: "I do not trust AI."**
 
-> "You should not blindly trust it. That is why we have the trial. 5 days free. Use it. If it fails, we stop. No card, no contract, no risk."
+> "You should not blindly trust it. That is why we start on the Free plan. 50 credits every month, no card, no contract, no risk. Use it. If it fails, we stop."
 
 **Objection 6: "Will it take over my WhatsApp?"**
 
@@ -1579,7 +1579,7 @@ Make 20 calls or visits this week. That is how you find your first customer.`,
 
 **Objection 8: "Let me think about it."**
 
-> "Of course. Here is my number — WhatsApp me if you have any questions. The trial is free for the first 5 days. If you want to try, just message me START. If not, no problem."
+> "Of course. Here is my number — WhatsApp me if you have any questions. The Free plan gives you 50 credits every month, no card needed. If you want to try, just message me START. If not, no problem."
 
 Do not chase. If they say no, say thank you and leave. Come back in 2 weeks. Business owners change their minds.
 
@@ -1757,12 +1757,12 @@ If yes — celebrate with them. Ask them to screenshot it and send it to you as 
 
 If no — check the conversation logs together. Look for where the AI failed. Fix it.
 
-**Day 5 (trial-ending reminder):**
+**Day 5 (credit check):**
 
-> "Your free trial ends tomorrow. Do you want to continue at ₦15,000 a month?"
+> "How is the AI doing? The Free plan gives you 50 credits every month — do you want more?"
 
 If yes — guide them through payment.
-If no — "No problem. I will leave the account for another week in case you change your mind."
+If no — "No problem. The Free plan keeps working, and I am here if you change your mind."
 
 **Day 7 (final check):**
 
@@ -2078,11 +2078,13 @@ async function main() {
       tone: "friendly",
       description:
         "We sell TVs, phones, home appliances and electronics accessories in Lagos.",
-      // Active for testing: an active Green plan with 5,000 credits so the AI
-      // answers immediately after seeding, no billing step required.
+      // Active for testing: an active Green plan with 5,000 plan credits plus a
+      // 2,500-credit top-up, so the AI answers immediately after seeding (no
+      // billing step required) and both halves of the split wallet are visible.
       plan: "green",
       planStatus: "active",
-      creditBalance: 5000,
+      planCredits: 5000,
+      topUpCredits: 2500,
       messagesUsedThisMonth: 0,
       manualMessagesUsedThisMonth: 0,
     },
@@ -2426,7 +2428,17 @@ async function main() {
   // when there is at least one account to hold.
   if (preservedUsers.length > 0) {
     const personal = await prisma.business.create({
-      data: { name: "Personal", phone: "", whatsappNumber: "" },
+      data: {
+        name: "Personal",
+        phone: "",
+        whatsappNumber: "",
+        // Brand-new accounts live on the permanent Free tier: 50 credits every
+        // month, no card and no expiry (no trial window to lapse).
+        plan: "free",
+        planStatus: "inactive",
+        planCredits: 50,
+        topUpCredits: 0,
+      },
     });
 
     for (const user of preservedUsers) {

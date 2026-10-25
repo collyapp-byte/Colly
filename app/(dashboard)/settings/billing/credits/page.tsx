@@ -8,6 +8,10 @@ import { formatNaira } from "@/lib/format";
 
 export default function CreditsPage() {
   const [balance, setBalance] = useState<number | null>(null);
+  // Split wallet: the monthly plan allowance and the paid top-up bucket, both
+  // reported by /api/billing/usage.
+  const [planCredits, setPlanCredits] = useState<number | null>(null);
+  const [topUpCredits, setTopUpCredits] = useState<number | null>(null);
   const [planStatus, setPlanStatus] = useState<string | null>(null);
   const [plan, setPlan] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -23,6 +27,12 @@ export default function CreditsPage() {
         const data = await res.json();
         if (active && typeof data.creditBalance === "number") {
           setBalance(data.creditBalance);
+        }
+        if (active && typeof data.planCredits === "number") {
+          setPlanCredits(data.planCredits);
+        }
+        if (active && typeof data.topUpCredits === "number") {
+          setTopUpCredits(data.topUpCredits);
         }
         if (active && typeof data.plan === "string") {
           setPlan(data.plan);
@@ -107,6 +117,12 @@ export default function CreditsPage() {
           </h2>
         </div>
         <p className="mt-1 text-sm text-gray-500">{CREDIT_ECONOMY_DESCRIPTION}</p>
+        {planCredits !== null && topUpCredits !== null && (
+          <p className="mt-1 text-xs text-gray-500">
+            {planCredits.toLocaleString()} plan credits (reset every month) +{" "}
+            {topUpCredits.toLocaleString()} top-up credits (never expire)
+          </p>
+        )}
 
         <div className="mt-6 rounded-lg border border-gray-200 bg-background p-5">
           <p className="text-lg font-semibold text-gray-900">
@@ -114,8 +130,8 @@ export default function CreditsPage() {
             {creditPackage.credits.toLocaleString()} credits
           </p>
           <p className="mt-1 text-sm text-gray-500">
-            Credits never expire. They are spent automatically as the AI replies
-            to your customers.
+            Top-up credits never expire. They are spent automatically as the AI
+            replies to your customers, after your monthly plan credits run out.
           </p>
           <button
             type="button"
@@ -140,9 +156,10 @@ export default function CreditsPage() {
               and a WhatsApp reply costs 40 credits. You can top up any time
               without changing your plan, and the credits you buy here never
               expire. Plan credits are the monthly allowance that comes with
-              your subscription and is granted again on every renewal. Manual
-              replies you send yourself are always free. You always see how many
-              credits you have left on your billing page.
+              your subscription: they are reset to the monthly grant on every
+              renewal, so unused allowance does not roll over. Manual
+              replies you send yourself are always free. You always see both
+              balances on your billing page.
             </p>
           </div>
         </div>

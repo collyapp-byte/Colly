@@ -58,7 +58,7 @@ export async function POST(
         where: { id: businessId },
         data: {
           manualMessagesUsedThisMonth: { increment: 1 },
-          // Trial counter: how many manual replies the 7-day trial has spent.
+          // Lifetime manual reply counter, kept for reporting.
           manualMessagesUsed: { increment: 1 },
         },
       }),

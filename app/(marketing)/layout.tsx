@@ -5,7 +5,7 @@ import { MarketingHeader } from "@/components/marketing/marketing-header";
 
 export const metadata = {
   title: "Colly | AI Sales Assistant for Nigerian Businesses",
-  description: "Stop losing sales to missed replies. Colly is the AI sales assistant that replies to your customers 24/7 in English or Pidgin. Start your free trial today.",
+  description: "Stop losing sales to missed replies. Colly is the AI sales assistant that replies to your customers 24/7 in English or Pidgin. Start free today — 50 AI credits every month, no card required.",
   openGraph: {
     title: "Colly | AI Sales Assistant",
     description: "Stop losing sales to missed replies. Reply 24/7 in English or Pidgin.",

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { isMissingConfigError } from "@/lib/supabase/env";
-import { TRIAL_CONFIG, isPlanTierName } from "@/lib/plans";
+import { FREE_PLAN_LIMITS, isPlanTierName } from "@/lib/plans";
 import { isChannel } from "@/lib/business";
 import {
   isValidEmail,
@@ -220,35 +220,24 @@ export async function signup(
     } else {
       // A business and its owner must appear together, or neither.
       await prisma.$transaction(async (tx) => {
-        // Fresh accounts start the free trial from the moment they sign up, so
-        // the billing UI can count down to a real end date. The length comes
-        // from TRIAL_CONFIG so there is a single source of truth.
-        const trialEndsAt = new Date(
-          Date.now() + TRIAL_CONFIG.durationDays * 24 * 60 * 60 * 1000,
-        );
-
         const business = await tx.business.create({
           data: {
             name: businessName,
             phone,
-      // Contact number stored on the business.
-      whatsappNumber: phone,
+            // Contact number stored on the business.
+            whatsappNumber: phone,
             // Channel picked on the signup form; drives which connection flow
             // the AI Line settings page shows.
             channel,
-            // The trial plan itself: the AI replies from the trial credit grant
-            // (TRIAL_CONFIG.credits) until the trial lapses, with no card
-            // required.
-            plan: "trial",
-            planStatus: "trialing",
-            // Credit Economy: the trial starts with its one-off credit grant so
-            // the AI can answer customers during the 7 days.
-            creditBalance: TRIAL_CONFIG.credits,
-            // Fresh accounts start the free trial from the moment they sign up,
-            // so the billing UI can count down to a real end date. The length
-            // comes from TRIAL_CONFIG so there is a single source of truth.
-            onboardingEndsAt: trialEndsAt,
-            trialEndsAt,
+            // Every new account starts on the permanent Free tier: no card, no
+            // expiry, 50 AI credits every month. A successful plan charge
+            // overwrites both `plan` and `planCredits`.
+            plan: "free",
+            planStatus: "inactive",
+            // Credit Economy (Split Wallet): the Free grant lands in the
+            // monthly-allowance bucket; top-ups are bought, so they start at 0.
+            planCredits: FREE_PLAN_LIMITS.credits,
+            topUpCredits: 0,
             // The tier picked on the pricing page (?plan=green): remembered so
             // the billing page pre-selects it.
             selectedPlan,

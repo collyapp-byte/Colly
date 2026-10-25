@@ -5,6 +5,7 @@ import { TiltCard } from "@/components/ui/tilt-card";
 import {
   CREDIT_ECONOMY_DESCRIPTION,
   CREDITS_RESET_DISCLAIMER,
+  FREE_PLAN_LIMITS,
   PLANS,
   REPLY_CREDIT_COSTS,
   bonusCreditsBadge,
@@ -46,6 +47,8 @@ type PlanCard = {
   desc: string;
   credits: number;
   bonusCredits: number;
+  /** Free tier: shows the plan description instead of the reply calculator. */
+  free?: boolean;
   features: string[];
   cta: string;
   href: string;
@@ -58,9 +61,10 @@ export function Pricing() {
     {
       name: "Free",
       price: "₦0",
-      desc: "For testing the waters.",
-      credits: 0,
+      desc: "Free forever. No card required.",
+      credits: FREE_PLAN_LIMITS.credits,
       bonusCredits: 0,
+      free: true,
       features: ["Unlimited manual replies", "Dashboard inbox", "Product catalogue"],
       cta: "Start Free",
       href: "/signup?role=business",
@@ -140,7 +144,9 @@ export function Pricing() {
                         </span>
                       </p>
                       <p className="mt-1 text-xs text-gray-500">
-                        {creditReplyCalculator(plan.credits)}
+                        {plan.free
+                          ? FREE_PLAN_LIMITS.description
+                          : creditReplyCalculator(plan.credits)}
                       </p>
                       <p className="mt-1 text-[11px] leading-snug text-gray-500">
                         {CREDITS_RESET_DISCLAIMER}

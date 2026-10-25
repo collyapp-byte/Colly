@@ -6,6 +6,7 @@ import { Check, Star, Zap } from "lucide-react";
 import {
   CREDIT_ECONOMY_DESCRIPTION,
   CREDITS_RESET_DISCLAIMER,
+  FREE_PLAN_LIMITS,
   PLANS,
   REPLY_CREDIT_COSTS,
   bonusCreditsBadge,
@@ -216,8 +217,21 @@ function PlansContent() {
         </div>
       )}
 
+      {/* FREE TIER — permanent, always on, no checkout */}
+      <div className="mt-8 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900">Free</h2>
+          <p className="mt-1 max-w-xl text-xs text-gray-500">
+            {FREE_PLAN_LIMITS.description}
+          </p>
+        </div>
+        <p className="shrink-0 text-lg font-bold text-gray-900">
+          {FREE_PLAN_LIMITS.credits} Credits / month
+        </p>
+      </div>
+
       {/* PLAN CARDS */}
-      <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {tiers.map((tier) => {
           const config = plans[tier];
           const price = interval === "monthly" ? config.monthly : config.yearly;

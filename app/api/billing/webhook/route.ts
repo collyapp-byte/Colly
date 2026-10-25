@@ -137,9 +137,9 @@ export async function POST(request: Request) {
           break;
         }
 
-        // Credit top-ups add credits to the balance (1 credit = ₦1). The
-        // Transaction row's own `type` is authoritative; metadata.type is the
-        // Paystack echo.
+        // Credit top-ups ADD their credits to the permanent bucket (1 credit =
+        // ₦1). The Transaction row's own `type` is authoritative; metadata.type
+        // is the Paystack echo.
         const isCredit =
           transaction?.type === "credits" || data.metadata?.type === "credits";
 
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
           await prisma.business.update({
             where: { id: transaction.businessId },
             data: {
-              creditBalance: {
+              topUpCredits: {
                 increment:
                   transaction.creditsPurchased ?? Number(transaction.amount),
               },
@@ -176,12 +176,15 @@ export async function POST(request: Request) {
               },
             });
 
-            // Credit Economy: a successful charge (first payment or a renewal)
-            // credits the plan's TOTAL grant — baseCredits plus the bonus
-            // WhatsApp credits (Green 23,000, Blue 44,000, Black 100,000).
-            // Recurring charges have no Transaction row of their own, so the
-            // business's stored tier is the fallback.
-            const totalCredits = getMonthlyCredits(
+            // Credit Economy (Split Wallet): a successful charge — first payment
+            // or a renewal — OVERWRITES the monthly allowance with the plan's
+            // TOTAL grant (baseCredits plus the bonus WhatsApp credits: Green
+            // 23,000, Blue 44,000, Black 100,000). It is deliberately not an
+            // increment: allowance left over from last month must not pile up.
+            // `topUpCredits` is never touched here. Recurring charges have no
+            // Transaction row of their own, so the business's stored tier is the
+            // fallback.
+            const monthlyCredits = getMonthlyCredits(
               transaction?.plan ?? business?.plan ?? null,
             );
 
@@ -192,8 +195,8 @@ export async function POST(request: Request) {
                 planStatus: "active",
                 paymentFailedAt: null,
                 gracePeriodEndsAt: null,
-                ...(totalCredits > 0
-                  ? { creditBalance: { increment: totalCredits } }
+                ...(monthlyCredits > 0
+                  ? { planCredits: monthlyCredits }
                   : {}),
               },
             });
@@ -338,8 +341,11 @@ export async function POST(request: Request) {
         break;
       }
 
-      // A successful recurring charge clears the dunning state and extends the
-      // plan for another interval.
+      // A successful recurring charge clears the dunning state, extends the plan
+      // for another interval and RESETS the monthly credit allowance to the
+      // plan's grant (Split Wallet: `planCredits` is overwritten, never
+      // incremented, so unspent allowance does not roll over). Paid top-ups in
+      // `topUpCredits` are deliberately left untouched.
       case "invoice.payment_success": {
         const businessId = await findBusinessId(data);
         if (!businessId) break;
@@ -350,6 +356,7 @@ export async function POST(request: Request) {
         });
 
         const interval = business.planInterval === "yearly" ? "yearly" : "monthly";
+        const monthlyCredits = getMonthlyCredits(business.plan);
         await prisma.business.update({
           where: { id: businessId },
           data: {
@@ -361,6 +368,7 @@ export async function POST(request: Request) {
               new Date(),
               interval === "yearly" ? 365 : 30,
             ),
+            ...(monthlyCredits > 0 ? { planCredits: monthlyCredits } : {}),
           },
         });
         break;

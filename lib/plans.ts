@@ -34,12 +34,12 @@ export const CREDIT_ECONOMY_DESCRIPTION =
   "1 Credit = 1 Naira. Telegram/Discord AI replies cost 5 credits. WhatsApp replies cost 40 credits.";
 
 /**
- * Shown right under a plan's monthly credit allowance: a subscription buys an
- * allowance that resets every renewal, while top-up credits were paid for and
- * stay on the balance forever.
+ * Shown right under a plan's monthly credit allowance: the allowance is a
+ * monthly bucket that resets on every billing month, while top-up credits were
+ * paid for and stay on the balance forever.
  */
 export const CREDITS_RESET_DISCLAIMER =
-  "(Credits reset on renewal. Top-up credits never expire).";
+  "(Plan credits reset every month. Top-up credits never expire).";
 
 /** Owner alert sent when the AI cannot afford a reply. */
 export const LOW_CREDIT_MESSAGE =
@@ -127,25 +127,18 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
   }),
 };
 
-
 /**
- * Free trial: a time box plus a one-off credit grant, no card required. 250
- * credits is 50 Telegram replies (or 6 WhatsApp replies).
+ * The permanent Free tier: every account gets 50 credits every month, no card
+ * and no time box. The grant lands in `planCredits`, so a Free business replies
+ * with the AI exactly like a paid one until the allowance runs out; top-ups
+ * extend it and never expire. Manual replies are always free.
  */
-export const TRIAL_CONFIG = {
-  credits: 250,
-  durationDays: 7,
-  whatsappNumbersLimit: 1,
-  seatsLimit: 1,
-  productsLimit: 50,
-  faqsLimit: 20,
-};
-
-/** The free plan grants no credits; AI replies must be topped up. */
 export const FREE_PLAN_LIMITS = {
   monthly: 0,
   yearly: 0,
-  credits: 0, // 0 AI credits
+  credits: 50, // 50 AI credits every month
+  description:
+    "Includes 50 free AI credits every month. Manual replies are always free.",
 };
 
 /**
@@ -198,6 +191,36 @@ export const CREDIT_PACKAGES: Record<CreditPackageId, CreditPackage> = {
   paid_credits: defineCreditPackage("paid_credits", 3_000),
 };
 
+/**
+ * A business's two credit buckets, 1 credit = ₦1. They are stored separately so
+ * a renewal can reset the monthly allowance without ever touching credits the
+ * business paid for: `planCredits` is the monthly plan allowance (overwritten on
+ * every successful plan charge) and `topUpCredits` are paid top-ups that never
+ * expire.
+ */
+export type CreditWallet = {
+  planCredits: number;
+  topUpCredits: number;
+};
+
+/** Total spendable credits: the monthly allowance plus permanent top-ups. */
+export function totalAvailableCredits(wallet: CreditWallet): number {
+  return wallet.planCredits + wallet.topUpCredits;
+}
+
+/**
+ * Splits one reply's cost across the wallet: the monthly allowance is spent
+ * first and top-ups only cover the remainder. `chargeAiReply` debits the two
+ * buckets in exactly this order, so the rule lives here once.
+ */
+export function splitCreditCost(
+  wallet: CreditWallet,
+  cost: number,
+): { fromPlanCredits: number; fromTopUpCredits: number } {
+  const fromPlanCredits = Math.min(wallet.planCredits, cost);
+  return { fromPlanCredits, fromTopUpCredits: cost - fromPlanCredits };
+}
+
 /** True when `value` is a plan tier name in the unified plan set. */
 export function isPlanTierName(value: unknown): value is PlanTier {
   return typeof value === "string" && value in PLANS;
@@ -237,7 +260,6 @@ export function getCreditPrice(
  * 15,000). Unknown plans grant nothing rather than throwing.
  */
 export function getMonthlyCredits(plan?: string | null): number {
-  if (plan === "trial") return TRIAL_CONFIG.credits;
   if (plan === "free") return FREE_PLAN_LIMITS.credits;
   return PLANS[plan as PlanTier]?.credits ?? 0;
 }
@@ -265,10 +287,10 @@ export function getCreditPackage(business: {
 }
 
 /**
- * The limits that apply to a business given its stored plan. The trial is its
- * own config, the free plan grants no credits, and a paid tier resolves against
- * the unified plan table. Unknown plans degrade to the trial limits rather
- * than throwing.
+ * The limits that apply to a business given its stored plan. The Free tier has
+ * its own numbers, every paid tier resolves against the unified plan table, and
+ * unknown plans (including rows left over from the retired trial plan) degrade
+ * to the Free tier rather than throwing.
  *
  * `planInterval` ("monthly" | "yearly") does not change the limits — both
  * billing intervals share a tier's numbers — but it is kept in the signature
@@ -279,15 +301,11 @@ export function getPlanLimits(plan: string, planInterval: string) {
   // what Paystack charges, and is kept so callers surface the right price.
   void planInterval;
 
-  if (plan === "trial") {
-    return TRIAL_CONFIG;
-  }
-
   if (plan === "free") {
     return FREE_PLAN_LIMITS;
   }
 
-  return PLANS[plan as PlanTier] ?? TRIAL_CONFIG;
+  return PLANS[plan as PlanTier] ?? FREE_PLAN_LIMITS;
 }
 
 /**

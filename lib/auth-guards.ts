@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getAiReplyCreditCost } from "@/lib/plans";
+import { getAiReplyCreditCost, totalAvailableCredits } from "@/lib/plans";
 import { getCurrentAgent } from "@/lib/agent-auth";
 
 export type AiEnabledResult =
@@ -30,18 +30,20 @@ export async function requireSiteAccess(businessId: string): Promise<void> {
 /**
  * Checks if AI auto-reply should be enabled for this business.
  *
- * Credit Economy: the AI may reply when the business's credit balance covers
- * exactly one more reply on its channel — 5 credits on Telegram, Discord and
- * Web Chat, 40 credits on WhatsApp. Manual (human) replies are free, so they
- * are never gated here. `cap_hit` stays in the result union for older clients
- * but is no longer produced: there is no monthly message allowance to hit.
+ * Credit Economy: the AI may reply when the business's wallet — the monthly plan
+ * allowance plus permanent top-ups — covers exactly one more reply on its
+ * channel: 5 credits on Telegram, Discord and Web Chat, 40 credits on WhatsApp.
+ * Manual (human) replies are free, so they are never gated here. `cap_hit` stays
+ * in the result union for older clients but is no longer produced: there is no
+ * monthly message allowance to hit.
  */
 export async function requireAiEnabled(businessId: string): Promise<AiEnabledResult> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
     select: {
       channel: true,
-      creditBalance: true,
+      planCredits: true,
+      topUpCredits: true,
       aiEnabled: true,
       subscriptionStatus: true,
       gracePeriodEndsAt: true,
@@ -66,9 +68,10 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
     }
   }
 
-  // One AI reply must be affordable out of the credit balance.
+  // One AI reply must be affordable out of the wallet: the monthly plan
+  // allowance first, then the top-ups that never expire.
   const replyCost = getAiReplyCreditCost(business.channel);
-  if (business.creditBalance < replyCost) {
+  if (totalAvailableCredits(business) < replyCost) {
     return { ok: false, reason: "no_credits" };
   }
 
