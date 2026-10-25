@@ -1,16 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
-import { getPlanLimits } from "@/lib/plans";
+import { getAiReplyCreditCost, getPlanLimits, REPLY_CREDIT_COSTS } from "@/lib/plans";
 
 function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
 }
 
 // GET /api/billing/usage
-// Shows how many AI replies this business has used this month versus its plan
-// limit, plus its Naira wallet balance and plan details. The limit comes from
-// the plan config for the business's channel; the trial's 50-reply allowance
-// is the limit while trialing.
+// Reports the Credit Economy state: the current credit balance, the credits the
+// plan grants each month, and what one AI reply costs on this channel (5
+// credits on Telegram/Discord/Web Chat, 40 on WhatsApp). Manual replies are
+// free. AI replies used this month are counted from the Message table so the
+// number always matches the inbox.
 export async function GET() {
   try {
     const businessId = await getCurrentBusinessId();
@@ -29,8 +30,7 @@ export async function GET() {
         onboardingEndsAt: true,
         trialEndsAt: true,
         channel: true,
-        creditWalletBalanceNaira: true,
-        manualMessagesUsedThisMonth: true,
+        creditBalance: true,
         aiMessagesUsed: true,
         manualMessagesUsed: true,
         subscriptionStatus: true,
@@ -38,25 +38,27 @@ export async function GET() {
       },
     });
 
-    const [{ c: aiRepliesUsed }] = await prisma.$queryRaw<{ c: number }[]>`
-      SELECT COUNT(*)::int AS c
+    const [{ ai: aiRepliesUsed, manual: manualRepliesUsed }] = await prisma.$queryRaw<
+      { ai: number; manual: number }[]
+    >`
+      SELECT
+        COUNT(*) FILTER (WHERE "sender" = 'ai')::int AS ai,
+        COUNT(*) FILTER (WHERE "sender" = 'agent')::int AS manual
       FROM "Message"
       WHERE "businessId" = ${businessId}
-        AND "sender" = 'ai'
         AND "createdAt" >= date_trunc('month', now())
     `;
 
     const limits = getPlanLimits(business.plan, business.planInterval);
-    const aiRepliesLimit = limits.includedMsgs;
-    const includedManualMessages = limits.includedManualMessages;
 
     return Response.json({
       aiRepliesUsed,
-      aiRepliesLimit,
-      includedAiMessages: aiRepliesLimit,
-      manualMessagesUsed: business.manualMessagesUsedThisMonth,
-      includedManualMessages,
-      creditWalletBalanceNaira: business.creditWalletBalanceNaira,
+      manualMessagesUsed: manualRepliesUsed,
+      // Credit Economy: 1 credit = ₦1.
+      creditBalance: business.creditBalance,
+      planCredits: limits.credits,
+      aiCreditCost: getAiReplyCreditCost(business.channel),
+      manualCreditCost: REPLY_CREDIT_COSTS.manual,
       plan: business.plan,
       planInterval: business.planInterval,
       planStatus: business.planStatus,

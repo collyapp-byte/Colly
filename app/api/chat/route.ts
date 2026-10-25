@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     } else {
       // No session: only trusted server-to-server callers may pass a
       // businessId, and only with the shared secret. Otherwise an anonymous
-      // caller could write into any tenant and drain its wallet.
+      // caller could write into any tenant and drain its credits.
       const secret = request.headers.get("x-colly-internal-secret");
       const expected = process.env.CHAT_INTERNAL_SECRET;
 

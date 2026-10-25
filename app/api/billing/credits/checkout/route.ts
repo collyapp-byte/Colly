@@ -10,10 +10,10 @@ function unauthorized() {
 
 // POST /api/billing/credits/checkout
 // Starts a Paystack checkout for a one-off credit top-up. The package (and
-// price) depends on the business's plan state: free/expired plans buy at ₦35
-// per message (₦5,250 / 150 messages), active paid plans at ₦20 per message
-// (₦3,000 / 150 messages). Unlike a subscription checkout there is no plan
-// code: the payment is a single charge and the balance is credited by
+// price) depends on the business's plan state: free/expired plans buy 3,000
+// credits for ₦5,250, active paid plans buy 3,000 credits for ₦3,000 (1 credit
+// = ₦1 face value). Unlike a subscription checkout there is no plan code: the
+// payment is a single charge and the credits are added to the balance by
 // /api/billing/verify.
 export async function POST() {
   try {
@@ -42,7 +42,7 @@ export async function POST() {
       metadata: {
         businessId: user.businessId,
         type: "credits",
-        creditsIncluded: creditPackage.messages,
+        creditsIncluded: creditPackage.credits,
       },
     });
 
@@ -53,7 +53,7 @@ export async function POST() {
         amount: creditPackage.price,
         status: "pending",
         type: "credits",
-        creditsPurchased: creditPackage.messages,
+        creditsPurchased: creditPackage.credits,
       },
     });
 

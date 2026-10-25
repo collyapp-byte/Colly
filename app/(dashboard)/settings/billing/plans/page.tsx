@@ -4,7 +4,9 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Check, Star, Zap } from "lucide-react";
 import {
+  CREDIT_ECONOMY_DESCRIPTION,
   PLANS,
+  creditReplyCalculator,
   type PlanConfig,
   type PlanInterval,
   type PlanTier,
@@ -33,12 +35,16 @@ const PLAN_META: Record<PlanTier, CardMeta> = {
   },
 };
 
-/** The bullet list under a card. Message counts come from the plan config. */
+/** The bullet list under a card. Credit grants come from the plan config. */
 function cardFeatures(config: PlanConfig): string[] {
-  const messages = `${config.includedMsgs.toLocaleString()} total AI messages/mo across all channels`;
-  const manual = `${config.includedManualMessages.toLocaleString()} manual replies/month`;
-
-  return [messages, manual, "Telegram, Discord & Web Chat", "Product catalogue", "FAQ knowledge base", "Owner alerts"];
+  return [
+    `${config.credits.toLocaleString()} credits every month`,
+    "5 credits per Telegram, Discord & Web Chat reply",
+    "40 credits per WhatsApp reply",
+    "Product catalogue",
+    "FAQ knowledge base",
+    "Owner alerts",
+  ];
 }
 
 function PlansContent() {
@@ -130,7 +136,7 @@ function PlansContent() {
           the same AI features.
         </p>
         <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-1 text-xs font-medium text-[#C2410C]">
-          Your AI message limit is shared across all connected channels.
+          {CREDIT_ECONOMY_DESCRIPTION}
         </p>
       </div>
 
@@ -255,6 +261,9 @@ function PlansContent() {
                     {formatNaira(config.yearly)} if billed yearly
                   </p>
                 )}
+                <p className={`mt-1 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  {creditReplyCalculator(config.credits)}
+                </p>
               </div>
 
               <Button

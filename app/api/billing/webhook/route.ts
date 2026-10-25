@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendAlert } from "@/lib/alerts";
+import { getMonthlyCredits } from "@/lib/plans";
 import { sendOwnerAlert } from "@/lib/owner-alerts";
 import {
   fetchSubscription,
@@ -136,8 +137,9 @@ export async function POST(request: Request) {
           break;
         }
 
-        // Credit top-ups also fund the Naira wallet. The Transaction row's own
-        // `type` is authoritative; metadata.type is the Paystack echo.
+        // Credit top-ups add credits to the balance (1 credit = ₦1). The
+        // Transaction row's own `type` is authoritative; metadata.type is the
+        // Paystack echo.
         const isCredit =
           transaction?.type === "credits" || data.metadata?.type === "credits";
 
@@ -145,8 +147,9 @@ export async function POST(request: Request) {
           await prisma.business.update({
             where: { id: transaction.businessId },
             data: {
-              creditWalletBalanceNaira: {
-                increment: Number(transaction.amount),
+              creditBalance: {
+                increment:
+                  transaction.creditsPurchased ?? Number(transaction.amount),
               },
             },
           });
@@ -164,25 +167,36 @@ export async function POST(request: Request) {
           const businessId =
             transaction?.businessId ?? (await findBusinessId(data));
           if (businessId) {
-            await prisma.business.update({
-              where: { id: businessId },
-              data: {
-            subscriptionStatus: "active",
-            planStatus: "active",
-            paymentFailedAt: null,
-            gracePeriodEndsAt: null,
-          },
-            });
-
-            // Pay the referring agent 15% for up to 12 months from signup.
             const business = await prisma.business.findUnique({
               where: { id: businessId },
               select: {
+                plan: true,
                 referredByAgentId: true,
                 commissionEndsAt: true,
               },
             });
 
+            // Credit Economy: a successful charge (first payment or a renewal)
+            // grants the tier's credits. Recurring charges have no Transaction
+            // row of their own, so the business's stored tier is the fallback.
+            const planCredits = getMonthlyCredits(
+              transaction?.plan ?? business?.plan ?? null,
+            );
+
+            await prisma.business.update({
+              where: { id: businessId },
+              data: {
+                subscriptionStatus: "active",
+                planStatus: "active",
+                paymentFailedAt: null,
+                gracePeriodEndsAt: null,
+                ...(planCredits > 0
+                  ? { creditBalance: { increment: planCredits } }
+                  : {}),
+              },
+            });
+
+            // Pay the referring agent 15% for up to 12 months from signup.
             if (
               business?.referredByAgentId &&
               business.commissionEndsAt &&

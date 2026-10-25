@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getCreditPrice, getPlanLimits, isActivePaidPlan } from "@/lib/plans";
+import { getAiReplyCreditCost } from "@/lib/plans";
 import { getCurrentAgent } from "@/lib/agent-auth";
 
 export type AiEnabledResult =
@@ -29,25 +29,19 @@ export async function requireSiteAccess(businessId: string): Promise<void> {
 
 /**
  * Checks if AI auto-reply should be enabled for this business.
- * Returns ok=true if:
- * - Plan is active paid AND messagesUsedThisMonth < includedMsgs, OR
- * - the Naira wallet can cover at least one AI reply
- * Otherwise returns ok=false with reason.
+ *
+ * Credit Economy: the AI may reply when the business's credit balance covers
+ * exactly one more reply on its channel — 5 credits on Telegram, Discord and
+ * Web Chat, 40 credits on WhatsApp. Manual (human) replies are free, so they
+ * are never gated here. `cap_hit` stays in the result union for older clients
+ * but is no longer produced: there is no monthly message allowance to hit.
  */
 export async function requireAiEnabled(businessId: string): Promise<AiEnabledResult> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
     select: {
-      plan: true,
-      planStatus: true,
-      planInterval: true,
-      planExpiresAt: true,
-      onboardingEndsAt: true,
-      trialEndsAt: true,
       channel: true,
-      creditWalletBalanceNaira: true,
-      messagesUsedThisMonth: true,
-      messagesResetAt: true,
+      creditBalance: true,
       aiEnabled: true,
       subscriptionStatus: true,
       gracePeriodEndsAt: true,
@@ -72,53 +66,11 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
     }
   }
 
-  // Check monthly reset
-  const now = new Date();
-  if (business.messagesResetAt && business.messagesResetAt < now) {
-    await prisma.business.update({
-      where: { id: businessId },
-      data: {
-        messagesUsedThisMonth: 0,
-        messagesResetAt: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-      },
-    });
-    // After reset, re-check with fresh values
-    business.messagesUsedThisMonth = 0;
-    business.messagesResetAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  // One AI reply must be affordable out of the credit balance.
+  const replyCost = getAiReplyCreditCost(business.channel);
+  if (business.creditBalance < replyCost) {
+    return { ok: false, reason: "no_credits" };
   }
 
-  // Active paid plan
-  const activePaidPlan = isActivePaidPlan(business);
-
-  // Active trial. `trialEndsAt` is the 7-day trial window; `onboardingEndsAt`
-  // is the fallback for rows created before the trial column existed.
-  const trialEndsAt = business.trialEndsAt ?? business.onboardingEndsAt;
-  const isTrialActive =
-    business.planStatus === "trialing" && trialEndsAt && trialEndsAt > now;
-
-  // What one AI reply over the cap costs out of the Naira wallet.
-  const aiCreditPrice = getCreditPrice(business, "ai");
-
-  if (activePaidPlan || isTrialActive) {
-    const limits = getPlanLimits(business.plan, business.planInterval);
-    const included = limits.includedMsgs;
-
-    if (business.messagesUsedThisMonth < included) {
-      return { ok: true };
-    }
-
-    // Cap hit — the wallet must cover at least one more reply
-    if (business.creditWalletBalanceNaira >= aiCreditPrice) {
-      return { ok: true };
-    }
-
-    return { ok: false, reason: "cap_hit" };
-  }
-
-  // Free/expired plan — the wallet must cover the reply
-  if (business.creditWalletBalanceNaira >= aiCreditPrice) {
-    return { ok: true };
-  }
-
-  return { ok: false, reason: isTrialActive ? "cap_hit" : "plan_expired" };
+  return { ok: true };
 }

@@ -2,6 +2,12 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { TiltCard } from "@/components/ui/tilt-card";
+import {
+  CREDIT_ECONOMY_DESCRIPTION,
+  PLANS,
+  creditReplyCalculator,
+} from "@/lib/plans";
+import { formatNaira } from "@/lib/format";
 
 export function Pricing() {
   const plans = [
@@ -9,34 +15,38 @@ export function Pricing() {
       name: "Free",
       price: "₦0",
       desc: "For testing the waters.",
-      features: ["50 manual replies/mo", "0 AI messages", "Dashboard inbox"],
+      credits: 0,
+      features: ["Unlimited manual replies", "Dashboard inbox", "Product catalogue"],
       cta: "Start Free",
       href: "/signup?role=business",
       highlight: false
     },
     {
       name: "Green",
-      price: "₦15,000",
-      desc: "For small boutiques & vendors.",
-      features: ["Includes Telegram, Discord & Web Chat", "2,000 total AI messages/mo across all channels", "All AI features", "₦10/extra message", "Owner alerts"],
+      price: formatNaira(PLANS.green.monthly),
+      desc: PLANS.green.description,
+      credits: PLANS.green.credits,
+      features: ["Telegram, Discord & Web Chat", "5 credits per Telegram reply", "40 credits per WhatsApp reply", "All AI features", "Owner alerts"],
       cta: "Get Green",
       href: "/signup?role=business&plan=green",
       highlight: true
     },
     {
       name: "Blue",
-      price: "₦25,000",
-      desc: "For growing electronics shops.",
-      features: ["Includes Telegram, Discord & Web Chat", "6,000 total AI messages/mo across all channels", "All AI features", "₦10/extra message", "Priority support"],
+      price: formatNaira(PLANS.blue.monthly),
+      desc: PLANS.blue.description,
+      credits: PLANS.blue.credits,
+      features: ["Telegram, Discord & Web Chat", "5 credits per Telegram reply", "40 credits per WhatsApp reply", "All AI features", "Priority support"],
       cta: "Get Blue",
       href: "/signup?role=business&plan=blue",
       highlight: false
     },
     {
       name: "Black",
-      price: "₦50,000",
-      desc: "For high-volume wholesalers.",
-      features: ["Includes Telegram, Discord & Web Chat", "30,000 total AI messages/mo across all channels", "30,000 manual replies/mo", "₦10/extra message", "Dedicated onboarding"],
+      price: formatNaira(PLANS.black.monthly),
+      desc: PLANS.black.description,
+      credits: PLANS.black.credits,
+      features: ["Telegram, Discord & Web Chat", "5 credits per Telegram reply", "40 credits per WhatsApp reply", "Unlimited manual replies", "Dedicated onboarding"],
       cta: "Get Black",
       href: "/signup?role=business&plan=black",
       highlight: false
@@ -49,6 +59,7 @@ export function Pricing() {
         <div className="text-center mb-16">
           <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">Simple pricing. No hidden fees.</h2>
           <p className="mt-4 text-gray-600">Billed monthly. Cancel anytime.</p>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-gray-500">{CREDIT_ECONOMY_DESCRIPTION}</p>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
@@ -63,6 +74,15 @@ export function Pricing() {
               <div className="mb-6">
                 <span className="text-3xl font-extrabold text-gray-900">{plan.price}</span>
                 <span className="text-sm text-gray-500">/mo</span>
+                {plan.credits > 0 ? (
+                  <p className="mt-1 text-xs text-gray-500">
+                    {creditReplyCalculator(plan.credits)}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Manual replies are always free
+                  </p>
+                )}
               </div>
               <ul className="mb-8 flex-1 space-y-3">
                 {plan.features.map((f, i) => (

@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { formatNaira } from "@/lib/format";
 
 type Usage = {
   plan: string;
   planInterval: string;
   planStatus: string;
-  creditWalletBalanceNaira: number;
+  /** Credit Economy balance: 1 credit = ₦1. */
+  creditBalance: number;
 };
 
 const PLAN_LABELS: Record<string, string> = {
@@ -35,7 +35,7 @@ export function PlanChip() {
             plan: data.plan,
             planInterval: data.planInterval,
             planStatus: data.planStatus,
-            creditWalletBalanceNaira: data.creditWalletBalanceNaira ?? 0,
+            creditBalance: data.creditBalance ?? 0,
           });
         }
       })
@@ -49,7 +49,7 @@ export function PlanChip() {
 
   const plan = usage?.plan ?? "trial";
   const planStatus = usage?.planStatus ?? "trialing";
-  const balance = usage?.creditWalletBalanceNaira ?? 0;
+  const balance = usage?.creditBalance ?? 0;
 
   let label = "Trial";
   let classes =
@@ -67,7 +67,7 @@ export function PlanChip() {
     }
   }
 
-  const walletClasses =
+  const balanceClasses =
     balance > 0
       ? "bg-gray-100 text-gray-600 border border-gray-200"
       : "bg-red-50 text-red-600 border border-red-200";
@@ -84,13 +84,13 @@ export function PlanChip() {
       {usage !== null && (
         <Link
           href="/settings/billing"
-          title={`${formatNaira(balance)} in your credit wallet`}
-          className={`inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors hover:opacity-80 ${walletClasses}`}
+          title={`${balance.toLocaleString()} credits in your balance`}
+          className={`inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors hover:opacity-80 ${balanceClasses}`}
         >
           <span className="hidden sm:inline">
-            {formatNaira(balance)} credits
+            {balance.toLocaleString()} credits
           </span>
-          <span className="sm:hidden">{formatNaira(balance)}</span>
+          <span className="sm:hidden">{balance.toLocaleString()}</span>
         </Link>
       )}
     </div>

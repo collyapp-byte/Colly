@@ -4,17 +4,25 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, CircleAlert, Info } from "lucide-react";
 import { formatNaira } from "@/lib/format";
-import { getCreditPackage, getCreditPrice } from "@/lib/plans";
+import {
+  LOW_CREDIT_MESSAGE,
+  REPLY_CREDIT_COSTS,
+  getCreditPackage,
+} from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/ui/back-button";
 import { toast } from "sonner";
 
 type Usage = {
   aiRepliesUsed: number;
-  aiRepliesLimit: number;
   manualMessagesUsed: number;
-  includedManualMessages: number;
-  creditWalletBalanceNaira: number;
+  /** Credit Economy: 1 credit = ₦1. */
+  creditBalance: number;
+  /** Credits the current plan grants each billing month. */
+  planCredits: number;
+  /** Credits one AI reply costs on this business's channel. */
+  aiCreditCost: number;
+  manualCreditCost: number;
   plan: string;
   planInterval: string;
   planStatus: string;
@@ -65,6 +73,12 @@ const PAYMENT_BADGE: Record<string, string> = {
   success: "bg-green-100 text-green-700",
   failed: "bg-red-100 text-red-700",
   pending: "bg-amber-100 text-amber-700",
+};
+
+const CHANNEL_LABELS: Record<string, string> = {
+  TELEGRAM: "Telegram",
+  DISCORD: "Discord",
+  WHATSAPP: "WhatsApp",
 };
 
 function capitalize(value: string): string {
@@ -173,9 +187,8 @@ export default function BillingPage() {
   const planName = usage ? PLAN_NAMES[usage.plan] ?? capitalize(usage.plan) : "";
   const isTrial = usage?.plan === "trial";
   const isFree = usage?.plan === "free";
-  const creditPrice = usage
-    ? getCreditPrice({ plan: usage.plan }, "ai")
-    : 20;
+  const aiCreditCost = usage?.aiCreditCost ?? REPLY_CREDIT_COSTS.standard;
+  const channelLabel = CHANNEL_LABELS[usage?.channel ?? ""] ?? "this channel";
   const creditPackage = getCreditPackage(
     usage
       ? { plan: usage.plan, planStatus: usage.planStatus }
@@ -273,47 +286,66 @@ export default function BillingPage() {
               </div>
             </div>
 
-            {/* USAGE */}
-            <div className="mt-4">
-              <div className="flex items-baseline justify-between gap-2 text-sm">
-                <span className="text-gray-600">
-                  AI replies used: {usage.aiRepliesUsed.toLocaleString()} /{" "}
-                  {usage.aiRepliesLimit.toLocaleString()}
+            {/* CREDITS */}
+            <div className="mt-4 rounded-lg border border-gray-100 bg-background p-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="text-sm font-medium text-gray-900">
+                  Credit balance
                 </span>
-                <span className="text-xs text-gray-400">resets monthly</span>
+                <span className="font-display text-xl text-gray-900">
+                  {usage.creditBalance.toLocaleString()} credits
+                </span>
               </div>
-              <UsageBar used={usage.aiRepliesUsed} limit={usage.aiRepliesLimit} />
+              <p className="mt-1 text-xs text-gray-500">
+                {usage.planCredits > 0
+                  ? `${usage.planCredits.toLocaleString()} credits are included ${
+                      usage.plan === "trial"
+                        ? "with your 7-day trial."
+                        : "with your plan each billing month."
+                    }`
+                  : "Your current plan does not add credits — top up to keep the AI replying."}
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                {aiCreditCost} credits per AI reply on {channelLabel} · manual
+                replies are free
+              </p>
+              {usage.creditBalance < aiCreditCost && (
+                <p className="mt-2 text-xs font-medium text-danger">
+                  {LOW_CREDIT_MESSAGE}
+                </p>
+              )}
             </div>
 
-            <div className="mt-4">
-              <div className="flex items-baseline justify-between gap-2 text-sm">
-                <span className="text-gray-600">
-                  Manual replies used: {usage.manualMessagesUsed.toLocaleString()}{" "}
-                  / {usage.includedManualMessages.toLocaleString()}
-                </span>
-                <span className="text-xs text-gray-400">resets monthly</span>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-gray-100 p-3">
+                <p className="text-xs text-gray-400">AI replies this month</p>
+                <p className="mt-1 text-sm font-semibold text-gray-900">
+                  {usage.aiRepliesUsed.toLocaleString()}
+                </p>
               </div>
-              <UsageBar
-                used={usage.manualMessagesUsed}
-                limit={usage.includedManualMessages}
-              />
+              <div className="rounded-lg border border-gray-100 p-3">
+                <p className="text-xs text-gray-400">Manual replies this month</p>
+                <p className="mt-1 text-sm font-semibold text-gray-900">
+                  {usage.manualMessagesUsed.toLocaleString()}
+                </p>
+              </div>
             </div>
 
-            {/* WALLET */}
+            {/* TOP UP */}
             <div className="mt-5 flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
               <div>
                 <p className="text-sm font-medium text-gray-900">
-                  {formatNaira(usage.creditWalletBalanceNaira)} wallet balance
+                  {usage.creditBalance.toLocaleString()} credits available
                 </p>
                 <p className="text-xs text-gray-500">
-                  {formatNaira(creditPrice)} per AI reply · wallet never expires
+                  1 Credit = 1 Naira · credits never expire
                 </p>
               </div>
               <Link
                 href="/settings/billing/credits"
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
               >
-                Top up wallet
+                Top up credits
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
@@ -443,32 +475,6 @@ function DunningBanner({
         <ArrowRight className="h-4 w-4" aria-hidden />
       </a>
     </section>
-  );
-}
-
-function UsageBar({ used, limit }: { used: number; limit: number }) {
-  const percent = limit > 0 ? (used / limit) * 100 : 0;
-  const width = Math.min(100, Math.max(0, percent));
-  const color =
-    percent > 90
-      ? "bg-danger"
-      : percent >= 70
-        ? "bg-warning"
-        : "bg-success";
-
-  return (
-    <div
-      role="progressbar"
-      aria-valuenow={Math.round(width)}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-gray-100"
-    >
-      <div
-        className={`h-full rounded-full transition-all ${color}`}
-        style={{ width: `${width}%` }}
-      />
-    </div>
   );
 }
 

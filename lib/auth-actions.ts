@@ -236,10 +236,14 @@ export async function signup(
             // Channel picked on the signup form; drives which connection flow
             // the AI Line settings page shows.
             channel,
-            // The trial plan itself: the AI replies with the trial allowance
-            // (TRIAL_CONFIG) until the trial lapses, with no card required.
+            // The trial plan itself: the AI replies from the trial credit grant
+            // (TRIAL_CONFIG.credits) until the trial lapses, with no card
+            // required.
             plan: "trial",
             planStatus: "trialing",
+            // Credit Economy: the trial starts with its one-off credit grant so
+            // the AI can answer customers during the 7 days.
+            creditBalance: TRIAL_CONFIG.credits,
             // Fresh accounts start the free trial from the moment they sign up,
             // so the billing UI can count down to a real end date. The length
             // comes from TRIAL_CONFIG so there is a single source of truth.

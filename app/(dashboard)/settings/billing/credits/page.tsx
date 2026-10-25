@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CircleAlert, Coins, Info, LoaderCircle } from "lucide-react";
-import { getCreditPackage } from "@/lib/plans";
+import { getCreditPackage, CREDIT_ECONOMY_DESCRIPTION } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
 
 export default function CreditsPage() {
@@ -21,8 +21,8 @@ export default function CreditsPage() {
         const res = await fetch("/api/billing/usage");
         if (!res.ok) return;
         const data = await res.json();
-        if (active && typeof data.creditWalletBalanceNaira === "number") {
-          setBalance(data.creditWalletBalanceNaira);
+        if (active && typeof data.creditBalance === "number") {
+          setBalance(data.creditBalance);
         }
         if (active && typeof data.plan === "string") {
           setPlan(data.plan);
@@ -103,19 +103,19 @@ export default function CreditsPage() {
         <div className="flex items-center gap-2">
           <Coins className="h-5 w-5 text-colly" aria-hidden />
           <h2 className="font-display text-base text-gray-900">
-            You have {balance === null ? "—" : formatNaira(balance)} in your
-            wallet
+            You have {balance === null ? "—" : `${balance.toLocaleString()} credits`}
           </h2>
         </div>
+        <p className="mt-1 text-sm text-gray-500">{CREDIT_ECONOMY_DESCRIPTION}</p>
 
         <div className="mt-6 rounded-lg border border-gray-200 bg-background p-5">
           <p className="text-lg font-semibold text-gray-900">
             {formatNaira(creditPackage.price)} for{" "}
-            {creditPackage.messages.toLocaleString()} extra AI replies
+            {creditPackage.credits.toLocaleString()} credits
           </p>
           <p className="mt-1 text-sm text-gray-500">
-            Credits never expire. They are used after your monthly plan
-            allowance runs out.
+            Credits never expire. They are spent automatically as the AI replies
+            to your customers.
           </p>
           <button
             type="button"
@@ -135,11 +135,12 @@ export default function CreditsPage() {
           <div className="text-sm text-gray-600">
             <p className="font-medium text-gray-900">What are credits?</p>
             <p className="mt-1">
-              Credits are extra AI replies you can buy once, without changing
-              your plan. They sit on top of your monthly allowance and roll
-              over forever, so they are a good option if you have a busy month
-              you don&apos;t want to commit a new plan to. You always see how
-              many you have left on your billing page.
+              Credits are the currency Colly uses to pay for AI replies. 1 credit
+              = 1 Naira: a Telegram, Discord or Web Chat reply costs 5 credits
+              and a WhatsApp reply costs 40 credits. You can top up any time
+              without changing your plan, and credits roll over forever. Manual
+              replies you send yourself are always free. You always see how many
+              credits you have left on your billing page.
             </p>
           </div>
         </div>

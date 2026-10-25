@@ -25,7 +25,7 @@ import {
   getLanguageInstruction,
 } from "@/lib/language-detect";
 import { requireAiEnabled } from "@/lib/auth-guards";
-import { getCreditPrice, getPlanLimits, isActivePaidPlan } from "@/lib/plans";
+import { getAiReplyCreditCost, LOW_CREDIT_MESSAGE } from "@/lib/plans";
 import { sendEscalationAlert, sendOwnerAlert } from "@/lib/owner-alerts";
 
 const TONE_INSTRUCTIONS: Record<Tone, string> = {
@@ -269,9 +269,11 @@ export async function handleIncomingMessage({
     // the inbound pipeline.
     await sendOwnerAlert(
       businessId,
-      "New message from customer! Your AI is currently paused (" +
-        aiCheck.reason +
-        "). Reply manually in your dashboard or upgrade to restore AI.",
+      aiCheck.reason === "no_credits"
+        ? LOW_CREDIT_MESSAGE
+        : "New message from customer! Your AI is currently paused (" +
+            aiCheck.reason +
+            "). Reply manually in your dashboard or upgrade to restore AI.",
     );
     return { reply: null, blocked: true, saved: true, replied: false, reason: aiCheck.reason };
   }
@@ -284,8 +286,20 @@ export async function handleIncomingMessage({
       description: true,
       businessHours: true,
       paymentInstructions: true,
+      channel: true,
+      creditBalance: true,
     },
   });
+
+  // Credit Economy: the balance is re-read here (not only in
+  // requireAiEnabled) so a balance drained by a concurrent reply is caught
+  // before the AI spends money on a model call. Nothing below is charged
+  // until the reply is actually saved.
+  const replyCreditCost = getAiReplyCreditCost(business.channel);
+  if (business.creditBalance < replyCreditCost) {
+    await sendOwnerAlert(businessId, LOW_CREDIT_MESSAGE);
+    return { reply: null, blocked: true, saved: true, replied: false, reason: "no_credits" };
+  }
 
   const negotiation = await loadNegotiation(businessId, conversation.id, incoming);
 
@@ -353,77 +367,36 @@ export async function handleIncomingMessage({
     data: { businessId, conversationId: conversation.id, sender: "ai", content: reply },
   });
 
-  await applyAiUsage(businessId);
+  await chargeAiReply(businessId, business.channel);
 
   return { reply, blocked: false, saved: true, replied: true, paused: false };
 }
 
-async function applyAiUsage(businessId: string) {
-  const businessForTracking = await prisma.business.findUnique({
-    where: { id: businessId },
-    select: {
-      plan: true,
-      planStatus: true,
-      planInterval: true,
-      onboardingEndsAt: true,
-      trialEndsAt: true,
-      channel: true,
-      creditWalletBalanceNaira: true,
+/**
+ * Spend credits for one AI reply: 5 credits on Telegram, Discord and Web Chat,
+ * 40 credits on WhatsApp. The `creditBalance: { gte: cost }` filter makes the
+ * decrement conditional, so two replies racing on the same balance can never
+ * push it negative — the losing update matches 0 rows and is logged instead.
+ * Manual (agent) replies never reach this function: they are free.
+ */
+async function chargeAiReply(
+  businessId: string,
+  channel: string | null,
+): Promise<void> {
+  const cost = getAiReplyCreditCost(channel);
+  const charged = await prisma.business.updateMany({
+    where: { id: businessId, creditBalance: { gte: cost } },
+    data: {
+      creditBalance: { decrement: cost },
+      messagesUsedThisMonth: { increment: 1 },
+      // Trial counter: how many AI replies the 7-day trial has spent.
+      aiMessagesUsed: { increment: 1 },
     },
   });
-  if (!businessForTracking) return;
-  const now = new Date();
-  const activePaidPlan = isActivePaidPlan(businessForTracking);
-  // `trialEndsAt` is the 7-day trial window; `onboardingEndsAt` is the
-  // fallback for rows created before the trial column existed.
-  const trialEndsAt =
-    businessForTracking.trialEndsAt ?? businessForTracking.onboardingEndsAt;
-  const isTrialActive =
-    businessForTracking.planStatus === "trialing" &&
-    trialEndsAt &&
-    trialEndsAt > now;
-  const aiCreditPrice = getCreditPrice(businessForTracking, "ai");
-  if (activePaidPlan || isTrialActive) {
-    const limits = getPlanLimits(
-      businessForTracking.plan,
-      businessForTracking.planInterval,
+  if (charged.count === 0) {
+    console.warn(
+      `[chat-engine] credit charge skipped for business ${businessId}: balance below ${cost}`,
     );
-    const included = limits.includedMsgs;
-    const currentUsage = await prisma.message.count({
-      where: {
-        businessId,
-        sender: "ai",
-        createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) },
-      },
-    });
-    if (currentUsage <= included) {
-      await prisma.business.update({
-        where: { id: businessId },
-        data: {
-          messagesUsedThisMonth: { increment: 1 },
-          // Trial counter: how many AI replies the 7-day trial has spent.
-          aiMessagesUsed: { increment: 1 },
-        },
-      });
-    } else if (businessForTracking.creditWalletBalanceNaira >= aiCreditPrice) {
-      await prisma.business.update({
-        where: { id: businessId },
-        data: {
-          creditWalletBalanceNaira: { decrement: aiCreditPrice },
-          messagesUsedThisMonth: { increment: 1 },
-          aiMessagesUsed: { increment: 1 },
-        },
-      });
-    }
-  } else if (businessForTracking.creditWalletBalanceNaira >= aiCreditPrice) {
-    await prisma.business.update({
-      where: { id: businessId },
-      data: {
-        creditWalletBalanceNaira: { decrement: aiCreditPrice },
-        messagesUsedThisMonth: { increment: 1 },
-        aiMessagesUsed: { increment: 1 },
-      },
-    });
   }
 }
 

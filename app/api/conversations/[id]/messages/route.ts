@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
-import { getCreditPrice, getPlanLimits } from "@/lib/plans";
 
 type MessageRequestBody = {
   content?: unknown;
@@ -19,10 +18,9 @@ function notFound() {
 // over. The row is stored with sender "agent" so the UI can render it as the
 // business's own voice, separate from the AI's replies.
 //
-// Manual replies are metered like AI replies: the first `includedManualMessages`
-// per billing month are free, after that each reply costs the channel's
-// `manualCredit` Naira out of the wallet (Telegram's rate is 0, so those replies
-// stay free). When the wallet cannot cover the reply it is blocked.
+// Credit Economy: manual replies are free — they spend 0 credits — so an empty
+// balance never blocks an owner from answering a customer. The reply counters
+// are still incremented for usage reporting.
 export async function POST(
   request: Request,
   context: RouteContext<"/api/conversations/[id]/messages">,
@@ -52,49 +50,18 @@ export async function POST(
       return notFound();
     }
 
-    const business = await prisma.business.findUniqueOrThrow({
-      where: { id: businessId },
-      select: {
-        plan: true,
-        planInterval: true,
-        channel: true,
-        creditWalletBalanceNaira: true,
-        manualMessagesUsedThisMonth: true,
-      },
-    });
-
-    const limits = getPlanLimits(business.plan, business.planInterval);
-    const includedManualMessages = limits.includedManualMessages;
-    const manualCreditPrice = getCreditPrice(business, "manual");
-
-    // Under the monthly allowance the reply is free; otherwise the wallet pays
-    // the channel's per-reply rate.
-    const withinAllowance =
-      business.manualMessagesUsedThisMonth < includedManualMessages;
-
-    if (!withinAllowance && business.creditWalletBalanceNaira < manualCreditPrice) {
-      return Response.json(
-        { error: "Insufficient wallet balance. Top up to reply manually." },
-        { status: 402 },
-      );
-    }
-
-    const businessUpdate = withinAllowance
-      ? {
+    // Manual replies spend 0 credits, so there is nothing to charge — only the
+    // usage counters move. The counters and the message are written together so
+    // a failed insert never leaves a phantom reply in the usage figures.
+    const [, message] = await prisma.$transaction([
+      prisma.business.update({
+        where: { id: businessId },
+        data: {
           manualMessagesUsedThisMonth: { increment: 1 },
           // Trial counter: how many manual replies the 7-day trial has spent.
           manualMessagesUsed: { increment: 1 },
-        }
-      : {
-          creditWalletBalanceNaira: { decrement: manualCreditPrice },
-          manualMessagesUsedThisMonth: { increment: 1 },
-          manualMessagesUsed: { increment: 1 },
-        };
-
-    // Charge the business and store the reply atomically, so a failed write
-    // never leaves the wallet debited without a message.
-    const [, message] = await prisma.$transaction([
-      prisma.business.update({ where: { id: businessId }, data: businessUpdate }),
+        },
+      }),
       prisma.message.create({
         data: {
           businessId,

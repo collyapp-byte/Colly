@@ -1,13 +1,17 @@
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
-import { getPlanLimits } from "@/lib/plans";
+import {
+  LOW_CREDIT_MESSAGE,
+  getAiReplyCreditCost,
+  getPlanLimits,
+} from "@/lib/plans";
 import { TransactionRow } from "@/components/dashboard/transaction-row";
 import Link from "next/link";
 import { MessageSquare } from "lucide-react";
 
 export default async function CollyAIPage() {
-  // Keep this page dynamic: it renders per-owner data (plan, usage, wallet,
+  // Keep this page dynamic: it renders per-owner data (plan, usage, credits,
   // transactions) that must never be statically frozen. Date rendering lives
   // in the client-only <TransactionRow /> so no clock value is read during
   // prerendering.
@@ -21,45 +25,64 @@ export default async function CollyAIPage() {
       ownerTelegramChatId: true,
       telegramBotToken: true,
       discordBotToken: true,
-      creditWalletBalanceNaira: true,
-      messagesUsedThisMonth: true,
-      manualMessagesUsedThisMonth: true,
+      creditBalance: true,
       plan: true,
       planInterval: true,
       channel: true,
     },
   });
 
-  const [productsCount, faqsCount, transactions] = await Promise.all([
-    prisma.product.count({ where: { businessId: user.businessId } }),
-    prisma.faq.count({ where: { businessId: user.businessId } }),
-    prisma.transaction.findMany({
-      where: { businessId: user.businessId },
-      orderBy: { createdAt: "desc" },
-      take: 3,
-      select: {
-        id: true,
-        createdAt: true,
-        amount: true,
-        type: true,
-        status: true,
-        reference: true,
-      },
-    }),
-  ]);
+  // "This month" is counted from the Message table so it always matches the
+  // inbox; the denormalised counters on Business are not month-scoped anymore.
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
 
-  // Plan limits from the same source of truth the billing API uses
-  // (lib/plans.ts). Free plan = 0 included messages; paid tiers carry their
-  // real allowance (e.g. Telegram Green = 2000).
+  const [productsCount, faqsCount, transactions, aiRepliesThisMonth, manualRepliesThisMonth] =
+    await Promise.all([
+      prisma.product.count({ where: { businessId: user.businessId } }),
+      prisma.faq.count({ where: { businessId: user.businessId } }),
+      prisma.transaction.findMany({
+        where: { businessId: user.businessId },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        select: {
+          id: true,
+          createdAt: true,
+          amount: true,
+          type: true,
+          status: true,
+          reference: true,
+        },
+      }),
+      prisma.message.count({
+        where: {
+          businessId: user.businessId,
+          sender: "ai",
+          createdAt: { gte: startOfMonth },
+        },
+      }),
+      prisma.message.count({
+        where: {
+          businessId: user.businessId,
+          sender: "agent",
+          createdAt: { gte: startOfMonth },
+        },
+      }),
+    ]);
+
+  // Credit Economy figures from the same source of truth the billing API uses
+  // (lib/plans.ts): 1 credit = ₦1, and one AI reply costs 5 credits on
+  // Telegram/Discord/Web Chat and 40 on WhatsApp. Manual replies are free.
   const limits = getPlanLimits(
     business?.plan ?? "free",
     business?.planInterval ?? "monthly",
   );
-  const includedMsgs = limits.includedMsgs;
-  const includedManual = limits.includedManualMessages;
-  const aiUsed = business?.messagesUsedThisMonth ?? 0;
-  const manualUsed = business?.manualMessagesUsedThisMonth ?? 0;
-  const isFreePlan = includedMsgs === 0 && includedManual === 0;
+  const creditBalance = business?.creditBalance ?? 0;
+  const aiReplyCost = getAiReplyCreditCost(business?.channel);
+  const aiUsed = aiRepliesThisMonth;
+  const manualUsed = manualRepliesThisMonth;
+  const isFreePlan = limits.credits === 0;
   const tone = business?.tone === "formal" ? "Formal" : "Friendly";
   const ownerAlertsActive = Boolean(business?.ownerTelegramChatId);
   const telegramConnected = Boolean(business?.telegramBotToken);
@@ -218,46 +241,40 @@ export default async function CollyAIPage() {
             Credits & Usage
           </h2>
           <div className="mt-4 space-y-4">
-            <div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">AI Replies</span>
-                <span className="font-medium text-gray-900">
-                  {includedMsgs === 0 ? "0 / 0" : `${aiUsed} / ${includedMsgs}`}
-                </span>
-              </div>
-              <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
-                <div
-                  className="h-2 rounded-full bg-[#FF6600]"
-                  style={{
-                    width:
-                      includedMsgs === 0
-                        ? "0%"
-                        : `${Math.min(100, (aiUsed / includedMsgs) * 100)}%`,
-                  }}
-                />
-              </div>
+            <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
+              <span className="text-sm text-gray-600">Credit balance</span>
+              <span className="font-semibold text-gray-900">
+                {creditBalance.toLocaleString()} credits
+              </span>
             </div>
-            <div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Manual Replies</span>
-                <span className="font-medium text-gray-900">
-                  {includedManual === 0
-                    ? "0 / 0"
-                    : `${manualUsed} / ${includedManual}`}
-                </span>
-              </div>
-              <div className="mt-2 h-2 w-full rounded-full bg-gray-100">
-                <div
-                  className="h-2 rounded-full bg-[#FF6600]"
-                  style={{
-                    width:
-                      includedManual === 0
-                        ? "0%"
-                        : `${Math.min(100, (manualUsed / includedManual) * 100)}%`,
-                  }}
-                />
-              </div>
+            <p className="text-xs text-gray-500">
+              {limits.credits > 0
+                ? `${limits.credits.toLocaleString()} credits are included ${
+                    business?.plan === "trial"
+                      ? "with your 7-day trial."
+                      : "with your plan each billing month."
+                  }`
+                : "Your plan does not add credits — top up to keep the AI replying."}{" "}
+              1 credit = ₦1. An AI reply costs {aiReplyCost} credits on this
+              channel; manual replies are free.
+            </p>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">AI replies this month</span>
+              <span className="font-medium text-gray-900">
+                {aiUsed.toLocaleString()}
+              </span>
             </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Manual replies this month</span>
+              <span className="font-medium text-gray-900">
+                {manualUsed.toLocaleString()}
+              </span>
+            </div>
+            {creditBalance < aiReplyCost && (
+              <p className="rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm text-[#C2410C]">
+                {LOW_CREDIT_MESSAGE}
+              </p>
+            )}
             {isFreePlan && (
               <p className="rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm text-[#C2410C]">
                 You are on the Free plan.{" "}
@@ -267,15 +284,9 @@ export default async function CollyAIPage() {
                 >
                   Upgrade
                 </Link>{" "}
-                to get included messages.
+                to get monthly credits.
               </p>
             )}
-            <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
-              <span className="text-sm text-gray-600">Wallet Balance</span>
-              <span className="font-semibold text-gray-900">
-                ₦{(business?.creditWalletBalanceNaira ?? 0).toLocaleString("en-NG")} remaining
-              </span>
-            </div>
             <Link
               href="/settings/billing"
               className="inline-flex items-center justify-center rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"

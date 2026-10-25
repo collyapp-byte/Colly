@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AlertCircle, X } from "lucide-react";
+import { LOW_CREDIT_MESSAGE } from "@/lib/plans";
 
 type AiPausedBannerProps = {
   reason: "plan_expired" | "cap_hit" | "no_credits";
@@ -23,7 +24,7 @@ export function AiPausedBanner({
       case "cap_hit":
         return `You've used ${used.toLocaleString()}/${cap.toLocaleString()} messages this month. Buy credits or upgrade.`;
       case "no_credits":
-        return "You're out of credits. Buy more to keep AI replying.";
+        return LOW_CREDIT_MESSAGE;
       default:
         return "AI replies are paused.";
     }

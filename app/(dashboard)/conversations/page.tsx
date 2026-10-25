@@ -27,8 +27,10 @@ type Usage = {
   planStatus: string;
   planInterval: string;
   aiRepliesUsed: number;
-  aiRepliesLimit: number;
-  creditWalletBalanceNaira: number;
+  /** Credit Economy: 1 credit = ₦1. */
+  creditBalance: number;
+  /** Credits one AI reply costs on this business's channel. */
+  aiCreditCost: number;
 };
 
 const EMPTY_STATE_TEXT =
@@ -103,20 +105,14 @@ export default function ConversationsPage() {
 
   const loading = conversations === null && error === null && !hasLoadError;
 
+  // Credit Economy: the AI pauses when the balance cannot cover one more reply
+  // on this channel (5 credits on Telegram/Discord/Web Chat, 40 on WhatsApp).
   const showBanner =
     !dismissedBanner &&
-    usage &&
-    (usage.planStatus !== "active" ||
-      usage.aiRepliesUsed >= usage.aiRepliesLimit) &&
-    usage.creditWalletBalanceNaira === 0;
+    usage !== null &&
+    usage.creditBalance < (usage.aiCreditCost ?? 5);
 
-  const bannerReason = usage
-    ? usage.planStatus !== "active"
-      ? "plan_expired"
-      : usage.creditWalletBalanceNaira === 0
-      ? "cap_hit"
-      : null
-    : null;
+  const bannerReason = showBanner ? ("no_credits" as const) : null;
 
   async function handleDelete(id: string) {
     if (
@@ -163,8 +159,6 @@ export default function ConversationsPage() {
       {showBanner && bannerReason && (
         <AiPausedBanner
           reason={bannerReason}
-          used={usage.aiRepliesUsed}
-          cap={usage.aiRepliesLimit}
           onDismiss={() => setDismissedBanner(true)}
         />
       )}
