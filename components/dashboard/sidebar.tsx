@@ -15,6 +15,7 @@ import {
   MapPin,
   MessageSquare,
   Package,
+  QrCode,
   Settings,
   ShoppingCart,
   Sparkles,
@@ -54,6 +55,11 @@ const SECONDARY_ITEMS: NavItem[] = [
     icon: HelpCircle,
   },
   { label: "Find an Agent", href: "/find-an-agent", icon: MapPin },
+  {
+    label: "QR Code Generator",
+    href: "/settings/qr-code",
+    icon: QrCode,
+  },
 ];
 
 const BOTTOM_ITEMS: NavItem[] = [
@@ -321,10 +327,15 @@ export function Sidebar({
           <ul className="flex flex-col gap-0.5">
             {BOTTOM_ITEMS.map((item) => {
               // Keep the parent "Settings" link from also lighting up while on
-              // the "AI Line" sub-page, so only one bottom item is active.
+              // a sub-page that has its own nav entry, so only one item shows
+              // as active at a time.
               const active =
                 isActivePath(pathname, item.href) &&
-                !(item.href === "/settings" && pathname.startsWith("/settings/ai-line"));
+                !(
+                  item.href === "/settings" &&
+                  (pathname.startsWith("/settings/ai-line") ||
+                    pathname === "/settings/qr-code")
+                );
               const Icon = item.icon;
               return (
                 <li key={item.label}>

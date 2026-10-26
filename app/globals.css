@@ -277,3 +277,48 @@ button:active:not(:disabled) {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* ── Print ─────────────────────────────────────────────────────────────────
+   The in-store QR card (/settings/qr-code) is printed and taped to a counter,
+   so the dashboard chrome must stay off the paper. Elements marked
+   `data-print-hide` (sidebar, top bar, mobile nav, action buttons) are dropped,
+   and the shell's full-height scroll containers are unwound - a scroll
+   container would otherwise clip the sheet to its first screen. */
+@media print {
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  [data-dashboard-shell],
+  [data-dashboard-shell] > div,
+  [data-dashboard-shell] main,
+  [data-dashboard-shell] main > div {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+  }
+
+  /* Printers strip backgrounds by default; the QR modules and the brand
+     accents are the whole point of this sheet, so keep them. */
+  [data-print-card],
+  [data-print-card] canvas {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  [data-print-card] {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+}

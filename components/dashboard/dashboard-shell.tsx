@@ -75,10 +75,13 @@ export function DashboardShell({
   }, []);
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#f8fafc] bg-radial-[ellipse_at_top] from-orange-100/40 via-gray-50 to-blue-100/20">
+    <div
+      data-dashboard-shell
+      className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#f8fafc] bg-radial-[ellipse_at_top] from-orange-100/40 via-gray-50 to-blue-100/20"
+    >
       {/* Mobile drawer */}
       {mobileNavOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div data-print-hide className="fixed inset-0 z-40 md:hidden">
           <button
             type="button"
             aria-label="Close menu"
@@ -99,7 +102,10 @@ export function DashboardShell({
 
       <div className="flex min-h-screen w-full max-w-full overflow-x-hidden md:h-screen md:overflow-hidden">
         {/* Desktop sidebar */}
-        <aside className="hidden w-64 shrink-0 flex-col md:flex">
+        <aside
+          data-print-hide
+          className="hidden w-64 shrink-0 flex-col md:flex"
+        >
           <Sidebar
             hasNoProducts={hasNoProducts}
             hasNoFaqs={hasNoFaqs}
@@ -113,6 +119,7 @@ export function DashboardShell({
           {(!telegramConnected || !ownerAlertsLinked) && (
             <div
               role="alert"
+              data-print-hide
               className="mx-3 mt-3 flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between md:mx-0"
             >
               <span className="flex items-start gap-2">
@@ -135,7 +142,10 @@ export function DashboardShell({
           )}
           {/* Top bar - glass, floats over the tinted page background. It scrolls
               horizontally on narrow screens so the bar never widens the page. */}
-          <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 overflow-x-auto bg-white/40 backdrop-blur-md no-scrollbar">
+          <header
+            data-print-hide
+            className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 overflow-x-auto bg-white/40 backdrop-blur-md no-scrollbar"
+          >
             <div className="flex shrink-0 items-center gap-3 px-3 md:px-0">
               <button
                 type="button"
@@ -184,7 +194,10 @@ export function DashboardShell({
           </main>
         </div>
       </div>
-      <MobileNav />
+      {/* The mobile tab bar is screen navigation only; keep it off paper. */}
+      <div data-print-hide>
+        <MobileNav />
+      </div>
     </div>
   );
 }

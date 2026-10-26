@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Code2, Copy, ExternalLink, Globe } from "lucide-react";
+import {
+  ArrowLeft,
+  Code2,
+  Copy,
+  ExternalLink,
+  Globe,
+  QrCode,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { Business } from "@/lib/business";
@@ -160,6 +167,13 @@ export default function WebChatSettingsPage() {
                   <Copy className="mr-1.5 h-4 w-4" aria-hidden />
                   Copy Link
                 </Button>
+                <Link
+                  href="/settings/qr-code"
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-gray-100 px-3 py-1.5 text-[13px] font-semibold text-gray-900 transition-colors hover:bg-gray-200"
+                >
+                  <QrCode className="h-4 w-4" aria-hidden />
+                  Get In-Store QR Code
+                </Link>
                 <a
                   href={chatLink}
                   target="_blank"
