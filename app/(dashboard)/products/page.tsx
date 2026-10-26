@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type FormEvent,
 } from "react";
 import {
   Camera,
@@ -14,6 +15,8 @@ import {
   LoaderCircle,
   Pencil,
   Plus,
+  RefreshCw,
+  Store,
   Trash,
   Upload,
 } from "lucide-react";
@@ -46,6 +49,15 @@ export default function ProductsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [importing, setImporting] = useState(false);
+  // Jiji import keeps its own modal state so it never clashes with the
+  // create / edit / delete dialog that `modal` tracks.
+  const [jijiOpen, setJijiOpen] = useState(false);
+  const [jijiUrl, setJijiUrl] = useState("");
+  const [jijiImporting, setJijiImporting] = useState(false);
+  const [jijiError, setJijiError] = useState<string | null>(null);
+  // Two-way sync runs next to the importer: it follows price + sold changes
+  // from the shop saved at import time.
+  const [syncingJiji, setSyncingJiji] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -79,6 +91,100 @@ export default function ProductsPage() {
   const refresh = useCallback(() => setReloadKey((key) => key + 1), []);
 
   const closeModal = useCallback(() => setModal({ kind: "closed" }), []);
+
+  function openJijiImport() {
+    setJijiError(null);
+    setJijiOpen(true);
+  }
+
+  function closeJijiImport() {
+    // Stay open while the request is in flight; the import finishes into the
+    // refreshed list either way.
+    if (jijiImporting) return;
+    setJijiOpen(false);
+    setJijiError(null);
+  }
+
+  async function handleJijiImport(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (jijiImporting) return;
+
+    const shopUrl = jijiUrl.trim();
+    if (!shopUrl) {
+      setJijiError("Paste your Jiji shop URL to continue.");
+      return;
+    }
+
+    setJijiImporting(true);
+    setJijiError(null);
+
+    try {
+      const res = await fetch("/api/products/import-jiji", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jijiUrl: shopUrl }),
+      });
+      const data = (await res.json().catch(() => null)) as {
+        success?: boolean;
+        count?: number;
+        error?: string;
+      } | null;
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error ?? "Failed to import products");
+      }
+
+      toast.success(
+        `Successfully imported ${data.count ?? 0} products from Jiji!`,
+      );
+      setJijiOpen(false);
+      setJijiUrl("");
+      refresh();
+    } catch (err) {
+      toast.error("Failed to import products. Check the URL and try again.");
+      // The API explains 4xx cases ("not a Jiji shop link") far better than the
+      // generic toast, so surface it in the dialog too.
+      setJijiError(
+        err instanceof Error && err.message
+          ? err.message
+          : "Failed to import products. Check the URL and try again.",
+      );
+    } finally {
+      setJijiImporting(false);
+    }
+  }
+
+  /**
+   * Reconciles the catalogue with the live Jiji shop. `refresh()` afterwards so
+   * the prices / stock badges in the list match what the sync just wrote.
+   */
+  async function handleJijiSync() {
+    if (syncingJiji) return;
+
+    setSyncingJiji(true);
+    try {
+      const res = await fetch("/api/products/sync-jiji", { method: "POST" });
+      const data = (await res.json().catch(() => null)) as {
+        success?: boolean;
+        markedOutOfStock?: number;
+        priceUpdates?: number;
+        error?: string;
+      } | null;
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error ?? "Failed to sync with Jiji");
+      }
+
+      toast.success(
+        `Synced! Marked ${data.markedOutOfStock ?? 0} products out of stock and updated ${data.priceUpdates ?? 0} prices.`,
+      );
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to sync with Jiji");
+    } finally {
+      setSyncingJiji(false);
+    }
+  }
 
   async function handleCreate(values: ProductInput) {
     const duplicate = products?.some(
@@ -228,6 +334,29 @@ export default function ProductsPage() {
           </button>
           <button
             type="button"
+            onClick={openJijiImport}
+            disabled={jijiImporting}
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Store className="h-4 w-4" aria-hidden />
+            Import from Jiji
+          </button>
+          <button
+            type="button"
+            onClick={handleJijiSync}
+            disabled={syncingJiji}
+            title="Pull price changes and sold listings from Jiji"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {syncingJiji ? (
+              <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+            ) : (
+              <RefreshCw className="h-4 w-4" aria-hidden />
+            )}
+            {syncingJiji ? "Syncing..." : "Sync Jiji"}
+          </button>
+          <button
+            type="button"
             onClick={() => setModal({ kind: "create" })}
             className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
           >
@@ -283,6 +412,14 @@ export default function ProductsPage() {
                 >
                   <Plus className="h-4 w-4" aria-hidden />
                   Add Product
+                </button>
+                <button
+                  type="button"
+                  onClick={openJijiImport}
+                  className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  <Store className="h-4 w-4" aria-hidden />
+                  Import from Jiji
                 </button>
               </div>
             </div>
@@ -462,6 +599,63 @@ export default function ProductsPage() {
               Delete
             </button>
           </div>
+        </Modal>
+      )}
+
+      {jijiOpen && (
+        <Modal
+          title="Import from Jiji"
+          onClose={closeJijiImport}
+          footer={
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeJijiImport}
+                disabled={jijiImporting}
+                className="inline-flex min-h-[44px] items-center rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="jiji-import-form"
+                disabled={jijiImporting}
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {jijiImporting && (
+                  <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                )}
+                {jijiImporting ? "Importing..." : "Import products"}
+              </button>
+            </div>
+          }
+        >
+          <form id="jiji-import-form" onSubmit={handleJijiImport}>
+            <label
+              htmlFor="jiji-shop-url"
+              className="mb-1 block text-sm font-medium text-gray-700"
+            >
+              Jiji Shop URL
+            </label>
+            <input
+              id="jiji-shop-url"
+              type="text"
+              inputMode="url"
+              value={jijiUrl}
+              onChange={(event) => setJijiUrl(event.target.value)}
+              placeholder="https://jiji.ng/your-shop-name"
+              disabled={jijiImporting}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20 disabled:bg-gray-50 disabled:text-gray-500"
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              We copy the title, price, description and first photo from each
+              listing. Products you already have with the same name are skipped.
+            </p>
+
+            {jijiError && (
+              <p className="mt-3 text-sm text-danger">{jijiError}</p>
+            )}
+          </form>
         </Modal>
       )}
     </div>

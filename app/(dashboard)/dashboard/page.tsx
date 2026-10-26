@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -17,6 +17,7 @@ import { formatNaira } from "@/lib/format";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card } from "@/components/ui/card";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
+import { JijiSyncCard } from "@/components/dashboard/jiji-sync-card";
 
 type Stat = {
   label: string;
@@ -41,6 +42,12 @@ export default function OverviewPage() {
   >(undefined);
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [joiningWaitlist, setJoiningWaitlist] = useState(false);
+  // Jiji sync status for the store card; null until the status request lands so
+  // the card never flashes the "not connected" state at a connected shop.
+  const [jijiSync, setJijiSync] = useState<{
+    lastJijiSyncAt: string | null;
+    hasJijiProducts: boolean;
+  } | null>(null);
 
   async function handleJoinWaitlist(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,6 +76,47 @@ export default function OverviewPage() {
       setJoiningWaitlist(false);
     }
   }
+
+  /**
+   * Jiji sync status for the store card.
+   *
+   * Fetched (rather than server-rendered) so the card can re-read it after a sync
+   * without a page reload: `jijiSyncKey` is bumped by the card's `onSynced`.
+   */
+  const [jijiSyncKey, setJijiSyncKey] = useState(0);
+
+  const handleJijiSynced = useCallback(
+    () => setJijiSyncKey((key) => key + 1),
+    [],
+  );
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/products/sync-jiji")
+      .then((res) => (res.ok ? res.json() : null))
+      .then(
+        (
+          data: {
+            lastJijiSyncAt?: string | null;
+            hasJijiProducts?: boolean;
+          } | null,
+        ) => {
+          if (!active || !data) return;
+          setJijiSync({
+            lastJijiSyncAt: data.lastJijiSyncAt ?? null,
+            hasJijiProducts: Boolean(data.hasJijiProducts),
+          });
+        },
+      )
+      .catch(() => {
+        // The card is optional: hide it rather than block the overview.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [jijiSyncKey]);
 
   useEffect(() => {
     let active = true;
@@ -271,6 +319,20 @@ export default function OverviewPage() {
             />
           );
         })}
+
+        {jijiSync && (
+          <div className="col-span-2 md:col-span-4">
+            <JijiSyncCard
+              lastSyncedAt={
+                jijiSync.lastJijiSyncAt
+                  ? new Date(jijiSync.lastJijiSyncAt)
+                  : null
+              }
+              hasJijiProducts={jijiSync.hasJijiProducts}
+              onSynced={handleJijiSynced}
+            />
+          </div>
+        )}
       </section>
 
       <Card className="mt-6 border-[color:var(--outline-subtle)]!">
