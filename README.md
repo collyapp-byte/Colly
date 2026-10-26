@@ -64,7 +64,8 @@ app/
   api/                 ~60 route handlers (chat, channels, billing, products, agents, cron)
 components/            UI grouped by surface (dashboard, conversations, agents, products, ui)
 lib/                   domain logic: chat-engine, ai/deepseek, plans, credits, tools,
-                       negotiation, invoices, jiji, badges, certification, agent-auth
+                       negotiation, invoices, jiji, badges, certification, agent-auth,
+                       pagination
 prisma/                schema, migrations, seed.cjs, academy-content.cjs
 scripts/               academy sync, embedding backfill
 tests/                 node:test suites (plans, academy content, negotiation)
@@ -94,12 +95,13 @@ is derived from it and asserted by `tests/plans.test.ts`.
 
 ## Testing and CI
 
-`npm test` runs three suites with the Node test runner (`tsx`, no Jest/Vitest):
+`npm test` runs four suites with the Node test runner (`tsx`, no Jest/Vitest):
 
 - `tests/plans.test.ts` — plan/credit invariants and the wallet spend order.
 - `tests/academy-content.test.ts` — course/lesson/quiz/exam integrity, plus a guard that
   fails on retired claims and on drift from `lib/plans.ts`.
 - `tests/negotiation.test.ts` — counter-offer ladder and offer parsing.
+- `tests/pagination.test.ts` — cursor encode/decode and page-size clamping.
 
 `.github/workflows/ci.yml` runs lint → typecheck → test on every push and pull request.
 `npm run build` is not part of CI because it needs real provider credentials; run it
@@ -108,10 +110,7 @@ before deploying.
 ## Operations
 
 - `GET /api/health` — liveness (no auth).
-- `GET /api/cron/maintenance` — Bearer `CRON_SECRET`; demotes expired paid plans, refills
-  the Free allowance, and builds the weekly report. Scheduled by
-  `.github/workflows/maintenance.yml` (needs `APP_URL` and `CRON_SECRET` repository
-  secrets).
+- `GET /api/cron/maintenance` — Bearer `CRON_SECRET`; demotes expired paid plans, refills the Free allowance, and sends the weekly Telegram digest to owners who linked a chat. Scheduled every 6 hours by `.github/workflows/maintenance.yml` (needs `APP_URL` and `CRON_SECRET` repository secrets); `?digest=force|skip` overrides the Monday-only digest.
 - Paystack webhook: `POST /api/billing/webhook` (`PAYSTACK_SECRET_KEY`).
 - Telegram webhook must point at `NEXT_PUBLIC_APP_URL/api/telegram/webhook`; Discord at
   `/api/discord/webhook`. Telegram connect refuses localhost.

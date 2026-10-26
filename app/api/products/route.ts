@@ -2,6 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
 import { serializeProduct } from "@/lib/products";
 import { reembedProduct } from "@/lib/embedding-pipeline";
+import {
+  cursorDate,
+  decodeCursor,
+  encodeCursor,
+  readPageSize,
+} from "@/lib/pagination";
 
 type ProductRequestBody = {
   name?: unknown;
@@ -20,9 +26,6 @@ function badRequest(error: string) {
 function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
 }
-
-/** Rows per page for the list endpoints; see the note on pagination in GET. */
-const LIST_PAGE_SIZE = 50;
 
 /**
  * Validates the `images` field into a list of URL strings.
@@ -53,9 +56,10 @@ function readImages(value: unknown): string[] | null {
   return images;
 }
 
-// GET /api/products
-// The signed-in business's products (one page), newest first.
-export async function GET() {
+// GET /api/products?limit=50&cursor=...
+// The signed-in business's products, newest first. Keyset paginated: pass
+// `nextCursor` back as `cursor` for the following page.
+export async function GET(request: Request) {
   try {
     const businessId = await getCurrentBusinessId();
 
@@ -63,16 +67,42 @@ export async function GET() {
       return unauthorized();
     }
 
-    // One page, newest first: `take` without an order would silently slice the
-    // oldest rows, and a freshly added product must stay visible. Cursor
-    // pagination is the follow-up for catalogues above one page.
+    const { searchParams } = new URL(request.url);
+    const limit = readPageSize(searchParams);
+    const cursor = decodeCursor(searchParams.get("cursor"));
+    const cursorCreatedAt = cursorDate(cursor, "createdAt");
+    const cursorId = cursor?.id ?? null;
+
+    // Continue strictly after the last row of the previous page, matching the
+    // (createdAt, id) ordering (id breaks ties on rows created in the same ms).
+    const after =
+      cursorCreatedAt && cursorId
+        ? {
+            OR: [
+              { createdAt: { lt: cursorCreatedAt } },
+              { createdAt: cursorCreatedAt, id: { lt: cursorId } },
+            ],
+          }
+        : {};
+
+    // Newest first: `take` without an order would silently slice the oldest
+    // rows, and a freshly added product must stay visible.
     const products = await prisma.product.findMany({
-      where: { businessId },
-      orderBy: { createdAt: "desc" },
-      take: LIST_PAGE_SIZE,
+      where: { businessId, ...after },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit,
     });
 
-    return Response.json({ products: products.map(serializeProduct) });
+    const lastProduct = products.at(-1);
+    const nextCursor =
+      products.length === limit && lastProduct
+        ? encodeCursor({ createdAt: lastProduct.createdAt, id: lastProduct.id })
+        : null;
+
+    return Response.json({
+      products: products.map(serializeProduct),
+      nextCursor,
+    });
   } catch (error) {
     console.error("[GET /api/products]", error);
     return Response.json(

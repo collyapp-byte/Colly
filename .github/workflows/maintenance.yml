@@ -1,0 +1,43 @@
+name: Maintenance
+
+on:
+  schedule:
+    # Every 6 hours. The wallet sweep is idempotent, and the weekly digest only
+    # sends on Mondays (UTC) unless the endpoint is called with ?digest=force.
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      digest:
+        description: "Weekly digest: force or skip (blank = Monday only)"
+        required: false
+        default: ""
+
+concurrency:
+  group: maintenance
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    name: Wallet sweep + weekly digest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/maintenance
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          DIGEST: ${{ inputs.digest }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP_URL:-}" ] || [ -z "${CRON_SECRET:-}" ]; then
+            echo "APP_URL and CRON_SECRET repository secrets are required."
+            exit 1
+          fi
+
+          url="${APP_URL%/}/api/cron/maintenance"
+          if [ -n "${DIGEST:-}" ]; then
+            url="${url}?digest=${DIGEST}"
+          fi
+
+          curl --fail --silent --show-error --max-time 120 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "$url"

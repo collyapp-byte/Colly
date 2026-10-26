@@ -1,17 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
+import {
+  cursorDate,
+  decodeCursor,
+  encodeCursor,
+  readPageSize,
+} from "@/lib/pagination";
 
 function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
 }
 
-/** Rows per page for the list endpoints; see the note on pagination in GET. */
-const LIST_PAGE_SIZE = 50;
-
-// GET /api/customers
-// The signed-in business's customers (one page), ranked by recent activity, each
-// with a conversation count and the timestamp of their latest message.
-export async function GET() {
+// GET /api/customers?limit=50&cursor=...
+// The signed-in business's customers, newest first and keyset paginated, each
+// with a conversation count and the timestamp of their latest message. The page
+// itself is then ranked by recent activity.
+export async function GET(request: Request) {
   try {
     const businessId = await getCurrentBusinessId();
 
@@ -19,14 +23,31 @@ export async function GET() {
       return unauthorized();
     }
 
+    const { searchParams } = new URL(request.url);
+    const limit = readPageSize(searchParams);
+    const cursor = decodeCursor(searchParams.get("cursor"));
+    const cursorCreatedAt = cursorDate(cursor, "createdAt");
+    const cursorId = cursor?.id ?? null;
+
+    const after =
+      cursorCreatedAt && cursorId
+        ? {
+            OR: [
+              { createdAt: { lt: cursorCreatedAt } },
+              { createdAt: cursorCreatedAt, id: { lt: cursorId } },
+            ],
+          }
+        : {};
+
     // A customer's "last active" time is the newest message in any of their
-    // conversations, which Prisma cannot order a parent by, so one page of
-    // customers is fetched (newest first, so a newly added customer is always in
-    // it) and ranked by activity in memory. Cursor pagination is the follow-up.
+    // conversations, which Prisma cannot order a parent by. So the page is
+    // fetched newest-first (a newly added customer is always on page one) and
+    // ranked by activity in memory; the cursor continues from the last row's
+    // createdAt/id, so paging is stable even though the ranking is per page.
     const rows = await prisma.customer.findMany({
-      where: { businessId },
-      orderBy: { createdAt: "desc" },
-      take: LIST_PAGE_SIZE,
+      where: { businessId, ...after },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit,
       include: {
         conversations: {
           select: {
@@ -75,7 +96,13 @@ export async function GET() {
         lastMessageAt,
       }));
 
-    return Response.json({ customers });
+    const lastRow = rows.at(-1);
+    const nextCursor =
+      rows.length === limit && lastRow
+        ? encodeCursor({ createdAt: lastRow.createdAt, id: lastRow.id })
+        : null;
+
+    return Response.json({ customers, nextCursor });
   } catch (error) {
     console.error("[GET /api/customers]", error);
     return Response.json(

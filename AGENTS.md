@@ -66,7 +66,7 @@ academy content, or a pricing/credit rule.
 - Agents (academy/partner surface): `app/api/agents/*` — `signup`, `me`, `training`, `training/[courseSlug]`, `training/[courseSlug]/[lessonSlug]`, `lessons/[lessonId]/complete`, `quiz/submit`, `final-exam`, `certificate` (+ `pdf`, `badge`), `badges` (+ `[courseSlug]/svg|png`), `leaderboard`, `referrals`, `bank-details`, `payouts/request`.
 - Reports & alerts: `app/api/reports/weekly/route.ts` (HTML report: AI replies, manual replies, escalations, sales), owner notifications via Telegram.
 - Housekeeping: `app/api/health/route.ts` (liveness, no auth), `app/api/waitlist/route.ts` (WhatsApp waitlist), `app/api/business/nrs/route.ts` (Naira formatting helper), `app/api/voice/transcribe-description/route.ts`.
-- Maintenance cron: `app/api/cron/maintenance/route.ts` (Bearer `CRON_SECRET`) — runs `downgradeExpiredPlan` + `ensureFreeGrant` for every business and sends the weekly report; triggered by `.github/workflows/maintenance.yml`.
+- Maintenance cron: `app/api/cron/maintenance/route.ts` (Bearer `CRON_SECRET`) — runs `downgradeExpiredPlan` + `ensureFreeGrant` for every business (batched, default 500) and, on Mondays or `?digest=force`, sends each owner a 7-day Telegram digest through `sendOwnerAlert`; triggered by `.github/workflows/maintenance.yml` every 6 hours.
 
 ## Agent academy & partner domain
 
@@ -115,4 +115,5 @@ academy content, or a pricing/credit rule.
 - `tests/plans.test.ts` locks the credit economy: tier totals equal base + bonus (Green 23,000 / Blue 41,000 / Black 90,000), prices (₦15k/₦25k/₦50k), Free's 80, reply costs (5 / 80 / 0) and the plan-before-top-up spend order.
 - `tests/academy-content.test.ts` validates `prisma/academy-content.cjs`: badge slugs match `lib/course-badge-meta.ts`, every lesson works, every quiz question has an explanation, the exam is 40 questions (10 per section), and the pricing lesson quotes `lib/plans.ts` exactly. It also fails on retired claims ("WhatsApp Business API", "44,000 credits", "50 credits every month", …) so the content cannot silently drift again.
 - `tests/negotiation.test.ts` covers the deterministic counter-offer ladder and offer parsing (`100k`, `₦100,000`, "one hundred thousand").
+- `tests/pagination.test.ts` covers the keyset cursor helpers (`lib/pagination.ts`): round-trip, garbage rejection and page-size clamping.
 - No integration/e2e tests and no DB in CI: anything touching Prisma (chat engine, billing, cron) is verified manually against the seeded demo tenant. Do not point tests at `DATABASE_URL`.

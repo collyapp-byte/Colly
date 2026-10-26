@@ -11,6 +11,12 @@ import {
   VAT_RATE,
   type InvoiceItem,
 } from "@/lib/invoices";
+import {
+  cursorDate,
+  decodeCursor,
+  encodeCursor,
+  readPageSize,
+} from "@/lib/pagination";
 
 function badRequest(error: string) {
   return Response.json({ error }, { status: 400 });
@@ -23,9 +29,6 @@ function notFound(error: string) {
 function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
 }
-
-/** Rows per page for the list endpoints; see the note on pagination in GET. */
-const LIST_PAGE_SIZE = 50;
 
 type InvoiceRequestBody = {
   customerId?: unknown;
@@ -78,9 +81,10 @@ function parseItems(raw: unknown): InvoiceItem[] | string {
   return items;
 }
 
-// GET /api/invoices?status=draft&from=2026-01-01&to=2026-12-31
+// GET /api/invoices?status=draft&from=2026-01-01&to=2026-12-31&limit=50&cursor=...
 // Every invoice for the signed-in business, newest first, with the customer it
 // was billed to. `status` filters by state; `from`/`to` filter by createdAt.
+// Keyset paginated: pass `nextCursor` back as `cursor` for the next page.
 export async function GET(request: Request) {
   try {
     const businessId = await getCurrentBusinessId();
@@ -93,10 +97,27 @@ export async function GET(request: Request) {
     const rawStatus = searchParams.get("status");
     const fromParam = searchParams.get("from");
     const toParam = searchParams.get("to");
+    const limit = readPageSize(searchParams);
+    const cursor = decodeCursor(searchParams.get("cursor"));
+    const cursorCreatedAt = cursorDate(cursor, "createdAt");
+    const cursorId = cursor?.id ?? null;
 
     const where: Prisma.InvoiceWhereInput = { businessId };
     if (isInvoiceStatus(rawStatus)) {
       where.status = rawStatus;
+    }
+
+    // Continue strictly after the last row of the previous page. Combined with
+    // the date filters using AND so a cursor never widens the query.
+    if (cursorCreatedAt && cursorId) {
+      where.AND = [
+        {
+          OR: [
+            { createdAt: { lt: cursorCreatedAt } },
+            { createdAt: cursorCreatedAt, id: { lt: cursorId } },
+          ],
+        },
+      ];
     }
 
     const fromDate = fromParam ? new Date(`${fromParam}T00:00:00`) : null;
@@ -113,16 +134,25 @@ export async function GET(request: Request) {
       where.createdAt = createdAt;
     }
 
-    // Newest first, one page: unbounded invoice history is the slowest list in
-    // the app to render. Cursor pagination is the follow-up.
+    // Newest first, keyset paginated: unbounded invoice history is the slowest
+    // list in the app to render.
     const invoices = await prisma.invoice.findMany({
       where,
       include: INVOICE_INCLUDE,
-      orderBy: { createdAt: "desc" },
-      take: LIST_PAGE_SIZE,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit,
     });
 
-    return Response.json({ invoices: invoices.map(serializeInvoice) });
+    const lastInvoice = invoices.at(-1);
+    const nextCursor =
+      invoices.length === limit && lastInvoice
+        ? encodeCursor({ createdAt: lastInvoice.createdAt, id: lastInvoice.id })
+        : null;
+
+    return Response.json({
+      invoices: invoices.map(serializeInvoice),
+      nextCursor,
+    });
   } catch (error) {
     console.error("[GET /api/invoices]", error);
     return Response.json(
