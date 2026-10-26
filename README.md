@@ -14,7 +14,7 @@ channel on.
 | Area | Highlights |
 | --- | --- |
 | AI replies | DeepSeek via an OpenAI-compatible client; tool-calling forced for every product/price/stock question so answers come from the catalogue, never from memory. Plain-text replies, no stock quantities disclosed, automatic human takeover. |
-| Catalogue | Products with price, floor price (negotiation limit), negotiable flag, stock, images and descriptions; CSV/JSON import; Jiji import + two-way price/stock sync; semantic search (Jina embeddings) with a `pg_trgm` fallback. |
+| Catalogue | Products with price, floor price (negotiation limit), negotiable flag, stock, images and descriptions; CSV upload; Jiji import + two-way price/stock sync; semantic search (Jina embeddings) with a `pg_trgm` fallback. |
 | Inbox | Conversation list ordered by last activity, message history, AI pause/resume (takeover), manual replies that cost no credits. |
 | CRM | Customer records ranked by activity, tags, and a four-stage deal pipeline (inquiry → negotiating → paid → delivered). |
 | Billing | Free tier + Green/Blue/Black plans, split wallet (monthly plan credits + permanent top-ups), credit packs, Paystack checkout, cancellation, invoices/sales, usage dashboard. |
