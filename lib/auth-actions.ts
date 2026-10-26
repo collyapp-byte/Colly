@@ -238,6 +238,10 @@ export async function signup(
             // monthly-allowance bucket; top-ups are bought, so they start at 0.
             planCredits: FREE_PLAN_LIMITS.credits,
             topUpCredits: 0,
+            // Starts the 30-day Free re-grant clock at signup. Only Free rows are
+            // re-granted lazily (lib/auth-guards.ts); paid tiers are re-granted by
+            // the Paystack charge and ignore this column.
+            lastFreeGrantAt: new Date(),
             // The tier picked on the pricing page (?plan=green): remembered so
             // the billing page pre-selects it.
             selectedPlan,

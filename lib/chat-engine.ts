@@ -385,7 +385,7 @@ export async function handleIncomingMessage({
 
 /**
  * Spend credits for one AI reply: 5 credits on Telegram, Discord and Web Chat,
- * 40 credits on WhatsApp. Manual (agent) replies never reach this function: they
+ * 80 credits on WhatsApp. Manual (agent) replies never reach this function: they
  * are free.
  *
  * Split wallet: the monthly plan allowance (`planCredits`) is spent first and

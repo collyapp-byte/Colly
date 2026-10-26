@@ -67,7 +67,9 @@ model Business {
   /// is "inactive" (Free) | "active" | "past_due" | "cancelled" | "expired".
   /// The old trial plan ("trial" / "trialing") is retired: signup no longer
   /// sets it, and every reader treats such a row as Free. The permanent Free
-  /// tier grants 50 `planCredits` every month and never expires.
+  /// tier grants 50 `planCredits` every month and never expires; the re-grant is
+  /// lazy (lib/auth-guards.ts resets the allowance once `lastFreeGrantAt` is
+  /// more than 30 days old), so no scheduler is needed.
   /// Credits are a SPLIT WALLET (1 credit = ₦1), so a monthly allowance can
   /// never be hoarded:
   /// - `planCredits` is the plan's monthly allowance. Every successful plan
@@ -75,7 +77,7 @@ model Business {
   ///   unused allowance resets at each renewal instead of stacking up.
   /// - `topUpCredits` are credits the business paid for. They are never reset,
   ///   so they keep paying for replies after the monthly allowance is gone.
-  /// Each AI reply spends 5 credits on Telegram, Discord or Web Chat and 40 on
+  /// Each AI reply spends 5 credits on Telegram, Discord or Web Chat and 80 on
   /// WhatsApp, always drawing from `planCredits` first, then `topUpCredits`.
   /// Manual replies are free.
   /// `paystackCustomerCode` / `paystackSubscriptionCode` / `paystackEmailToken`
@@ -91,6 +93,12 @@ model Business {
   onboardingEndsAt         DateTime?
   planCredits              Int       @default(0)
   topUpCredits             Int       @default(0)
+  /// When the Free tier's allowance was last handed out. Free businesses are
+  /// re-granted lazily — `requireAiEnabled()` in lib/auth-guards.ts refreshes
+  /// `planCredits` once this stamp is more than 30 days old — so the permanent
+  /// Free plan needs no scheduler. Paid tiers are re-granted by the Paystack
+  /// charge instead and never read this column.
+  lastFreeGrantAt          DateTime?
   paystackCustomerCode     String?
   paystackSubscriptionCode String?
   paystackEmailToken       String?

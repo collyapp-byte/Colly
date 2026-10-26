@@ -106,7 +106,7 @@ export default function ConversationsPage() {
   const loading = conversations === null && error === null && !hasLoadError;
 
   // Credit Economy: the AI pauses when the balance cannot cover one more reply
-  // on this channel (5 credits on Telegram/Discord/Web Chat, 40 on WhatsApp).
+  // on this channel (5 credits on Telegram/Discord/Web Chat, 80 on WhatsApp).
   const showBanner =
     !dismissedBanner &&
     usage !== null &&

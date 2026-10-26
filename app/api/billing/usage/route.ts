@@ -14,7 +14,7 @@ function unauthorized() {
 // GET /api/billing/usage
 // Reports the Credit Economy state: the split wallet, the credits the plan
 // grants each month, and what one AI reply costs on this channel (5 credits on
-// Telegram/Discord/Web Chat, 40 on WhatsApp). Manual replies are free. AI replies
+// Telegram/Discord/Web Chat, 80 on WhatsApp). Manual replies are free. AI replies
 // used this month are counted from the Message table so the number always
 // matches the inbox.
 //

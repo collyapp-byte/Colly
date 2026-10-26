@@ -75,7 +75,7 @@ export default async function CollyAIPage() {
 
   // Credit Economy figures from the same source of truth the billing API uses
   // (lib/plans.ts): 1 credit = ₦1, and one AI reply costs 5 credits on
-  // Telegram/Discord/Web Chat and 40 on WhatsApp. Manual replies are free.
+  // Telegram/Discord/Web Chat and 80 on WhatsApp. Manual replies are free.
   const limits = getPlanLimits(
     business?.plan ?? "free",
     business?.planInterval ?? "monthly",

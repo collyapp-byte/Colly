@@ -495,10 +495,10 @@ Log into your own Colly account. Click every menu item in the sidebar. Spend 10 
 
 We now have a single set of plans. Credits are shared across **all** connected channels (Telegram, Discord, Web Chat). 1 credit = ₦1.
 
-- **Green:** ₦15,000/month — 23,000 credits (15,000 base + 8,000 bonus = 200 free WhatsApp messages)
-- **Blue:** ₦25,000/month — 44,000 credits (28,000 base + 16,000 bonus = 400 free WhatsApp messages)
-- **Black:** ₦50,000/month — 100,000 credits (60,000 base + 40,000 bonus = 1,000 free WhatsApp messages)
-- **Reply costs:** Telegram/Discord replies cost 5 credits. WhatsApp replies cost 40 credits. Manual replies are free.
+- **Green:** ₦15,000/month — 23,000 credits (15,000 base + 8,000 bonus = 100 free WhatsApp messages)
+- **Blue:** ₦25,000/month — 44,000 credits (28,000 base + 16,000 bonus = 200 free WhatsApp messages)
+- **Black:** ₦50,000/month — 100,000 credits (60,000 base + 40,000 bonus = 500 free WhatsApp messages)
+- **Reply costs:** Telegram/Discord replies cost 5 credits. WhatsApp replies cost 80 credits. Manual replies are free.
 - **Top-ups:** buy more credits any time; they never expire.
 - **Free:** ₦0/month — 50 credits every month, forever. No card required.`,
       },
@@ -604,8 +604,8 @@ Before your first sales pitch, memorize these 6 limits. When a business owner as
         question:
           "How much does one AI reply cost in credits?",
         options: [
-          "40 credits on WhatsApp and 5 credits on Telegram or Discord",
-          "5 credits on WhatsApp and 40 credits on Telegram or Discord",
+          "80 credits on WhatsApp and 5 credits on Telegram or Discord",
+          "5 credits on WhatsApp and 80 credits on Telegram or Discord",
           "Manual replies cost credits too",
           "0 credits because replies are included in the plan",
         ],
@@ -2438,6 +2438,9 @@ async function main() {
         planStatus: "inactive",
         planCredits: 50,
         topUpCredits: 0,
+        // The 30-day Free re-grant clock starts now (see lastFreeGrantAt in
+        // prisma/schema.prisma).
+        lastFreeGrantAt: new Date(),
       },
     });
 

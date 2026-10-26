@@ -153,7 +153,7 @@ export default function CreditsPage() {
             <p className="mt-1">
               Credits are the currency Colly uses to pay for AI replies. 1 credit
               = 1 Naira: a Telegram, Discord or Web Chat reply costs 5 credits
-              and a WhatsApp reply costs 40 credits. You can top up any time
+              and a WhatsApp reply costs 80 credits. You can top up any time
               without changing your plan, and the credits you buy here never
               expire. Plan credits are the monthly allowance that comes with
               your subscription: they are reset to the monthly grant on every

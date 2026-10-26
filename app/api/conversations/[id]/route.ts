@@ -77,7 +77,7 @@ export async function GET(
     const { messages, ...meta } = conversation;
 
     // Billing state for the page banner. Credit Economy: AI replies spend
-    // credits (5 on Telegram/Discord/Web Chat, 40 on WhatsApp) while manual
+    // credits (5 on Telegram/Discord/Web Chat, 80 on WhatsApp) while manual
     // replies are always free, so only the AI can be paused by billing.
     const business = await prisma.business.findUniqueOrThrow({
       where: { id: businessId },

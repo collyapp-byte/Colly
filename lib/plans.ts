@@ -20,18 +20,18 @@ export type CreditType = "ai" | "manual";
 
 /**
  * Credits spent per reply. `standard` covers Telegram, Discord and Web Chat;
- * `whatsapp` is priced higher to cover Meta's per-conversation fee. Manual
- * replies never spend credits.
+ * `whatsapp` is priced higher to cover Meta's per-conversation fee and still
+ * leave a margin — at 40 credits a WhatsApp reply lost money. Manual replies
+ * never spend credits.
  */
 export const REPLY_CREDIT_COSTS = {
   standard: 5,
-  whatsapp: 40,
+  whatsapp: 80,
   manual: 0,
 } as const;
 
 /** Explains the credit economy under plan prices and on the credits page. */
-export const CREDIT_ECONOMY_DESCRIPTION =
-  "1 Credit = 1 Naira. Telegram/Discord AI replies cost 5 credits. WhatsApp replies cost 40 credits.";
+export const CREDIT_ECONOMY_DESCRIPTION = `1 Credit = 1 Naira. Telegram/Discord AI replies cost ${REPLY_CREDIT_COSTS.standard} credits. WhatsApp replies cost ${REPLY_CREDIT_COSTS.whatsapp} credits.`;
 
 /**
  * Shown right under a plan's monthly credit allowance: the allowance is a
@@ -58,20 +58,20 @@ export type PlanConfig = {
   bonusCredits: number;
   /** Total credits granted per billing month: `baseCredits + bonusCredits`. */
   credits: number;
-  /** Bonus headline: "Includes 200 Free WhatsApp Messages!". */
+  /** Bonus headline: "Includes 100 Free WhatsApp Messages!". */
   bonusDescription: string;
   /** One-line pitch shown on the plans page. */
   description: string;
 };
 
-/** How many free WhatsApp AI replies a bonus grant buys (40 credits each). */
+/** How many free WhatsApp AI replies a bonus grant buys (80 credits each). */
 export function bonusWhatsappReplies(bonusCredits: number): number {
   return Math.floor(bonusCredits / REPLY_CREDIT_COSTS.whatsapp);
 }
 
 /**
  * The conversion badge under a plan's credits:
- * "+ 8,000 Bonus Credits = 200 FREE WhatsApp Messages".
+ * "+ 8,000 Bonus Credits = 100 FREE WhatsApp Messages".
  */
 export function bonusCreditsBadge(bonusCredits: number): string {
   return `+ ${bonusCredits.toLocaleString()} Bonus Credits = ${bonusWhatsappReplies(
@@ -101,7 +101,7 @@ function definePlan(config: {
 }
 
 export const PLANS: Record<PlanTier, PlanConfig> = {
-  // 15,000 base + 8,000 bonus = 23,000 credits (200 free WhatsApp replies).
+  // 15,000 base + 8,000 bonus = 23,000 credits (100 free WhatsApp replies).
   green: definePlan({
     monthly: 15_000,
     yearly: 150_000,
@@ -109,7 +109,7 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
     bonusCredits: 8_000,
     description: "For small boutiques and vendors getting started.",
   }),
-  // 28,000 base + 16,000 bonus = 44,000 credits (400 free WhatsApp replies).
+  // 28,000 base + 16,000 bonus = 44,000 credits (200 free WhatsApp replies).
   blue: definePlan({
     monthly: 25_000,
     yearly: 250_000,
@@ -117,7 +117,7 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
     bonusCredits: 16_000,
     description: "For growing shops replying to customers all day.",
   }),
-  // 60,000 base + 40,000 bonus = 100,000 credits (1,000 free WhatsApp replies).
+  // 60,000 base + 40,000 bonus = 100,000 credits (500 free WhatsApp replies).
   black: definePlan({
     monthly: 50_000,
     yearly: 500_000,
@@ -235,7 +235,7 @@ export function isActivePaidPlan(business: {
   return Boolean(PLANS[business.plan as PlanTier]);
 }
 
-/** Credits one AI reply costs on a channel (40 on WhatsApp, 5 everywhere else). */
+/** Credits one AI reply costs on a channel (80 on WhatsApp, 5 everywhere else). */
 export function getAiReplyCreditCost(channel?: string | null): number {
   return channel?.toUpperCase() === "WHATSAPP"
     ? REPLY_CREDIT_COSTS.whatsapp
