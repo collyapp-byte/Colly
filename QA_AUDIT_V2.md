@@ -11,6 +11,46 @@
 
 ---
 
+## Status (updated 2026-10-26)
+
+The audit below is a snapshot of `82b4fa9` and is preserved verbatim. This column records
+where each item stands now; the detail and the original reasoning stay underneath.
+
+| Audit item | Status |
+| --- | --- |
+| 🔴 Renewal webhook never re-grants credits / extends the plan / pays commission | **Fixed** — `charge.success` falls through to `recordRenewal()` when there is no local `Transaction`; `invoice.update` success + `invoice.payment_success` also renew. |
+| 🔴 `sha512=` prefix on the webhook signature | **Fixed** — `lib/paystack.ts` strips an optional `sha512=` and compares in constant time. |
+| 🔴 AI reply delivered without being charged under concurrency | **Fixed** — credits are reserved before `askAI()` and refunded on failure (`refundAiReply`). |
+| 🔴 Provider-outage reply charged with no owner alert | **Fixed** — `provider === "fallback"` refunds, returns `ai_unavailable`, and alerts the owner. |
+| 🟠 Weekly report never scheduled | **Fixed** — `/api/cron/maintenance` + `.github/workflows/maintenance.yml` (needs `CRON_SECRET`). |
+| 🟠 Dashboard assistant unmetered | **Fixed** — metered through `chargeAiReply`, 402 with `LOW_CREDIT_MESSAGE` when the wallet is short. |
+| 🟠 Per-process rate limiting | **Open** — still in-memory per instance; needs a shared store (Upstash/Postgres) before scale. |
+| 🟠 Public web-chat widget abuse | **Re-verify** — `/api/chat/web` remains public by design; confirm the per-session/business guards before a marketing push. |
+| 🟠 Missing vector/trigram index | **Fixed** — `prisma/migrations/20261026000000_qa_indexes` (`pg_trgm`, `product_name_trgm_idx`). |
+| 🟠 CSV import is O(n) round-trips | **Open** — batch the writes when a real customer imports thousands of rows. |
+| 🟠 Cancelled/expired plans never fall back to Free | **Fixed** — `downgradeExpiredPlan()` runs before every gate. |
+| 🟠 `.env.example` vs code drift on Paystack vars | **Open (cosmetic)** — the `PAYSTACK_PLAN_WA_*` entries are legacy; the unified tiers use `PAYSTACK_PLAN_TG_*`. |
+| 🟠 SSRF on media URLs + debug endpoints in production | **Fixed** — `isTrustedStorageUrl()` allow-list; no `/api/test*` routes remain. |
+| 🟠 `AGENTS.md` materially out of date | **Fixed** — rewritten for the multi-channel/unified-plan product (see `docs/CONTENT_AUDIT.md`). |
+| 🟠 Unbounded list endpoints | **Fixed** — one page + optional keyset `cursor` via `lib/pagination.ts`. |
+| 🟠 Hot message query has no supporting index | **Fixed** — composite Message/Conversation indexes in the same QA migration. |
+| 🟡 Plan grants do not reconcile with 1 credit = ₦1 | **Fixed** — Blue base 25,000, Black base 50,000 (`lib/plans.ts`, asserted by tests). |
+| 🟡 Free tier's 50 credits cannot afford one WhatsApp reply | **Fixed** — Free is now 80 credits / 30 days. |
+| 🟡 `getCreditPackage()` is a no-op branch | **Open (harmless)** — both packs are 3,000 credits; simplify when the packages diverge. |
+| 🟡 `[SILENCE]` handling is an exact string match | **Re-verify** in `lib/chat-engine.ts`. |
+| 🟡 Prompt-injection regex too broad and too narrow | **Re-verify** in `lib/chat-engine.ts`. |
+| 🟡 Mobile touch targets | **Open** — audit the dashboard buttons against 44px before launch. |
+| 🟡 Empty states / client error handling / `console.log` leaks | **Open** — partially addressed; re-sweep `app/(dashboard)` before launch. |
+| 🟡 Waitlist endpoint unauthenticated, unthrottled, no dedupe | **Open** — the form now exists (`/settings/ai-line`), so throttle + dedupe before it is promoted. |
+| 🟡 Telegram webhook secret derived from the bot token | **Open** — re-check `app/api/telegram/webhook/route.ts` before the next bot rollout. |
+| 🟡 Dead WhatsApp-era plan labels | **Re-verify** — `components/dashboard/plan-chip.tsx` now reads the unified tiers; confirm no labels remain. |
+| 🟡 Duplicate migration timestamps (`20261024120000`) | **Open** — never rewrite applied migrations; document the ordering in the next migration that touches those tables. |
+| 🟡 Modal accessibility | **Open** — backdrop `onMouseDown`, focus trap and Escape handling. |
+| 🗑️ Trash files | **Fixed** — `/api/test-db` and the scratch routes are gone. |
+| 💡 Pagination, tests, docs | **Added this cycle** — `lib/pagination.ts`, `tests/` + CI, `README`/`AGENTS`/`docs/`. |
+
+---
+
 ## 🔴 Critical (Must fix before launch)
 
 - **`app/api/billing/webhook/route.ts` — monthly renewal never re-grants credits, never extends the plan, never pays the referring agent.**
