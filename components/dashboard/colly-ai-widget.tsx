@@ -110,7 +110,7 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close Colly AI"
-              className="rounded-md p-1 transition-colors hover:bg-white/20"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md transition-colors hover:bg-white/20"
             >
               <X className="h-4 w-4" aria-hidden />
             </button>
@@ -165,7 +165,7 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
               type="submit"
               disabled={sending || input.trim().length === 0}
               aria-label="Send message"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FF6600] text-white transition-colors hover:bg-[#E65C00] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-9 w-9 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg bg-[#FF6600] text-white transition-colors hover:bg-[#E65C00] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send className="h-4 w-4" aria-hidden />
             </button>

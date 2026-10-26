@@ -27,7 +27,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const busy = isLoading || loading;
 
     const baseStyles =
-      "inline-flex min-h-[44px] items-center justify-center rounded-lg font-semibold transition-all duration-150 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-4 focus:ring-[#FF6600]/30";
+      "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg font-semibold transition-all duration-150 active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none focus:outline-none focus:ring-4 focus:ring-[#FF6600]/30";
 
     const sizeStyles =
       size === "sm" ? "px-3 py-1.5 text-[13px]" : "px-6 py-3";

@@ -202,7 +202,7 @@ export function Sidebar({
               href="/settings"
               role="menuitem"
               onClick={() => setSwitcherOpen(false)}
-              className="mx-1.5 flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-gray-700 transition-colors hover:bg-gray-50"
+              className="mx-1.5 flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-gray-700 transition-colors hover:bg-gray-50"
             >
               <Settings className="h-3.5 w-3.5" aria-hidden />
               Account settings
@@ -212,7 +212,7 @@ export function Sidebar({
               href="/settings/billing"
               role="menuitem"
               onClick={() => setSwitcherOpen(false)}
-              className="mx-1.5 flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-gray-700 transition-colors hover:bg-gray-50"
+              className="mx-1.5 flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-gray-700 transition-colors hover:bg-gray-50"
             >
               <CreditCard className="h-3.5 w-3.5" aria-hidden />
               Billing &amp; plan
@@ -222,7 +222,7 @@ export function Sidebar({
               <button
                 type="submit"
                 role="menuitem"
-                className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-gray-700 transition-colors hover:bg-gray-50 hover:text-red-600"
+                className="flex min-h-[44px] w-full cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-gray-700 transition-colors hover:bg-gray-50 hover:text-red-600"
               >
                 <LogOut className="h-3.5 w-3.5" aria-hidden />
                 Sign out

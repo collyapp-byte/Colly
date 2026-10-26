@@ -29,6 +29,50 @@ const DASHBOARD_ASSISTANT_PROMPT =
   "Help them understand their sales, manage their products, and train their " +
   "WhatsApp/Telegram bot. Keep answers short and actionable.";
 
+/** Path every Supabase Storage public object URL starts with. */
+const STORAGE_PUBLIC_PATH = "/storage/v1/object/public/";
+
+/**
+ * Whether `value` points at Colly's own Supabase Storage bucket.
+ *
+ * `audioUrl` / `imageUrl` arrive in the request body and the voice and image
+ * pipelines fetch them SERVER-SIDE (`lib/stt.ts`, `lib/vision.ts`). Unvalidated,
+ * this route was an SSRF proxy: any signed-in caller could make the server GET
+ * an internal host (localhost, 169.254.169.254, a private IP), a cloud metadata
+ * endpoint, or an arbitrary remote file, and read the failure details back.
+ *
+ * Only `https://<project>.supabase.co/storage/v1/object/public/...` is accepted —
+ * the exact shape `lib/supabase/storage.ts` produces for every upload. Anything
+ * else (other host, plain http, credentials in the URL, a custom port, a
+ * non-storage path) is rejected before a single byte is fetched.
+ */
+function isTrustedStorageUrl(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+
+  // https only: no http, javascript:, data:, file: or protocol-relative forms.
+  if (url.protocol !== "https:") return false;
+  // Embedded credentials and odd ports are classic SSRF bypasses.
+  if (url.username || url.password) return false;
+  if (url.port && url.port !== "443") return false;
+  // Must be a public object in the storage API, not a signed/internal path.
+  if (!url.pathname.startsWith(STORAGE_PUBLIC_PATH)) return false;
+  // Fragments/queries are allowed (Supabase appends none today) but the host
+  // has to be this project's own Supabase domain.
+  const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!projectUrl) return false;
+
+  try {
+    return url.hostname.toLowerCase() === new URL(projectUrl).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
 // POST /api/chat
 // Body: { businessId: string, customerId: string, message: string }
 //   or: { businessId: string, customerId: string, audioUrl: string }
@@ -42,7 +86,10 @@ const DASHBOARD_ASSISTANT_PROMPT =
 //
 // When `audioUrl` or `imageUrl` is present, the audio/image is processed first
 // and the transcript/description stands in for `message`; priority is audioUrl >
-// imageUrl > message. `businessId` may be omitted when the caller is signed in,
+// imageUrl > message. Both URLs are fetched server-side, so they must be https
+// URLs inside this project's Supabase Storage bucket (see `isTrustedStorageUrl`)
+// — anything else is rejected with 400 before a request is made. `businessId`
+// may be omitted when the caller is signed in,
 // in which case the session decides the tenant. A caller with no dashboard
 // session (e.g. the future WhatsApp webhook) must send the shared secret in the
 // `X-Colly-Internal-Secret` header (CHAT_INTERNAL_SECRET); without it the
@@ -61,6 +108,27 @@ export async function POST(request: Request) {
       typeof body.imageUrl === "string" && body.imageUrl.length > 0
         ? body.imageUrl
         : null;
+
+    // SSRF guard: both URLs are fetched server-side by the pipelines, so they
+    // have to be Colly's own Storage URLs. Reject anything else outright.
+    if (audioUrl && !isTrustedStorageUrl(audioUrl)) {
+      return Response.json(
+        {
+          error:
+            "audioUrl must be an https URL for a file in this business's Colly storage",
+        },
+        { status: 400 },
+      );
+    }
+    if (imageUrl && !isTrustedStorageUrl(imageUrl)) {
+      return Response.json(
+        {
+          error:
+            "imageUrl must be an https URL for a file in this business's Colly storage",
+        },
+        { status: 400 },
+      );
+    }
 
     const user = await getCurrentUser();
 

@@ -252,7 +252,7 @@ export default function AgentDashboardPage() {
                           open === badge.courseSlug ? null : badge.courseSlug,
                         )
                       }
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-50"
+                      className="inline-flex min-h-[44px] items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-50"
                     >
                       <Download className="h-3.5 w-3.5" aria-hidden />
                       Download
@@ -270,7 +270,7 @@ export default function AgentDashboardPage() {
                         onClick={() => copyShareLink(badge.courseSlug)}
                         title="Copy share link"
                         aria-label="Copy share link"
-                        className="inline-flex items-center rounded-md p-1 text-gray-600 transition-colors hover:bg-gray-50"
+                        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-gray-600 transition-colors hover:bg-gray-50"
                       >
                         <Share2 className="h-3.5 w-3.5" aria-hidden />
                       </button>

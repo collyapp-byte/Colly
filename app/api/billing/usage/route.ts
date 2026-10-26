@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
-import { ensureFreeGrant } from "@/lib/credits";
+import { downgradeExpiredPlan, ensureFreeGrant } from "@/lib/credits";
 import {
   getAiReplyCreditCost,
   getPlanLimits,
@@ -27,9 +27,11 @@ function unauthorized() {
 // (not a balance) and is what the UI advertises next to the plan name.
 //
 // Free tier: the allowance is re-granted lazily, so this endpoint also hands out
-// the 50 Free credits when they are over 30 days old. That is what makes the
+// the 80 Free credits when they are over 30 days old. That is what makes the
 // dashboard header pills (which call this route) refresh on their own, without
-// waiting for the owner to trigger an AI reply.
+// waiting for the owner to trigger an AI reply. Cancelled or lapsed paid plans
+// are demoted to Free first (see `downgradeExpiredPlan`), so the pills and the
+// billing pages always show the tier the business is actually entitled to.
 export async function GET() {
   try {
     const businessId = await getCurrentBusinessId();
@@ -55,10 +57,18 @@ export async function GET() {
       },
     });
 
-    // Free tier: re-grant the monthly 50 credits if they lapsed. The helper is a
+    // A cancelled or lapsed paid plan is demoted to Free BEFORE the wallet is
+    // read, so the dashboard plan chip (and the billing/credits pages, which all
+    // call this route) stop advertising a tier the business no longer pays for
+    // even when no AI reply has been generated since the period ended. The
+    // helper is a compare-and-swap that skips active rows and dunning grace, so
+    // a live subscription can never be cut off here.
+    const current = await downgradeExpiredPlan(business);
+
+    // Free tier: re-grant the monthly 80 credits if they lapsed. The helper is a
     // compare-and-swap that only ever touches Free rows, so a paid plan is left
     // alone; it returns the same record with planCredits/topUpCredits refreshed.
-    const wallet = await ensureFreeGrant(business);
+    const wallet = await ensureFreeGrant(current);
 
     const [{ ai: aiRepliesUsed, manual: manualRepliesUsed }] = await prisma.$queryRaw<
       { ai: number; manual: number }[]
@@ -71,7 +81,7 @@ export async function GET() {
         AND "createdAt" >= date_trunc('month', now())
     `;
 
-    const limits = getPlanLimits(business.plan, business.planInterval);
+    const limits = getPlanLimits(wallet.plan, business.planInterval);
 
     return Response.json({
       aiRepliesUsed,

@@ -73,7 +73,7 @@ export function QuantityControl({
         onClick={decrease}
         disabled={atMin && !onRemove}
         aria-label={atMin && onRemove ? "Remove item" : "Decrease quantity"}
-        className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-300 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-gray-300 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Minus className="h-3.5 w-3.5" aria-hidden />
       </button>
@@ -97,14 +97,14 @@ export function QuantityControl({
             }
           }}
           aria-label="Quantity"
-          className="h-6 w-10 rounded-md border border-gray-300 text-center text-sm font-semibold text-gray-900 outline-none focus:border-colly focus:ring-2 focus:ring-colly/20 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          className="min-h-[44px] w-10 rounded-md border border-gray-300 text-center text-sm font-semibold text-gray-900 outline-none focus:border-colly focus:ring-2 focus:ring-colly/20 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
       ) : (
         <button
           type="button"
           onClick={startEditing}
           aria-label={`Quantity ${quantity}, click to edit`}
-          className="h-6 w-10 rounded-md text-center text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100"
+          className="min-h-[44px] w-10 rounded-md text-center text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100"
         >
           {quantity}
         </button>
@@ -115,7 +115,7 @@ export function QuantityControl({
         onClick={() => onChange(quantity + 1)}
         disabled={atMax}
         aria-label="Increase quantity"
-        className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-300 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-gray-300 text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Plus className="h-3.5 w-3.5" aria-hidden />
       </button>

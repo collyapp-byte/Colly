@@ -38,7 +38,7 @@ export async function requireSiteAccess(businessId: string): Promise<void> {
  * in the result union for older clients but is no longer produced: there is no
  * monthly message allowance to hit.
  *
- * Free tier: the permanent Free plan's 50 credits are a monthly allowance, so
+ * Free tier: the permanent Free plan's 80 credits are a monthly allowance, so
  * `ensureFreeGrant()` (lib/credits.ts) resets the wallet before any of the
  * checks below run once `lastFreeGrantAt` is more than 30 days old. No scheduler
  * is involved and the owner has nothing to click; the dashboard picks up the
@@ -73,12 +73,12 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
 
   // A paid plan whose paid period is over (cancelled subscription, lapsed
   // renewal, dunning grace exhausted) is demoted to the permanent Free tier —
-  // with its 50 credits — BEFORE any gate below reads the plan, so a lapsed
+  // with its 80 credits — BEFORE any gate below reads the plan, so a lapsed
   // business is treated as Free instead of keeping paid access indefinitely.
   // The write is a compare-and-swap: a renewal landing concurrently wins.
   await downgradeExpiredPlan(business);
 
-  // Permanent Free tier: 50 credits every 30 days, handed out lazily by the
+  // Permanent Free tier: 80 credits every 30 days, handed out lazily by the
   // first wallet read after the window lapses. `ensureFreeGrant` mutates the row
   // in place, so the checks below spend the fresh balance. It runs before every
   // early return so a Free business whose AI is paused still gets its allowance

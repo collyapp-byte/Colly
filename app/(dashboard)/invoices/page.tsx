@@ -460,7 +460,7 @@ function InvoiceActions({
         href={`/invoices/${invoice.id}`}
         aria-label={`View invoice ${invoice.invoiceNumber}`}
         title="View"
-        className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
       >
         <Eye className="h-4 w-4" aria-hidden />
       </Link>
@@ -470,7 +470,7 @@ function InvoiceActions({
           onClick={onDelete}
           aria-label={`Delete invoice ${invoice.invoiceNumber}`}
           title="Delete"
-          className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
         >
           <Trash className="h-4 w-4" aria-hidden />
         </button>
@@ -670,7 +670,7 @@ function CreateInvoiceModal({
                     onClick={() => removeLine(line.key)}
                     aria-label="Remove line item"
                     title="Remove"
-                    className="shrink-0 rounded-lg p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
+                    className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
                   >
                     <Trash className="h-4 w-4" aria-hidden />
                   </button>

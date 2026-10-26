@@ -517,7 +517,7 @@ function ActionButtons({ onEdit, onDelete }: ActionButtonsProps) {
         onClick={onEdit}
         aria-label="Edit sale"
         title="Edit"
-        className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
       >
         <Pencil className="h-4 w-4" aria-hidden />
       </button>
@@ -526,7 +526,7 @@ function ActionButtons({ onEdit, onDelete }: ActionButtonsProps) {
         onClick={onDelete}
         aria-label="Delete sale"
         title="Delete"
-        className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
       >
         <Trash className="h-4 w-4" aria-hidden />
       </button>

@@ -105,7 +105,7 @@ export async function POST(request: Request) {
             ),
             // Credit Economy: the plan's TOTAL grant fills the monthly bucket
             // (baseCredits plus the bonus WhatsApp credits: Green 23,000, Blue
-            // 44,000, Black 100,000) — monthly and yearly alike. It is SET, not
+            // 41,000, Black 90,000) — monthly and yearly alike. It is SET, not
             // incremented, so an allowance that was not fully spent last month
             // cannot be hoarded. `topUpCredits` (paid credits) is left alone.
             planCredits: getMonthlyCredits(transaction.plan),

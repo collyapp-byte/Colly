@@ -245,7 +245,7 @@ export function ProductFormModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="flex-1 sm:flex-none rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+            className="flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -280,7 +280,7 @@ export function ProductFormModal({
                 onClick={() => bumpPrice(-1000)}
                 aria-label="Decrease price by 1000"
                 title="Decrease by 1000"
-                className="shrink-0 rounded-lg border border-gray-300 px-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
               >
                 <Minus className="h-4 w-4" aria-hidden />
               </button>
@@ -300,7 +300,7 @@ export function ProductFormModal({
                 onClick={() => bumpPrice(1000)}
                 aria-label="Increase price by 1000"
                 title="Increase by 1000"
-                className="shrink-0 rounded-lg border border-gray-300 px-2.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
               >
                 <Plus className="h-4 w-4" aria-hidden />
               </button>
@@ -411,9 +411,11 @@ export function ProductFormModal({
                   onClick={() => removeImage(url)}
                   aria-label="Remove image"
                   title="Remove"
-                  className="absolute right-1 top-1 rounded-full bg-gray-900/60 p-0.5 text-white transition-colors hover:bg-gray-900"
+                  className="absolute right-0 top-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-white"
                 >
-                  <X className="h-3.5 w-3.5" aria-hidden />
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-900/70">
+                    <X className="h-3.5 w-3.5" aria-hidden />
+                  </span>
                 </button>
               </div>
             ))}

@@ -72,7 +72,7 @@ function AtRiskBadge() {
 }
 
 const EMPTY_STATE_TEXT =
-  "No customers yet. When someone messages your WhatsApp, they'll appear here.";
+  "No customers yet. When someone messages your AI line on Telegram or Discord, they'll appear here.";
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerListItem[] | null>(null);
@@ -171,7 +171,7 @@ export default function CustomersPage() {
           <button
             type="button"
             onClick={() => setView("list")}
-            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-md px-3 py-2 min-h-[44px] text-sm font-medium transition-colors ${
               view === "list"
                 ? "bg-gray-100 text-gray-900"
                 : "text-gray-500 hover:text-gray-900"
@@ -182,7 +182,7 @@ export default function CustomersPage() {
           <button
             type="button"
             onClick={() => setView("kanban")}
-            className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-md px-3 py-2 min-h-[44px] text-sm font-medium transition-colors ${
               view === "kanban"
                 ? "bg-gray-100 text-gray-900"
                 : "text-gray-500 hover:text-gray-900"

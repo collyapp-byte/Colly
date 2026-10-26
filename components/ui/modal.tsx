@@ -65,7 +65,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="-mr-1 rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="-mr-1 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
           >
             <X className="h-5 w-5" aria-hidden />
           </button>

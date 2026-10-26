@@ -315,7 +315,7 @@ function ConversationDetail() {
                 onClick={handleDownloadTranscript}
                 aria-label="Download transcript"
                 title="Download transcript"
-                className="rounded-lg border border-gray-200 p-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
               >
                 <Download className="h-4 w-4" aria-hidden />
               </button>
@@ -325,7 +325,7 @@ function ConversationDetail() {
                   type="button"
                   onClick={handleResumeAi}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-60"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-60"
                 >
                   {busy ? (
                     <LoaderCircle
@@ -343,7 +343,7 @@ function ConversationDetail() {
                     type="button"
                     onClick={handleTakeOver}
                     disabled={busy}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
                   >
                     {busy ? (
                       <LoaderCircle
@@ -383,7 +383,7 @@ function ConversationDetail() {
                   type="button"
                   onClick={handleResumeAi}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
                 >
                   {busy && (
                     <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -462,7 +462,7 @@ function ConversationDetail() {
                 <button
                   type="submit"
                   disabled={sending || draft.trim().length === 0}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                  className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
                 >
                   {sending ? (
                     <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />

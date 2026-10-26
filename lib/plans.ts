@@ -109,36 +109,42 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
     bonusCredits: 8_000,
     description: "For small boutiques and vendors getting started.",
   }),
-  // 28,000 base + 16,000 bonus = 44,000 credits (200 free WhatsApp replies).
+  // ₦25,000 = 25,000 base credits + 16,000 bonus = 41,000 credits
+  // (200 free WhatsApp replies). The base grant matches the price 1:1.
   blue: definePlan({
     monthly: 25_000,
     yearly: 250_000,
-    baseCredits: 28_000,
+    baseCredits: 25_000,
     bonusCredits: 16_000,
     description: "For growing shops replying to customers all day.",
   }),
-  // 60,000 base + 40,000 bonus = 100,000 credits (500 free WhatsApp replies).
+  // ₦50,000 = 50,000 base credits + 40,000 bonus = 90,000 credits
+  // (500 free WhatsApp replies). The base grant matches the price 1:1.
   black: definePlan({
     monthly: 50_000,
     yearly: 500_000,
-    baseCredits: 60_000,
+    baseCredits: 50_000,
     bonusCredits: 40_000,
     description: "For high-volume wholesalers and teams.",
   }),
 };
 
 /**
- * The permanent Free tier: every account gets 50 credits every month, no card
+ * The permanent Free tier: every account gets 80 credits every month, no card
  * and no time box. The grant lands in `planCredits`, so a Free business replies
  * with the AI exactly like a paid one until the allowance runs out; top-ups
  * extend it and never expire. Manual replies are always free.
+ *
+ * 80 credits is exactly one WhatsApp AI reply (80) or sixteen Telegram/Discord
+ * replies (5 each), so a new business can test the AI on either channel before
+ * paying.
  */
 export const FREE_PLAN_LIMITS = {
   monthly: 0,
   yearly: 0,
-  credits: 50, // 50 AI credits every month
+  credits: 80, // 80 AI credits every month
   description:
-    "Includes 50 free AI credits every month. Manual replies are always free.",
+    "Includes 80 free AI credits every month. Manual replies are always free.",
 };
 
 /**

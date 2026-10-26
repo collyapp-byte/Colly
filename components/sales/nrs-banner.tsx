@@ -56,7 +56,7 @@ export function NrsBanner({ business, onOpen, onDismissed }: NrsBannerProps) {
       <button
         type="button"
         onClick={onOpen}
-        className="flex min-w-0 flex-1 items-center gap-2 text-left font-medium transition-colors hover:text-amber-900"
+        className="flex min-h-[44px] min-w-0 flex-1 items-center gap-2 text-left font-medium transition-colors hover:text-amber-900"
       >
         <span aria-hidden>⚠️</span>
         <span className="truncate">NRS e-invoicing compliance is coming. Get ready →</span>
@@ -67,7 +67,7 @@ export function NrsBanner({ business, onOpen, onDismissed }: NrsBannerProps) {
         disabled={dismissing}
         aria-label="Dismiss"
         title="Dismiss"
-        className="shrink-0 rounded-lg p-1.5 text-amber-500 transition-colors hover:bg-amber-100 hover:text-amber-800 disabled:opacity-50"
+        className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-amber-500 transition-colors hover:bg-amber-100 hover:text-amber-800 disabled:opacity-50"
       >
         <X className="h-4 w-4" aria-hidden />
       </button>

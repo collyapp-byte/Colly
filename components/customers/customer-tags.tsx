@@ -85,7 +85,7 @@ export function CustomerTags({
               onClick={() => removeTag(tag)}
               disabled={saving}
               aria-label={`Remove ${tag} tag`}
-              className="rounded-full p-0.5 transition-colors hover:bg-[#FF6600]/15 disabled:opacity-50"
+              className="-mx-2 -my-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full transition-colors hover:bg-[#FF6600]/15 disabled:opacity-50"
             >
               <X className="h-3 w-3" aria-hidden />
             </button>

@@ -50,7 +50,7 @@ export function AiPausedBanner({
           <button
             type="button"
             onClick={onDismiss}
-            className="shrink-0 text-gray-400 hover:text-gray-600"
+            className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-400 hover:text-gray-600"
             aria-label="Dismiss"
           >
             <X className="h-5 w-5" />

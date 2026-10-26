@@ -59,7 +59,7 @@ export function AgentShell({ agentBadge, children }: AgentShellProps) {
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
                 aria-label="Open menu"
-                className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 md:hidden"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 md:hidden"
               >
                 <PanelLeft className="h-[18px] w-[18px]" />
               </button>

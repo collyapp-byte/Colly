@@ -99,7 +99,7 @@ export default async function CollyAIPage() {
   const aiReplyCost = getAiReplyCreditCost(business?.channel);
   const aiUsed = aiRepliesThisMonth;
   const manualUsed = manualRepliesThisMonth;
-  // The Free tier includes 50 credits every month, so "Free" is decided by the
+  // The Free tier includes 80 credits every month, so "Free" is decided by the
   // plan name rather than by a zero credit grant.
   const isFreePlan = (business?.plan ?? "free") === "free";
   const tone = business?.tone === "formal" ? "Formal" : "Friendly";

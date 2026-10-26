@@ -1,6 +1,6 @@
 // Free-tier credit bookkeeping.
 //
-// The permanent Free plan grants 50 credits every 30 days, but the grant is
+// The permanent Free plan grants 80 credits every 30 days, but the grant is
 // lazy — nothing runs on a schedule. The allowance is refreshed by the first
 // wallet read after the window lapses: the chat engine (via `requireAiEnabled`)
 // or the dashboard's `/api/billing/usage` call, so the header pills and billing
@@ -33,7 +33,7 @@ export type BusinessCreditRecord = {
 };
 
 /**
- * Re-grants the Free tier's 50 credits when the current allowance is more than
+ * Re-grants the Free tier's 80 credits when the current allowance is more than
  * 30 days old, and returns the same record with the fresh balance. It mutates
  * the record in place (`planCredits`) so callers keep using their own snapshot,
  * and it returns it so callers can also write `const fresh = await ...`.
@@ -113,7 +113,7 @@ export type BusinessPlanRecord = {
 
 /**
  * Downgrades a paid plan whose paid period has ended back to the permanent Free
- * tier, and grants the Free 50 credits.
+ * tier, and grants the Free 80 credits.
  *
  * Nothing else ever demotes a business: a Paystack cancellation or a lapsed
  * subscription only rewrites `planStatus` ("cancelled" / "expired" / "past_due"),

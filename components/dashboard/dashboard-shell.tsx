@@ -141,7 +141,7 @@ export function DashboardShell({
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
                 aria-label="Open menu"
-                className="rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 md:hidden"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 md:hidden"
               >
                 <PanelLeft className="h-[18px] w-[18px]" />
               </button>
@@ -159,7 +159,7 @@ export function DashboardShell({
               <Link
                 href="/notifications"
                 aria-label="Notifications"
-                className="relative flex items-center rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100"
+                className="relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100"
               >
                 <Bell className="h-[18px] w-[18px]" />
                 {pendingEscalations > 0 && (
@@ -171,7 +171,7 @@ export function DashboardShell({
               <Link
                 href="/settings"
                 aria-label="Settings"
-                className="hidden items-center rounded-md p-1.5 text-gray-500 transition-colors hover:bg-gray-100 md:flex"
+                className="hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 md:flex"
               >
                 <Settings className="h-[18px] w-[18px]" />
               </Link>

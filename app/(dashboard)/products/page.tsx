@@ -214,7 +214,7 @@ export default function ProductsPage() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={importing}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {importing ? (
               <LoaderCircle
@@ -229,7 +229,7 @@ export default function ProductsPage() {
           <button
             type="button"
             onClick={() => setModal({ kind: "create" })}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Add Product
@@ -279,7 +279,7 @@ export default function ProductsPage() {
                 <button
                   type="button"
                   onClick={() => setModal({ kind: "create" })}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+                  className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
                 >
                   <Plus className="h-4 w-4" aria-hidden />
                   Add Product
@@ -446,7 +446,7 @@ export default function ProductsPage() {
               type="button"
               onClick={closeModal}
               disabled={deleting}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+              className="inline-flex min-h-[44px] items-center rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
             >
               Cancel
             </button>
@@ -454,7 +454,7 @@ export default function ProductsPage() {
               type="button"
               onClick={() => handleDelete(modal.product)}
               disabled={deleting}
-              className="inline-flex items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-danger/90 disabled:opacity-60"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-danger/90 disabled:opacity-60"
             >
               {deleting && (
                 <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -482,7 +482,7 @@ function ActionButtons({ name, onEdit, onDelete }: ActionButtonsProps) {
         onClick={onEdit}
         aria-label={`Edit ${name}`}
         title="Edit"
-        className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
       >
         <Pencil className="h-4 w-4" aria-hidden />
       </button>
@@ -491,7 +491,7 @@ function ActionButtons({ name, onEdit, onDelete }: ActionButtonsProps) {
         onClick={onDelete}
         aria-label={`Delete ${name}`}
         title="Delete"
-        className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
       >
         <Trash className="h-4 w-4" aria-hidden />
       </button>

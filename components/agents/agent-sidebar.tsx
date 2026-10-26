@@ -162,7 +162,7 @@ export function AgentSidebar({ onClose }: { onClose?: () => void }) {
               <button
                 type="submit"
                 role="menuitem"
-                className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-gray-700 transition-colors hover:bg-gray-50 hover:text-red-600"
+                className="flex min-h-[44px] w-full cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-gray-700 transition-colors hover:bg-gray-50 hover:text-red-600"
               >
                 <LogOut className="h-3.5 w-3.5" aria-hidden />
                 Sign out

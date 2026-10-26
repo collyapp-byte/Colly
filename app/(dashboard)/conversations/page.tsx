@@ -34,7 +34,7 @@ type Usage = {
 };
 
 const EMPTY_STATE_TEXT =
-  "No conversations yet. When customers message your WhatsApp, they'll appear here.";
+  "No conversations yet. When customers message your AI line on Telegram or Discord, they'll appear here.";
 
 function initials(name: string): string {
   return name

@@ -673,7 +673,7 @@ function CartPanel({
                   type="button"
                   onClick={() => onRemoveLine(line.id)}
                   aria-label={`Remove ${line.name}`}
-                  className="-mr-1 -mt-1 shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-danger"
+                  className="-mr-1 -mt-1 inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-danger"
                 >
                   <X className="h-3.5 w-3.5" aria-hidden />
                 </button>

@@ -230,7 +230,7 @@ export async function signup(
             // the AI Line settings page shows.
             channel,
             // Every new account starts on the permanent Free tier: no card, no
-            // expiry, 50 AI credits every month. A successful plan charge
+            // expiry, 80 AI credits every month. A successful plan charge
             // overwrites both `plan` and `planCredits`.
             plan: "free",
             planStatus: "inactive",
