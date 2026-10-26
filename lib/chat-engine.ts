@@ -2,6 +2,7 @@ import { Prisma, type Conversation } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   askAI,
+  type AIResult,
   type ChatMessage,
   type ChatTool,
   type ChatToolCall,
@@ -187,7 +188,14 @@ export type EngineResult =
        * still see and answer it manually even though the AI is gated off). */
       saved: boolean;
       replied: false;
-      reason: "plan_expired" | "cap_hit" | "no_credits" | "paused" | "no_message" | "silence";
+      reason:
+        | "plan_expired"
+        | "cap_hit"
+        | "no_credits"
+        | "paused"
+        | "no_message"
+        | "silence"
+        | "ai_unavailable";
       paused?: boolean;
     };
 
@@ -298,19 +306,8 @@ export async function handleIncomingMessage({
       businessHours: true,
       paymentInstructions: true,
       channel: true,
-      planCredits: true,
-      topUpCredits: true,
     },
   });
-
-  // Credit Economy: the wallet is re-read here (not only in requireAiEnabled)
-  // so credits drained by a concurrent reply are caught before the AI spends
-  // money on a model call. Nothing below is charged until the reply is saved.
-  const replyCreditCost = getAiReplyCreditCost(business.channel);
-  if (totalAvailableCredits(business) < replyCreditCost) {
-    await sendOwnerAlert(businessId, LOW_CREDIT_MESSAGE);
-    return { reply: null, blocked: true, saved: true, replied: false, reason: "no_credits" };
-  }
 
   const negotiation = await loadNegotiation(businessId, conversation.id, incoming);
 
@@ -344,49 +341,116 @@ export async function handleIncomingMessage({
     }
   }
 
-  let result = await askAI(chatMessages, TOOLS);
-  let toolCalls = result.toolCalls ?? [];
-  for (let round = 0; round < MAX_TOOL_ROUNDS && toolCalls.length > 0; round++) {
-    chatMessages.push({
-      role: "assistant",
-      content: result.completion?.choices[0]?.message?.content ?? null,
-      tool_calls: toolCalls,
-    });
-    for (const toolCall of toolCalls) {
-      chatMessages.push({
-        role: "tool",
-        tool_call_id: toolCall.id,
-        content: JSON.stringify(await runToolCall(businessId, conversation.id, toolCall)),
-      });
-    }
-    result = await askAI(chatMessages, TOOLS);
-    toolCalls = result.toolCalls ?? [];
+  // Credit Economy: RESERVE this reply's credits BEFORE the model is called.
+  // Reading the wallet and charging after the reply let N messages that arrived
+  // together all pass the same balance check and all get a free reply, because
+  // a check is not a reservation. `chargeAiReply` is an atomic
+  // compare-and-swap debit, so only the messages that actually paid reach a
+  // provider; the reservation is refunded whenever the AI cannot answer. It is
+  // taken after the cheap reads above so a database failure there cannot strand
+  // a charge with no reply.
+  const debit = await chargeAiReply(businessId, business.channel);
+  if (!debit) {
+    await sendOwnerAlert(businessId, LOW_CREDIT_MESSAGE);
+    return { reply: null, blocked: true, saved: true, replied: false, reason: "no_credits" };
   }
-  let reply = result.reply.trim();
-  if (!reply) {
-    const final = await askAI(chatMessages);
-    reply = final.reply.trim();
+
+  let result: AIResult;
+  let reply: string;
+  try {
+    result = await askAI(chatMessages, TOOLS);
+    let toolCalls = result.toolCalls ?? [];
+    for (let round = 0; round < MAX_TOOL_ROUNDS && toolCalls.length > 0; round++) {
+      chatMessages.push({
+        role: "assistant",
+        content: result.completion?.choices[0]?.message?.content ?? null,
+        tool_calls: toolCalls,
+      });
+      for (const toolCall of toolCalls) {
+        chatMessages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(await runToolCall(businessId, conversation.id, toolCall)),
+        });
+      }
+      result = await askAI(chatMessages, TOOLS);
+      toolCalls = result.toolCalls ?? [];
+    }
+    reply = result.reply.trim();
+    if (!reply) {
+      result = await askAI(chatMessages);
+      reply = result.reply.trim();
+    }
+  } catch (error) {
+    // A provider/tool failure after the reservation: the customer never got a
+    // reply, so the credits go straight back.
+    await refundAiReply(businessId, debit);
+    throw error;
+  }
+
+  // Provider outage: every model in lib/ai.ts's chain failed, so this "reply" is
+  // the static apology — not an answer. Never charge for it: refund the
+  // reservation, hand the conversation to the owner (which stops further AI
+  // replies and flags it in the dashboard) and alert them to answer by hand.
+  if (result.provider === "fallback") {
+    await refundAiReply(businessId, debit);
+    try {
+      await escalateConversation(businessId, conversation.id, incoming);
+    } catch (error) {
+      // Best effort: an escalation write failure must not turn the outage into a
+      // 500 — the owner alert below still fires and the message is already saved.
+      console.error("[chat-engine] escalation failed after AI outage", error);
+    }
+    await sendOwnerAlert(
+      businessId,
+      "⚠️ Our AI providers are down, so no automatic reply was sent to a customer. " +
+        `Please answer them manually in your dashboard. Their message: "${incoming.slice(0, 200)}"`,
+    );
+    return {
+      reply: null,
+      blocked: true,
+      saved: true,
+      replied: false,
+      reason: "ai_unavailable",
+    };
   }
 
   // Conversational endings: the model is told to answer [SILENCE] instead of a
-  // closing pleasantry. Persist nothing, charge nothing, and stay quiet.
+  // closing pleasantry. Persist nothing and return the reservation.
   if (reply === "[SILENCE]") {
+    await refundAiReply(businessId, debit);
     return { reply: null, blocked: true, saved: true, replied: false, reason: "silence" };
   }
 
-  await prisma.message.create({
-    data: { businessId, conversationId: conversation.id, sender: "ai", content: reply },
-  });
-
-  await chargeAiReply(businessId, business.channel);
+  try {
+    await prisma.message.create({
+      data: { businessId, conversationId: conversation.id, sender: "ai", content: reply },
+    });
+  } catch (error) {
+    // The reply could not be stored, so it was never delivered: refund.
+    await refundAiReply(businessId, debit);
+    throw error;
+  }
 
   return { reply, blocked: false, saved: true, replied: true, paused: false };
 }
 
 /**
- * Spend credits for one AI reply: 5 credits on Telegram, Discord and Web Chat,
- * 80 credits on WhatsApp. Manual (agent) replies never reach this function: they
- * are free.
+ * The credits reserved for one AI reply, split across the two wallet buckets.
+ * Handed back to `refundAiReply` when the reply is never delivered.
+ */
+type CreditDebit = { planCredits: number; topUpCredits: number };
+
+/**
+ * RESERVE the credits for one AI reply: 5 credits on Telegram, Discord and Web
+ * Chat, 80 credits on WhatsApp. Manual (agent) replies never reach this function:
+ * they are free.
+ *
+ * The debit happens BEFORE the model is called, because a balance check is not a
+ * reservation: N messages arriving together all read the same balance, all pass,
+ * and all get a free reply when the charge is deferred until afterwards. Here
+ * only the caller that wins the compare-and-swap reaches a provider; everyone
+ * else gets `null` and is told the wallet is empty.
  *
  * Split wallet: the monthly plan allowance (`planCredits`) is spent first and
  * `topUpCredits` only cover what is left of the cost, so the credits a business
@@ -397,11 +461,14 @@ export async function handleIncomingMessage({
  * `topUpCredits` must still hold those exact values). Two replies racing on the
  * same wallet therefore cannot double-spend or push a bucket negative: the loser
  * matches 0 rows, re-reads the wallet and tries again.
+ *
+ * Returns the amounts debited (for a possible refund), or `null` when the wallet
+ * could not cover the reply.
  */
 async function chargeAiReply(
   businessId: string,
   channel: string | null,
-): Promise<void> {
+): Promise<CreditDebit | null> {
   const cost = getAiReplyCreditCost(channel);
 
   for (let attempt = 0; attempt < CHARGE_MAX_ATTEMPTS; attempt++) {
@@ -413,7 +480,7 @@ async function chargeAiReply(
 
       // Neither bucket alone may cover a reply; the two together must.
       if (totalAvailableCredits(wallet) < cost) {
-        return "insufficient" as const;
+        return { kind: "insufficient" } as const;
       }
 
       const { fromPlanCredits, fromTopUpCredits } = splitCreditCost(wallet, cost);
@@ -434,22 +501,63 @@ async function chargeAiReply(
         },
       });
 
-      return charged.count === 1 ? ("charged" as const) : ("retry" as const);
+      if (charged.count !== 1) {
+        return { kind: "retry" } as const;
+      }
+
+      return {
+        kind: "charged",
+        debit: { planCredits: fromPlanCredits, topUpCredits: fromTopUpCredits },
+      } as const;
     });
 
-    if (outcome === "charged") return;
+    if (outcome.kind === "charged") return outcome.debit;
 
-    if (outcome === "insufficient") {
+    if (outcome.kind === "insufficient") {
       console.warn(
         `[chat-engine] credit charge skipped for business ${businessId}: wallet below ${cost}`,
       );
-      return;
+      return null;
     }
   }
 
   console.warn(
     `[chat-engine] credit charge skipped for business ${businessId}: wallet changed under ${CHARGE_MAX_ATTEMPTS} attempts`,
   );
+  return null;
+}
+
+/**
+ * Gives back a reservation made by `chargeAiReply`. Called only when the AI did
+ * not deliver a reply (provider outage, `[SILENCE]`, a thrown provider/tool
+ * error, or a failed message write), so the usage counters the debit
+ * incremented are rolled back with it.
+ *
+ * Best effort: a failed refund is logged, never thrown — an outage must not fail
+ * the inbound pipeline a second time.
+ */
+async function refundAiReply(
+  businessId: string,
+  debit: CreditDebit,
+): Promise<void> {
+  if (debit.planCredits === 0 && debit.topUpCredits === 0) return;
+
+  try {
+    await prisma.business.update({
+      where: { id: businessId },
+      data: {
+        planCredits: { increment: debit.planCredits },
+        topUpCredits: { increment: debit.topUpCredits },
+        messagesUsedThisMonth: { decrement: 1 },
+        aiMessagesUsed: { decrement: 1 },
+      },
+    });
+  } catch (error) {
+    console.error(
+      `[chat-engine] refund failed for business ${businessId}: ${debit.planCredits} plan / ${debit.topUpCredits} top-up credits`,
+      error,
+    );
+  }
 }
 
 function buildSystemPrompt(

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendAlert } from "@/lib/alerts";
 import { getMonthlyCredits } from "@/lib/plans";
@@ -14,6 +15,8 @@ type WebhookEventData = {
   channel?: string;
   paid_at?: string;
   status?: string;
+  /** Amount charged, in kobo (Paystack's smallest unit). */
+  amount?: number;
   email_token?: string;
   subscription_code?: string;
   metadata?: { type?: string } | null;
@@ -26,7 +29,11 @@ type WebhookEventData = {
     status?: string;
     reference?: string;
   } | null;
-  invoice?: { paid?: boolean; transaction?: { reference?: string } } | null;
+  invoice?: {
+    paid?: boolean;
+    paid_at?: string;
+    transaction?: { reference?: string };
+  } | null;
 };
 
 type WebhookEvent = { event: string; data: WebhookEventData };
@@ -88,6 +95,162 @@ function addDays(date: Date, days: number): Date {
   return next;
 }
 
+/** Map a Paystack interval string onto the two billing periods Colly sells. */
+function normalizeInterval(value?: string | null): "monthly" | "yearly" {
+  const normalised = (value ?? "").toLowerCase();
+  return normalised === "yearly" ||
+    normalised === "annual" ||
+    normalised === "annually"
+    ? "yearly"
+    : "monthly";
+}
+
+/**
+ * Grants one paid period of a subscription: clears the dunning state, pushes
+ * `planExpiresAt` out by one interval, OVERWRITES the monthly allowance with the
+ * tier's grant (Split Wallet: allowance left over from last month must not pile
+ * up, and `topUpCredits` — credits the business paid for — is never touched) and
+ * pays the referring agent's 15% commission while the 12-month window is open.
+ *
+ * Shared by the first payment (`charge.success` with a local Transaction row)
+ * and by renewals, which get their row from `recordRenewal`.
+ */
+async function applySubscriptionPeriod({
+  businessId,
+  plan,
+  interval,
+  amountNaira,
+  db = prisma,
+}: {
+  businessId: string;
+  /** Tier to grant; defaults to the tier stored on the Business. */
+  plan?: string | null;
+  interval?: string | null;
+  /** Amount actually charged for this period, in Naira (0 when unknown). */
+  amountNaira: number;
+  /** Pass a transaction client to make the grant atomic with the caller's writes. */
+  db?: Prisma.TransactionClient;
+}): Promise<void> {
+  const business = await db.business.findUnique({
+    where: { id: businessId },
+    select: {
+      plan: true,
+      planInterval: true,
+      referredByAgentId: true,
+      commissionEndsAt: true,
+    },
+  });
+  if (!business) return;
+
+  const tier = plan ?? business.plan;
+  const period = normalizeInterval(interval ?? business.planInterval);
+  const monthlyCredits = getMonthlyCredits(tier);
+
+  await db.business.update({
+    where: { id: businessId },
+    data: {
+      planStatus: "active",
+      subscriptionStatus: "active",
+      paymentFailedAt: null,
+      gracePeriodEndsAt: null,
+      planExpiresAt: addDays(new Date(), period === "yearly" ? 365 : 30),
+      ...(monthlyCredits > 0 ? { planCredits: monthlyCredits } : {}),
+    },
+  });
+
+  // Pay the referring agent 15% for up to 12 months from signup.
+  if (
+    business.referredByAgentId &&
+    business.commissionEndsAt &&
+    new Date() < business.commissionEndsAt &&
+    amountNaira > 0
+  ) {
+    const commissionNaira = Math.floor(amountNaira * 0.15);
+    if (commissionNaira > 0) {
+      await db.agent.update({
+        where: { id: business.referredByAgentId },
+        data: { commissionBalanceNaira: { increment: commissionNaira } },
+      });
+    }
+  }
+}
+
+/**
+ * Records a recurring subscription charge and grants the period it paid for.
+ *
+ * Renewals are billed by Paystack against the saved card and never pass through
+ * our checkout, so they have no `Transaction` row — which is exactly why the old
+ * `claim.count === 0` guard discarded every renewal. The Paystack reference
+ * becomes the row's unique key, so a webhook retry (or the sibling
+ * `invoice.update` event) can only ever grant credits and pay commission once.
+ *
+ * Returns false when the charge was already recorded.
+ */
+async function recordRenewal({
+  businessId,
+  reference,
+  amountNaira,
+  channel,
+  paidAt,
+  interval,
+}: {
+  businessId: string;
+  reference: string;
+  amountNaira: number;
+  channel: string | null;
+  paidAt: Date;
+  interval?: string | null;
+}): Promise<boolean> {
+  try {
+    // Recording the charge and granting the paid period are one atomic unit: if
+    // the grant failed on its own, the unique reference would be burnt and a
+    // webhook retry would see P2002 and never grant anything.
+    return await prisma.$transaction(async (tx) => {
+      const business = await tx.business.findUnique({
+        where: { id: businessId },
+        select: { plan: true, planInterval: true },
+      });
+      if (!business) return false;
+
+      const period = normalizeInterval(interval ?? business.planInterval);
+
+      await tx.transaction.create({
+        data: {
+          businessId,
+          reference,
+          amount: amountNaira,
+          status: "success",
+          type: "subscription",
+          plan: business.plan,
+          planInterval: period,
+          channel,
+          paidAt,
+        },
+      });
+
+      await applySubscriptionPeriod({
+        businessId,
+        plan: business.plan,
+        interval: period,
+        amountNaira,
+        db: tx,
+      });
+
+      return true;
+    });
+  } catch (error) {
+    // Unique `reference` → this payment was already recorded (a retry, or the
+    // matching `invoice.update`/`charge.success` event). Nothing left to grant.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return false;
+    }
+    throw error;
+  }
+}
+
 // POST /api/billing/webhook
 // Paystack pushes transaction and subscription state changes here. The body
 // must be verified before anything is trusted. Handler: acknowledge events
@@ -114,6 +277,47 @@ export async function POST(request: Request) {
         const transaction = await prisma.transaction.findUnique({
           where: { reference },
         });
+
+        // Renewals have no local Transaction row: only our checkout route
+        // creates those, and Paystack bills recurring charges against the saved
+        // card. This branch must run BEFORE the pending → success claim below,
+        // because that claim matches 0 rows for a renewal and the old `break`
+        // dropped every renewal on the floor (no credits, no expiry extension,
+        // no commission).
+        if (!transaction) {
+          // `data.plan` is only present on subscription charges, so an unrelated
+          // one-off charge with no local row is ignored rather than guessed at.
+          if (!data.plan) {
+            console.warn(
+              `[billing] charge.success ${reference}: no local transaction and no plan, ignored`,
+            );
+            break;
+          }
+
+          const businessId = await findBusinessId(data);
+          if (!businessId) {
+            console.warn(
+              `[billing] renewal ${reference}: no business matched the charge, ignored`,
+            );
+            break;
+          }
+
+          await recordRenewal({
+            businessId,
+            reference,
+            // Paystack amounts are kobo; Transaction rows store Naira.
+            amountNaira:
+              typeof data.amount === "number" ? data.amount / 100 : 0,
+            channel: data.channel ?? data.transaction?.channel ?? null,
+            paidAt: data.paid_at
+              ? new Date(data.paid_at)
+              : data.transaction?.paid_at
+                ? new Date(data.transaction.paid_at)
+                : new Date(),
+            interval: data.plan.interval ?? null,
+          });
+          break;
+        }
 
         // Idempotency guard (BUG 2): atomically flip this reference from
         // "pending" to "success". Only the first caller (this webhook or the
@@ -143,7 +347,7 @@ export async function POST(request: Request) {
         const isCredit =
           transaction?.type === "credits" || data.metadata?.type === "credits";
 
-        if (isCredit && transaction) {
+        if (isCredit) {
           await prisma.business.update({
             where: { id: transaction.businessId },
             data: {
@@ -155,85 +359,66 @@ export async function POST(request: Request) {
           });
         }
 
-        // A successful subscription charge pays off any past-due balance: clear
-        // the dunning state so the AI keeps replying. Scoped by the resolved
-        // business (from the transaction row, else the customer/subscription).
+        // A successful subscription charge pays off any past-due balance: grant
+        // the period it paid for (credits, expiry, agent commission) and clear
+        // the dunning state so the AI keeps replying. `transaction` is non-null
+        // here — renewals were handled above.
         const isSubscription =
-          transaction?.type === "subscription" ||
+          transaction.type === "subscription" ||
           data.metadata?.type === "subscription" ||
           Boolean(data.subscription_code);
 
         if (isSubscription) {
-          const businessId =
-            transaction?.businessId ?? (await findBusinessId(data));
-          if (businessId) {
-            const business = await prisma.business.findUnique({
-              where: { id: businessId },
-              select: {
-                plan: true,
-                referredByAgentId: true,
-                commissionEndsAt: true,
-              },
-            });
-
-            // Credit Economy (Split Wallet): a successful charge — first payment
-            // or a renewal — OVERWRITES the monthly allowance with the plan's
-            // TOTAL grant (baseCredits plus the bonus WhatsApp credits: Green
-            // 23,000, Blue 44,000, Black 100,000). It is deliberately not an
-            // increment: allowance left over from last month must not pile up.
-            // `topUpCredits` is never touched here. Recurring charges have no
-            // Transaction row of their own, so the business's stored tier is the
-            // fallback.
-            const monthlyCredits = getMonthlyCredits(
-              transaction?.plan ?? business?.plan ?? null,
-            );
-
-            await prisma.business.update({
-              where: { id: businessId },
-              data: {
-                subscriptionStatus: "active",
-                planStatus: "active",
-                paymentFailedAt: null,
-                gracePeriodEndsAt: null,
-                ...(monthlyCredits > 0
-                  ? { planCredits: monthlyCredits }
-                  : {}),
-              },
-            });
-
-            // Pay the referring agent 15% for up to 12 months from signup.
-            if (
-              business?.referredByAgentId &&
-              business.commissionEndsAt &&
-              new Date() < business.commissionEndsAt
-            ) {
-              const chargedAmountNaira = transaction?.amount
-                ? Number(transaction.amount)
-                : 0;
-              if (chargedAmountNaira > 0) {
-                const commissionNaira = Math.floor(chargedAmountNaira * 0.15);
-                if (commissionNaira > 0) {
-                  await prisma.agent.update({
-                    where: { id: business.referredByAgentId },
-                    data: {
-                      commissionBalanceNaira: {
-                        increment: commissionNaira,
-                      },
-                    },
-                  });
-                }
-              }
-            }
-          }
+          await applySubscriptionPeriod({
+            businessId: transaction.businessId,
+            plan: transaction.plan,
+            interval: transaction.planInterval ?? data.plan?.interval ?? null,
+            amountNaira: Number(transaction.amount),
+          });
         }
         break;
       }
 
-      // Paystack fires `invoice.update` as a subscription invoice changes state
-      // (including when a recurring charge fails). This is the canonical dunning
-      // trigger: mark the business past_due, start a 3-day grace period and alert
-      // the owner.
+      // Paystack fires `invoice.update` as a subscription invoice changes state:
+      // `failed` is the canonical dunning trigger (mark the business past_due,
+      // start a 3-day grace period and alert the owner), while `success` is the
+      // renewal confirmation for an invoice that has just been paid.
       case "invoice.update": {
+        if (data.status === "success") {
+          const businessId = await findBusinessId(data);
+          if (!businessId) break;
+
+          const subscriptionCode =
+            data.subscription?.subscription_code ??
+            data.subscription_code ??
+            "";
+          const paidAtRaw = data.invoice?.paid_at ?? data.paid_at ?? null;
+
+          // Dedupe: `charge.success` normally records the same payment first and
+          // wins the unique reference. When Paystack omits the transaction
+          // reference, the subscription code plus the invoice's `paid_at` is
+          // deterministic across retries.
+          const reference =
+            data.invoice?.transaction?.reference ??
+            data.transaction?.reference ??
+            (subscriptionCode
+              ? `invoice:${subscriptionCode}:${paidAtRaw ?? ""}`
+              : "");
+          if (!reference) break;
+
+          await recordRenewal({
+            businessId,
+            reference,
+            // Paystack amounts are kobo; Transaction rows store Naira.
+            amountNaira:
+              typeof data.amount === "number" ? data.amount / 100 : 0,
+            channel: data.channel ?? null,
+            paidAt: paidAtRaw ? new Date(paidAtRaw) : new Date(),
+            interval: data.plan?.interval ?? null,
+          });
+          break;
+        }
+
         if (data.status !== "failed") break;
 
         const businessId = await findBusinessId(data);

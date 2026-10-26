@@ -295,20 +295,27 @@ export async function initiateTransfer({
 }
 
 /**
- * Verify a Paystack webhook signature. Paystack signs the raw request body
- * with an HMAC-SHA512 of the secret key, sent as `x-paystack-signature` in the
- * form `sha512=<hex>`.
+ * Verify a Paystack webhook signature. Paystack signs the raw request body with
+ * an HMAC-SHA512 of the secret key and sends it in the `x-paystack-signature`
+ * header as the BARE hex digest. Some older integration samples (and our own
+ * previous code) show it prefixed with `sha512=`, so both shapes are accepted:
+ * the prefix is stripped before the constant-time comparison.
  */
 export function verifyWebhookSignature(
   rawBody: string,
   signature: string,
 ): boolean {
-  const expected = `sha512=${createHmac("sha512", getSecretKey())
+  const expected = createHmac("sha512", getSecretKey())
     .update(rawBody)
-    .digest("hex")}`;
+    .digest("hex");
 
-  const a = Buffer.from(expected);
-  const b = Buffer.from(signature ?? "");
+  // `trim()` because header whitespace is not part of the digest, and the case
+  // fold keeps hex comparisons stable (digests are case-insensitive).
+  const provided = (signature ?? "").trim().replace(/^sha512=/i, "");
 
+  const a = Buffer.from(expected, "utf8");
+  const b = Buffer.from(provided.toLowerCase(), "utf8");
+
+  // `timingSafeEqual` throws on length mismatch, so the guard is required.
   return a.length === b.length && timingSafeEqual(a, b);
 }
