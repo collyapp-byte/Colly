@@ -126,6 +126,18 @@ export type AgentFinalExamQuestion = {
   sectionTitle: string;
   question: string;
   options: string[];
+  /// Shown in the post-exam review for a missed question. Null when the content
+  /// author did not provide one.
+  explanation: string | null;
+};
+
+/** One graded question, used to review mistakes after the exam. */
+export type AgentFinalExamReviewItem = {
+  order: number;
+  chosenIndex: number;
+  correctIndex: number;
+  correct: boolean;
+  explanation: string | null;
 };
 
 export type AgentFinalExamResponse = {
@@ -141,4 +153,6 @@ export type AgentFinalExamResult = {
   correct: number;
   total: number;
   certified: boolean;
+  /// Per-question outcome; the client shows the explanations for missed items.
+  review?: AgentFinalExamReviewItem[];
 };

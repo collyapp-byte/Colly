@@ -68,6 +68,7 @@ export default function FinalExamPage() {
         correct: data.correct ?? 0,
         total: data.total ?? 0,
         certified: data.certified ?? false,
+        review: data.review ?? [],
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -127,6 +128,42 @@ export default function FinalExamPage() {
             {result.certified ? "Certificate issued." : "Certificate issuance pending..."}
           </p>
         )}
+
+        {(() => {
+          const missed = (result.review ?? []).filter((item) => !item.correct);
+          if (missed.length === 0) return null;
+
+          return (
+            <section className="flex flex-col gap-3">
+              <h2 className="text-base font-semibold">
+                Review your {missed.length} missed question
+                {missed.length === 1 ? "" : "s"}
+              </h2>
+              {missed.map((item) => {
+                const question = questions.find((q) => q.order === item.order);
+                if (!question) return null;
+
+                return (
+                  <div
+                    key={item.order}
+                    className="rounded-lg border border-gray-200 bg-white p-3"
+                  >
+                    <p className="text-sm font-medium text-gray-900">
+                      {item.order}. {question.question}
+                    </p>
+                    <p className="mt-1 text-sm text-green-700">
+                      Correct answer: {question.options[item.correctIndex]}
+                    </p>
+                    <p className="mt-1 text-sm text-gray-600">
+                      {item.explanation?.trim() || "See the lesson for the full explanation."}
+                    </p>
+                  </div>
+                );
+              })}
+            </section>
+          );
+        })()}
+
         <div className="flex gap-2">
           <Link
             href={result.passed ? "/agents/certified" : "/agents/dashboard"}

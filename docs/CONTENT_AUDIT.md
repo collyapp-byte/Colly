@@ -45,7 +45,7 @@ separate module, seeded by `prisma/seed.cjs` and by `npm run academy:sync`.
 | A4 | Pricing lesson, handoff lesson, agent-playbook lessons, demo-business copy | Free plan = 50 credits. | `FREE_PLAN_LIMITS.credits` = 80. | Corrected (five places). |
 | A5 | Quiz "Who connects the WhatsApp Business API?" / "Colly will connect your WhatsApp within 24 hours" | Outright false, and tests a deprecated flow. | Multi-channel onboarding. | Replaced. |
 | A6 | Whole curriculum | No lesson on Jiji import + two-way sync, web chat widget, in-store QR, credits/top-ups, CRM deal pipeline, weekly report, owner notifications, Discord, agent payouts, WhatsApp waitlist. | Shipped features. | Lessons added per course. |
-| A7 | Every quiz question | `AgentQuizQuestion.explanation` (rendered by the quiz page after a wrong answer) was never populated, so every wrong answer showed the generic fallback. | Explanations authored in content and written by the seed. | Added to all questions. |
+| A7 | Every quiz question | `AgentQuizQuestion.explanation` (rendered by the quiz page after a wrong answer) was never populated, so every wrong answer showed the generic fallback. | Explanations authored in content and written by the seed; the final exam now returns a per-question `review` so missed exam questions show their explanation too. | Added to all questions. |
 | A8 | Final exam | Source file missing (D10) → no exam rows. | 40 questions, 10 per section, inline and validated by tests. | Authored. |
 | A9 | `seed.cjs` ("Personal" business) | New accounts seeded with `planCredits: 50` and a "50 credits" comment. | 80 credits, 30-day lazy re-grant. | Corrected. |
 

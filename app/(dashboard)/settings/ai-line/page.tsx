@@ -29,7 +29,7 @@ const HOW_IT_WORKS = [
   "Telegram: Connect your bot token to reply instantly.",
   "Discord: Connect your Discord bot to answer server members.",
   "Web Chat: Embed the chat widget on your website.",
-  "WhatsApp: Connect via Meta (Requires a CAC certificate).",
+  "WhatsApp: Join the waitlist. Onboarding is manual while Meta reviews each business.",
 ];
 
 /** Self-serve Telegram connection, straight from @BotFather. */
@@ -88,6 +88,13 @@ export default function AiLinePage() {
   const [discordError, setDiscordError] = useState<string | null>(null);
   const [discordNotice, setDiscordNotice] = useState<string | null>(null);
 
+  // WhatsApp waitlist (manual onboarding — WhatsApp needs Meta's review).
+  const [waitlistNumber, setWaitlistNumber] = useState("");
+  const [waitlistJoined, setWaitlistJoined] = useState<string | null>(null);
+  const [waitlistSaving, setWaitlistSaving] = useState(false);
+  const [waitlistError, setWaitlistError] = useState<string | null>(null);
+  const [waitlistNotice, setWaitlistNotice] = useState<string | null>(null);
+
   const loadBusiness = useCallback(async () => {
     try {
       const data = await fetchBusinessData();
@@ -106,6 +113,7 @@ export default function AiLinePage() {
         if (!active) return;
         setBusiness(data);
         setOwnerLinked(Boolean(data.ownerTelegramChatId));
+        setWaitlistNumber(data.whatsappNumber ?? "");
       })
       .catch((err) => {
         if (!active) return;
@@ -117,6 +125,25 @@ export default function AiLinePage() {
   }, []);
 
   const loading = business === null && error === null;
+
+  // Waitlist status for this business (null while it has not joined yet).
+  useEffect(() => {
+    let active = true;
+    fetch("/api/waitlist")
+      .then((res) => (res.ok ? res.json() : null))
+      .then(
+        (data: { onWaitlist?: boolean; whatsappNumber?: string | null } | null) => {
+          if (!active || !data?.onWaitlist) return;
+          setWaitlistJoined(data.whatsappNumber ?? "your number");
+        },
+      )
+      .catch(() => {
+        // A failed status read only hides the confirmation; the form still works.
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Per-channel connection state.
   const telegramIsConnected = Boolean(business?.telegramConnected);
@@ -209,6 +236,46 @@ export default function AiLinePage() {
       };
     }
     return { failure: null, data };
+  }
+
+  async function handleJoinWaitlist(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setWaitlistSaving(true);
+    setWaitlistError(null);
+    setWaitlistNotice(null);
+
+    const submitted = waitlistNumber.trim();
+
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ whatsappNumber: submitted }),
+      });
+      const data = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        alreadyOnList?: boolean;
+        error?: string;
+      } | null;
+
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error ?? "Could not join the waitlist.");
+      }
+
+      setWaitlistJoined(submitted);
+      setWaitlistNumber("");
+      setWaitlistNotice(
+        data.alreadyOnList
+          ? "You are already on the waitlist, no need to submit again."
+          : "You are on the list. We will contact that number when WhatsApp is ready for your business.",
+      );
+    } catch (err) {
+      setWaitlistError(
+        err instanceof Error ? err.message : "Could not join the waitlist.",
+      );
+    } finally {
+      setWaitlistSaving(false);
+    }
   }
 
   async function handleTelegramConnect(event: FormEvent<HTMLFormElement>) {
@@ -870,6 +937,79 @@ export default function AiLinePage() {
                   : "Connect Discord"}
               </Button>
             </form>
+          </section>
+
+          {/* WHATSAPP - manual onboarding waitlist. */}
+          <section id="connect-whatsapp" className={SECTION_CLASS}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className={HEADING_CLASS}>WhatsApp (Waitlist)</h2>
+              <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[12px] font-medium text-amber-700">
+                <Clock className="h-3.5 w-3.5" aria-hidden />
+                Manual onboarding
+              </span>
+            </div>
+
+            <p className="mt-3 text-sm text-gray-600">
+              WhatsApp needs Meta&apos;s review, so we onboard businesses one at a
+              time. Join the list with the number your customers should reach you
+              on and we will contact you when it is your turn.
+            </p>
+
+            {waitlistJoined ? (
+              <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                <p className="inline-flex items-center gap-2 font-medium">
+                  <BadgeCheck className="h-4 w-4" aria-hidden />
+                  You are on the WhatsApp waitlist
+                </p>
+                <p className="mt-1 text-green-700">
+                  Number on file: {waitlistJoined}. We will reach out before we
+                  switch the channel on.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleJoinWaitlist} className="mt-4 flex flex-col gap-3">
+                <div>
+                  <label
+                    htmlFor="waitlistNumber"
+                    className="mb-1 block text-sm font-medium text-gray-700"
+                  >
+                    WhatsApp number
+                  </label>
+                  <input
+                    id="waitlistNumber"
+                    name="whatsappNumber"
+                    type="tel"
+                    inputMode="tel"
+                    required
+                    value={waitlistNumber}
+                    onChange={(event) => setWaitlistNumber(event.target.value)}
+                    placeholder="+2348012345678"
+                    autoComplete="tel"
+                    className={INPUT_CLASS}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Use the number customers already message you on. You can
+                    change it later by contacting support.
+                  </p>
+                </div>
+
+                {waitlistError && (
+                  <p role="alert" className="text-sm text-danger">
+                    {waitlistError}
+                  </p>
+                )}
+
+                <Button type="submit" variant="primary" isLoading={waitlistSaving}>
+                  Join the WhatsApp waitlist
+                </Button>
+              </form>
+            )}
+
+            {waitlistNotice && (
+              <p role="status" className="mt-3 text-sm text-success">
+                {waitlistNotice}
+              </p>
+            )}
           </section>
 
           {/* WEB CHAT - always available, no connection required. */}

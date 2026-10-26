@@ -41,7 +41,7 @@ where each item stands now; the detail and the original reasoning stay underneat
 | 🟡 Prompt-injection regex too broad and too narrow | **Re-verify** in `lib/chat-engine.ts`. |
 | 🟡 Mobile touch targets | **Open** — audit the dashboard buttons against 44px before launch. |
 | 🟡 Empty states / client error handling / `console.log` leaks | **Open** — partially addressed; re-sweep `app/(dashboard)` before launch. |
-| 🟡 Waitlist endpoint unauthenticated, unthrottled, no dedupe | **Open** — the form now exists (`/settings/ai-line`), so throttle + dedupe before it is promoted. |
+| 🟡 Waitlist endpoint unauthenticated, unthrottled, no dedupe | **Partially fixed** — the form exists (`/settings/ai-line`), numbers are normalised, re-submits are deduped and a per-IP throttle was added; the throttle is still in-process, so move it to a shared store before promoting the waitlist widely. |
 | 🟡 Telegram webhook secret derived from the bot token | **Open** — re-check `app/api/telegram/webhook/route.ts` before the next bot rollout. |
 | 🟡 Dead WhatsApp-era plan labels | **Re-verify** — `components/dashboard/plan-chip.tsx` now reads the unified tiers; confirm no labels remain. |
 | 🟡 Duplicate migration timestamps (`20261024120000`) | **Open** — never rewrite applied migrations; document the ordering in the next migration that touches those tables. |

@@ -31,6 +31,7 @@ export async function GET() {
         sectionTitle: true,
         question: true,
         options: true,
+        explanation: true,
       },
     });
     const locked = !(await hasAllBadges(agent.id));
@@ -116,11 +117,12 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    let correct = 0;
+    // Validate first: a review is built from the raw answers, so a malformed
+    // payload must be rejected before anything is graded or stored.
     for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      const optionCount = toOptions(q.options).length;
+      const optionCount = toOptions(questions[i].options).length;
       const chosen = answers[i];
+
       if (
         typeof chosen !== "number" ||
         !Number.isInteger(chosen) ||
@@ -132,8 +134,22 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      if (chosen === q.correctIndex) correct++;
     }
+
+    let correct = 0;
+    const review = questions.map((question, index) => {
+      const chosen = answers[index];
+      const isCorrect = chosen === question.correctIndex;
+      if (isCorrect) correct += 1;
+
+      return {
+        order: question.order,
+        chosenIndex: chosen as number,
+        correctIndex: question.correctIndex,
+        correct: isCorrect,
+        explanation: question.explanation,
+      };
+    });
     const score = Math.round((correct / questions.length) * 100);
     const passed = score >= PASS_MARK;
     await prisma.agentFinalExamAttempt.create({
@@ -159,6 +175,7 @@ export async function POST(request: Request) {
       total: questions.length,
       correct,
       certified,
+      review,
     });
   } catch (error) {
     console.error("[POST /api/agents/final-exam]", error);
