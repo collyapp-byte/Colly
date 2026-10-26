@@ -30,12 +30,18 @@ type CardMeta = {
   tone?: CardTone;
 };
 
-/** Light plans are tinted with their own colour: emerald Green, blue Blue. */
+/** Accent colours for a light card; Black keeps the dark theme instead. */
 type CardTone = "emerald" | "blue";
 
 const PLAN_META: Record<PlanTier, CardMeta> = {
   green: { name: "Green", tagline: "For getting started", tone: "emerald" },
-  blue: { name: "Blue", tagline: "For growing businesses", tone: "blue" },
+  blue: {
+    name: "Blue",
+    tagline: "For growing businesses",
+    badge: "Most Popular",
+    featured: true,
+    tone: "blue",
+  },
   black: {
     name: "Black",
     tagline: "Maximum reach for high-volume teams",
@@ -46,27 +52,35 @@ const PLAN_META: Record<PlanTier, CardMeta> = {
 
 /**
  * Per-plan card tint. The class strings are literals (never interpolated) so
- * Tailwind's scanner keeps them; text stays dark for contrast.
+ * Tailwind's scanner keeps them; text stays dark for contrast. Only Blue, the
+ * highlighted plan, carries a coloured background — Green is a plain white
+ * card with emerald accents.
  */
 const LIGHT_CARD_STYLES: Record<
   CardTone,
   { card: string; credit: string; check: string }
 > = {
   emerald: {
-    card: "border border-emerald-100 bg-emerald-50/50",
+    card: "border border-gray-200 bg-white",
     credit: "text-emerald-700",
     check: "text-emerald-600",
   },
   blue: {
-    card: "border border-blue-100 bg-blue-50/50",
+    card: "border-2 border-blue-600 bg-blue-50/50 shadow-lg shadow-blue-600/10",
     credit: "text-blue-700",
     check: "text-blue-600",
   },
 };
 
+/** Support line that differs by tier, matching the marketing pricing table. */
+const SUPPORT_FEATURE: Partial<Record<PlanTier, string>> = {
+  blue: "Priority support",
+  black: "Dedicated onboarding",
+};
+
 /** The bullet list under a card. Credit grants come from the plan config. */
-function cardFeatures(config: PlanConfig): string[] {
-  return [
+function cardFeatures(config: PlanConfig, tier: PlanTier): string[] {
+  const features = [
     `${config.credits.toLocaleString()} credits every month (${config.baseCredits.toLocaleString()} base + ${config.bonusCredits.toLocaleString()} bonus)`,
     config.bonusDescription,
     `${REPLY_CREDIT_COSTS.standard} credits per Telegram, Discord & Web Chat reply`,
@@ -75,6 +89,9 @@ function cardFeatures(config: PlanConfig): string[] {
     "FAQ knowledge base",
     "Owner alerts",
   ];
+  const support = SUPPORT_FEATURE[tier];
+
+  return support ? [...features, support] : features;
 }
 
 function PlansContent() {
@@ -246,10 +263,10 @@ function PlansContent() {
           const cardClasses = [
             isDark
               ? "border-2 border-gray-900 bg-gray-900 text-white"
-              : isFeatured
-                ? "border-2 border-[#FF6600] bg-[#FFF4EC]"
-                : tone
-                  ? tone.card
+              : tone
+                ? tone.card
+                : isFeatured
+                  ? "border-2 border-blue-600 bg-blue-50/50 shadow-lg"
                   : "border border-gray-200 bg-white",
             isSelected ? "ring-2 ring-[#FF6600] ring-offset-2" : "",
           ]
@@ -258,27 +275,31 @@ function PlansContent() {
 
           return (
             <div key={tier} className={`relative rounded-2xl p-6 ${cardClasses}`}>
-              <div
-                className={`absolute top-4 left-4 flex h-6 w-6 items-center justify-center rounded-full border ${
-                  isDark ? "border-gray-700 bg-gray-800 text-white" : "bg-white"
-                }`}
-              >
-                <Icon className={`h-3.5 w-3.5 ${tone ? tone.check : ""}`} />
-              </div>
-
-              {meta.badge && (
-                <span
-                  className={`absolute top-4 right-4 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                    isDark
-                      ? "bg-white text-gray-900"
-                      : "bg-[#FF6600] text-white"
+              {/* The badge sits in the card's normal flow (not absolutely
+                  positioned) so it can never overlap the plan name. */}
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
+                    isDark ? "border-gray-700 bg-gray-800 text-white" : "bg-white"
                   }`}
                 >
-                  {meta.badge}
-                </span>
-              )}
+                  <Icon className={`h-3.5 w-3.5 ${tone ? tone.check : ""}`} />
+                </div>
 
-              <h3 className={`mt-4 text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                {meta.badge && (
+                  <span
+                    className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                      isDark
+                        ? "bg-white text-gray-900"
+                        : "bg-[#FF6600] text-white"
+                    }`}
+                  >
+                    {meta.badge}
+                  </span>
+                )}
+              </div>
+
+              <h3 className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                 {meta.name}
               </h3>
               <p className={`mt-1 text-xs ${isDark ? "text-gray-300" : "text-gray-500"}`}>
@@ -349,7 +370,7 @@ function PlansContent() {
               </Button>
 
               <div className="mt-6 space-y-2">
-                {cardFeatures(config).map((feature) => (
+                {cardFeatures(config, tier).map((feature) => (
                   <div key={feature} className="flex items-center gap-2">
                     <Check
                       className={`h-3.5 w-3.5 ${

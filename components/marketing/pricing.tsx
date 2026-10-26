@@ -14,28 +14,33 @@ import {
 import { formatNaira } from "@/lib/format";
 
 /**
- * Every card carries its plan's colour: a very light emerald wash for Green and
- * a very light blue wash for Blue, with the text kept dark for contrast. The
- * Black plan keeps its own styling and the Free plan stays neutral.
+ * Every card carries its plan's accent colour in the credits figure and the
+ * check marks, but only the highlighted plan gets a tinted background. Green,
+ * Black and Free are plain white cards; Blue (the "Most Popular" plan) keeps
+ * its light blue wash, a strong blue border and a deeper shadow so it stands
+ * out without overlapping any text.
  */
 type CardTone = "neutral" | "emerald" | "blue";
 
 const CARD_TONES: Record<
   CardTone,
-  { card: string; credit: string; check: string }
+  { card: string; highlightCard: string; credit: string; check: string }
 > = {
   neutral: {
-    card: "border border-white/50 bg-white/60 backdrop-blur-md shadow-lg",
+    card: "border border-gray-200 bg-white shadow-sm",
+    highlightCard: "border-2 border-[#FF6600] bg-[#FFF4EC] shadow-xl",
     credit: "text-[#FF6600]",
     check: "text-[#FF6600]",
   },
   emerald: {
-    card: "border border-emerald-100 bg-emerald-50/50 backdrop-blur-md shadow-lg",
+    card: "border border-gray-200 bg-white shadow-sm",
+    highlightCard: "border-2 border-emerald-600 bg-emerald-50/50 shadow-xl",
     credit: "text-emerald-700",
     check: "text-emerald-600",
   },
   blue: {
-    card: "border border-blue-100 bg-blue-50/50 backdrop-blur-md shadow-lg",
+    card: "border border-blue-100 bg-blue-50/50 shadow-sm",
+    highlightCard: "border-2 border-blue-600 bg-blue-50/50 shadow-xl shadow-blue-600/10",
     credit: "text-blue-700",
     check: "text-blue-600",
   },
@@ -80,7 +85,7 @@ export function Pricing() {
       features: [PLANS.green.bonusDescription, "Telegram, Discord & Web Chat", `${REPLY_CREDIT_COSTS.standard} credits per Telegram reply`, `${REPLY_CREDIT_COSTS.whatsapp} credits per WhatsApp reply`, "All AI features", "Owner alerts"],
       cta: "Get Green",
       href: "/signup?role=business&plan=green",
-      highlight: true,
+      highlight: false,
       tone: "emerald"
     },
     {
@@ -92,7 +97,7 @@ export function Pricing() {
       features: [PLANS.blue.bonusDescription, "Telegram, Discord & Web Chat", `${REPLY_CREDIT_COSTS.standard} credits per Telegram reply`, `${REPLY_CREDIT_COSTS.whatsapp} credits per WhatsApp reply`, "All AI features", "Priority support"],
       cta: "Get Blue",
       href: "/signup?role=business&plan=blue",
-      highlight: false,
+      highlight: true,
       tone: "blue"
     },
     {
@@ -122,9 +127,14 @@ export function Pricing() {
             const tone = CARD_TONES[plan.tone];
 
             return (
-              <TiltCard key={plan.name} className={`flex flex-col p-6 ${tone.card}`}>
+              <TiltCard
+                key={plan.name}
+                className={`flex flex-col p-6 ${plan.highlight ? tone.highlightCard : tone.card}`}
+              >
                 {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[#FF6600] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">Most Popular</div>
+                  <span className="mb-4 inline-block rounded-full bg-[#FF6600] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
+                    Most Popular
+                  </span>
                 )}
                 <div className="mb-4">
                   <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
@@ -172,7 +182,7 @@ export function Pricing() {
                 </ul>
                 <Link
                   href={plan.href}
-                  className={`block w-full rounded-lg py-2.5 text-center text-sm font-semibold transition-transform active:scale-95 ${plan.highlight ? 'bg-[#FF6600] text-white hover:bg-[#E65C00]' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}
+                  className={`block w-full rounded-lg py-2.5 text-center text-sm font-semibold transition-transform active:scale-95 ${plan.highlight ? "bg-[#FF6600] text-white hover:bg-[#E65C00]" : "border border-gray-300 bg-gray-100 text-gray-900 hover:bg-gray-200"}`}
                 >
                   {plan.cta}
                 </Link>
