@@ -2,33 +2,12 @@ import { Footer } from "@/components/ui/footer";
 import { SmoothScroll } from "@/components/ui/smooth-scroll";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 
-export const metadata = {
-  title: "Colly | AI Sales Assistant for Nigerian Businesses",
-  description: "Stop losing sales to missed replies. Colly is the AI sales assistant that replies to your customers 24/7 in English or Pidgin. Start free today — 80 AI credits every month, no card required.",
-  openGraph: {
-    title: "Colly | AI Sales Assistant",
-    description: "Stop losing sales to missed replies. Reply 24/7 in English or Pidgin.",
-    url: "https://colly.com.ng",
-    siteName: "Colly",
-    locale: "en_NG",
-    type: "website",
-    images: [
-      {
-        url: "https://colly.com.ng/og-image.png",
-        width: 1200,
-        height: 630,
-        type: "image/png",
-        alt: "Colly AI Sales Assistant",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Colly | AI Sales Assistant",
-    description: "Stop losing sales to missed replies.",
-    images: ["https://colly.com.ng/og-image.png"],
-  },
-};
+/*
+ * No `metadata` export here on purpose. Marketing titles, descriptions and
+ * canonicals are per page (`pageMetadata()` in `lib/seo.ts`), and a title set on
+ * this layout would be run through the root template as well, producing
+ * "… | Colly Nigeria | Colly Nigeria".
+ */
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   // Analytics note: the Umami tracker is rendered once, in the root layout

@@ -40,6 +40,9 @@ export const metadata: Metadata = {
     default: "Dashboard",
     template: "%s · Colly",
   },
+  // The signed-in app is never useful to a crawler — every route in this group
+  // redirects to /login without a session — so the whole tree is noindex.
+  robots: { index: false, follow: false },
 };
 
 export default async function DashboardLayout({ children }: LayoutProps<"/">) {

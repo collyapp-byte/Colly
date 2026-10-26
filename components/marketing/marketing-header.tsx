@@ -64,13 +64,19 @@ export function MarketingHeader() {
         </Link>
         <nav className="flex items-center gap-5">
           <Link
+            href="/pricing"
+            className="hidden text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 md:block"
+          >
+            Pricing
+          </Link>
+          <Link
             href="/find-an-agent"
             className="hidden text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 md:block"
           >
             Find an Agent
           </Link>
           <Link
-            href="/signup?role=agent"
+            href="/academy"
             className="hidden text-sm font-medium text-gray-600 transition-colors hover:text-[#FF6600] md:block"
           >
             Agent Program
@@ -99,7 +105,14 @@ export function MarketingHeader() {
           className="absolute top-full left-0 w-full bg-white shadow-lg border-b border-gray-100 p-4 flex flex-col gap-4 z-50 md:hidden"
         >
           <Link
-            href="/signup?role=agent"
+            href="/pricing"
+            onClick={() => setMenuOpen(false)}
+            className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+          >
+            Pricing
+          </Link>
+          <Link
+            href="/academy"
             onClick={() => setMenuOpen(false)}
             className="text-sm font-medium text-gray-600 transition-colors hover:text-[#FF6600]"
           >

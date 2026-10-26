@@ -1,6 +1,7 @@
-import { NextResponse, type NextRequest } from "next/server";
+﻿import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { prisma } from "@/lib/prisma";
+import { isPublicRoute } from "@/lib/public-routes";
 import { getSupabaseEnv, isMissingConfigError } from "./env";
 
 /** Routes that only signed-out visitors should see. */
@@ -12,31 +13,6 @@ const AUTH_PATHS = ["/login", "/signup"];
  * one, so the two audiences never cross.
  */
 const AGENT_PUBLIC_PATHS = ["/agents/login", "/agents/signup"];
-
-/**
- * Always-public paths (no session required): the marketing homepage, agent
- * certificate verification, email verification (Supabase redirects here from
- * the confirmation link, while the visitor is still signed out), the agent
- * discovery directory and the legal pages (privacy, terms, account deletion).
- *
- * Note "/" only matches the homepage itself: `matchesPath` appends "/" to each
- * prefix, so the entry becomes "//" and never matches a nested path.
- */
-const PUBLIC_PATHS = [
-  "/",
-  "/auth/callback",
-  // Public website chat widget -- embedded on customer sites, so it must open
-  // for signed-out visitors (and inside an iframe).
-  "/chat",
-   "/verify",
-   "/verify-email",
-   "/forgot-password",
-   "/reset-password",
-   "/find-an-agent",
-  "/privacy",
-  "/terms",
-  "/account/delete",
-];
 
 /**
  * Auth routes a signed-in visitor is bounced away from -- but only when the
@@ -158,7 +134,7 @@ export async function updateSession(request: NextRequest) {
   // redirect, which is what fetch() callers can act on.
   if (!isApiRoute) {
     if (!user) {
-      const isPublic = matchesPath(pathname, PUBLIC_PATHS);
+      const isPublic = isPublicRoute(pathname);
       const isAgentPublic = matchesPath(pathname, AGENT_PUBLIC_PATHS);
       const isAgentArea =
         pathname === "/agents" || pathname.startsWith("/agents/");

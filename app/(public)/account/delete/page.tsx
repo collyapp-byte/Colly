@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Account Deletion",
   description:
     "Request the permanent deletion of your Colly account and all associated data.",
-};
+  path: "/account/delete",
+});
 
 export default function AccountDeletePage() {
   return (

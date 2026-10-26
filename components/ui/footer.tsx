@@ -7,6 +7,14 @@ import Link from "next/link";
 export function Footer() {
   return (
     <footer className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-gray-100 px-4 py-6 text-xs text-gray-500">
+      <Link href="/pricing" className="transition-colors hover:text-gray-700">
+        Pricing
+      </Link>
+      <span aria-hidden="true">·</span>
+      <Link href="/academy" className="transition-colors hover:text-gray-700">
+        Agent Academy
+      </Link>
+      <span aria-hidden="true">·</span>
       <Link
         href="/find-an-agent"
         className="transition-colors hover:text-gray-700"

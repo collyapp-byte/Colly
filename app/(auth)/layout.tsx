@@ -1,9 +1,20 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { Footer } from "@/components/ui/footer";
 import { getCurrentUser } from "@/lib/auth";
 import { logout } from "@/lib/auth-actions";
+
+/**
+ * Signed-out screens: login, signup, password reset, email verification.
+ * They are thin, near-duplicate forms that must not compete with the marketing
+ * pages in search results, so the whole group is marked noindex. `/signup` is
+ * therefore absent from `app/sitemap.ts` too.
+ */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 /**
  * The "Not you? Sign out" control. Only rendered when a real Supabase session

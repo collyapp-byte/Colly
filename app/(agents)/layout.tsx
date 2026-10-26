@@ -27,6 +27,9 @@ export const metadata: Metadata = {
     default: "Agent Dashboard",
     template: "%s · Colly Agents",
   },
+  // Every route in this group calls `requireAgent()` and bounces to
+  // /agents/login when signed out, so nothing here should be indexed.
+  robots: { index: false, follow: false },
 };
 
 export default async function AgentsLayout({ children }: { children: React.ReactNode }) {

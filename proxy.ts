@@ -14,10 +14,12 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Everything except Next.js internals and static assets: those are served
-     * straight from disk, and running auth logic on them would break CSS and
-     * images for signed-out visitors.
+     * Everything except Next.js internals, static assets and the metadata
+     * files: those are served straight from disk (or generated with no session
+     * involvement), and running auth logic on them would break CSS, images and
+     * crawler access for signed-out visitors. `robots.txt` and `sitemap.xml`
+     * must stay reachable for Googlebot, which has no cookies to refresh.
      */
-    "/((?!api/health|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!api/health|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

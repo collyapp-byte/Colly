@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Privacy Policy",
   description:
     "How Colly collects, uses and protects business, customer and agent information under the Nigeria Data Protection Act 2023.",
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

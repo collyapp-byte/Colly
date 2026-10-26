@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Terms of Service",
   description:
     "The terms governing your use of Colly, the multi-channel AI assistant for small businesses.",
-};
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (
