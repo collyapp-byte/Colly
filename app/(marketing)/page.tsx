@@ -6,8 +6,8 @@ import { HowItWorks } from "@/components/marketing/how-it-works";
 import { Pricing } from "@/components/marketing/pricing";
 import { FAQ } from "@/components/marketing/faq";
 import { FounderAndCTA } from "@/components/marketing/founder-and-cta";
-import { JsonLd } from "@/components/seo/json-ld";
-import { faqJsonLd, pageMetadata, softwareApplicationJsonLd } from "@/lib/seo";
+import { HomepageJsonLd } from "@/components/seo/json-ld";
+import { pageMetadata } from "@/lib/seo";
 import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_TITLE_DEFAULT } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
@@ -22,11 +22,12 @@ export const metadata: Metadata = pageMetadata({
 export default function MarketingPage() {
   return (
     <>
-      {/* Product + FAQ markup: both read from lib/plans.ts and
-          lib/marketing-faq.ts, so the rich snippet cannot quote a stale price
-          or an answer the page does not show. */}
-      <JsonLd data={softwareApplicationJsonLd()} />
-      <JsonLd data={faqJsonLd()} />
+      {/* Structured data renders first: `<main>` is the marketing layout's
+          wrapper, so this <script> is the first element inside it. The product
+          and FAQ nodes are assembled in `lib/seo.ts` from `lib/plans.ts` and
+          `lib/marketing-faq.ts`, so the rich snippet can never quote a stale
+          price or an answer the page does not show. */}
+      <HomepageJsonLd />
       <Hero />
       <ProblemSection />
       <Features />

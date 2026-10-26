@@ -1,4 +1,4 @@
-import type { JsonLdNode } from "@/lib/seo";
+import { homepageJsonLd, type JsonLdNode } from "@/lib/seo";
 
 /**
  * Renders a JSON-LD document. Server Component on purpose: structured data is
@@ -17,4 +17,17 @@ export function JsonLd({ data }: { data: JsonLdNode | JsonLdNode[] }) {
       dangerouslySetInnerHTML={{ __html: json }}
     />
   );
+}
+
+/**
+ * The marketing homepage's structured data: one SoftwareApplication node (with
+ * an Offer per paid tier) plus the FAQPage that mirrors the accordion rendered
+ * by `components/marketing/faq.tsx`.
+ *
+ * Server Component with no props on purpose: the page cannot pass a price or a
+ * question in, so the schema can never drift from `lib/plans.ts` (what checkout
+ * charges) or `lib/marketing-faq.ts` (what the visitor reads).
+ */
+export function HomepageJsonLd() {
+  return <JsonLd data={homepageJsonLd()} />;
 }

@@ -7,7 +7,18 @@ import {
   Tag,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { DEFAULT_MAX_ROUNDS } from "@/lib/negotiation";
+import { REPLY_CREDIT_COSTS } from "@/lib/plans";
 
+/**
+ * Answer-first (BLUF) feature copy.
+ *
+ * Every card opens with one factual, quotable sentence ("Colly escalates …",
+ * "Colly negotiates …") and only then adds the example, so an AI answer engine
+ * can lift the first sentence as the answer to "does Colly understand Pidgin?",
+ * "does it handle delivery questions?" or "can it negotiate price?". Replies,
+ * rounds and credits come from the libraries that implement them.
+ */
 export function Features() {
   return (
     <section className="bg-white py-24">
@@ -17,8 +28,12 @@ export function Features() {
             One AI. Every channel. One limit.
           </h2>
           <p className="mt-4 text-gray-600">
-            Colly understands Nigerian buyers across Telegram, Discord, and Web
-            Chat while keeping a single shared message allowance.
+            Colly replies to customers on Telegram, Discord, and Web Chat, and
+            every channel draws from one shared credit balance:{" "}
+            {REPLY_CREDIT_COSTS.standard} credits per AI reply,{" "}
+            {REPLY_CREDIT_COSTS.whatsapp} credits on WhatsApp. Connect Telegram,
+            Discord, and Web Chat yourself in minutes; WhatsApp is onboarded
+            manually through a short waitlist.
           </p>
         </div>
 
@@ -31,12 +46,14 @@ export function Features() {
                   <AudioLines className="h-5 w-5" aria-hidden />
                 </span>
                 <h3 className="mt-6 text-2xl font-bold">
-                  Pidgin &amp; Voice Notes
+                  Nigerian Pidgin &amp; Voice Notes
                 </h3>
                 <p className="mt-3 text-sm leading-relaxed text-blue-100">
-                  Customer sends a voice note saying &quot;Wagwan, how much be
-                  this iPhone 12?&quot; Colly understands, translates, and
-                  replies perfectly — in their language.
+                  Colly understands and speaks Nigerian Pidgin, English, and
+                  processes voice notes natively. A customer can send a voice
+                  note saying “Wagwan, how much be this iPhone 12?” and Colly
+                  transcribes it, checks your product catalogue, and replies in
+                  the same language with the real price, no typing required.
                 </p>
               </div>
 
@@ -58,12 +75,14 @@ export function Features() {
               <ShieldAlert className="h-5 w-5" aria-hidden />
             </span>
             <h3 className="mt-6 text-xl font-bold text-gray-900">
-              Smart Escalation
+              Smart Escalation to Your Telegram
             </h3>
             <p className="mt-3 text-sm leading-relaxed text-gray-600">
-              Colly never guesses a waybill price. If a customer asks for
-              delivery to Abuja, it instantly pings your personal Telegram to
-              take over.
+              Colly escalates complex delivery or waybill questions to your
+              personal Telegram immediately. If a customer asks for delivery to
+              Abuja and you have not set a waybill price, Colly does not guess:
+              it pauses the AI, alerts you with the customer’s question, and lets
+              you reply as the human agent.
             </p>
             <div className="mt-6 flex items-center gap-2 rounded-xl border border-orange-200 bg-white px-3 py-2.5">
               <BellRing className="h-4 w-4 shrink-0 text-[#FF6600]" aria-hidden />
@@ -79,11 +98,13 @@ export function Features() {
               <ImageIcon className="h-5 w-5" aria-hidden />
             </span>
             <h3 className="mt-6 text-xl font-bold text-gray-900">
-              Image Sending
+              Product Images on Request
             </h3>
             <p className="mt-3 text-sm leading-relaxed text-gray-600">
-              Ask for a photo and Colly sends the real product image straight
-              from your catalogue. No more digging through your gallery.
+              Colly sends real product images from your catalogue whenever a
+              customer asks for a photo. It replies with the actual picture, the
+              price, and whether the item is in stock, so you never dig through
+              your phone gallery mid-conversation.
             </p>
             <div className="mt-6 grid grid-cols-3 gap-2">
               {[0, 1, 2].map((item) => (
@@ -105,11 +126,14 @@ export function Features() {
                   <Tag className="h-5 w-5" aria-hidden />
                 </span>
                 <h3 className="mt-6 text-2xl font-bold text-gray-900">
-                  Never quotes below your floor
+                  Price Negotiation That Never Loses You Money
                 </h3>
                 <p className="mt-3 text-sm leading-relaxed text-gray-600">
-                  You set the limits. Colly can negotiate within your rules, but
-                  it will never sell at a loss or embarrass you on price.
+                  Colly negotiates price automatically but never below the floor
+                  you set. You enter a list price and a floor price (for example
+                  ₦185,000 list and ₦170,000 floor); Colly makes counter-offers
+                  in small steps, stops after {DEFAULT_MAX_ROUNDS} rounds, and
+                  refuses anything lower, so it never sells at a loss.
                 </p>
               </div>
 

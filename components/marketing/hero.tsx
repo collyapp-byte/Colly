@@ -1,6 +1,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
+import { PLANS } from "@/lib/plans";
+import { formatNaira } from "@/lib/format";
+
+/**
+ * Answer-first (BLUF) hero copy.
+ *
+ * The first screen states what Colly is, who it is for, the live channels and
+ * the entry price in one self-contained paragraph, so an AI search engine
+ * (ChatGPT, Perplexity, Google AI Overviews) can quote it verbatim without
+ * needing the rest of the page. Price and credit figures are read from
+ * `lib/plans.ts`, the single source of truth, so this answer can never
+ * advertise a price the billing code does not charge.
+ */
+const HERO_ANSWER =
+  "Colly is an AI sales assistant that replies to customers 24/7 on Telegram, Discord, and Web Chat. " +
+  `It costs ${formatNaira(PLANS.green.monthly)}/month for ${PLANS.green.credits.toLocaleString()} credits, with a free tier available. ` +
+  "It handles Pidgin, voice notes, and price negotiations so you never lose a sale.";
 
 export function Hero() {
   return (
@@ -19,13 +36,13 @@ export function Hero() {
           </span>
 
           <h1 className="mt-6 text-5xl font-bold tracking-tight text-gray-900 lg:text-7xl">
-            Your AI sales assistant for{" "}
-            <span className="text-[#FF6600]">Nigerian businesses.</span>
+            AI Sales Assistant for{" "}
+            <span className="text-[#FF6600]">Nigerian Businesses</span>
           </h1>
 
-          <p className="mt-6 max-w-lg text-lg text-gray-600">
-            Stop losing sales to missed replies. Colly replies 24/7 in English or
-            Pidgin, quotes prices, and sends product images.
+          {/* Bottom line first: what it is, where it replies, what it costs. */}
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
+            {HERO_ANSWER}
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">

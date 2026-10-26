@@ -131,7 +131,9 @@ export function softwareApplicationJsonLd(options?: {
     "@type": "SoftwareApplication",
     "@id": SOFTWARE_ID,
     name: SITE_NAME,
-    alternateName: "Colly AI Sales Assistant",
+    // "Colly AI" is the exact phrase buyers type into ChatGPT/Perplexity, so it
+    // is listed as an alias next to the descriptive marketing name.
+    alternateName: ["Colly AI", "Colly AI Sales Assistant"],
     applicationCategory: "BusinessApplication",
     applicationSubCategory: "AI sales and customer service assistant",
     operatingSystem: "Web, Telegram, Discord",
@@ -172,6 +174,21 @@ export function faqJsonLd(
       acceptedAnswer: { "@type": "Answer", text: faq.a },
     })),
   };
+}
+
+/**
+ * Everything the landing page publishes as structured data, in one document:
+ * the SoftwareApplication (which already carries one `Offer` per paid tier
+ * inside its AggregateOffer) followed by the FAQPage built from the answers the
+ * page renders further down.
+ *
+ * Kept as an array so `JsonLd` can emit a single `<script>` block: an AI answer
+ * engine reads the product and the FAQ from one parse, and `/` never repeats a
+ * node. Both halves are still built by the functions above, so prices keep
+ * coming from `lib/plans.ts` and the answers from `lib/marketing-faq.ts`.
+ */
+export function homepageJsonLd(): JsonLdNode[] {
+  return [softwareApplicationJsonLd(), faqJsonLd()];
 }
 
 /** The four academy courses, so search engines can read the curriculum. */

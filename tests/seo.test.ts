@@ -5,7 +5,7 @@ import { createRequire } from "node:module";
 
 import robots from "../app/robots";
 import sitemap from "../app/sitemap";
-import { JsonLd } from "../components/seo/json-ld";
+import { HomepageJsonLd, JsonLd } from "../components/seo/json-ld";
 import {
   ACADEMY_COURSES,
   ACADEMY_LESSON_COUNT,
@@ -271,6 +271,61 @@ test("the FAQPage schema mirrors the rendered FAQ list", () => {
     JSON.stringify(node).includes("WhatsApp Business API"),
     false,
     "retired claims must not reach the schema",
+  );
+});
+
+test("the homepage ships one document with the product and the FAQ answers", () => {
+  // The landing page renders `<HomepageJsonLd />`, which takes no props, so the
+  // nodes below are the only thing it can emit: prices cannot drift from
+  // lib/plans.ts and answers cannot drift from lib/marketing-faq.ts.
+  const element = HomepageJsonLd() as unknown as {
+    props: { data: Array<Record<string, unknown>> };
+  };
+  const document = element.props.data;
+
+  assert.deepEqual(
+    document.map((node) => node["@type"]),
+    ["SoftwareApplication", "FAQPage"],
+    "the product answers first, then the FAQ rendered on the page",
+  );
+
+  const [app, faq] = document;
+
+  assert.equal(app.applicationCategory, "BusinessApplication");
+  assert.ok(String(app.operatingSystem).includes("Web"));
+  // "Colly AI" is the phrase buyers ask AI engines about, so the product must
+  // be quotable by that name even though its `name` is the legal-style one.
+  const aliases = [app.name, app.alternateName].flat();
+  assert.ok(aliases.includes("Colly AI"));
+
+  // Green, Blue and Black are all priced inside the document.
+  const offers = app.offers as {
+    "@type": string;
+    offers: Array<Record<string, unknown>>;
+  };
+  assert.equal(offers["@type"], "AggregateOffer");
+  assert.deepEqual(
+    offers.offers.map((offer) => offer.price),
+    Object.values(PLANS).map((plan) => String(plan.monthly)),
+  );
+  assert.deepEqual(offers.offers.map((offer) => offer.price), [
+    "15000",
+    "25000",
+    "50000",
+  ]);
+
+  // The FAQ node is the accordion, verbatim — not a second copy of the copy.
+  const entities = faq.mainEntity as Array<{
+    name: string;
+    acceptedAnswer: { text: string };
+  }>;
+  assert.deepEqual(
+    entities.map((entity) => entity.name),
+    MARKETING_FAQS.map((item) => item.q),
+  );
+  assert.deepEqual(
+    entities.map((entity) => entity.acceptedAnswer.text),
+    MARKETING_FAQS.map((item) => item.a),
   );
 });
 
