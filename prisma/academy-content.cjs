@@ -29,28 +29,29 @@ const COURSES = [
         title: "The Multi-Channel AI (Telegram, Web Chat, Discord)",
         order: 0,
         durationMin: 5,
-        bodyMarkdown: `Every business in Nigeria uses WhatsApp. But we are not starting with WhatsApp.
+        bodyMarkdown: `Every business in Nigeria uses WhatsApp. But Colly does not start there.
 
-Why? Because Meta requires a **CAC certificate** to use the official WhatsApp API. If we wait for every business owner to register their company, we will never launch.
+Why? Meta's official WhatsApp API needs a **CAC certificate** and a manual review. If we waited for every shop to register a company, we would never launch.
 
-Instead, Colly is built for the modern channels that work **instantly, for free, with zero CAC**:
-1. **Telegram:** Zero SIM card required. Zero message fees. A business owner can create a bot in 30 seconds using @BotFather.
-2. **Web Chat:** We give them a line of code. They paste it on their website. Visitors can talk to the AI instantly.
-3. **Discord:** For tech-savvy businesses or communities.
+Instead, Colly runs on the channels that work **instantly, with zero CAC**:
+1. **Telegram:** No SIM card, no message fees. The owner creates a bot with @BotFather in 30 seconds and pastes the token into Colly.
+2. **Web Chat:** Colly gives the owner an embed snippet. They paste it on their website (or print the in-store QR) and visitors can chat with the AI.
+3. **Discord:** For communities and tech-savvy businesses. Paste the bot token and the AI answers server members.
 
 **Why this matters to you as an agent:**
-You can onboard a business in 5 minutes. No waiting. No Meta approval. No CAC.
-You set up the Telegram bot, paste the token into Colly, and the AI is live.
-When the business finally gets their CAC, we will switch on WhatsApp for them.`,
+You can onboard a business in 5 minutes. No waiting, no Meta approval, no CAC.
+You set up the Telegram bot, paste the token, and the AI is live.
+
+**WhatsApp:** it is available through a **manual onboarding waitlist**. The owner joins the waitlist from Settings > AI Line and Colly's team switches it on. Never promise a switch-on date.`,
       },
       {
         slug: "what-colly-does",
         title: "What Colly Does",
         order: 1,
         durationMin: 5,
-        bodyMarkdown: `Colly is the AI that runs on the WhatsApp Business API.
+        bodyMarkdown: `Colly is a multi-channel AI assistant. It runs on Telegram, Discord and Web Chat (with WhatsApp onboarding through a manual waitlist).
 
-Think of it this way. The API is the road. Colly is the car that drives on it.
+Think of the channel as the road. Colly is the car that drives on it.
 
 **What Colly does:**
 
@@ -207,11 +208,11 @@ Log into your own Colly account. Click every menu item in the sidebar. Spend 10 
 We now have a single set of plans. Credits are shared across **all** connected channels (Telegram, Discord, Web Chat). 1 credit = ₦1.
 
 - **Green:** ₦15,000/month — 23,000 credits (15,000 base + 8,000 bonus = 100 free WhatsApp messages)
-- **Blue:** ₦25,000/month — 44,000 credits (28,000 base + 16,000 bonus = 200 free WhatsApp messages)
-- **Black:** ₦50,000/month — 100,000 credits (60,000 base + 40,000 bonus = 500 free WhatsApp messages)
-- **Reply costs:** Telegram/Discord replies cost 5 credits. WhatsApp replies cost 80 credits. Manual replies are free.
-- **Top-ups:** buy more credits any time; they never expire.
-- **Free:** ₦0/month — 50 credits every month, forever. No card required.`,
+- **Blue:** ₦25,000/month — 41,000 credits (25,000 base + 16,000 bonus = 200 free WhatsApp messages)
+- **Black:** ₦50,000/month — 90,000 credits (50,000 base + 40,000 bonus = 500 free WhatsApp messages)
+- **Reply costs:** Telegram/Discord/Web Chat replies cost 5 credits. WhatsApp replies cost 80 credits. Manual replies are free.
+- **Top-ups:** buy more credits any time at ₦1 per credit; they never expire.
+- **Free:** ₦0/month — 80 credits every 30 days, forever. No card required.`,
       },
       {
         slug: "what-colly-cannot-do",
@@ -224,7 +225,7 @@ We now have a single set of plans. Credits are shared across **all** connected c
 
 **1. Post to WhatsApp Status**
 
-The Status feature is not available through the WhatsApp Business API. If a business relies on posting Status updates for sales, Colly does not help with that. They will still need a separate WhatsApp account for Status.
+The WhatsApp Status feed is a separate Meta product and is not part of Colly on any channel. If a business relies on posting Status updates for sales, Colly does not help with that. They will still need a separate WhatsApp account for Status.
 
 **2. Send marketing blasts**
 
@@ -236,7 +237,7 @@ The business needs an existing WhatsApp number. Colly does not create numbers. I
 
 **4. Guarantee Meta approval**
 
-Meta (the company that owns WhatsApp) approves each business individually. Colly guides the process but cannot force approval.
+Meta (the company that owns WhatsApp) approves each business individually. Colly's team runs the onboarding once a business leaves the waitlist, but cannot force Meta's approval.
 
 **5. Handle 100% of conversations**
 
@@ -253,117 +254,6 @@ Nigerian SMEs have been burned before. Too many "AI" companies promised the worl
 **Do this now:**
 
 Before your first sales pitch, memorize these 6 limits. When a business owner asks "Can it also do X?", you will know the answer. If X is not on the list, tell them the truth: "Let me check with Colly support and get back to you."`,
-      },
-    ],
-    questions: [
-      {
-        question:
-          "What is the main difference between the WhatsApp Business App and the WhatsApp Business API?",
-        options: [
-          "The API is free",
-          "The API can handle many customers at once, automatically",
-          "The API works only on Android",
-          "The API cannot send images",
-        ],
-        correctIndex: 1,
-      },
-      {
-        question:
-          "Mrs. Adeyemi's store lost about how much extra revenue per month before Colly?",
-        options: ["₦18,000", "₦180,000", "₦1,800", "₦18"],
-        correctIndex: 1,
-      },
-      {
-        question:
-          "What does Colly do when a customer asks a question it cannot answer?",
-        options: [
-          "Ignores the message",
-          "Answers with a generic reply",
-          "Hands the conversation to the business owner",
-          "Ends the chat",
-        ],
-        correctIndex: 2,
-      },
-      {
-        question: "Which of these can Colly understand?",
-        options: [
-          "Only English",
-          "Only English and French",
-          "English, Pidgin, voice notes, and photos",
-          "Only text messages",
-        ],
-        correctIndex: 2,
-      },
-      {
-        question:
-          "What does the Green plan cost per month, and how many credits does it include?",
-        options: [
-          "₦10,000 / 10,000 credits",
-          "₦15,000 / 23,000 credits",
-          "₦25,000 / 44,000 credits",
-          "₦50,000 / 100,000 credits",
-        ],
-        correctIndex: 1,
-      },
-      {
-        question:
-          "Which plan includes the most credits?",
-        options: ["Green", "Blue", "Black", "Free"],
-        correctIndex: 2,
-      },
-      {
-        question:
-          "How much does one AI reply cost in credits?",
-        options: [
-          "80 credits on WhatsApp and 5 credits on Telegram or Discord",
-          "5 credits on WhatsApp and 80 credits on Telegram or Discord",
-          "Manual replies cost credits too",
-          "0 credits because replies are included in the plan",
-        ],
-        correctIndex: 0,
-      },
-      {
-        question:
-          "What does Colly charge the agent for using the platform to onboard businesses?",
-        options: [
-          "A 10% commission on setup fees",
-          "A monthly agent fee",
-          "Nothing - Colly does not track setup fees",
-          "₦5,000 per business onboarded",
-        ],
-        correctIndex: 2,
-      },
-      {
-        question: "Which of these is something Colly CANNOT do?",
-        options: [
-          "Answer customer messages automatically",
-          "Send product images on request",
-          "Post to WhatsApp Status",
-          "Take over a conversation manually",
-        ],
-        correctIndex: 2,
-      },
-      {
-        question:
-          "What should you tell a business owner who hits their monthly message cap?",
-        options: [
-          "There is nothing you can do, wait until next month",
-          "You can top up their wallet to keep going, or upgrade their plan",
-          "Colly is being greedy",
-          "Just tell customers to message less",
-        ],
-        correctIndex: 1,
-      },
-      {
-        question:
-          "What should an agent do when a business owner asks about a feature Colly does not have?",
-        options: [
-          "Promise it will be added soon",
-          "Tell them the truth and offer to check with Colly support",
-          "Change the subject",
-          "Say the competitor does not have it either",
-        ],
-        correctIndex: 1,
       },
     ],
   },
@@ -412,13 +302,13 @@ For Web Chat, there is no token. You just copy the embed link and paste it on th
 
 **What happens next:**
 
-Every new account starts on the permanent Free plan: 50 credits every month, forever. That is enough to try AI replies, the dashboard and real sales, with no payment and no card.
+Every new account starts on the permanent Free plan: 80 credits every 30 days, forever. That is enough to try AI replies, the dashboard and real sales, with no payment and no card.
 
-When the 50 credits are spent, the AI pauses until the owner subscribes or tops up. The account is never deleted: the owner can still log in, see the dashboard and chat with customers manually, because manual replies are always free.
+When the 80 credits are spent, the AI pauses until the owner subscribes or tops up. The account is never deleted: the owner can still log in, see the dashboard and chat with customers manually, because manual replies are always free.
 
 **Tell the owner this clearly:**
 
-> "It is free to start. You get 50 credits every month, and replying by hand is always free. If you like it, you pay ₦15,000 to get more AI credits. No charge today."
+> "It is free to start. You get 80 credits every 30 days, and replying by hand is always free. If you like it, you pay ₦15,000 to get more AI credits. No charge today."
 
 This removes the fear of "being locked in."
 
@@ -725,69 +615,7 @@ Since Telegram requires no Meta approval, the moment you paste the Bot Token int
 2. Send a test message to the bot.
 3. If the AI replies, you are done. Hand the phone back to the owner.
 
-(WhatsApp is the only channel that requires a handoff to Colly support and a CAC).`,
-      },
-    ],
-    questions: [
-      {
-        question: "Before a setup visit, which of these is NOT required?",
-        options: ["Product list and photos","The owner's bank details","Common customer questions","The owner's WhatsApp number"],
-        correctIndex: 1,
-      },
-      {
-        question: "Whose details should you use when creating the business account?",
-        options: ["Your own email and phone","The owner's real details","A shared Colly account","The customer's details"],
-        correctIndex: 1,
-      },
-      {
-        question: "What happens when the free monthly credits run out?",
-        options: ["The account is deleted","The owner is charged automatically","The AI stops replying until they subscribe or top up, but the account stays","Nothing changes"],
-        correctIndex: 2,
-      },
-      {
-        question: "What is the floor price?",
-        options: ["The highest price the AI can offer","The lowest price the AI can offer during negotiation","The price after VAT","The cost price"],
-        correctIndex: 1,
-      },
-      {
-        question: "How many photos can a product have?",
-        options: ["1","3","5","Up to 10"],
-        correctIndex: 3,
-      },
-      {
-        question: "Which product name is best?",
-        options: ["Apple Inc. iPhone 12 128GB Model A2403","iPhone 12 128GB","The latest Apple smartphone","Phone"],
-        correctIndex: 1,
-      },
-      {
-        question: "A good product description should include:",
-        options: ["What it is, what it is good for, and honest limits","Only the price","Marketing words like 'premium' and 'best'","Made-up facts to sound professional"],
-        correctIndex: 0,
-      },
-      {
-        question: "Which is NOT one of the 5 must-have FAQ categories?",
-        options: ["Delivery","Payment","Returns","Instagram followers"],
-        correctIndex: 3,
-      },
-      {
-        question: "The AI tone should match:",
-        options: ["Your preference","The owner's existing reply style","Always formal","Always friendly"],
-        correctIndex: 1,
-      },
-      {
-        question: "When testing before handoff, you should send:",
-        options: ["One message","Only product queries","Product, FAQ, negotiation, unknown, and Pidgin messages","Nothing - Colly tests automatically"],
-        correctIndex: 2,
-      },
-      {
-        question: "Who connects the WhatsApp Business API?",
-        options: ["The agent","The business owner","Colly's team","Meta"],
-        correctIndex: 2,
-      },
-      {
-        question: "What should you tell the owner after setup?",
-        options: ["You are all set, goodbye","Wait 3 weeks for approval","Everything is ready. Colly will connect your WhatsApp within 24 hours.","You need to buy another SIM card"],
-        correctIndex: 2,
+(WhatsApp is the only channel that needs Colly's team: the owner joins the waitlist and we switch it on. There is no self-serve WhatsApp connection).`,
       },
     ],
   },
@@ -1129,48 +957,6 @@ Colly's team will investigate. Usually it is a data problem, not an AI problem.
 Review the owner's product list. Look for anything out of date. Fix it before it causes a wrong AI reply.`,
       },
     ],
-    questions: [
-      {
-        question: "How long should the initial dashboard tour take?",
-        options: ["1 minute","10 minutes","1 hour","All day"],
-        correctIndex: 1,
-      },
-      {
-        question: "When should the owner take over a conversation?",
-        options: ["Every conversation","Only when the AI fails or the customer is angry","Never - let the AI handle everything","Randomly"],
-        correctIndex: 1,
-      },
-      {
-        question: "What happens when the owner forgets to resume the AI after taking over?",
-        options: ["The AI stays paused forever","The AI auto-resumes after 1 hour","The customer gets an error","The conversation ends"],
-        correctIndex: 1,
-      },
-      {
-        question: "What is the Quick Sale feature for?",
-        options: ["Online customers","Walk-in customers who pay in cash, transfer, or POS","Wholesale customers","Only for delivery"],
-        correctIndex: 1,
-      },
-      {
-        question: "During the evening check, what should the owner look for in Conversations?",
-        options: ["Every message the AI sent today","Complaints, escalations, and custom quote requests","Only unread conversations","The total number of messages sent"],
-        correctIndex: 1,
-      },
-      {
-        question: "The AI quoted the wrong price. What should the owner do?",
-        options: ["Turn off the AI","Update the price in the Products page","Wait for it to fix itself","Call the customer"],
-        correctIndex: 1,
-      },
-      {
-        question: "The AI refused to negotiate when it should have. Likely cause?",
-        options: ["The AI is broken","The floor price is not set or 'Negotiable' is unchecked","The customer blocked it","The internet is down"],
-        correctIndex: 1,
-      },
-      {
-        question: "The AI keeps making the same mistake. What should the owner do?",
-        options: ["Give up","Wait - it will fix itself","Report it to Colly support with a screenshot","Delete the catalog"],
-        correctIndex: 2,
-      },
-    ],
   },
   {
     slug: "sales-and-support",
@@ -1226,11 +1012,11 @@ These businesses have already solved the problem. Skip them. Focus on the owner-
 
 **A quick filter:**
 
-Before you pitch, ask: "Do you reply to WhatsApp messages yourself?"
+Before you pitch, ask: "Do you answer customer messages yourself?"
 
 - **Yes** — perfect prospect. Owner is doing everything, needs help.
 - **No, I have someone** — deprioritize. They might already be okay.
-- **What is WhatsApp?** — wrong business. Move on.
+- **No, I don't sell online yet** — wrong business for now. Move on.
 
 **Do this now:**
 
@@ -1262,7 +1048,7 @@ Make 20 calls or visits this week. That is how you find your first customer.`,
 
 **Objection 1: "The AI will make mistakes."**
 
-> "It will. That is why you can take over any conversation at any time. You see every chat in your dashboard. If the AI says something wrong, you fix it, and the AI learns from the change."
+> "It will. That is why you can take over any conversation at any time. You see every chat in your dashboard. If the AI gets a product wrong, you correct the product or FAQ in the catalogue and it stops repeating that mistake."
 
 **Objection 2: "My customers want to talk to me, not a robot."**
 
@@ -1278,7 +1064,7 @@ Make 20 calls or visits this week. That is how you find your first customer.`,
 
 **Objection 5: "I do not trust AI."**
 
-> "You should not blindly trust it. That is why we start on the Free plan. 50 credits every month, no card, no contract, no risk. Use it. If it fails, we stop."
+> "You should not blindly trust it. That is why we start on the Free plan. 80 credits every 30 days, no card, no contract, no risk. Use it. If it fails, we stop."
 
 **Objection 6: "Will it take over my WhatsApp?"**
 
@@ -1290,7 +1076,7 @@ Make 20 calls or visits this week. That is how you find your first customer.`,
 
 **Objection 8: "Let me think about it."**
 
-> "Of course. Here is my number — WhatsApp me if you have any questions. The Free plan gives you 50 credits every month, no card needed. If you want to try, just message me START. If not, no problem."
+> "Of course. Here is my number — WhatsApp me if you have any questions. The Free plan gives you 80 credits every 30 days, no card needed. If you want to try, just message me START. If not, no problem."
 
 Do not chase. If they say no, say thank you and leave. Come back in 2 weeks. Business owners change their minds.
 
@@ -1305,7 +1091,7 @@ Write down your answers to these 8 objections in your own words. Say them out lo
         title: "Setting Your Setup Fee",
         order: 3,
         durationMin: 5,
-        bodyMarkdown: `Colly charges the business ₦15,000/month. **You charge a separate setup fee.** That is your income. Colly does not take a cut.
+        bodyMarkdown: `Colly's plans start at ₦15,000/month (Green). **You charge a separate setup fee for your own work.** Colly does not take a cut of it. On top of that, the subscription earns you 15% referral commission for 12 months (see "How You Get Paid").
 
 **How much to charge:**
 
@@ -1392,7 +1178,7 @@ If they insist on paying by card, use your personal POS or an agent's POS nearby
 
 **Option 4: Colly subscription (via Paystack)**
 
-The monthly ₦15,000 subscription goes through Colly's own payment system. You do not handle this. The owner pays Colly directly. When we set up Paystack live mode, this becomes automatic.
+The subscription is paid inside the Colly dashboard, through Paystack. **You never handle it.** The owner pays Colly directly, the plan activates instantly and they get a receipt. Sending a subscription payment to your personal account is a hard no: it is untraceable, delays activation and can cost you your agent account.
 
 **What about receipts?**
 
@@ -1402,7 +1188,7 @@ RECEIPT
 Date: [today]
 From: [business name]
 Amount: ₦10,000
-For: Colly setup fee — WhatsApp AI assistant
+For: Colly setup fee — AI assistant setup
 Received by: [your name]
 
 Handwritten is fine. Or type it in Notes app and WhatsApp it to them. Keep a copy.
@@ -1470,7 +1256,7 @@ If no — check the conversation logs together. Look for where the AI failed. Fi
 
 **Day 5 (credit check):**
 
-> "How is the AI doing? The Free plan gives you 50 credits every month — do you want more?"
+> "How is the AI doing? The Free plan gives you 80 credits every 30 days — do you want more?"
 
 If yes — guide them through payment.
 If no — "No problem. The Free plan keeps working, and I am here if you change your mind."
@@ -1525,7 +1311,7 @@ Block 1 hour every day for the first week of each new customer. Put it in your c
 
 **How to escalate:**
 
-Send a WhatsApp to Colly support with:
+Send a message to Colly support (the current contact is in your agent dashboard) with:
 
 Agent: AG-0001
 Business: Mama Chidi's Provision Store
@@ -1533,7 +1319,7 @@ Issue: [one-line description]
 Impact: [how many customers affected / how urgent]
 Screenshot: [attach if relevant]
 
-Response time: within 24 hours. For critical issues (number banned, platform down), within 2 hours.
+Support triages in the order received. Channel outages (bot not replying, credits blocked, platform down) are treated as critical and handled first.
 
 **What NOT to do:**
 
@@ -1543,16 +1329,11 @@ Response time: within 24 hours. For critical issues (number banned, platform dow
 
 **The support contact:**
 
-Save this number in your phone:
-
-Colly Support
-+234 [support phone number]
-
-(Colly will give you the actual number when you are certified.)
+Colly sends the current support contact and the escalation template to every certified agent. Save both in your phone the day you are certified — when a business is stuck, you will not have time to look them up.
 
 **Do this now:**
 
-Save the support number. Save the escalation template. When you need it, you will not have time to look it up.`,
+Save the support contact. Save the escalation template. When you need it, you will not have time to look it up.`,
       },
       {
         slug: "how-you-get-paid",
@@ -1583,83 +1364,6 @@ Commissions last for **exactly 12 months** from the date the business signs up. 
 Keep your bank details up to date so you never miss a payout.`,
       },
     ],
-    questions: [
-      {
-        question: "Which of these is a sign a business needs Colly?",
-        options: ["They have a full-time customer service team","They post prices on WhatsApp Status","They use Uber Eats","They have a dedicated social media manager"],
-        correctIndex: 1,
-      },
-      {
-        question: "What is the FIRST thing you should do before pitching?",
-        options: ["Show your phone","Ask one question and let them talk","Hand them a flyer","Quote the price"],
-        correctIndex: 1,
-      },
-      {
-        question: "The pitch should focus on which 3 things?",
-        options: ["Features, tech, price","More sales, control of WhatsApp, cost","Speed, security, scale","AI, integration, uptime"],
-        correctIndex: 1,
-      },
-      {
-        question: "What is the correct response to 'My customers want to talk to me, not a robot'?",
-        options: ["The AI is smarter than you think","Your customers do not know it is AI - you step in when needed","Robots are better than humans","It does not matter"],
-        correctIndex: 1,
-      },
-      {
-        question: "What is the recommended setup fee range for a small shop with 10-30 products?",
-        options: ["₦1,000 - ₦3,000","₦5,000 - ₦15,000","₦25,000 - ₦50,000","₦0 (free)"],
-        correctIndex: 1,
-      },
-      {
-        question: "What should you NOT do when pricing your setup fee?",
-        options: ["State the price confidently","Go below ₦5,000","Explain what the setup covers","Offer a smaller package if the price is too high"],
-        correctIndex: 1,
-      },
-      {
-        question: "What is the recommended way to collect the setup fee?",
-        options: ["Paystack only","Direct bank transfer","Cash only","Crypto"],
-        correctIndex: 1,
-      },
-      {
-        question: "What if the owner does not pay the setup fee within 7 days?",
-        options: ["Keep working without payment","Send one reminder, and if still unpaid by day 14, turn off AI","Immediately delete their account","Take them to court"],
-        correctIndex: 1,
-      },
-      {
-        question: "What should you do on Day 1 of onboarding?",
-        options: ["Set up and leave quickly","Set up, run test messages, and walk through the dashboard","Just set up the AI, no training","Send them a PDF guide"],
-        correctIndex: 1,
-      },
-      {
-        question: "What should you do on Day 2?",
-        options: ["Nothing, let them figure it out","Call them on the phone - not WhatsApp","Send an email","Skip it"],
-        correctIndex: 1,
-      },
-      {
-        question: "What are you watching for in the first week?",
-        options: ["The owner's happiness","Whether they log in daily, reply manually a lot, and complain about prices","How often they update their profile picture","Their social media followers"],
-        correctIndex: 1,
-      },
-      {
-        question: "Which of these should you escalate to Colly support?",
-        options: ["Wrong product description","Missing FAQ","WhatsApp number banned or disconnected","AI tone needs adjusting"],
-        correctIndex: 2,
-      },
-      {
-        question: "Which of these should you handle yourself?",
-        options: ["Login broken","Payment/subscription issue on Colly","Missing FAQ","WhatsApp number disconnected"],
-        correctIndex: 2,
-      },
-      {
-        question: "What is the correct escalation format?",
-        options: ["Just say Help","Agent ID, Business, Issue, Impact, Screenshot","Send an email","Call the CEO"],
-        correctIndex: 1,
-      },
-      {
-        question: "What should you NEVER say to an owner?",
-        options: ["I will check with Colly support","I do not know, let me find out","I will fix it (when it is a Colly platform issue)","Let me look at the logs with you"],
-        correctIndex: 2,
-      },
-    ],
   }
 ];
 
@@ -1677,7 +1381,228 @@ const FINAL_EXAM_SECTIONS = [
  * existing lessons keep their slugs so agents keep their progress ticks.
  */
 const EXTRA_LESSONS = {
-  /* EXTRA_LESSONS */
+  "understanding-colly": [
+    {
+      slug: "channels-and-credits-at-a-glance",
+      title: "Channels and Credits at a Glance",
+      order: 6,
+      durationMin: 6,
+      bodyMarkdown: `Every business asks the same three questions in the first meeting: "Which channels?", "How much?" and "What happens when the credits finish?" Learn this page by heart.
+
+**Channels today**
+
+| Channel | Status | What the owner does |
+| --- | --- | --- |
+| Telegram | Live, self-serve | Creates a bot with @BotFather, pastes the token |
+| Discord | Live, self-serve | Pastes the bot token (and optionally the server id) |
+| Web Chat | Live, no keys | Copies the embed snippet or prints the in-store QR |
+| WhatsApp | Waitlist, manual | Joins the waitlist in Settings > AI Line; Colly's team switches it on |
+
+**What a reply costs**
+
+- Telegram, Discord and Web Chat: 5 credits per AI reply.
+- WhatsApp: 80 credits per AI reply.
+- Manual replies by the owner: free, on every channel.
+
+**What the plans include (1 credit = ₦1)**
+
+- Free: 80 credits every 30 days, no card.
+- Green: ₦15,000 = 23,000 credits.
+- Blue: ₦25,000 = 41,000 credits.
+- Black: ₦50,000 = 90,000 credits.
+
+**The one line to remember:** 80 credits is one WhatsApp reply or sixteen Telegram/Discord/Web Chat replies. That is why a business can test the AI on the free plan without paying.
+
+**When credits run out:** the AI pauses, the owner gets a low-credit alert, and manual replies keep working. Nothing is deleted and no customer is lost.`,
+    },
+  ],
+  "setting-up-a-business": [
+    {
+      slug: "importing-from-jiji",
+      title: "Importing a Catalogue from Jiji",
+      order: 7,
+      durationMin: 8,
+      bodyMarkdown: `Most shops you onboard already sell on Jiji. Typing 200 products by hand is where onboarding dies, so use the importer.
+
+**How it works**
+
+1. Ask for the shop's Jiji seller page (the profile URL) or their Jiji username.
+2. In Colly, open Products > Import from Jiji and paste it.
+3. Colly reads the seller's live listings and creates products with the name, price, description and listing id.
+4. Every imported row is tagged as coming from Jiji, so the importer can find it again on the next run.
+
+**Keeping it in sync**
+
+The dashboard shows a Jiji card with the last sync time. A sync:
+
+- refreshes prices when the seller changes them on Jiji,
+- updates stock when a listing is sold or relisted,
+- never drops a product the agent added by hand in Colly,
+- protects the floor price: if a lower Jiji price would push the floor above the list price, the floor is cleared instead of blocking the sale.
+
+**What to check after importing**
+
+- a handful of prices, especially the ones with "negotiable" in the title,
+- products with no description (they answer badly, so improve the top sellers),
+- duplicates where the seller listed the same item twice on Jiji,
+- stock 0 items that should be marked sold out.
+
+**Never** promise that an import is instant for a huge shop: large catalogues are fetched and embedded in batches.`,
+    },
+    {
+      slug: "web-chat-embed-and-qr",
+      title: "Web Chat: Embed Snippet and In-Store QR",
+      order: 8,
+      durationMin: 6,
+      bodyMarkdown: `Web Chat is the channel with zero setup friction: no Meta review, no bot token, no API key. Two things come out of Settings > Web Chat.
+
+**1. The embed snippet**
+
+- Paste it into the website's HTML just before the closing body tag, or into the theme's custom-code box on WordPress, Shopify or Wix.
+- The widget appears bottom-right and starts a real conversation with the AI.
+- Visitors do not need an account; the chat is tied to the business, not to a phone number.
+
+**2. The shareable link and QR code**
+
+- The link opens the same chat in a browser tab. Put it in Instagram bios, broadcast lists and WhatsApp Status.
+- Settings > QR Code turns that link into a printable QR. Print it for the counter, the shop door, receipts or a flyer.
+- A walk-in customer scans and chats while standing in the shop, and the AI answers with the same catalogue.
+
+**What to verify before you leave**
+
+1. Open the link on your own phone and send "how much is [product]".
+2. Confirm the AI quotes the correct price and does not invent stock.
+3. Confirm the conversation appears in the dashboard inbox.
+4. Print or screenshot the QR and test it once.
+
+**Selling point:** this is the only channel where the owner's existing customers need to install nothing at all.`,
+    },
+  ],
+  "training-the-owner": [
+    {
+      slug: "credits-plans-and-top-ups",
+      title: "Credits, Plans and Top-ups",
+      order: 5,
+      durationMin: 7,
+      bodyMarkdown: `This is the lesson that prevents "the AI stopped replying" calls. Teach it on the day of handoff.
+
+**The wallet has two halves**
+
+- **Plan credits:** the monthly allowance of the plan (Free 80, Green 23,000, Blue 41,000, Black 90,000). It resets on every billing month, so unused plan credits do not roll over.
+- **Top-up credits:** bought separately at ₦1 per credit (3,000-credit packs). They never expire and are only spent after plan credits run out.
+
+The dashboard header shows the total, with a tooltip splitting plan and top-up.
+
+**What spends credits**
+
+- AI replies: 5 credits on Telegram, Discord and Web Chat; 80 on WhatsApp.
+- Manual replies: never. Owners can always answer customers themselves for free.
+
+**What happens when the wallet is empty**
+
+1. The AI stops replying and the owner is alerted to top up.
+2. The inbox keeps working; customers can still be served by hand.
+3. A top-up or an upgrade brings the AI back immediately, with no re-setup.
+
+**Show the owner where to look**
+
+Settings > Billing shows the balance, the plan, the renewal date and the usage split. Settings > Billing > Credits sells top-ups. Settings > Billing > Plans upgrades or changes the tier.
+
+**Say this:** "Your plan credits reset every month, your top-ups never expire, and replying by hand is always free."`,
+    },
+    {
+      slug: "weekly-report-and-owner-alerts",
+      title: "The Weekly Report and Owner Alerts",
+      order: 6,
+      durationMin: 5,
+      bodyMarkdown: `Owners forget the AI exists until something breaks. The weekly report and the alert stream are how you keep the account healthy after handoff.
+
+**The weekly report** summarises the last 7 days:
+
+- AI replies sent,
+- manual replies sent (a rising number means the AI is missing answers),
+- escalations / conversations handed to a human,
+- total sales recorded in Colly.
+
+Use it in your first-week follow-up call: "You had 214 AI replies and 12 escalations; let us look at the 12."
+
+**Owner alerts** go to the owner's personal Telegram chat, linked in Settings > AI Line. They cover the moments that need a human:
+
+- a customer needs takeover,
+- the credit balance is too low to reply.
+
+**How to use the report as an agent**
+
+1. High escalations: check the FAQs and the catalogue descriptions.
+2. High manual replies: the AI is being bypassed; retrain the owner on takeover etiquette.
+3. Low sales with high conversations: the catalogue has no prices, or the owner never closes.
+4. Low AI replies overall: the channel token is broken or the business is not promoting the line.
+
+Never quote the weekly numbers to a prospect as a guarantee; they are one shop's outcome.`,
+    },
+  ],
+  "sales-and-support": [
+    {
+      slug: "crm-pipeline-and-deal-status",
+      title: "The CRM Pipeline and Deal Status",
+      order: 8,
+      durationMin: 5,
+      bodyMarkdown: `Every customer in Colly sits in one of four pipeline columns. This is how the owner turns conversations into money.
+
+**The four stages**
+
+1. **INQUIRY:** the customer asked something and has not committed.
+2. **NEGOTIATING:** price or delivery is being discussed.
+3. **PAID:** money has been received.
+4. **DELIVERED:** the item or service reached the customer.
+
+**How to teach it**
+
+- Move the card the moment the situation changes, not at the end of the day.
+- PAID is only for money actually received, never for "he said he will pay".
+- DELIVERED closes the loop; it is the column that proves the AI paid for itself.
+
+**Why it matters**
+
+- The dashboard's today's-sales figure and the weekly report both read from real sales and pipeline movement.
+- Customers stuck in INQUIRY for days are your follow-up list. Colly does not chase them for you.
+- When an owner says "the AI does not bring sales", open the pipeline first: if every card sits in INQUIRY, the problem is closing, not the AI.
+
+**A 10-second rule for the owner:** a conversation without a stage is a lead you will forget.`,
+    },
+    {
+      slug: "agent-commission-and-payouts",
+      title: "Your Commission and Payouts",
+      order: 9,
+      durationMin: 6,
+      bodyMarkdown: `Agents earn from the businesses they refer. Understand the rules before you promise yourself anything.
+
+**How commission works**
+
+- The owner enters your agent ID ("AG-0001") when they sign up, which links the business to you.
+- Colly pays **15% of every subscription charge** from that business, for the **first 12 months**.
+- After the 12-month window closes the business stops earning you commission; the referrals list shows which ones are still inside it.
+
+**Where to see it**
+
+- Referrals page: every business linked to your agent ID, its plan and status.
+- Payout history: past transfers with their reference numbers.
+- Balance: the available commission, in naira.
+
+**Getting paid**
+
+1. Add your bank details once; Colly creates a Paystack transfer recipient.
+2. Request a payout when the balance is at least **₦5,000**.
+3. The transfer goes to the bank account on file and is recorded in your payout history.
+
+**Hard rules**
+
+- Never collect a subscription payment into your personal account. The owner pays in the dashboard so the plan activates instantly and they get a receipt.
+- Never promise a commission amount; it depends on the plan the owner actually pays for.
+- Never onboard a business under someone else's agent ID.`,
+    },
+  ],
+
 };
 
 /**
@@ -1686,7 +1611,514 @@ const EXTRA_LESSONS = {
  * `explanation` (shown by the quiz page after a wrong answer).
  */
 const COURSE_QUIZZES = {
-  /* COURSE_QUIZZES */
+  "understanding-colly": [
+    {
+      question: "Which channels are live and self-serve today?",
+      options: [
+        "Telegram, Discord and Web Chat",
+        "WhatsApp and Telegram",
+        "Instagram and Facebook",
+        "Only WhatsApp",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Those three need no Meta review. WhatsApp onboarding is manual through the waitlist.",
+    },
+    {
+      question: "How does a business get WhatsApp on Colly?",
+      options: [
+        "They join the waitlist and Colly's team switches it on",
+        "They paste a WhatsApp token into settings",
+        "They buy the Black plan",
+        "It is already on for every account",
+      ],
+      correctIndex: 0,
+      explanation:
+        "WhatsApp is a manual onboarding waitlist; never promise a switch-on date.",
+    },
+    {
+      question: "Where does the AI get product prices from?",
+      options: [
+        "A catalogue search on every product question",
+        "The last conversation with that customer",
+        "The business description",
+        "The owner's WhatsApp Status",
+      ],
+      correctIndex: 0,
+      explanation:
+        "The catalogue is the only source of product truth; the AI must search it before answering.",
+    },
+    {
+      question: "What does the Free plan give a new business?",
+      options: [
+        "80 credits every 30 days, no card",
+        "50 credits once",
+        "A 7-day trial",
+        "Unlimited AI replies",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Free is permanent: 80 credits re-granted every 30 days. That is one WhatsApp reply or sixteen standard replies.",
+    },
+    {
+      question: "What does one Telegram AI reply cost?",
+      options: ["5 credits", "80 credits", "50 credits", "Nothing"],
+      correctIndex: 0,
+      explanation:
+        "Standard replies cost 5. WhatsApp costs 80 because Meta charges per conversation.",
+    },
+    {
+      question: "What does one WhatsApp AI reply cost?",
+      options: ["80 credits", "5 credits", "8 credits", "Nothing"],
+      correctIndex: 0,
+      explanation:
+        "WhatsApp is priced at 80 credits to cover Meta's per-conversation fee.",
+    },
+    {
+      question: "What does the Blue plan cost and include?",
+      options: [
+        "₦25,000 for 41,000 credits",
+        "₦25,000 for 44,000 credits",
+        "₦28,000 for 41,000 credits",
+        "₦41,000 for 25,000 credits",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Blue is ₦25,000: 25,000 base credits plus 16,000 bonus = 41,000.",
+    },
+    {
+      question: "What does the Black plan cost and include?",
+      options: [
+        "₦50,000 for 90,000 credits",
+        "₦60,000 for 100,000 credits",
+        "₦50,000 for 50,000 credits",
+        "₦90,000 for 50,000 credits",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Black is ₦50,000: 50,000 base credits plus 40,000 bonus = 90,000.",
+    },
+    {
+      question: "What do manual replies cost?",
+      options: [
+        "Nothing on every channel",
+        "5 credits each",
+        "80 credits each",
+        "The same as AI replies",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Only AI replies spend credits. Owners can always answer by hand for free.",
+    },
+    {
+      question: "Which of these can Colly NOT do?",
+      options: [
+        "Post to WhatsApp Status",
+        "Answer price questions from the catalogue",
+        "Hand a conversation to the owner",
+        "Reply on Telegram",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Status is a separate Meta product. Telling owners this builds trust.",
+    },
+    {
+      question:
+        "An owner asks for a feature Colly does not have. What do you say?",
+      options: [
+        "Tell them the truth and offer to check with Colly support",
+        "Promise it will ship next month",
+        "Change the subject",
+        "Say a competitor does not have it either",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Honesty about limits is the reason owners trust the rest of the pitch.",
+    },
+  ],
+  "setting-up-a-business": [
+    {
+      question: "Which details are required before the profile can be saved?",
+      options: [
+        "Business name, phone and WhatsApp number",
+        "Bank account and BVN",
+        "CAC certificate",
+        "Instagram handle",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Those three are validated on save; everything else is optional context for the AI.",
+    },
+    {
+      question: "Which tones can the owner choose?",
+      options: [
+        "Formal, friendly and pidgin-friendly",
+        "Formal and aggressive",
+        "Only friendly",
+        "Casual and sarcastic",
+      ],
+      correctIndex: 0,
+      explanation:
+        "The tone is validated and appended to the prompt last, so it shapes every reply.",
+    },
+    {
+      question: "What does every product need?",
+      options: [
+        "A name, a price and a description",
+        "A photo only",
+        "A Jiji listing",
+        "A barcode",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Without those three the AI cannot quote or recommend the product reliably.",
+    },
+    {
+      question: "What is the floor price for?",
+      options: [
+        "The lowest price the AI may accept while negotiating",
+        "The delivery fee",
+        "The VAT rate",
+        "The wholesale price shown to customers",
+      ],
+      correctIndex: 0,
+      explanation:
+        "The AI negotiates down to the floor and never below it.",
+    },
+    {
+      question: "What does the AI do when a product has no floor price?",
+      options: [
+        "Holds the listed price",
+        "Invents a discount",
+        "Refuses to answer",
+        "Asks the customer for an offer",
+      ],
+      correctIndex: 0,
+      explanation:
+        "No floor means no room to negotiate, so the listed price stands.",
+    },
+    {
+      question: "What does the Jiji importer need?",
+      options: [
+        "The seller's Jiji profile URL or username",
+        "The seller's Jiji password",
+        "A CAC certificate",
+        "The seller's bank details",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Only public seller details are used; Colly never asks for Jiji credentials.",
+    },
+    {
+      question: "What should you check right after a Jiji import?",
+      options: [
+        "Prices, missing descriptions, duplicates and stock-0 items",
+        "Only the total number of products",
+        "The owner's email address",
+        "The plan tier",
+      ],
+      correctIndex: 0,
+      explanation:
+        "An import copies what Jiji has, including the gaps. Fix the top sellers first.",
+    },
+    {
+      question: "What does Web Chat require to go live?",
+      options: [
+        "Pasting the embed snippet (or sharing the link/QR)",
+        "A Meta business review",
+        "A bot token",
+        "A CAC certificate",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Web Chat has no keys and no review; the snippet or link is the whole setup.",
+    },
+    {
+      question: "What is the in-store QR code for?",
+      options: [
+        "Opening the business's web chat for walk-in customers",
+        "Printing the catalogue as a PDF",
+        "Opening the owner's bank details",
+        "Verifying the agent's certificate",
+      ],
+      correctIndex: 0,
+      explanation:
+        "It turns foot traffic into conversations the AI can answer with the same catalogue.",
+    },
+    {
+      question: "How is Telegram connected?",
+      options: [
+        "Create a bot with @BotFather and paste the token",
+        "Enter the owner's Telegram password",
+        "Ask Colly support to connect it",
+        "Scan a QR code inside Telegram",
+      ],
+      correctIndex: 0,
+      explanation:
+        "It is the fastest self-serve channel: BotFather, token, live AI.",
+    },
+    {
+      question: "What does the Discord connection need?",
+      options: [
+        "The bot token, and optionally the server id",
+        "The owner's Discord login",
+        "A CAC certificate",
+        "A WhatsApp number",
+      ],
+      correctIndex: 0,
+      explanation:
+        "The token authorises the bot; the server id restricts it to one server.",
+    },
+  ],
+  "training-the-owner": [
+    {
+      question: "What are the two halves of the Colly wallet?",
+      options: [
+        "Plan credits (monthly) and top-up credits (permanent)",
+        "Free credits and bonus credits",
+        "Cash and card credits",
+        "Agent credits and owner credits",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Plan credits reset with each billing month; top-up credits were paid for and never expire.",
+    },
+    {
+      question: "When do plan credits reset?",
+      options: [
+        "On every billing month, when the new allowance is granted",
+        "Never; they roll over forever",
+        "Every Sunday",
+        "Only when the owner upgrades",
+      ],
+      correctIndex: 0,
+      explanation:
+        "The monthly allowance is replaced, so unused plan credits do not carry over.",
+    },
+    {
+      question: "How much does a 3,000-credit top-up cost?",
+      options: ["₦3,000", "₦5,250", "₦1,500", "₦300"],
+      correctIndex: 0,
+      explanation:
+        "Top-ups sell at face value: 1 credit = ₦1, so 3,000 credits cost ₦3,000.",
+    },
+    {
+      question: "What happens when the wallet cannot cover an AI reply?",
+      options: [
+        "The AI pauses, the owner is alerted, and manual replies keep working",
+        "The account is deleted",
+        "The AI replies anyway and the balance goes negative",
+        "Customers are blocked from messaging",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Nothing is lost: the inbox stays usable and a top-up or upgrade restores the AI instantly.",
+    },
+    {
+      question: "Where can the owner see the credit balance?",
+      options: [
+        "The dashboard header pill and Settings > Billing",
+        "Only by asking the agent",
+        "Only on the invoice",
+        "Nowhere; it is hidden",
+      ],
+      correctIndex: 0,
+      explanation:
+        "The header pill shows the total with a plan/top-up split, and billing shows the detail.",
+    },
+    {
+      question: "Which numbers does the weekly report include?",
+      options: [
+        "AI replies, manual replies, escalations and total sales",
+        "Website visits and ad spend",
+        "Bank balance and tax owed",
+        "Agent commission and payouts",
+      ],
+      correctIndex: 0,
+      explanation:
+        "It is a seven-day operating summary of how the AI performed for that business.",
+    },
+    {
+      question: "Manual replies are climbing. What does that usually mean?",
+      options: [
+        "The AI is missing answers the catalogue or FAQs should cover",
+        "The AI is working perfectly",
+        "The owner has too many credits",
+        "The channel token expired",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Every manual reply is a question the AI could not finish; fix the content behind it.",
+    },
+    {
+      question: "Where do owner alerts arrive?",
+      options: [
+        "The owner's linked Telegram chat",
+        "The customer's chat",
+        "By SMS",
+        "In the agent's inbox",
+      ],
+      correctIndex: 0,
+      explanation:
+        "The owner links their personal Telegram chat in Settings > AI Line.",
+    },
+    {
+      question: "Why add FAQs and detailed descriptions?",
+      options: [
+        "The AI answers accurately without guessing",
+        "They lower the price per reply",
+        "They replace the catalogue",
+        "They unlock the Black plan",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Delivery, payment and location questions are answered from the FAQ, and specs from the description.",
+    },
+    {
+      question: "The owner changes a price in the shop. What comes next?",
+      options: [
+        "Update the product in Colly so the AI quotes the new price",
+        "Nothing; the AI learns from chats",
+        "Change the business tone",
+        "Delete the conversation history",
+      ],
+      correctIndex: 0,
+      explanation:
+        "The AI quotes the catalogue as it is right now, so a stale row becomes a wrong quote.",
+    },
+  ],
+  "sales-and-support": [
+    {
+      question: "What is the correct order of the CRM pipeline?",
+      options: [
+        "Inquiry, Negotiating, Paid, Delivered",
+        "Inquiry, Paid, Negotiating, Delivered",
+        "Negotiating, Inquiry, Delivered, Paid",
+        "Paid, Inquiry, Negotiating, Delivered",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Each stage records a real change in the deal, ending with the item delivered.",
+    },
+    {
+      question: "When should a customer be moved to PAID?",
+      options: [
+        "Only when money has actually been received",
+        "When they promise to pay tomorrow",
+        "When they ask for the account number",
+        "When the chat starts",
+      ],
+      correctIndex: 0,
+      explanation:
+        "PAID drives the sales figures, so a promise must never be counted as money.",
+    },
+    {
+      question: "A customer sits in INQUIRY for four days. What does that mean?",
+      options: [
+        "They belong on the owner's follow-up list",
+        "The AI should message them forever",
+        "The deal is closed",
+        "The customer must be deleted",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Colly does not chase customers; the pipeline makes the stale leads visible.",
+    },
+    {
+      question: "How much commission does an agent earn?",
+      options: [
+        "15% of every subscription charge from a referred business",
+        "A flat ₦5,000 per signup",
+        "10% of the business's sales",
+        "30% of the setup fee",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Commission follows the subscription charge, not the business's own revenue.",
+    },
+    {
+      question: "How long does an agent earn commission from one business?",
+      options: [
+        "For the first 12 months after signup",
+        "Forever",
+        "For 3 months",
+        "Until the business upgrades",
+      ],
+      correctIndex: 0,
+      explanation:
+        "The referral window closes after 12 months; the referrals list shows which are still active.",
+    },
+    {
+      question: "What is the minimum payout?",
+      options: ["₦5,000", "₦1,000", "₦10,000", "₦50,000"],
+      correctIndex: 0,
+      explanation:
+        "Payouts are only requested once the available balance reaches ₦5,000.",
+    },
+    {
+      question: "What is required before requesting a payout?",
+      options: [
+        "Bank details on file so Paystack can create a transfer recipient",
+        "A CAC certificate",
+        "A customer referral",
+        "A Colly subscription",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Without a recipient code the transfer cannot be initiated, so the request is rejected.",
+    },
+    {
+      question: "An owner offers to pay you cash for their subscription. What do you do?",
+      options: [
+        "Send them to the Colly dashboard checkout instead",
+        "Collect it and pay Colly later",
+        "Keep it as your commission",
+        "Accept it and mark the plan active yourself",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Dashboard payment activates the plan instantly and gives the owner a receipt; agents never hold funds.",
+    },
+    {
+      question: "What is the escalation format?",
+      options: [
+        "Agent ID, business, issue, impact, screenshot",
+        "Just the business name",
+        "A phone call to the owner",
+        "An email to the customer",
+      ],
+      correctIndex: 0,
+      explanation:
+        "The five-part format lets support reproduce and fix the issue without a round trip.",
+    },
+    {
+      question: "What should you never promise an owner?",
+      options: [
+        "That you will fix a platform bug, or a WhatsApp switch-on date",
+        "That you will escalate their issue",
+        "That you will follow up",
+        "That you will check the catalogue with them",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Only Colly's team fixes platform issues or enables WhatsApp; promise follow-up, not a fix.",
+    },
+    {
+      question: "What does human takeover do?",
+      options: [
+        "Pauses the AI on that conversation while the owner replies",
+        "Deletes the AI's messages",
+        "Turns the AI off for the whole business",
+        "Ends the conversation",
+      ],
+      correctIndex: 0,
+      explanation:
+        "Takeover is per conversation; manual replies are free and the AI can resume afterwards.",
+    },
+  ],
+
+
+
 };
 
 /** The 40-question Final Certification Exam, grouped into the four sections. */
