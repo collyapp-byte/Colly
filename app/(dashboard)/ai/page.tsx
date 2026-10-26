@@ -150,7 +150,12 @@ export default async function CollyAIPage() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* AI Persona */}
-        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm relative group cursor-pointer hover:border-[#FF6600]/50 transition-colors">
+          {/* Stretched link: the whole card opens the tone settings. It sits at
+              z-0 so the real buttons below (z-10) stay clickable on top of it. */}
+          <Link href="/settings" className="absolute inset-0 z-0">
+            <span className="sr-only">View</span>
+          </Link>
           <h2 className="font-display text-base text-gray-900">AI Persona</h2>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700">
@@ -163,7 +168,7 @@ export default async function CollyAIPage() {
           <div className="mt-4">
             <Link
               href="/settings"
-              className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="relative z-10 inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
               Edit Tone
             </Link>
@@ -171,7 +176,12 @@ export default async function CollyAIPage() {
         </section>
 
         {/* Connected Apps */}
-        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm relative group cursor-pointer hover:border-[#FF6600]/50 transition-colors">
+          {/* Stretched link: the whole card opens the AI Line settings. Each
+              per-channel button below is z-10 so it keeps its own destination. */}
+          <Link href="/settings/ai-line" className="absolute inset-0 z-0">
+            <span className="sr-only">View</span>
+          </Link>
           <h2 className="font-display text-base text-gray-900">
             Connected Apps
           </h2>
@@ -193,7 +203,7 @@ export default async function CollyAIPage() {
                 )}
                 <Link
                   href="/settings/ai-line"
-                  className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  className="relative z-10 inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                 >
                   Manage
                 </Link>
@@ -222,7 +232,7 @@ export default async function CollyAIPage() {
                 )}
                 <Link
                   href="/settings/ai-line"
-                  className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  className="relative z-10 inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                 >
                   {discordConnected ? "Manage" : "Connect Discord"}
                 </Link>
@@ -241,7 +251,7 @@ export default async function CollyAIPage() {
                 </span>
                 <Link
                   href="/settings/web-chat"
-                  className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  className="relative z-10 inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                 >
                   Get Embed Code
                 </Link>
@@ -255,7 +265,12 @@ export default async function CollyAIPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Credits & Usage */}
-        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm relative group cursor-pointer hover:border-[#FF6600]/50 transition-colors">
+          {/* Stretched link: the whole card opens the credits page. "Top Up" and
+              "Upgrade" below are z-10 so they keep their own destinations. */}
+          <Link href="/settings/billing/credits" className="absolute inset-0 z-0">
+            <span className="sr-only">View</span>
+          </Link>
           <h2 className="font-display text-base text-gray-900">
             Credits & Usage
           </h2>
@@ -312,7 +327,7 @@ export default async function CollyAIPage() {
                 You are on the Free plan.{" "}
                 <Link
                   href="/settings/billing/plans"
-                  className="font-semibold underline underline-offset-2 hover:text-[#9A3412]"
+                  className="relative z-10 font-semibold underline underline-offset-2 hover:text-[#9A3412]"
                 >
                   Upgrade
                 </Link>{" "}
@@ -321,7 +336,7 @@ export default async function CollyAIPage() {
             )}
             <Link
               href="/settings/billing"
-              className="inline-flex items-center justify-center rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"
+              className="relative z-10 inline-flex items-center justify-center rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"
             >
               Top Up
             </Link>
@@ -329,7 +344,12 @@ export default async function CollyAIPage() {
         </section>
 
         {/* Past Transactions */}
-        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm relative group cursor-pointer hover:border-[#FF6600]/50 transition-colors">
+          {/* Stretched link: the whole card opens the billing history. The
+              "View All Transactions" button below is z-10 so it stays clickable. */}
+          <Link href="/settings/billing" className="absolute inset-0 z-0">
+            <span className="sr-only">View</span>
+          </Link>
           <h2 className="font-display text-base text-gray-900">
             Past Transactions
           </h2>
@@ -350,7 +370,7 @@ export default async function CollyAIPage() {
           <div className="mt-4">
             <Link
               href="/settings/billing"
-              className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="relative z-10 inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
               View All Transactions
             </Link>
