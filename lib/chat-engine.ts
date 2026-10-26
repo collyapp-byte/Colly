@@ -439,7 +439,7 @@ export async function handleIncomingMessage({
  * The credits reserved for one AI reply, split across the two wallet buckets.
  * Handed back to `refundAiReply` when the reply is never delivered.
  */
-type CreditDebit = { planCredits: number; topUpCredits: number };
+export type CreditDebit = { planCredits: number; topUpCredits: number };
 
 /**
  * RESERVE the credits for one AI reply: 5 credits on Telegram, Discord and Web
@@ -464,8 +464,11 @@ type CreditDebit = { planCredits: number; topUpCredits: number };
  *
  * Returns the amounts debited (for a possible refund), or `null` when the wallet
  * could not cover the reply.
+ *
+ * Exported because the owner's dashboard assistant (app/api/chat/route.ts) is
+ * metered the same way: an AI reply costs credits whoever asked for it.
  */
-async function chargeAiReply(
+export async function chargeAiReply(
   businessId: string,
   channel: string | null,
 ): Promise<CreditDebit | null> {
@@ -535,8 +538,10 @@ async function chargeAiReply(
  *
  * Best effort: a failed refund is logged, never thrown — an outage must not fail
  * the inbound pipeline a second time.
+ *
+ * Exported for the dashboard assistant route, which reserves credits the same way.
  */
-async function refundAiReply(
+export async function refundAiReply(
   businessId: string,
   debit: CreditDebit,
 ): Promise<void> {

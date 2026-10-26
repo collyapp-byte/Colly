@@ -330,12 +330,24 @@ model Conversation {
   /// time; the flag lets the dashboard surface "needs your attention".
   escalatedAt DateTime?
 
+  /// Timestamp of the conversation's newest message (creation time while it has
+  /// none yet). Denormalised so the inbox can be ordered and paginated by
+  /// Postgres - ORDER BY "lastMessageAt" DESC - instead of loading every
+  /// conversation and sorting them in memory. Kept in sync with every message
+  /// insert by the `message_touch_conversation_activity` trigger in
+  /// prisma/migrations/20261026000000_qa_indexes (a trigger, not app code, so
+  /// seeds, scripts and raw inserts cannot leave the stamp stale; it also leaves
+  /// `updatedAt` alone, which the Telegram takeover clock reads).
+  lastMessageAt DateTime @default(now())
+
   business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customer Customer  @relation(fields: [customerId], references: [id])
   messages Message[]
 
   @@index([businessId])
   @@index([customerId])
+  /// Inbox page: WHERE businessId = ? ORDER BY lastMessageAt DESC.
+  @@index([businessId, lastMessageAt], map: "conversation_business_last_message_idx")
 }
 
 model Message {
@@ -369,6 +381,10 @@ model Message {
 
   @@index([businessId])
   @@index([conversationId])
+  /// Chat history: WHERE conversationId = ? ORDER BY createdAt DESC.
+  @@index([conversationId, createdAt], map: "message_conversation_created_idx")
+  /// Usage rollups: WHERE businessId = ? AND sender = ? AND createdAt >= ?.
+  @@index([businessId, sender, createdAt], map: "message_business_sender_created_idx")
 }
 
 // ---------------------------------------------------------------------------

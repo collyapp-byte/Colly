@@ -5,9 +5,12 @@ function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
 }
 
+/** Rows per page for the list endpoints; see the note on pagination in GET. */
+const LIST_PAGE_SIZE = 50;
+
 // GET /api/customers
-// The signed-in business's customers, most recently active first, each with a
-// conversation count and the timestamp of their latest message.
+// The signed-in business's customers (one page), ranked by recent activity, each
+// with a conversation count and the timestamp of their latest message.
 export async function GET() {
   try {
     const businessId = await getCurrentBusinessId();
@@ -17,10 +20,13 @@ export async function GET() {
     }
 
     // A customer's "last active" time is the newest message in any of their
-    // conversations. Prisma can't order a parent by a relation's children, so
-    // pull the latest message of every conversation and reduce in memory.
+    // conversations, which Prisma cannot order a parent by, so one page of
+    // customers is fetched (newest first, so a newly added customer is always in
+    // it) and ranked by activity in memory. Cursor pagination is the follow-up.
     const rows = await prisma.customer.findMany({
       where: { businessId },
+      orderBy: { createdAt: "desc" },
+      take: LIST_PAGE_SIZE,
       include: {
         conversations: {
           select: {

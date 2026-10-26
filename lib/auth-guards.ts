@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAiReplyCreditCost, totalAvailableCredits } from "@/lib/plans";
-import { ensureFreeGrant } from "@/lib/credits";
+import { downgradeExpiredPlan, ensureFreeGrant } from "@/lib/credits";
 import { getCurrentAgent } from "@/lib/agent-auth";
 
 export type AiEnabledResult =
@@ -43,6 +43,11 @@ export async function requireSiteAccess(businessId: string): Promise<void> {
  * checks below run once `lastFreeGrantAt` is more than 30 days old. No scheduler
  * is involved and the owner has nothing to click; the dashboard picks up the
  * same re-grant through /api/billing/usage.
+ *
+ * Expiry: a paid plan whose `planExpiresAt` has passed while it is not `active`
+ * (cancelled, lapsed, dunning grace over) is demoted to Free by
+ * `downgradeExpiredPlan()` (lib/credits.ts) first, so a cancelled subscription
+ * falls back to the Free allowance instead of keeping paid-tier access forever.
  */
 export async function requireAiEnabled(businessId: string): Promise<AiEnabledResult> {
   const business = await prisma.business.findUnique({
@@ -51,6 +56,8 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
       id: true,
       channel: true,
       plan: true,
+      planStatus: true,
+      planExpiresAt: true,
       lastFreeGrantAt: true,
       planCredits: true,
       topUpCredits: true,
@@ -63,6 +70,13 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
   if (!business) {
     return { ok: false, reason: "plan_expired" };
   }
+
+  // A paid plan whose paid period is over (cancelled subscription, lapsed
+  // renewal, dunning grace exhausted) is demoted to the permanent Free tier —
+  // with its 50 credits — BEFORE any gate below reads the plan, so a lapsed
+  // business is treated as Free instead of keeping paid access indefinitely.
+  // The write is a compare-and-swap: a renewal landing concurrently wins.
+  await downgradeExpiredPlan(business);
 
   // Permanent Free tier: 50 credits every 30 days, handed out lazily by the
   // first wallet read after the window lapses. `ensureFreeGrant` mutates the row

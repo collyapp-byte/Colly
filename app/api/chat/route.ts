@@ -2,8 +2,13 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { processVoiceNote } from "@/lib/voice-pipeline";
 import { processImageMessage } from "@/lib/image-pipeline";
-import { handleIncomingMessage } from "@/lib/chat-engine";
-import { askAI } from "@/lib/ai";
+import {
+  chargeAiReply,
+  handleIncomingMessage,
+  refundAiReply,
+} from "@/lib/chat-engine";
+import { askAI, type AIResult } from "@/lib/ai";
+import { LOW_CREDIT_MESSAGE } from "@/lib/plans";
 
 type ChatRequestBody = {
   businessId?: unknown;
@@ -96,19 +101,54 @@ export async function POST(request: Request) {
 
       const business = await prisma.business.findUnique({
         where: { id: user.businessId },
-        select: { name: true, description: true },
+        select: { name: true, description: true, channel: true },
       });
+
+      // The owner's own assistant is metered exactly like a customer AI reply:
+      // the credits are reserved BEFORE the model call, with the same atomic
+      // compare-and-swap the chat engine uses. Without this the flag in the
+      // request body was enough to loop the widget for free — no plan gate, no
+      // charge, no rate limit — and burn provider tokens indefinitely. Manual
+      // (agent) replies stay free; only generated answers cost credits.
+      const debit = await chargeAiReply(user.businessId, business?.channel ?? null);
+      if (!debit) {
+        return Response.json(
+          { error: LOW_CREDIT_MESSAGE, blocked: true, reason: "no_credits" },
+          { status: 402 },
+        );
+      }
 
       let context = `Business name: ${business?.name ?? user.businessName}.`;
       if (business?.description) {
         context += ` Business description: ${business.description}`;
       }
 
-      const result = await askAI([
-        { role: "system", content: DASHBOARD_ASSISTANT_PROMPT },
-        { role: "system", content: context },
-        { role: "user", content: messageText },
-      ]);
+      let result: AIResult;
+      try {
+        result = await askAI([
+          { role: "system", content: DASHBOARD_ASSISTANT_PROMPT },
+          { role: "system", content: context },
+          { role: "user", content: messageText },
+        ]);
+      } catch (error) {
+        // No answer reached the owner, so the reservation goes straight back.
+        await refundAiReply(user.businessId, debit);
+        throw error;
+      }
+
+      if (result.provider === "fallback") {
+        // Every provider failed: that reply is a static apology, not an answer,
+        // so it is refunded exactly like a customer-side provider outage.
+        await refundAiReply(user.businessId, debit);
+        return Response.json(
+          {
+            error: "The AI is unavailable right now. You were not charged.",
+            blocked: true,
+            reason: "ai_unavailable",
+          },
+          { status: 503 },
+        );
+      }
 
       return Response.json({ reply: result.reply });
     }

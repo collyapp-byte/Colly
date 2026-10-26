@@ -24,6 +24,9 @@ function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
 }
 
+/** Rows per page for the list endpoints; see the note on pagination in GET. */
+const LIST_PAGE_SIZE = 50;
+
 type InvoiceRequestBody = {
   customerId?: unknown;
   items?: unknown;
@@ -110,10 +113,13 @@ export async function GET(request: Request) {
       where.createdAt = createdAt;
     }
 
+    // Newest first, one page: unbounded invoice history is the slowest list in
+    // the app to render. Cursor pagination is the follow-up.
     const invoices = await prisma.invoice.findMany({
       where,
       include: INVOICE_INCLUDE,
       orderBy: { createdAt: "desc" },
+      take: LIST_PAGE_SIZE,
     });
 
     return Response.json({ invoices: invoices.map(serializeInvoice) });

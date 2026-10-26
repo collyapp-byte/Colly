@@ -21,6 +21,9 @@ function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
 }
 
+/** Rows per page for the list endpoints; see the note on pagination in GET. */
+const LIST_PAGE_SIZE = 50;
+
 /**
  * Validates the `images` field into a list of URL strings.
  *
@@ -51,7 +54,7 @@ function readImages(value: unknown): string[] | null {
 }
 
 // GET /api/products
-// Every product for the signed-in business, oldest first.
+// The signed-in business's products (one page), newest first.
 export async function GET() {
   try {
     const businessId = await getCurrentBusinessId();
@@ -60,9 +63,13 @@ export async function GET() {
       return unauthorized();
     }
 
+    // One page, newest first: `take` without an order would silently slice the
+    // oldest rows, and a freshly added product must stay visible. Cursor
+    // pagination is the follow-up for catalogues above one page.
     const products = await prisma.product.findMany({
       where: { businessId },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
+      take: LIST_PAGE_SIZE,
     });
 
     return Response.json({ products: products.map(serializeProduct) });
