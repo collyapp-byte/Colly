@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
+import { ensureFreeGrant } from "@/lib/credits";
 import {
   getAiReplyCreditCost,
   getPlanLimits,
@@ -24,6 +25,11 @@ function unauthorized() {
 //   `creditBalance`    — the sum of both, i.e. what the AI can actually spend
 // `planMonthlyCredits` is the size of the allowance the current plan grants
 // (not a balance) and is what the UI advertises next to the plan name.
+//
+// Free tier: the allowance is re-granted lazily, so this endpoint also hands out
+// the 50 Free credits when they are over 30 days old. That is what makes the
+// dashboard header pills (which call this route) refresh on their own, without
+// waiting for the owner to trigger an AI reply.
 export async function GET() {
   try {
     const businessId = await getCurrentBusinessId();
@@ -35,6 +41,7 @@ export async function GET() {
     const business = await prisma.business.findUniqueOrThrow({
       where: { id: businessId },
       select: {
+        id: true,
         plan: true,
         planInterval: true,
         planStatus: true,
@@ -42,10 +49,16 @@ export async function GET() {
         channel: true,
         planCredits: true,
         topUpCredits: true,
+        lastFreeGrantAt: true,
         subscriptionStatus: true,
         gracePeriodEndsAt: true,
       },
     });
+
+    // Free tier: re-grant the monthly 50 credits if they lapsed. The helper is a
+    // compare-and-swap that only ever touches Free rows, so a paid plan is left
+    // alone; it returns the same record with planCredits/topUpCredits refreshed.
+    const wallet = await ensureFreeGrant(business);
 
     const [{ ai: aiRepliesUsed, manual: manualRepliesUsed }] = await prisma.$queryRaw<
       { ai: number; manual: number }[]
@@ -65,9 +78,9 @@ export async function GET() {
       manualMessagesUsed: manualRepliesUsed,
       // Credit Economy: 1 credit = ₦1. The split wallet is reported bucket by
       // bucket, and `creditBalance` keeps its old meaning of "spendable now".
-      planCredits: business.planCredits,
-      topUpCredits: business.topUpCredits,
-      creditBalance: totalAvailableCredits(business),
+      planCredits: wallet.planCredits,
+      topUpCredits: wallet.topUpCredits,
+      creditBalance: totalAvailableCredits(wallet),
       planMonthlyCredits: limits.credits,
       aiCreditCost: getAiReplyCreditCost(business.channel),
       manualCreditCost: REPLY_CREDIT_COSTS.manual,

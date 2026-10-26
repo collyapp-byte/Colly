@@ -68,8 +68,8 @@ model Business {
   /// The old trial plan ("trial" / "trialing") is retired: signup no longer
   /// sets it, and every reader treats such a row as Free. The permanent Free
   /// tier grants 50 `planCredits` every month and never expires; the re-grant is
-  /// lazy (lib/auth-guards.ts resets the allowance once `lastFreeGrantAt` is
-  /// more than 30 days old), so no scheduler is needed.
+  /// lazy (`ensureFreeGrant()` in lib/credits.ts resets the allowance once
+  /// `lastFreeGrantAt` is more than 30 days old), so no scheduler is needed.
   /// Credits are a SPLIT WALLET (1 credit = ₦1), so a monthly allowance can
   /// never be hoarded:
   /// - `planCredits` is the plan's monthly allowance. Every successful plan

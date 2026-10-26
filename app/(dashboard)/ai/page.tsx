@@ -7,6 +7,7 @@ import {
   getPlanLimits,
   totalAvailableCredits,
 } from "@/lib/plans";
+import { ensureFreeGrant } from "@/lib/credits";
 import { TransactionRow } from "@/components/dashboard/transaction-row";
 import Link from "next/link";
 import { MessageSquare } from "lucide-react";
@@ -22,12 +23,14 @@ export default async function CollyAIPage() {
   const business = await prisma.business.findUnique({
     where: { id: user.businessId },
     select: {
+      id: true,
       tone: true,
       ownerTelegramChatId: true,
       telegramBotToken: true,
       discordBotToken: true,
       planCredits: true,
       topUpCredits: true,
+      lastFreeGrantAt: true,
       plan: true,
       planInterval: true,
       channel: true,
@@ -76,6 +79,15 @@ export default async function CollyAIPage() {
   // Credit Economy figures from the same source of truth the billing API uses
   // (lib/plans.ts): 1 credit = ₦1, and one AI reply costs 5 credits on
   // Telegram/Discord/Web Chat and 80 on WhatsApp. Manual replies are free.
+  //
+  // Free tier: this page renders the wallet itself, so hand out the monthly 50
+  // credits here too. The header pills get theirs from /api/billing/usage; doing
+  // it in both places means a Free owner never sees a drained balance just
+  // because the AI has not been used for 30 days.
+  if (business) {
+    await ensureFreeGrant(business);
+  }
+
   const limits = getPlanLimits(
     business?.plan ?? "free",
     business?.planInterval ?? "monthly",
