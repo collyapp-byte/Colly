@@ -71,6 +71,7 @@ Required before submitting changes: run `npm run lint`. Typecheck is via TypeScr
 
 - No `.env.example` present. Required env vars: `DATABASE_URL`, `DIRECT_URL` (Prisma Postgres), `DEEPSEEK_API_KEY` (required for chat), optional `DEEPSEEK_BASE_URL`, and Supabase `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or PUBLISHABLE). Seed uses dotenv (`prisma/seed.cjs`).
 - After setting env, run `npm run seed` to populate demo data (optional but useful). Start with `npm run dev`.
+- Analytics (Umami, optional): set `NEXT_PUBLIC_UMAMI_WEBSITE_ID` to switch tracking on. Without it the tracker is never rendered and every `trackEvent()` call is a no-op, so local clones and previews stay silent.
 
 ## Conventions / gotchas
 
@@ -86,6 +87,7 @@ Required before submitting changes: run `npm run lint`. Typecheck is via TypeScr
 - Prisma logs: errors/warns in dev, errors only in prod.
 - Business tone defaults/fallbacks: unknown stored tone falls back to "friendly" in prompt building.
 - SearchProducts returns max 5 matches; chat returns count/products to model.
+- Analytics: the Umami `<Script>` is rendered exactly once, in the root `app/layout.tsx`, so marketing, auth and dashboard routes all report pageviews. Never add another copy in a nested layout/page (the marketing layout used to have one) — pageviews would be counted twice. Custom events go through `trackEvent(name, data)` in `lib/analytics.ts`, which is a safe no-op during SSR or when the script is missing. The `signup` event (`{ role: "business" | "agent" }`) is fired by `components/auth/business-signup-form.tsx` when `signup()` returns the email-verification state, and by the agent form in `app/(auth)/signup/signup-content.tsx`. A business signup that the server action redirects straight to `/dashboard` (email confirmation off) has no client-side success state, so it is pageview-only; covering it needs a marker (cookie or `?welcome=1`) read on the dashboard.
 - Next.js 16 experimental flags enabled: `agentFeedback: true`, `cacheComponents: true`, `partialPrefetching: true`. Turbopack configured for CSS. Do not remove the auto-generated Next.js agent rules block.
 
 ## Testing / verification

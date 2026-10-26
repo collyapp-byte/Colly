@@ -7,6 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { NIGERIAN_STATES } from "@/lib/nigerian-states";
 import { isPlanTierName } from "@/lib/plans";
+import { trackEvent } from "@/lib/analytics";
 import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
 import { createClient } from "@/lib/supabase/client";
 import { AuthAlert } from "@/components/auth/auth-form";
@@ -67,6 +68,10 @@ function AgentSignupForm() {
         });
         return;
       }
+
+      // Umami: the agent account now exists, whether or not the address still
+      // has to be confirmed, so this is a successful signup.
+      trackEvent("signup", { role: "agent" });
 
       if (payload.needsConfirmation) {
         setState({

@@ -1,4 +1,3 @@
-import Script from "next/script";
 import { Footer } from "@/components/ui/footer"; 
 import { SmoothScroll } from "@/components/ui/smooth-scroll";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
@@ -32,19 +31,11 @@ export const metadata = {
 };
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
-  const umamiId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
-
+  // Analytics note: the Umami tracker is rendered once, in the root layout
+  // (app/layout.tsx), so marketing pages must not add a second copy — a
+  // duplicate <Script> would report every visit twice.
   return (
     <>
-      {umamiId && (
-        <Script
-          async
-          src="https://cloud.umami.is/script.js"
-          data-website-id={umamiId}
-          strategy="afterInteractive"
-        />
-      )}
-      
       <SmoothScroll>
         <div className="flex min-h-screen flex-col bg-[#f8fafc] bg-radial-[ellipse_at_top] from-orange-100/40 via-gray-50 to-blue-100/20 pt-20">
           <MarketingHeader />

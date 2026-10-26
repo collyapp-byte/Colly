@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState, type FormEvent } from "react";
+import { useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import { Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { signup } from "@/lib/auth-actions";
+import { trackEvent } from "@/lib/analytics";
 import { INITIAL_AUTH_STATE, emailVerificationMessage } from "@/lib/auth-form";
 import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
 import { createClient } from "@/lib/supabase/client";
@@ -45,6 +46,20 @@ export function BusinessSignupForm({
       );
     }
   }, [state.requiresEmailVerification, state.email, router]);
+
+  // Umami: count a successful signup. This is the success state the client can
+  // observe — `signup()` returns it when Supabase asks for the address to be
+  // confirmed before sign-in. When confirmation is disabled the server action
+  // redirects straight to /dashboard instead, and a server-side redirect leaves
+  // the client with no post-success state to hook into.
+  const signupTracked = useRef(false);
+  useEffect(() => {
+    if (signupTracked.current) return;
+    if (!state.requiresEmailVerification && !state.notice) return;
+
+    signupTracked.current = true;
+    trackEvent("signup", { role: "business" });
+  }, [state.requiresEmailVerification, state.notice]);
 
   // Google sign-ups land here already authenticated by Supabase. In that case
   // the email and password fields are pointless (and a password would never be
