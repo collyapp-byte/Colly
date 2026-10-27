@@ -30,6 +30,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # `next-env.d.ts` and `.next/types/*` are gitignored build outputs, so a
+      # fresh checkout has none of the route globals (`LayoutProps`,
+      # `PageProps`, `RouteContext`) and `tsc` fails with TS2304. `next typegen`
+      # writes both without running a full build.
+      - name: Generate Next.js Types
+        run: npx next typegen
+
       - name: Typecheck
         run: npm run typecheck
 

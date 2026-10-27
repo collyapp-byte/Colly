@@ -38,6 +38,12 @@ jobs:
             url="${url}?digest=${DIGEST}"
           fi
 
-          curl --fail --silent --show-error --max-time 120 \
+          # The host sleeps when idle, so the first connection is often refused
+          # or the request hangs through a cold start. `--retry-connrefused`
+          # covers the sleeping case and, combined with `--fail`, curl also
+          # retries transient 5xx/429 responses; a 401/404 still fails fast.
+          curl --fail --silent --show-error \
+            --retry 3 --retry-delay 10 --retry-connrefused \
+            --max-time 120 \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             "$url"
