@@ -72,7 +72,18 @@ export function Hero() {
             alt="Business owner chatting with a customer through Colly AI"
             width={900}
             height={700}
-            priority
+            /* LCP element. `preload` inserts <link rel="preload"> in <head> so the
+               hero asset starts downloading before the parser reaches the tag.
+               Next.js 16 deprecated `priority` (same behaviour, ambiguous name),
+               so this is the v16 spelling — do not add `priority` back. */
+            preload
+            /* Full-bleed until the wrapper switches to `lg:grid-cols-2` (Tailwind
+               lg = 1024px), then half of the grid. The breakpoint matches the
+               layout so tablets (769–1023px) still request a full-width
+               candidate instead of a blurry 50vw one. `sizes` also switches
+               Next's srcset to a full responsive set; without it the browser
+               assumes 100vw and requests an oversized candidate on desktop. */
+            sizes="(max-width: 1023px) 100vw, 50vw"
             className="rounded-3xl shadow-2xl object-cover w-full aspect-[4/5] lg:aspect-auto lg:h-[500px] object-center border border-gray-100"
           />
         </ScrollReveal>
