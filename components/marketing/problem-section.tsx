@@ -24,6 +24,10 @@ export function ProblemSection() {
             alt="Customer chatting with a business late at night"
             width={900}
             height={1100}
+            /* Half of the two-column grid from `lg` (1024px) up, full bleed
+               below it — same breakpoint as the hero. Without this the browser
+               assumes 100vw and pulls a far larger candidate than the box. */
+            sizes="(max-width: 1023px) 100vw, 50vw"
             className="rounded-3xl shadow-xl object-cover w-full aspect-[4/5] lg:aspect-auto lg:h-[600px]"
           />
         </div>

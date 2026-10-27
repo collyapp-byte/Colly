@@ -63,6 +63,10 @@ export function Features() {
                   alt="Colly AI understanding voice notes and Pidgin"
                   width={700}
                   height={500}
+                  /* The card spans two of the three columns and the image takes
+                     half of that on `md`+ (~33vw at the max-w-7xl container),
+                     full width on phones. */
+                  sizes="(max-width: 767px) 100vw, 33vw"
                   className="rounded-xl object-cover w-full h-[240px] md:h-[280px]"
                 />
               </div>
