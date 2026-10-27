@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import { UmamiTracker } from "@/components/analytics/umami-tracker";
 import { SplashScreen } from "@/components/ui/splash-screen";
 import { TopLoader } from "@/components/ui/top-loader";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -98,14 +99,40 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
-  // Umami analytics: the tracker lives in the ROOT layout so every route —
-  // marketing pages, auth screens and the dashboard — reports a pageview.
-  // Optional by design: with no website ID configured (local clones, preview
-  // deploys) the <Script> is not rendered at all and nothing is sent.
+  // Analytics are optional by design: with no ID configured (local clones,
+  // preview deploys) the script is not rendered at all and nothing is sent.
+  //
+  // Umami: the `<Script>` lives in the ROOT layout so every route — marketing
+  // pages, auth screens and the dashboard — is covered. `data-auto-pageview`
+  // is off because `<UmamiTracker />` owns pageviews: it sees every App Router
+  // navigation, whereas the script would also fire its own pageview for each
+  // `history.pushState`, counting the same route twice.
+  //
+  // Clarity: session recordings and heatmaps, the vendor's inline snippet, only
+  // when `NEXT_PUBLIC_CLARITY_ID` is set. `beforeInteractive` is deliberate:
+  // Clarity should start recording before the page becomes interactive. In the
+  // App Router Next queues inline `beforeInteractive` scripts in the server HTML
+  // (here, inside `<head>`, as a `self.__next_s` entry) and the app bootstrap
+  // runs them from `document.head` before hydration — `afterInteractive` would
+  // only execute the snippet from a client effect, once hydration is done.
   const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+  const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID;
 
   return (
     <html lang="en-NG" className={`h-full scroll-smooth ${inter.variable}`}>
+      <head>
+        {clarityId && (
+          <Script id="microsoft-clarity" strategy="beforeInteractive">
+            {`
+              (function(c,l,a,r,i,t,y){
+                  c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                  t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+              })(window, document, "clarity", "script", "${clarityId}");
+            `}
+          </Script>
+        )}
+      </head>
       <body className="min-h-full bg-background font-sans text-gray-900 antialiased">
         {/* Publisher + site identity, referenced by @id from every page's
             JSON-LD, so crawlers resolve one "Colly Nigeria" entity. */}
@@ -114,10 +141,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {umamiWebsiteId && (
           <Script
             async
+            id="umami-analytics"
             src="https://cloud.umami.is/script.js"
             data-website-id={umamiWebsiteId}
+            data-auto-pageview="false"
             strategy="afterInteractive"
           />
+        )}
+        {umamiWebsiteId && (
+          <Suspense fallback={null}>
+            {/* `useSearchParams` needs a Suspense boundary so static routes can
+                still be prerendered. Renders nothing; sends the pageview. */}
+            <UmamiTracker />
+          </Suspense>
         )}
         <Suspense fallback={null}>
           <TopLoader />

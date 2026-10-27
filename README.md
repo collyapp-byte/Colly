@@ -26,7 +26,7 @@ channel on.
 
 Next.js 16 (App Router, Turbopack, `cacheComponents`) · React 19 · TypeScript ·
 Tailwind CSS v4 · Prisma 6 + PostgreSQL (Supabase) · Supabase Auth (`@supabase/ssr`) ·
-DeepSeek · Paystack · Jina embeddings · Umami (optional).
+DeepSeek · Paystack · Jina embeddings · Umami + Microsoft Clarity (optional).
 
 ## Quick start
 

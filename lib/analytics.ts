@@ -17,7 +17,10 @@ type UmamiTracker = {
 };
 
 /**
- * Records a custom Umami event (pageviews are automatic).
+ * Records a custom Umami event. Pageviews are not sent from here: the root
+ * layout disables the script's own automatic pageviews
+ * (`data-auto-pageview="false"`) and `components/analytics/umami-tracker.tsx`
+ * reports one pageview per URL instead.
  *
  * Safe to call from anywhere in a Client Component: it does nothing during
  * server rendering and nothing when the script is missing or still loading, so

@@ -59,6 +59,7 @@ We do not sell personal data, and we do not use your customer conversations to t
 - Paystack — card payments, subscriptions and agent payouts.
 - Telegram, Discord and Meta — delivering messages on the channel you connect. WhatsApp is only activated when your business is onboarded from the waitlist.
 - Umami — optional, cookieless page analytics (only when enabled).
+- Microsoft Clarity — optional, session recordings and heatmaps (only when enabled).
 - Professional advisers or authorities where the law requires it.
 
 Each processor is bound to use the data only for the service it provides to us.`}
