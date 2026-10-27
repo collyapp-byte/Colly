@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { CollyAiWidget } from "@/components/dashboard/colly-ai-widget";
+import { SplashScreen } from "@/components/ui/splash-screen";
 import { Footer } from "@/components/ui/footer";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
@@ -76,6 +77,10 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
 
   return (
     <>
+      {/* Brand splash on sign-in. Scoped to this layout, not the root one: it is
+          a full-viewport overlay, and on public pages it would sit on top of the
+          hero (the LCP element) for 500 ms + a 200 ms fade. */}
+      <SplashScreen />
       <DashboardShell
         businessName={user.businessName}
         hasNoProducts={(business?._count.products ?? 0) === 0}

@@ -29,8 +29,9 @@ export function Hero() {
       </div>
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 lg:grid-cols-2">
-        {/* Left column */}
-        <ScrollReveal>
+        {/* Left column — above the fold: `immediate` keeps the h1 in the server
+            HTML as visible text so the LCP element does not wait for hydration. */}
+        <ScrollReveal immediate>
           <span className="inline-flex items-center rounded-full border border-[#FF6600]/30 bg-white px-4 py-1.5 text-[13px] font-semibold text-[#FF6600]">
             Colly AI 2.0 is live
           </span>
@@ -65,8 +66,10 @@ export function Hero() {
           </p>
         </ScrollReveal>
 
-        {/* Right column: customer conversation image */}
-        <ScrollReveal delay={0.15} className="relative mt-8 w-full lg:mt-0">
+        {/* Right column: customer conversation image. Also `immediate`: this is
+            the largest element on the page, so a hidden initial state would
+            postpone LCP even with the <link rel="preload"> in the head. */}
+        <ScrollReveal immediate className="relative mt-8 w-full lg:mt-0">
           <Image
             src="/man chatting daytime v.jpg"
             alt="Business owner chatting with a customer through Colly AI"

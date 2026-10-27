@@ -4,7 +4,6 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { UmamiTracker } from "@/components/analytics/umami-tracker";
-import { SplashScreen } from "@/components/ui/splash-screen";
 import { TopLoader } from "@/components/ui/top-loader";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
@@ -158,7 +157,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={null}>
           <TopLoader />
         </Suspense>
-        <SplashScreen />
+        {/* The splash screen deliberately does NOT live here. It is a
+            full-viewport `z-[100]` overlay that holds for 500 ms + a 200 ms
+            fade, so it would cover the marketing hero's LCP element and delay
+            first paint by ~0.7 s on every landing. It now lives in the
+            dashboard layout only (app/(dashboard)/layout.tsx). */}
         {children}
         <Toaster
           position="bottom-right"
