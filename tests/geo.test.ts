@@ -171,7 +171,17 @@ test("every competitor page has a row for every comparison axis", () => {
   assert.ok(COMPETITORS.length >= 3);
 
   const ids = COMPARISON_FEATURES.map((feature) => feature.id);
-  assert.deepEqual([...ids].sort(), ["ai", "cac", "channels", "jiji", "pricing"]);
+  assert.deepEqual([...ids].sort(), [
+    "ai",
+    "cac",
+    "channels",
+    "jiji",
+    "pidgin",
+    "pricing",
+  ]);
+  // The advantages Colly leads with open the table, in the order the hub prose
+  // lists them: paperwork, money, catalogue, language.
+  assert.deepEqual(ids.slice(0, 4), ["cac", "pricing", "jiji", "pidgin"]);
   assert.equal(new Set(ids).size, ids.length, "no duplicate axis");
 
   const slugs = new Set<string>();
@@ -203,6 +213,49 @@ test("every competitor page has a row for every comparison axis", () => {
   assert.equal(isUnknownGeoRoute("/vs/dmly"), false);
 });
 
+/**
+ * The Nigerian vendors that own the "AI chatbot for Nigerian business" answer
+ * boxes are the queries this surface exists to win, so they are pinned by slug
+ * here rather than by count: dropping one of them changes routing (sitemap,
+ * public allowlist, 404 rewrite), which has to be a deliberate edit.
+ */
+test("the Nigerian AI tools buyers search for each have a comparison page", () => {
+  const targeted = ["zella-ai", "loop56", "buvvo-ai", "accessplanet", "wabot"];
+
+  for (const slug of targeted) {
+    const competitor = getCompetitor(slug);
+    assert.ok(competitor, `/vs/${slug} would 404 — no record in COMPETITORS`);
+
+    // Every field the hub card and the comparison table render must be filled in.
+    assert.ok(competitor.name.trim().length > 0, `${slug} needs a display name`);
+    for (const [field, value] of Object.entries({
+      summary: competitor.summary,
+      bestFor: competitor.bestFor,
+      pricingModel: competitor.pricingModel,
+      collyEdge: competitor.collyEdge,
+    })) {
+      assert.ok(value.trim().length > 20, `${slug}.${field} is too thin to rank`);
+    }
+
+    assert.equal(competitorPath(slug), `/vs/${slug}`);
+    assert.equal(isPublicRoute(`/vs/${slug}`), true);
+    assert.equal(
+      isUnknownGeoRoute(`/vs/${slug}`),
+      false,
+      `${slug} resolves, so it must never be rewritten to the 404 page`,
+    );
+    assert.equal(
+      isUnknownGeoRoute(`/vs/${slug}-unknown`),
+      true,
+      "only the exact slug resolves; a near-miss is still a 404",
+    );
+    assert.ok(
+      PUBLIC_PAGES.some((page) => page.path === `/vs/${slug}`),
+      `${slug} is missing from the sitemap`,
+    );
+  }
+});
+
 test("the comparison rows quote lib/plans.ts and keep WhatsApp honest", () => {
   const pricing = COMPARISON_FEATURES.find(
     (feature) => feature.id === "pricing",
@@ -226,6 +279,15 @@ test("the comparison rows quote lib/plans.ts and keep WhatsApp honest", () => {
     json.includes("WhatsApp Business API"),
     false,
     "retired claim: Colly never had the WhatsApp Business API",
+  );
+
+  // A competitor may honestly be described as running on Meta's official
+  // channel; the retired claim is Colly having that API, so no vendor record may
+  // repeat it either.
+  assert.equal(
+    JSON.stringify(COMPETITORS).includes("WhatsApp Business API"),
+    false,
+    "the comparison copy must not imply Colly runs the WhatsApp Business API",
   );
 });
 
@@ -335,6 +397,14 @@ test("public/llms.txt names the entity and links the core pages", () => {
   // answer engine reads first must advertise them too.
   assert.ok(llms.includes("[All locations](https://colly.com.ng/locations)"));
   assert.ok(llms.includes("[Comparisons](https://colly.com.ng/vs)"));
+  // Every vendor on /vs is named here too: this is the file an answer engine
+  // reads before it crawls, so a comparison it cannot see is one it will not cite.
+  for (const competitor of COMPETITORS) {
+    assert.ok(
+      llms.includes(competitor.name),
+      `${competitor.name} has a comparison page but is not named in llms.txt`,
+    );
+  }
   assert.match(llms, /Plans start at ₦15,000\/month/);
 });
 

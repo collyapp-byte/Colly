@@ -93,10 +93,19 @@ site without parsing marketing prose. They are static data + prerendered pages, 
   (the shell itself is `placePageJsonLd`, shared with the city pages). The pages never claim a
   local price list: one Naira price list through Paystack, stated in the buyer's `currency`.
 - `/vs/[competitor]` — `app/(marketing)/vs/[competitor]/page.tsx`, records in
-  `lib/competitors.ts` (`getCompetitor(slug)`, rows + `disclaimer`). Comparison cells are
-  hedged at category level and the page carries the dated review disclaimer; the schema is an
-  `ItemList` (`lib/seo.ts#comparisonJsonLd`). Never claim "WhatsApp Business API" and never
-  promise self-serve WhatsApp — WhatsApp is a manual waitlist.
+  `lib/competitors.ts` (`getCompetitor(slug)`, rows + `disclaimer`). Eight vendors:
+  DMLY, Revoply AI and WATI, plus the Nigerian tools that own the "AI chatbot for
+  Nigerian business" answers — Zella AI (`zella-ai`), Loop56 (`loop56`), Buvvo AI
+  (`buvvo-ai`), Accessplanet (`accessplanet`) and WABot (`wabot`), pinned by slug
+  in `tests/geo.test.ts` so dropping one is a deliberate routing change. Six axes
+  (`COMPARISON_FEATURES`), led by the four advantages: zero CAC → Naira credits →
+  Jiji sync → Pidgin and voice notes, then channels and AI depth. `Competitor.values`
+  is keyed by `ComparisonFeatureId`, so adding an axis fails the build until every
+  vendor answers it. Comparison cells are hedged at category level and the page
+  carries the dated review disclaimer; the schema is an `ItemList`
+  (`lib/seo.ts#comparisonJsonLd`). Never claim "WhatsApp Business API" — a test
+  scans the axis rows and every vendor record for it — and never promise
+  self-serve WhatsApp; WhatsApp is a manual waitlist.
 - `/vs` and `/locations` — the two hubs (`app/(marketing)/vs/page.tsx`,
   `app/(marketing)/locations/page.tsx`). `/vs` renders one card per competitor (name, neutral
   summary, best-for) plus the dated disclaimer; `/locations` renders "By Country"

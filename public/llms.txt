@@ -6,7 +6,7 @@
 - [Agent Academy](https://colly.com.ng/academy): 15% recurring commission for local agents.
 - [Product Features](https://colly.com.ng/features): Pidgin language, voice notes, Jiji sync.
 - [All locations](https://colly.com.ng/locations): Every city and country page in one index.
-- [Comparisons](https://colly.com.ng/vs): Colly AI vs DMLY, Revoply AI and WATI.
+- [Comparisons](https://colly.com.ng/vs): Colly AI vs DMLY, Revoply AI, WATI, Zella AI, Loop56, Buvvo AI, Accessplanet and WABot.
 
 ## Countries
 - [Nigeria](https://colly.com.ng/countries/nigeria): Home market; one Naira price list for shops and online sellers.

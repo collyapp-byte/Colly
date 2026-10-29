@@ -66,11 +66,12 @@ export default function ComparisonsHubPage() {
             Colly AI vs the alternatives
           </h1>
           <p className="mt-4 text-base leading-relaxed text-gray-600">
-            The tools Nigerian shops shortlist most often, compared on the five
-            things that decide the sale: how much of the reply is really AI,
-            whether you pay in Naira or dollars, Jiji catalogue sync, the
-            channels your customers already use, and the paperwork needed to
-            start. One page per comparison, last reviewed in{" "}
+            The tools Nigerian shops shortlist most often — from WhatsApp
+            specialists to custom-trained agents — compared on the six things
+            that decide the sale: the paperwork needed to start, whether you pay
+            in Naira or dollars, Jiji catalogue sync, Pidgin and voice notes, the
+            channels your customers already use, and how much of the reply is
+            really AI. One page per comparison, last reviewed in{" "}
             {COMPETITOR_REVIEWED}.
           </p>
         </div>
@@ -78,7 +79,7 @@ export default function ComparisonsHubPage() {
 
       <section className="pb-14 sm:pb-16">
         <div className="mx-auto max-w-5xl px-4">
-          <ul className="grid gap-4 md:grid-cols-3">
+          <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {COMPETITORS.map((competitor) => (
               <li key={competitor.slug} className="h-full">
                 <Link

@@ -476,7 +476,7 @@ export function comparisonHubDescription(): string {
 
   return `Colly AI compared with ${listNames(
     names,
-  )} on the five things a buyer checks: AI depth, Naira pricing, Jiji catalogue sync, channels and CAC paperwork. Colly plans start at ${formatNaira(
+  )} on the six things a buyer checks: CAC paperwork, Naira pricing, Jiji catalogue sync, Pidgin and voice notes, channels and AI depth. Colly plans start at ${formatNaira(
     PLANS.green.monthly,
   )} a month; competitor details come from their public websites, last reviewed in ${COMPETITOR_REVIEWED}.`;
 }
