@@ -21,9 +21,10 @@ import { formatClockTime, isInFuture } from "@/lib/format";
 // customer messages appear without a manual reload.
 const POLL_INTERVAL_MS = 5000;
 
-// Matches the other dashboard inputs so the agent composer looks native.
-const INPUT_CLASS =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+// Pill-shaped composer input: a one-line field that grows with the draft, so
+// the reply bar reads like a chat app rather than a dashboard form.
+const COMPOSER_INPUT_CLASS =
+  "max-h-40 min-h-[44px] w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-colly focus:bg-white focus:ring-2 focus:ring-colly/20";
 
 type Message = {
   id: string;
@@ -48,6 +49,21 @@ type PlanState = {
   includedManualMessages: number;
   manualMessagesRemaining: number;
 };
+
+/**
+ * Up to two initials for the header avatar ("Ada Obi" -> "AO"), so the chat
+ * header reads like a contact row in a messenger.
+ */
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+
+  if (parts.length === 0) return "?";
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
 
 export default function ConversationDetailPage() {
   return (
@@ -77,6 +93,7 @@ function ConversationDetail() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   // Polling must not fight the "scroll to newest" effect, so only a growing
   // message list scrolls.
   const lastMessageCount = useRef(0);
@@ -125,25 +142,51 @@ function ConversationDetail() {
 
   const messageCount = messages?.length ?? 0;
 
-  // Keep the newest message in view on first load and whenever one arrives.
+  // Keep the newest message in view: jump there on first load, glide when one
+  // arrives (poll result or the owner's own reply) so the list moves the way a
+  // native chat scrolls.
   useEffect(() => {
     if (messageCount > lastMessageCount.current) {
-      bottomRef.current?.scrollIntoView({ block: "end" });
+      bottomRef.current?.scrollIntoView({
+        block: "end",
+        behavior: lastMessageCount.current === 0 ? "auto" : "smooth",
+      });
     }
     lastMessageCount.current = messageCount;
   }, [messageCount]);
+
+  // Auto-resize the composer: start at one line and grow with the draft, up to
+  // the max height. The height is reset first so the textarea can shrink again
+  // after a send (`scrollHeight` never reports less than the current height).
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
+  }, [draft]);
 
   // An expired timestamp means the takeover has lapsed and the AI is active.
   const paused = conversation?.pausedUntil
     ? isInFuture(conversation.pausedUntil)
     : false;
 
+  // Conversation.status is "AI_HANDLING", "HUMAN_TAKEOVER" or "ESCALATED".
+  // Seeded demo rows still carry the legacy "OPEN" value, which behaves like
+  // AI_HANDLING here.
+  const status = conversation?.status.toUpperCase() ?? "";
+  const isEscalated = status === "ESCALATED";
+  const isHumanTakeover = status === "HUMAN_TAKEOVER";
+
   // The AI is off (free/expired plan or an active takeover); the owner answers
   // by hand. The composer stays open while free manual replies remain.
   const aiPaused = plan?.aiPaused ?? false;
   const manualRemaining = plan?.manualMessagesRemaining ?? 0;
   const canReplyManually = manualRemaining > 0;
-  const showComposer = paused || (aiPaused && canReplyManually);
+  // An escalated chat is waiting on the owner ("AI Paused"), so it gets the
+  // banner instead of the composer until the owner takes it over.
+  const showComposer =
+    !isEscalated && (paused || (aiPaused && canReplyManually));
 
   async function handleTakeOver() {
     setActionError(null);
@@ -267,13 +310,17 @@ function ConversationDetail() {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <Link
-        href="/conversations"
-        className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Back to Conversations
-      </Link>
+      {/* Until the chat header exists (first paint or a failed fetch) keep a
+          plain way back; afterwards the sticky header owns that control. */}
+      {!conversation && (
+        <Link
+          href="/conversations"
+          className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Back to Conversations
+        </Link>
+      )}
 
       {error && (
         <div className="flex items-start gap-3 rounded-lg border border-danger/30 bg-danger/5 p-4 text-sm text-danger">
@@ -295,16 +342,34 @@ function ConversationDetail() {
 
       {conversation && (
         <>
-          {/* Header */}
-          <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
+          {/* Sticky chat header: back, the customer and the takeover control
+              pinned to the top right, the way a native chat app arranges it.
+              On mobile it parks under the dashboard top bar (h-14). */}
+          <div className="sticky top-14 z-20 -mx-4 -mt-4 flex items-center gap-2 border-b border-gray-200 bg-white px-3 py-2.5 shadow-sm md:top-0 md:-mx-6 md:-mt-6 md:gap-3 md:px-6 md:py-3">
+            <Link
+              href="/conversations"
+              aria-label="Back to Conversations"
+              title="Back to Conversations"
+              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+            >
+              <ArrowLeft className="h-5 w-5" aria-hidden />
+            </Link>
+
+            <div
+              aria-hidden
+              className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full bg-colly-light text-sm font-semibold text-colly sm:flex"
+            >
+              {getInitials(conversation.customer.name)}
+            </div>
+
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h1 className="truncate font-display text-xl text-gray-900">
+                <h1 className="truncate font-display text-base font-semibold text-gray-900 sm:text-lg">
                   {conversation.customer.name}
                 </h1>
                 <StatusBadge status={conversation.status} />
               </div>
-              <p className="mt-0.5 text-sm text-gray-500">
+              <p className="truncate text-xs text-gray-500 sm:text-sm">
                 {conversation.customer.phone}
               </p>
             </div>
@@ -315,17 +380,17 @@ function ConversationDetail() {
                 onClick={handleDownloadTranscript}
                 aria-label="Download transcript"
                 title="Download transcript"
-                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-900"
+                className="inline-flex min-h-[44px] min-w-[40px] items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
               >
                 <Download className="h-4 w-4" aria-hidden />
               </button>
 
-              {conversation.status === "HUMAN_TAKEOVER" ? (
+              {isHumanTakeover ? (
                 <button
                   type="button"
                   onClick={handleResumeAi}
                   disabled={busy}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-60"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-green-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-green-700 disabled:opacity-60 sm:px-4 sm:text-sm"
                 >
                   {busy ? (
                     <LoaderCircle
@@ -343,7 +408,7 @@ function ConversationDetail() {
                     type="button"
                     onClick={handleTakeOver}
                     disabled={busy}
-                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-colly px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-colly-hover disabled:opacity-60 sm:px-4 sm:text-sm"
                   >
                     {busy ? (
                       <LoaderCircle
@@ -378,7 +443,7 @@ function ConversationDetail() {
                 </span>
                 . You are replying manually.
               </p>
-              {conversation.status !== "HUMAN_TAKEOVER" && (
+              {!isHumanTakeover && (
                 <button
                   type="button"
                   onClick={handleResumeAi}
@@ -412,10 +477,10 @@ function ConversationDetail() {
             </div>
           )}
 
-          {/* Messages */}
-          <div className="mt-4 rounded-lg border border-gray-200 bg-surface px-4 py-5 sm:px-6">
+          {/* Messages: a light canvas with WhatsApp-style bubbles. */}
+          <div className="mt-3 rounded-2xl border border-gray-200 bg-white px-3 py-4 sm:px-4 sm:py-5">
             {messages && messages.length > 0 ? (
-              <div className="space-y-4">
+              <div className="flex flex-col gap-2.5">
                 {messages.map((message) => (
                   <ChatBubble
                     key={message.id}
@@ -424,7 +489,9 @@ function ConversationDetail() {
                     createdAt={message.createdAt}
                   />
                 ))}
-                <div ref={bottomRef} />
+                {/* Auto-scroll target. `scroll-mb-28` keeps the newest bubble
+                    clear of the sticky composer when it is scrolled into view. */}
+                <div ref={bottomRef} className="scroll-mb-28" />
               </div>
             ) : (
               <p className="py-8 text-center text-sm text-gray-400">
@@ -433,12 +500,44 @@ function ConversationDetail() {
             )}
           </div>
 
+          {/* Escalated chats are waiting on the owner: the AI is paused and the
+              composer stays closed until the chat is taken over, so the banner
+              replaces the input bar. */}
+          {isEscalated && (
+            <div className="sticky bottom-16 z-10 -mx-4 mt-3 flex flex-wrap items-center gap-3 border-t border-amber-200 bg-amber-50 px-4 py-3 md:bottom-0 md:-mx-6 md:px-6">
+              <PauseCircle
+                className="h-5 w-5 shrink-0 text-amber-600"
+                aria-hidden
+              />
+              <p className="min-w-0 flex-1 text-sm font-semibold text-amber-900">
+                AI Paused - Waiting for Owner
+              </p>
+              {!paused && (
+                <button
+                  type="button"
+                  onClick={handleTakeOver}
+                  disabled={busy}
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-60"
+                >
+                  {busy ? (
+                    <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Hand className="h-4 w-4" aria-hidden />
+                  )}
+                  Take Over
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Agent composer: open during a human takeover, or while the AI is
-              off and the owner still has free manual replies left. */}
+              off and the owner still has free manual replies left. It sticks to
+              the bottom of the screen like a native chat input bar (offset on
+              mobile so the tab bar stays reachable). */}
           {showComposer && (
             <form
               onSubmit={handleSend}
-              className="sticky bottom-16 z-10 mt-4 rounded-lg border border-gray-200 bg-surface p-3 sm:p-4"
+              className="sticky bottom-16 z-10 -mx-4 mt-3 border-t border-gray-200 bg-white p-4 md:bottom-0 md:-mx-6"
             >
               <label htmlFor="agent-reply" className="sr-only">
                 Reply as an agent
@@ -446,6 +545,7 @@ function ConversationDetail() {
               <div className="flex items-end gap-2">
                 <textarea
                   id="agent-reply"
+                  ref={textareaRef}
                   rows={1}
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
@@ -457,19 +557,20 @@ function ConversationDetail() {
                     }
                   }}
                   placeholder="Type your reply as a human agent..."
-                  className={`${INPUT_CLASS} max-h-40 min-h-[42px] resize-y`}
+                  className={COMPOSER_INPUT_CLASS}
                 />
                 <button
                   type="submit"
                   disabled={sending || draft.trim().length === 0}
-                  className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                  aria-label="Send reply"
+                  title="Send reply"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FF6600] text-white shadow-sm transition-colors hover:bg-colly-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {sending ? (
-                    <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                    <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden />
                   ) : (
-                    <Send className="h-4 w-4" aria-hidden />
+                    <Send className="h-5 w-5" aria-hidden />
                   )}
-                  Send
                 </button>
               </div>
             </form>

@@ -7,36 +7,39 @@ type ChatBubbleProps = {
 };
 
 /**
- * A single chat message.
- * - "customer" -> left aligned, white bubble
- * - "ai"       -> right aligned, soft orange (colly-light) bubble
- * - "agent"    -> right aligned, solid orange bubble (human takeover)
+ * A single chat message, styled like a native messaging app (WhatsApp/iMessage).
+ *
+ * - "customer" -> inbound: left aligned, light grey bubble, dark text, the
+ *   rounded corner points at the avatar side (top left).
+ * - "ai" / "agent" -> outbound: right aligned, brand orange bubble, white
+ *   text, the rounded corner points at the sender side (top right).
+ *
+ * Both outbound senders share the same colour, so the author (Colly AI or you)
+ * and the timestamp sit inside the bubble, bottom right, in small
+ * semi-transparent text — the same place a native chat app puts its clock.
  */
 export function ChatBubble({ sender, content, createdAt }: ChatBubbleProps) {
   const isCustomer = sender === "customer";
   const isAgent = sender === "agent";
 
-  const bubbleStyles = isCustomer
-    ? "border border-gray-200 bg-surface text-gray-700"
-    : isAgent
-      ? "bg-colly text-white"
-      : "bg-colly-light text-gray-900";
-
   const label = isCustomer ? "Customer" : isAgent ? "You" : "Colly AI";
 
   return (
     <div className={`flex ${isCustomer ? "justify-start" : "justify-end"}`}>
-      <div className="max-w-[85%] sm:max-w-[70%]">
-        <div
-          className={`whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${bubbleStyles}`}
-        >
-          {content}
-        </div>
+      <div
+        className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-sm ${
+          isCustomer
+            ? "rounded-tl-sm bg-gray-100 text-gray-900"
+            : "rounded-tr-sm bg-[#FF6600] text-white"
+        }`}
+      >
+        <p className="whitespace-pre-wrap break-words">{content}</p>
         <p
-          className={`mt-1 text-[11px] text-gray-400 ${
-            isCustomer ? "text-left" : "text-right"
+          className={`mt-1 text-right text-[10px] leading-none ${
+            isCustomer ? "text-gray-900/60" : "text-white/75"
           }`}
         >
+          <span className="sr-only">Sent by </span>
           {label} · {formatMessageTime(createdAt)}
         </p>
       </div>
