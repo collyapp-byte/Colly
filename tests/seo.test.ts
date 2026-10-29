@@ -243,6 +243,34 @@ test("organization, website and product nodes share stable @ids", () => {
   );
   assert.equal(org.url, SITE_URL);
   assert.ok(String(org["@id"]).endsWith("#organization"));
+  // `sameAs` is what ties the site to the same entity off-site; without it the
+  // "Colly" name is up for grabs by the footballer and the equipment company.
+  assert.ok(
+    Array.isArray(org.sameAs),
+    "sameAs must be an array of profile URLs",
+  );
+  const sameAs = org.sameAs as string[];
+  assert.ok(
+    sameAs.includes("https://www.linkedin.com/company/colly-ai"),
+    "sameAs must link the LinkedIn company profile",
+  );
+  for (const profile of sameAs) {
+    assert.match(
+      profile,
+      /^https:\/\/[^/]+\/./,
+      `${profile} must be an absolute https profile URL`,
+    );
+  }
+
+  assert.ok(
+    Array.isArray(org.knowsAbout),
+    "knowsAbout must be an array of expertise topics",
+  );
+  const knowsAbout = org.knowsAbout as string[];
+  assert.ok(
+    knowsAbout.includes("Artificial Intelligence"),
+    "knowsAbout must claim the software entity's core expertise",
+  );
 
   const logo = org.logo as { url: string };
   assert.equal(logo.url, absoluteUrl("/logo.png"), "logo must be absolute");

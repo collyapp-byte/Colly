@@ -47,6 +47,27 @@ const SOFTWARE_FEATURES = [
   "Manual replies are free; AI replies cost 5 credits (80 on WhatsApp)",
 ];
 
+/**
+ * Colly's off-site footprint. `sameAs` is how search and AI answer engines tie
+ * the site to the same entity elsewhere on the web, which is what stops "Colly"
+ * being merged with the footballer or the industrial equipment company that
+ * share the name. The profiles are listed before they go live so the entity
+ * graph keeps a stable shape once they exist.
+ */
+const ORGANIZATION_SAME_AS: string[] = [
+  "https://www.linkedin.com/company/colly-ai",
+  "https://x.com/colly_ai",
+  "https://github.com/collyapp-byte/Colly",
+];
+
+/** What the company is an authority on, so the entity reads as a software vendor. */
+const ORGANIZATION_KNOWS_ABOUT: string[] = [
+  "Artificial Intelligence",
+  "Customer Service Automation",
+  "Sales Automation",
+  "Nigerian SMEs",
+];
+
 function planName(tier: PlanTier): string {
   return `${SITE_BRAND} ${tier[0].toUpperCase()}${tier.slice(1)} plan (monthly)`;
 }
@@ -104,6 +125,11 @@ export function organizationJsonLd(): JsonLdNode {
       areaServed: "NG",
       availableLanguage: ["English", "Nigerian Pidgin"],
     },
+    // Off-site profiles and expertise: together with the aliases above they
+    // tell crawlers this is a Nigerian software company and not one of the
+    // unrelated namesakes.
+    sameAs: ORGANIZATION_SAME_AS,
+    knowsAbout: ORGANIZATION_KNOWS_ABOUT,
   };
 }
 
