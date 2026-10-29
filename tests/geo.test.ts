@@ -22,14 +22,21 @@ import { readFileSync } from "node:fs";
 import {
   COMPARISON_FEATURES,
   COMPETITORS,
+  COMPETITORS_HUB_PATH,
   COMPETITOR_DISCLAIMER,
+  COMPETITOR_REVIEWED,
   comparisonAnswer,
   competitorPath,
   getCompetitor,
 } from "../lib/competitors";
 import { COUNTRIES, countryPath, getCountry } from "../lib/countries";
 import { formatNaira } from "../lib/format";
-import { LOCATIONS, getLocation, locationPath } from "../lib/locations";
+import {
+  LOCATIONS,
+  LOCATIONS_HUB_PATH,
+  getLocation,
+  locationPath,
+} from "../lib/locations";
 import { FAQ_ANSWER_WORDS, MARKETING_FAQS } from "../lib/marketing-faq";
 import { PLANS, REPLY_CREDIT_COSTS } from "../lib/plans";
 import {
@@ -38,6 +45,8 @@ import {
   isUnknownGeoRoute,
 } from "../lib/public-routes";
 import {
+  comparisonHubDescription,
+  comparisonHubJsonLd,
   comparisonJsonLd,
   countryDescription,
   countryJsonLd,
@@ -45,8 +54,10 @@ import {
   locationDescription,
   locationJsonLd,
   pageMetadata,
+  placesHubDescription,
+  placesHubJsonLd,
 } from "../lib/seo";
-import { PUBLIC_PAGES } from "../lib/site";
+import { PUBLIC_PAGES, SITE_URL, absoluteUrl } from "../lib/site";
 
 /** Whitespace word count — what a model sees when it chunks the paragraph. */
 function wordCount(text: string): number {
@@ -320,6 +331,10 @@ test("public/llms.txt names the entity and links the core pages", () => {
   );
   assert.ok(llms.includes("[Pricing](https://colly.com.ng/pricing)"));
   assert.ok(llms.includes("[Agent Academy](https://colly.com.ng/academy)"));
+  // The two hubs are the crawl path into the programmatic pages, so the file an
+  // answer engine reads first must advertise them too.
+  assert.ok(llms.includes("[All locations](https://colly.com.ng/locations)"));
+  assert.ok(llms.includes("[Comparisons](https://colly.com.ng/vs)"));
   assert.match(llms, /Plans start at ₦15,000\/month/);
 });
 
@@ -478,4 +493,132 @@ test("a country page publishes a Country node beside the Naira offer", () => {
     "the canonical must be the country URL, not /",
   );
 });
+
+/**
+ * The two hubs are the crawl path into the programmatic pages: without them a
+ * crawler only reaches a comparison or a city page from a sibling, and an
+ * unknown slug is the only thing the proxy rewrites to `NOT_FOUND_REWRITE_PATH`.
+ * "Returns 200" is asserted as the three conditions that produce it: the proxy
+ * lets a signed-out visitor through, it does not rewrite the path to the 404
+ * target, and a route file exists that exports the page and its metadata.
+ */
+test("the /vs and /locations hubs render instead of 404ing", () => {
+  assert.equal(LOCATIONS_HUB_PATH, "/locations");
+  assert.equal(COMPETITORS_HUB_PATH, "/vs");
+
+  for (const hub of [LOCATIONS_HUB_PATH, COMPETITORS_HUB_PATH]) {
+    // 200, part one: no session required, and no 404 rewrite.
+    assert.equal(isPublicRoute(hub), true, `${hub} must render without a session`);
+    assert.equal(
+      isUnknownGeoRoute(hub),
+      false,
+      `${hub} is a hub, not an unknown slug — it must not be rewritten to a 404`,
+    );
+    assert.notEqual(hub, NOT_FOUND_REWRITE_PATH);
+
+    // Advertised exactly once, so the sitemap and the canonicals agree.
+    assert.equal(
+      PUBLIC_PAGES.filter((page) => page.path === hub).length,
+      1,
+      `${hub} must be in PUBLIC_PAGES exactly once`,
+    );
+
+    // 200, part two: a route actually serves the path. A hub the proxy allowed
+    // but no route served would still be a 404, which is the failure this test
+    // exists to catch.
+    const source = readFileSync(
+      new URL(`../app/(marketing)${hub}/page.tsx`, import.meta.url),
+      "utf8",
+    );
+    assert.match(source, /export default function/, `${hub} has no page component`);
+    assert.match(
+      source,
+      /export function generateMetadata/,
+      `${hub} must publish its own metadata`,
+    );
+  }
+
+  // The hubs do not loosen the leaf guards: a known slug still renders and an
+  // unknown one is still a real 404.
+  assert.equal(isUnknownGeoRoute("/locations/lagos"), false);
+  assert.equal(isUnknownGeoRoute("/locations/atlantis"), true);
+  assert.equal(isUnknownGeoRoute("/vs/dmly"), false);
+  assert.equal(isUnknownGeoRoute("/vs/unknown-tool"), true);
+});
+
+/**
+ * The hubs' structured data: a `CollectionPage` whose ItemList is the same set
+ * of URLs the cards link to. A competitor, city or country added to its data
+ * module appears in the hub schema without a second edit, and the copy quotes
+ * the Naira price from `lib/plans.ts` rather than typing one.
+ */
+test("the hubs publish an ItemList of every leaf page", () => {
+  type ListItem = {
+    position: number;
+    item: { "@type": string; url: string };
+  };
+  type ItemList = {
+    "@type": string;
+    numberOfItems: number;
+    itemListElement: ListItem[];
+  };
+
+  const comparisons = comparisonHubJsonLd();
+  assert.equal(comparisons["@type"], "CollectionPage");
+  assert.equal(comparisons.url, absoluteUrl(COMPETITORS_HUB_PATH));
+  assert.equal(
+    comparisons["@id"],
+    `${absoluteUrl(COMPETITORS_HUB_PATH)}#webpage`,
+  );
+  assert.equal(comparisons.description, comparisonHubDescription());
+
+  const comparisonList = comparisons.mainEntity as ItemList;
+  assert.equal(comparisonList["@type"], "ItemList");
+  assert.equal(comparisonList.numberOfItems, COMPETITORS.length);
+  assert.deepEqual(
+    comparisonList.itemListElement.map((entry) => entry.item.url),
+    COMPETITORS.map((competitor) =>
+      absoluteUrl(competitorPath(competitor.slug)),
+    ),
+  );
+  assert.deepEqual(
+    comparisonList.itemListElement.map((entry) => entry.position),
+    COMPETITORS.map((_, index) => index + 1),
+  );
+
+  const places = placesHubJsonLd();
+  assert.equal(places["@type"], "CollectionPage");
+  assert.equal(places.url, absoluteUrl(LOCATIONS_HUB_PATH));
+  assert.equal(places.description, placesHubDescription());
+
+  const placesList = places.mainEntity as ItemList;
+  assert.equal(placesList["@type"], "ItemList");
+  assert.equal(placesList.numberOfItems, COUNTRIES.length + LOCATIONS.length);
+  // Countries first (the parent level), then the cities inside them.
+  assert.deepEqual(
+    placesList.itemListElement.map((entry) => entry.item.url),
+    [
+      ...COUNTRIES.map((country) => absoluteUrl(countryPath(country.slug))),
+      ...LOCATIONS.map((location) => absoluteUrl(locationPath(location.slug))),
+    ],
+  );
+  assert.deepEqual(
+    placesList.itemListElement.map((entry) => entry.item["@type"]),
+    [...COUNTRIES.map(() => "Country"), ...LOCATIONS.map(() => "City")],
+  );
+
+  // Both hubs hang off the homepage's website node, and the copy they publish
+  // quotes the live price and the dated review instead of typing either.
+  for (const node of [comparisons, places]) {
+    assert.equal((node.isPartOf as { "@id": string })["@id"], `${SITE_URL}/#website`);
+    assert.equal((node.about as { "@id": string })["@id"], `${SITE_URL}/#organization`);
+  }
+  assert.ok(placesHubDescription().includes(formatNaira(PLANS.green.monthly)));
+  assert.ok(
+    comparisonHubDescription().includes(formatNaira(PLANS.green.monthly)),
+  );
+  assert.ok(comparisonHubDescription().includes(COMPETITOR_REVIEWED));
+});
+
+
 

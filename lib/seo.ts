@@ -13,13 +13,21 @@ import type { Metadata } from "next";
 import { ACADEMY_COURSES } from "@/lib/academy-catalogue";
 import {
   COMPARISON_FEATURES,
+  COMPETITORS,
+  COMPETITORS_HUB_PATH,
+  COMPETITOR_REVIEWED,
   comparisonAnswer,
   competitorPath,
   type Competitor,
 } from "@/lib/competitors";
-import { countryPath, type Country } from "@/lib/countries";
+import { COUNTRIES, countryPath, type Country } from "@/lib/countries";
 import { formatNaira } from "@/lib/format";
-import { locationPath, type Location } from "@/lib/locations";
+import {
+  LOCATIONS,
+  LOCATIONS_HUB_PATH,
+  locationPath,
+  type Location,
+} from "@/lib/locations";
 import { MARKETING_FAQS, type MarketingFaq } from "@/lib/marketing-faq";
 import { PLANS, type PlanTier } from "@/lib/plans";
 import {
@@ -447,6 +455,141 @@ export function comparisonJsonLd(competitor: Competitor): JsonLdNode {
           },
         },
       ],
+    },
+  };
+}
+
+/** "A, B and C" — reads like prose in a meta description, unlike a bare join. */
+function listNames(names: readonly string[]): string {
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/**
+ * The meta description for the `/vs` hub, shared by `generateMetadata` and
+ * `comparisonHubJsonLd` so the snippet and the schema cannot disagree. The
+ * competitors are named from `lib/competitors.ts` and the review date from
+ * `COMPETITOR_REVIEWED`, so adding a vendor updates both.
+ */
+export function comparisonHubDescription(): string {
+  const names = COMPETITORS.map((competitor) => competitor.name);
+
+  return `Colly AI compared with ${listNames(
+    names,
+  )} on the five things a buyer checks: AI depth, Naira pricing, Jiji catalogue sync, channels and CAC paperwork. Colly plans start at ${formatNaira(
+    PLANS.green.monthly,
+  )} a month; competitor details come from their public websites, last reviewed in ${COMPETITOR_REVIEWED}.`;
+}
+
+/**
+ * The meta description for the `/locations` hub: every city and country that
+ * has a landing page, counted from the data modules rather than typed, plus the
+ * one Naira price list they all share.
+ */
+export function placesHubDescription(): string {
+  return `Colly AI for businesses in ${LOCATIONS.length} Nigerian cities (${listNames(
+    LOCATIONS.map((location) => location.city),
+  )}) and in ${COUNTRIES.length} countries (${listNames(
+    COUNTRIES.map((country) => country.name),
+  )}), on one Naira price list from ${formatNaira(
+    PLANS.green.monthly,
+  )} a month.`;
+}
+
+/**
+ * The `/vs` hub as a `CollectionPage`: an ItemList of every comparison page.
+ *
+ * One comparison page links to the others, but nothing linked to *all* of them
+ * from a single crawlable URL until this hub — the schema states the same set
+ * the cards render, so the list a crawler reads is the list a visitor sees.
+ */
+export function comparisonHubJsonLd(): JsonLdNode {
+  const url = absoluteUrl(COMPETITORS_HUB_PATH);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${url}#webpage`,
+    url,
+    name: "Colly AI vs Competitors",
+    description: comparisonHubDescription(),
+    inLanguage: SITE_LANGUAGE,
+    isPartOf: { "@id": WEBSITE_ID },
+    about: { "@id": ORGANIZATION_ID },
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Comparisons", item: url },
+      ],
+    },
+    mainEntity: {
+      "@type": "ItemList",
+      name: "Colly AI comparisons",
+      numberOfItems: COMPETITORS.length,
+      itemListElement: COMPETITORS.map((competitor, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "WebPage",
+          name: `Colly AI vs ${competitor.name}`,
+          description: comparisonAnswer(competitor),
+          url: absoluteUrl(competitorPath(competitor.slug)),
+        },
+      })),
+    },
+  };
+}
+
+/**
+ * The `/locations` hub as a `CollectionPage`: one ItemList of every place page,
+ * countries first (the parent level) and then the cities inside them.
+ *
+ * Each item carries its real `@type` (`Country` or `City`) and the absolute URL
+ * of its landing page, so an answer engine reading the hub learns both the
+ * coverage and where the evidence for it lives.
+ */
+export function placesHubJsonLd(): JsonLdNode {
+  const url = absoluteUrl(LOCATIONS_HUB_PATH);
+  const places = [
+    ...COUNTRIES.map((country) => ({
+      type: "Country",
+      name: country.name,
+      url: absoluteUrl(countryPath(country.slug)),
+    })),
+    ...LOCATIONS.map((location) => ({
+      type: "City",
+      name: location.city,
+      url: absoluteUrl(locationPath(location.slug)),
+    })),
+  ];
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${url}#webpage`,
+    url,
+    name: "AI Sales Assistant by City and Country",
+    description: placesHubDescription(),
+    inLanguage: SITE_LANGUAGE,
+    isPartOf: { "@id": WEBSITE_ID },
+    about: { "@id": ORGANIZATION_ID },
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Locations", item: url },
+      ],
+    },
+    mainEntity: {
+      "@type": "ItemList",
+      name: "Where Colly AI works",
+      numberOfItems: places.length,
+      itemListElement: places.map((place, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        item: { "@type": place.type, name: place.name, url: place.url },
+      })),
     },
   };
 }

@@ -165,6 +165,14 @@ export const COMPETITOR_REVIEWED = "October 2026";
 
 export const COMPETITOR_DISCLAIMER = `Competitor details come from their public websites and were last reviewed in ${COMPETITOR_REVIEWED}. Check with the vendor before you buy, and note that Colly is not affiliated with any tool listed here.`;
 
+/**
+ * The hub that lists every comparison: `/vs`. Rendered by
+ * `app/(marketing)/vs/page.tsx`, listed in `lib/site.ts#PUBLIC_PAGES` and kept
+ * session-free by `lib/public-routes.ts` — it is the crawl path into the
+ * per-competitor pages, which have no other internal links but each other.
+ */
+export const COMPETITORS_HUB_PATH = "/vs";
+
 /** Root-relative URL of a comparison page. */
 export function competitorPath(slug: string): string {
   return `/vs/${slug}`;

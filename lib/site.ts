@@ -11,9 +11,13 @@
  * framework inlines `NEXT_PUBLIC_*` at build time.
  */
 
-import { COMPETITORS, competitorPath } from "@/lib/competitors";
+import {
+  COMPETITORS,
+  COMPETITORS_HUB_PATH,
+  competitorPath,
+} from "@/lib/competitors";
 import { COUNTRIES, countryPath } from "@/lib/countries";
-import { LOCATIONS, locationPath } from "@/lib/locations";
+import { LOCATIONS, LOCATIONS_HUB_PATH, locationPath } from "@/lib/locations";
 
 /** The production host, used when `NEXT_PUBLIC_APP_URL` is not configured. */
 export const SITE_DOMAIN = "colly.com.ng";
@@ -155,6 +159,13 @@ export const PUBLIC_PAGES: readonly PublicPage[] = [
   // list is derived from its data module, so a new city, country or competitor
   // is one object away from being in the sitemap, the public-route allowlist
   // (`lib/public-routes.ts`) and the per-page canonical.
+  //
+  // The two hubs (`/locations`, `/vs`) index those lists for a crawler — the
+  // leaf pages mostly link sideways to their siblings — and carry the same
+  // priority as the pages beneath them. Keeping each hub directly above its
+  // leaves is what preserves the non-increasing priority order that
+  // `tests/seo.test.ts` asserts.
+  { path: LOCATIONS_HUB_PATH, changeFrequency: "monthly", priority: 0.7 },
   ...LOCATIONS.map((location) => ({
     path: locationPath(location.slug),
     changeFrequency: "monthly" as const,
@@ -165,6 +176,7 @@ export const PUBLIC_PAGES: readonly PublicPage[] = [
     changeFrequency: "monthly" as const,
     priority: 0.6,
   })),
+  { path: COMPETITORS_HUB_PATH, changeFrequency: "monthly", priority: 0.6 },
   ...COMPETITORS.map((competitor) => ({
     path: competitorPath(competitor.slug),
     changeFrequency: "monthly" as const,

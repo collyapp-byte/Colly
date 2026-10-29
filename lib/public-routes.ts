@@ -13,9 +13,9 @@
  */
 
 import { PUBLIC_PAGES } from "@/lib/site";
-import { getCompetitor } from "@/lib/competitors";
+import { COMPETITORS_HUB_PATH, getCompetitor } from "@/lib/competitors";
 import { getCountry } from "@/lib/countries";
-import { getLocation } from "@/lib/locations";
+import { LOCATIONS_HUB_PATH, getLocation } from "@/lib/locations";
 
 /**
  * Session-free routes that are deliberately *not* in the sitemap: the Supabase
@@ -24,12 +24,15 @@ import { getLocation } from "@/lib/locations";
  * landing page, the password recovery screens and the agent discovery
  * directory.
  *
- * `/locations`, `/countries` and `/vs` are the programmatic GEO prefixes. Their
- * *known* cities, countries and competitors are in the sitemap through
- * `PUBLIC_PAGES`; the prefixes are listed here so an unlisted slug is answered by
- * the app rather than by the login redirect (see `isUnknownGeoRoute`, which turns
- * an unlisted slug into a real 404 before the page renders — a redirect reads as
- * a soft 404 to a crawler).
+ * `/locations`, `/countries` and `/vs` are the programmatic GEO prefixes.
+ * `/locations` and `/vs` are also real pages now — the two hubs that index the
+ * city/country and comparison lists, listed in `PUBLIC_PAGES` through
+ * `LOCATIONS_HUB_PATH` / `COMPETITORS_HUB_PATH` — while `/countries` has no hub
+ * of its own (the `/locations` hub is the index for both levels). Listing the
+ * prefixes here also means an unlisted slug is answered by the app rather than
+ * by the login redirect (see `isUnknownGeoRoute`, which turns an unlisted slug
+ * into a real 404 before the page renders — a redirect reads as a soft 404 to a
+ * crawler).
  */
 const SESSION_FREE_PATHS: readonly string[] = [
   "/auth/callback",
@@ -39,9 +42,9 @@ const SESSION_FREE_PATHS: readonly string[] = [
   "/forgot-password",
   "/reset-password",
   "/find-an-agent",
-  "/locations",
+  LOCATIONS_HUB_PATH,
   "/countries",
-  "/vs",
+  COMPETITORS_HUB_PATH,
 ];
 
 export const PUBLIC_ROUTE_PATHS: readonly string[] = [
@@ -76,6 +79,10 @@ export function isPublicRoute(pathname: string): boolean {
  * response starts and rewrites to a path with no route, so the answer is a real
  * 404 with the app's not-found page. The lookup is an array scan over static
  * data, so it costs nothing per request.
+ *
+ * A hub (`/vs`, `/locations`) is a single segment, not a slug, so it never
+ * matches here: it has a real page in `PUBLIC_PAGES` and must not be rewritten
+ * to the 404 target.
  */
 export function isUnknownGeoRoute(pathname: string): boolean {
   const segments = pathname.split("/").filter(Boolean);

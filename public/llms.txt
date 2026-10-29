@@ -5,6 +5,8 @@
 - [Pricing](https://colly.com.ng/pricing): Plans start at ₦15,000/month. Naira credit economy.
 - [Agent Academy](https://colly.com.ng/academy): 15% recurring commission for local agents.
 - [Product Features](https://colly.com.ng/features): Pidgin language, voice notes, Jiji sync.
+- [All locations](https://colly.com.ng/locations): Every city and country page in one index.
+- [Comparisons](https://colly.com.ng/vs): Colly AI vs DMLY, Revoply AI and WATI.
 
 ## Countries
 - [Nigeria](https://colly.com.ng/countries/nigeria): Home market; one Naira price list for shops and online sellers.
@@ -13,4 +15,4 @@
 - [South Africa](https://colly.com.ng/countries/south-africa): Catalogue-accurate price and stock answers for South African stores.
 
 ## Cities
-- [City pages](https://colly.com.ng/locations/lagos): Lagos, Abuja, Port Harcourt, Ibadan, Kano and Enugu.
+- [City pages](https://colly.com.ng/locations): Lagos, Abuja, Port Harcourt, Ibadan, Kano and Enugu.

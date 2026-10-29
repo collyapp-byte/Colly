@@ -74,7 +74,8 @@ site without parsing marketing prose. They are static data + prerendered pages, 
 
 - `public/llms.txt` — plain-text summary for LLMs (`# Colly AI`, blockquote, `## Core Pages`,
   `## Countries` and `## Cities` sections with `[Name](https://colly.com.ng/…)` links and
-  prices). Served straight from `public/`, so it needs **no** route; `proxy.ts` must keep
+  prices; `## Core Pages` also lists the `All locations` (`/locations`) and `Comparisons`
+  (`/vs`) hubs). Served straight from `public/`, so it needs **no** route; `proxy.ts` must keep
   excluding it from the matcher, otherwise a crawler gets a 307 to `/login`. Keep the prices in
   it — and the country/city slugs it lists — in step with `lib/plans.ts`, `lib/countries.ts`
   and `lib/locations.ts`.
@@ -96,6 +97,19 @@ site without parsing marketing prose. They are static data + prerendered pages, 
   hedged at category level and the page carries the dated review disclaimer; the schema is an
   `ItemList` (`lib/seo.ts#comparisonJsonLd`). Never claim "WhatsApp Business API" and never
   promise self-serve WhatsApp — WhatsApp is a manual waitlist.
+- `/vs` and `/locations` — the two hubs (`app/(marketing)/vs/page.tsx`,
+  `app/(marketing)/locations/page.tsx`). `/vs` renders one card per competitor (name, neutral
+  summary, best-for) plus the dated disclaimer; `/locations` renders "By Country"
+  (`COUNTRIES`) then "By City" (`LOCATIONS`), each card linking its landing page. Both are
+  static, `generateMetadata`-driven, and publish `lib/seo.ts#comparisonHubJsonLd` /
+  `#placesHubJsonLd` — a `CollectionPage` whose `mainEntity` is an `ItemList` of every leaf
+  URL, built from the same arrays the cards render. `/countries` deliberately has no hub:
+  `/locations` indexes both levels.
+- `components/ui/footer.tsx` carries the sitewide internal links: a `Product` column, a
+  `Compare` column (`/vs` plus every competitor, derived from `lib/competitors.ts`) and a
+  `Locations` column (`/locations` plus Nigeria, Ghana, Lagos and Abuja — a curated slice,
+  because the hub links all ten place pages). Keep those two columns when the footer is
+  restyled: they are the only sitewide crawl path into the `vs` and `locations` trees.
 - Homepage FAQ — copy in `lib/marketing-faq.ts` (`MARKETING_FAQS`, exact questions ending in
   `?`, 40–60-word self-contained answers, `FAQ_ANSWER_WORDS`), rendered **stacked and always
   open** by `components/marketing/faq.tsx`, which owns the only `FAQPage` node on the site.
@@ -103,8 +117,10 @@ site without parsing marketing prose. They are static data + prerendered pages, 
   second `FAQPage` there re-introduces the duplicate-schema bug.
 - The city, country and competitor prefixes are all in `lib/site.ts#PUBLIC_PAGES` (sitemap +
   canonicals) and in `SESSION_FREE_PATHS` (`lib/public-routes.ts`), so no crawler is bounced to
-  `/login`. Sitemap priority must stay non-increasing down `PUBLIC_PAGES` (`tests/seo.test.ts`
-  asserts it), hence cities 0.7 → countries 0.6 → competitors 0.6 → legal pages.
+  `/login`; the hub entries use `LOCATIONS_HUB_PATH` / `COMPETITORS_HUB_PATH` from the data
+  modules. Sitemap priority must stay non-increasing down `PUBLIC_PAGES` (`tests/seo.test.ts`
+  asserts it), hence the `/locations` hub 0.7 → cities 0.7 → countries 0.6 → the `/vs` hub
+  0.6 → competitors 0.6 → legal pages: each hub sits directly above its leaves.
 - **Real 404s:** `cacheComponents: true` rules out `dynamicParams`/`ensureStatic`, and partial
   prerendering streams the static shell before the page renders — so a page-level `notFound()`
   keeps the `200` and only adds `noindex` (a soft 404, confirmed against `npm run start`).
@@ -113,8 +129,10 @@ site without parsing marketing prose. They are static data + prerendered pages, 
   (`/not-found`, no route) and yields a real `404` with the app's not-found page. Add every new
   programmatic route prefix (`locations`, `countries`, `vs`) to that helper.
 - `tests/geo.test.ts` locks the copy rules (city/country/competitor slugs, JSON-LD shape, NGN
-  prices, 40–60-word answers, single `FAQPage`, `llms.txt` contents, and the known-slug
-  200/unknown-slug 404 routing contract); `tests/seo.test.ts` locks the homepage's single
+  prices, 40–60-word answers, single `FAQPage`, `llms.txt` contents, the known-slug
+  200/unknown-slug 404 routing contract, and that `/vs` + `/locations` are public, sitemapped,
+  never rewritten to the 404 target and backed by a route file that exports the page and its
+  `generateMetadata`); `tests/seo.test.ts` locks the homepage's single
   `SoftwareApplication` node.
 
 

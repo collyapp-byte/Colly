@@ -91,6 +91,13 @@ export const LOCATIONS: readonly Location[] = [
   },
 ];
 
+/**
+ * The hub that lists every city page, and the countries they sit in: `/locations`.
+ * `app/(marketing)/locations/page.tsx` renders it, `lib/site.ts` puts it in the
+ * sitemap and `lib/public-routes.ts` keeps it reachable without a session.
+ */
+export const LOCATIONS_HUB_PATH = "/locations";
+
 /** Root-relative URL of a city landing page. */
 export function locationPath(slug: string): string {
   return `/locations/${slug}`;
