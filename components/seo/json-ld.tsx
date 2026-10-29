@@ -20,13 +20,15 @@ export function JsonLd({ data }: { data: JsonLdNode | JsonLdNode[] }) {
 }
 
 /**
- * The marketing homepage's structured data: one SoftwareApplication node (with
- * an Offer per paid tier) plus the FAQPage that mirrors the accordion rendered
- * by `components/marketing/faq.tsx`.
+ * The marketing homepage's structured data: one SoftwareApplication node, with
+ * an Offer per paid tier inside its AggregateOffer.
  *
- * Server Component with no props on purpose: the page cannot pass a price or a
- * question in, so the schema can never drift from `lib/plans.ts` (what checkout
- * charges) or `lib/marketing-faq.ts` (what the visitor reads).
+ * The FAQPage is NOT part of this document — `components/marketing/faq.tsx`
+ * emits it from the same `MARKETING_FAQS` array it renders, which keeps the
+ * schema beside the visible copy and stops `/` shipping the node twice.
+ *
+ * Server Component with no props on purpose: the page cannot pass a price in,
+ * so the schema can never drift from `lib/plans.ts` (what checkout charges).
  */
 export function HomepageJsonLd() {
   return <JsonLd data={homepageJsonLd()} />;

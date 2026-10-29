@@ -11,6 +11,10 @@
  * framework inlines `NEXT_PUBLIC_*` at build time.
  */
 
+import { COMPETITORS, competitorPath } from "@/lib/competitors";
+import { COUNTRIES, countryPath } from "@/lib/countries";
+import { LOCATIONS, locationPath } from "@/lib/locations";
+
 /** The production host, used when `NEXT_PUBLIC_APP_URL` is not configured. */
 export const SITE_DOMAIN = "colly.com.ng";
 
@@ -147,6 +151,25 @@ export const PUBLIC_PAGES: readonly PublicPage[] = [
   { path: "/", changeFrequency: "weekly", priority: 1 },
   { path: "/pricing", changeFrequency: "monthly", priority: 0.9 },
   { path: "/academy", changeFrequency: "monthly", priority: 0.8 },
+  // Programmatic GEO pages: city, country and competitor landing pages. Every
+  // list is derived from its data module, so a new city, country or competitor
+  // is one object away from being in the sitemap, the public-route allowlist
+  // (`lib/public-routes.ts`) and the per-page canonical.
+  ...LOCATIONS.map((location) => ({
+    path: locationPath(location.slug),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  })),
+  ...COUNTRIES.map((country) => ({
+    path: countryPath(country.slug),
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  })),
+  ...COMPETITORS.map((competitor) => ({
+    path: competitorPath(competitor.slug),
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  })),
   { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
   { path: "/terms", changeFrequency: "yearly", priority: 0.3 },
   { path: "/account/delete", changeFrequency: "yearly", priority: 0.2 },

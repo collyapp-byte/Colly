@@ -13,6 +13,9 @@
  */
 
 import { PUBLIC_PAGES } from "@/lib/site";
+import { getCompetitor } from "@/lib/competitors";
+import { getCountry } from "@/lib/countries";
+import { getLocation } from "@/lib/locations";
 
 /**
  * Session-free routes that are deliberately *not* in the sitemap: the Supabase
@@ -20,6 +23,13 @@ import { PUBLIC_PAGES } from "@/lib/site";
  * inside an iframe), agent certificate verification, the email-confirmation
  * landing page, the password recovery screens and the agent discovery
  * directory.
+ *
+ * `/locations`, `/countries` and `/vs` are the programmatic GEO prefixes. Their
+ * *known* cities, countries and competitors are in the sitemap through
+ * `PUBLIC_PAGES`; the prefixes are listed here so an unlisted slug is answered by
+ * the app rather than by the login redirect (see `isUnknownGeoRoute`, which turns
+ * an unlisted slug into a real 404 before the page renders — a redirect reads as
+ * a soft 404 to a crawler).
  */
 const SESSION_FREE_PATHS: readonly string[] = [
   "/auth/callback",
@@ -29,6 +39,9 @@ const SESSION_FREE_PATHS: readonly string[] = [
   "/forgot-password",
   "/reset-password",
   "/find-an-agent",
+  "/locations",
+  "/countries",
+  "/vs",
 ];
 
 export const PUBLIC_ROUTE_PATHS: readonly string[] = [
@@ -50,3 +63,34 @@ export function isPublicRoute(pathname: string): boolean {
       : pathname === path || pathname.startsWith(`${path}/`),
   );
 }
+
+/**
+ * True when `pathname` is a programmatic GEO URL whose slug has no record:
+ * `/locations/<unknown city>`, `/countries/<unknown country>` or
+ * `/vs/<unknown competitor>`.
+ *
+ * The pages themselves call `notFound()`, but partial prerendering streams the
+ * static shell before the page renders, so a `notFound()` thrown that late can
+ * only keep the `200` already sent and add `noindex` — a soft 404, which search
+ * engines report and some drop silently. The proxy checks the slug *before* the
+ * response starts and rewrites to a path with no route, so the answer is a real
+ * 404 with the app's not-found page. The lookup is an array scan over static
+ * data, so it costs nothing per request.
+ */
+export function isUnknownGeoRoute(pathname: string): boolean {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length !== 2) return false;
+
+  const [prefix, slug] = segments;
+  if (prefix === "locations") return getLocation(slug) === undefined;
+  if (prefix === "countries") return getCountry(slug) === undefined;
+  if (prefix === "vs") return getCompetitor(slug) === undefined;
+  return false;
+}
+
+/**
+ * A path with no route: rewriting a request here inside the proxy answers with
+ * the app's `not-found` page and a `404` status, while the visitor's address bar
+ * keeps the URL they typed.
+ */
+export const NOT_FOUND_REWRITE_PATH = "/not-found";

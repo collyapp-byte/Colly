@@ -11,6 +11,15 @@
 
 import type { Metadata } from "next";
 import { ACADEMY_COURSES } from "@/lib/academy-catalogue";
+import {
+  COMPARISON_FEATURES,
+  comparisonAnswer,
+  competitorPath,
+  type Competitor,
+} from "@/lib/competitors";
+import { countryPath, type Country } from "@/lib/countries";
+import { formatNaira } from "@/lib/format";
+import { locationPath, type Location } from "@/lib/locations";
 import { MARKETING_FAQS, type MarketingFaq } from "@/lib/marketing-faq";
 import { PLANS, type PlanTier } from "@/lib/plans";
 import {
@@ -213,18 +222,233 @@ export function faqJsonLd(
 }
 
 /**
- * Everything the landing page publishes as structured data, in one document:
- * the SoftwareApplication (which already carries one `Offer` per paid tier
- * inside its AggregateOffer) followed by the FAQPage built from the answers the
- * page renders further down.
+ * What the landing page publishes as structured data: the SoftwareApplication,
+ * which already carries one `Offer` per paid tier inside its AggregateOffer.
  *
- * Kept as an array so `JsonLd` can emit a single `<script>` block: an AI answer
- * engine reads the product and the FAQ from one parse, and `/` never repeats a
- * node. Both halves are still built by the functions above, so prices keep
- * coming from `lib/plans.ts` and the answers from `lib/marketing-faq.ts`.
+ * The FAQPage node lives with the answers now — `components/marketing/faq.tsx`
+ * renders it from the same array it displays — so `/` ships exactly one FAQPage
+ * instead of two, and the schema is read where the copy is written.
  */
 export function homepageJsonLd(): JsonLdNode[] {
-  return [softwareApplicationJsonLd(), faqJsonLd()];
+  return [softwareApplicationJsonLd()];
+}
+
+/**
+ * The meta description for a city landing page, shared by `generateMetadata`
+ * and `locationJsonLd` so the snippet and the schema say the same thing.
+ */
+export function locationDescription(location: Location): string {
+  return `AI sales assistant for ${location.city} businesses: Colly replies 24/7 on Telegram, Discord and Web Chat in English or Nigerian Pidgin, from ${formatNaira(
+    PLANS.green.monthly,
+  )} a month.`;
+}
+
+/**
+ * The meta description for a country landing page, shared by
+ * `generateMetadata` and `countryJsonLd` so the snippet and the schema say the
+ * same thing. Same price, same channels, same languages as everywhere else —
+ * nothing in it is per-country, because nothing in the price list is.
+ */
+export function countryDescription(country: Country): string {
+  return `AI sales assistant for businesses in ${country.name}: Colly replies 24/7 on Telegram, Discord and Web Chat in English or Nigerian Pidgin, from ${formatNaira(
+    PLANS.green.monthly,
+  )} a month.`;
+}
+
+/**
+ * The shell shared by both programmatic place pages (`/locations/[city]` and
+ * `/countries/[country]`): a WebPage whose `mainEntity` is the Service, pointed
+ * at the place through `areaServed`, priced from `lib/plans.ts`, with a
+ * breadcrumb so the page has a place in the site hierarchy.
+ *
+ * `areaServed` is the part that matters for GEO — it lets an answer engine reply
+ * "Colly AI is available in Lagos" (or "in Ghana") with a citation instead of
+ * inferring it from the title.
+ */
+function placePageJsonLd({
+  url,
+  name,
+  description,
+  serviceName,
+  breadcrumbName,
+  areaServed,
+}: {
+  url: string;
+  name: string;
+  description: string;
+  serviceName: string;
+  breadcrumbName: string;
+  /** A `City` or `Country` node, or an `@id` reference to a full node. */
+  areaServed: JsonLdNode;
+}): JsonLdNode {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${url}#webpage`,
+    url,
+    name,
+    description,
+    inLanguage: SITE_LANGUAGE,
+    isPartOf: { "@id": WEBSITE_ID },
+    about: { "@id": ORGANIZATION_ID },
+    mainEntity: {
+      "@type": "Service",
+      name: serviceName,
+      serviceType: "AI sales and customer service assistant",
+      provider: { "@id": ORGANIZATION_ID },
+      areaServed,
+      offers: {
+        "@type": "Offer",
+        price: String(PLANS.green.monthly),
+        priceCurrency: "NGN",
+        url: absoluteUrl("/pricing"),
+      },
+    },
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: breadcrumbName, item: url },
+      ],
+    },
+  };
+}
+
+/**
+ * A city landing page: which service, where, and at what price.
+ *
+ * Delegates the WebPage/Service/Offer/breadcrumb shell to `placePageJsonLd`, so
+ * a country page publishes exactly the same structure one level up.
+ */
+export function locationJsonLd(location: Location): JsonLdNode {
+  const url = absoluteUrl(locationPath(location.slug));
+
+  return placePageJsonLd({
+    url,
+    name: `AI Sales Assistant for Businesses in ${location.city}`,
+    description: locationDescription(location),
+    serviceName: `Colly AI sales assistant in ${location.city}`,
+    breadcrumbName: location.city,
+    areaServed: {
+      "@type": "City",
+      name: location.city,
+      containedInPlace: {
+        "@type": "AdministrativeArea",
+        name: location.state,
+      },
+    },
+  });
+}
+
+/**
+ * A country landing page, as the two nodes the page publishes:
+ *
+ * 1. a `Country` node — the entity itself, so an answer engine can answer "is
+ *    Colly AI available in Kenya?" from the markup rather than by inferring it
+ *    from the copy, and so the country has a stable `@id` other nodes can cite;
+ * 2. the same WebPage/Service shell the city pages use, with `areaServed`
+ *    pointing at that `@id` and the Naira offer from `lib/plans.ts`.
+ *
+ * Returned as an array (one `<script type="application/ld+json">` graph) so a
+ * country page carries both facts without duplicating the service markup.
+ */
+export function countryJsonLd(country: Country): JsonLdNode[] {
+  const url = absoluteUrl(countryPath(country.slug));
+  const countryId = `${url}#country`;
+
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "Country",
+      "@id": countryId,
+      name: country.name,
+      description: countryDescription(country),
+      url,
+      containedInPlace: { "@type": "Continent", name: "Africa" },
+    },
+    placePageJsonLd({
+      url,
+      name: `AI Sales Assistant for Businesses in ${country.name}`,
+      description: countryDescription(country),
+      serviceName: `Colly AI sales assistant in ${country.name}`,
+      breadcrumbName: country.name,
+      areaServed: {
+        "@type": "Country",
+        "@id": countryId,
+        name: country.name,
+      },
+    }),
+  ];
+}
+
+/**
+ * The comparison page as data: two `SoftwareApplication` nodes side by side,
+ * each carrying one `additionalProperty` per table row, wrapped in an ItemList.
+ *
+ * This is the shape an AI Overview can read without parsing the HTML table: the
+ * axes come from `COMPARISON_FEATURES`, the answers from the same competitor
+ * record the table renders, and Colly's Naira price from `lib/plans.ts`.
+ */
+export function comparisonJsonLd(competitor: Competitor): JsonLdNode {
+  const url = absoluteUrl(competitorPath(competitor.slug));
+
+  const additionalProperties = (
+    values: readonly string[],
+  ): JsonLdNode[] =>
+    COMPARISON_FEATURES.map((feature, index) => ({
+      "@type": "PropertyValue",
+      name: feature.label,
+      value: values[index],
+    }));
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${url}#webpage`,
+    url,
+    name: `Colly AI vs ${competitor.name}`,
+    description: comparisonAnswer(competitor),
+    inLanguage: SITE_LANGUAGE,
+    isPartOf: { "@id": WEBSITE_ID },
+    about: { "@id": ORGANIZATION_ID },
+    mainEntity: {
+      "@type": "ItemList",
+      name: `Colly AI compared with ${competitor.name}`,
+      numberOfItems: 2,
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          item: {
+            "@type": "SoftwareApplication",
+            "@id": SOFTWARE_ID,
+            name: SITE_NAME,
+            alternateName: ["Colly AI", SITE_ENTITY_ALIAS],
+            applicationCategory: "BusinessApplication",
+            description: SITE_DESCRIPTION,
+            additionalProperty: additionalProperties(
+              COMPARISON_FEATURES.map((feature) => feature.colly),
+            ),
+          },
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          item: {
+            "@type": "SoftwareApplication",
+            name: competitor.name,
+            applicationCategory: "BusinessApplication",
+            description: competitor.summary,
+            additionalProperty: additionalProperties(
+              COMPARISON_FEATURES.map(
+                (feature) => competitor.values[feature.id],
+              ),
+            ),
+          },
+        },
+      ],
+    },
+  };
 }
 
 /** The four academy courses, so search engines can read the curriculum. */

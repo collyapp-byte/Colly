@@ -19,6 +19,11 @@ import { formatNaira } from "@/lib/format";
  * Black and Free are plain white cards; Blue (the "Most Popular" plan) keeps
  * its light blue wash, a strong blue border and a deeper shadow so it stands
  * out without overlapping any text.
+ *
+ * `place` localizes the section heading for the programmatic place pages
+ * (`/locations/[city]` and `/countries/[country]`). Prices do not change per
+ * city or country — Colly sells one Naira price list everywhere — so the prop
+ * only ever touches the copy around the cards.
  */
 type CardTone = "neutral" | "emerald" | "blue";
 
@@ -61,7 +66,7 @@ type PlanCard = {
   tone: CardTone;
 };
 
-export function Pricing() {
+export function Pricing({ place }: { place?: string } = {}) {
   const plans: PlanCard[] = [
     {
       name: "Free",
@@ -118,8 +123,16 @@ export function Pricing() {
     <section id="pricing" className="bg-white/60 py-20 sm:py-28">
       <ScrollReveal className="mx-auto max-w-5xl px-4">
         <div className="text-center mb-16">
-          <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">Simple pricing. No hidden fees.</h2>
-          <p className="mt-4 text-gray-600">Billed monthly. Cancel anytime.</p>
+          <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">
+            {place
+              ? `Simple pricing for businesses in ${place}.`
+              : "Simple pricing. No hidden fees."}
+          </h2>
+          <p className="mt-4 text-gray-600">
+            {place
+              ? `Same Naira price in ${place} as everywhere else. Billed monthly, cancel anytime.`
+              : "Billed monthly. Cancel anytime."}
+          </p>
           <p className="mx-auto mt-2 max-w-xl text-sm text-gray-500">{CREDIT_ECONOMY_DESCRIPTION}</p>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

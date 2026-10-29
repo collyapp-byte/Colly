@@ -1,7 +1,12 @@
 ﻿import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { prisma } from "@/lib/prisma";
-import { isPublicRoute } from "@/lib/public-routes";
+import {
+  isPublicRoute,
+  isUnknownGeoRoute,
+  NOT_FOUND_REWRITE_PATH,
+} from "@/lib/public-routes";
+
 import { getSupabaseEnv, isMissingConfigError } from "./env";
 
 /** Routes that only signed-out visitors should see. */
@@ -73,11 +78,13 @@ async function userHasTenant(authUser: {
 /**
  * Runs before every matched request (see the root `proxy.ts`).
  *
- * Two jobs:
- *  1. Refresh the Supabase session and write the rotated cookies back onto the
+ * Three jobs:
+ *  1. Answer `/locations/<unknown>`, `/countries/<unknown>` and `/vs/<unknown>`
+ *     with a real 404 (see `isUnknownGeoRoute`) before any rendering starts.
+ *  2. Refresh the Supabase session and write the rotated cookies back onto the
  *     response, so a server-rendered session stays alive. This must happen
  *     before the response is created, otherwise the refresh is lost.
- *  2. Do a cheap, optimistic redirect: signed-out visitors never reach a
+ *  3. Do a cheap, optimistic redirect: signed-out visitors never reach a
  *     dashboard page, and signed-in users *with a tenant* are sent away from
  *     /login. Signed-in accounts without a tenant can reach both /login and
  *     /signup, so they can sign out or switch accounts instead of looping.
@@ -88,6 +95,20 @@ async function userHasTenant(authUser: {
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
+
+  const { pathname } = request.nextUrl;
+
+  // Programmatic GEO pages (`/locations/<city>`, `/vs/<competitor>`) only exist
+  // for the records in their data modules. An unknown slug has to answer with a
+  // real 404 *before* the partially prerendered shell streams, otherwise
+  // `notFound()` inside the page can only leave the 200 status in place (see
+  // `isUnknownGeoRoute`). This runs first: it needs no session and no database.
+  if (isUnknownGeoRoute(pathname)) {
+    const notFoundUrl = request.nextUrl.clone();
+    notFoundUrl.pathname = NOT_FOUND_REWRITE_PATH;
+    notFoundUrl.search = "";
+    return NextResponse.rewrite(notFoundUrl);
+  }
 
   let supabase;
   try {
@@ -127,7 +148,6 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
   const isApiRoute = pathname.startsWith("/api");
 
   // Leave API routes alone: they answer with 401 JSON rather than an HTML

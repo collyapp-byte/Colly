@@ -13,6 +13,13 @@ import { formatNaira } from "@/lib/format";
  * needing the rest of the page. Price and credit figures are read from
  * `lib/plans.ts`, the single source of truth, so this answer can never
  * advertise a price the billing code does not charge.
+ *
+ * `place` switches the block into its localized form for the programmatic GEO
+ * pages — `/locations/[city]` and `/countries/[country]`: the H1 names the place,
+ * and the subhead becomes the one-sentence local answer ("Colly AI helps Lagos
+ * businesses …" / "Colly AI helps businesses across Nigeria …") so the page is
+ * quotable as the answer to "AI sales assistant in <place>". `across` picks the
+ * country phrasing; the default (no prop) is the homepage copy.
  */
 const HERO_ANSWER =
   // Entity type first: "Nigerian software company" is what separates Colly from
@@ -22,7 +29,19 @@ const HERO_ANSWER =
   `It costs ${formatNaira(PLANS.green.monthly)}/month for ${PLANS.green.credits.toLocaleString()} credits, with a free tier available. ` +
   "It handles Pidgin, voice notes, and price negotiations so you never lose a sale.";
 
-export function Hero() {
+export function Hero({
+  place,
+  across = false,
+}: {
+  /** Place name for a localized page: a city (`Lagos`) or a country (`Nigeria`). */
+  place?: string;
+  /**
+   * Say "businesses across <place>" instead of "<place> businesses". A city takes
+   * the possessive form ("Lagos businesses"); a country reads better with
+   * "across", which is how the country pages phrase it.
+   */
+  across?: boolean;
+} = {}) {
   return (
     <section className="relative overflow-hidden bg-[#f5f5f5] pt-8 pb-16 sm:pt-32 sm:pb-24">
       {/* Soft warm glow behind the visual, kept subtle so the copy stays crisp. */}
@@ -40,13 +59,26 @@ export function Hero() {
           </span>
 
           <h1 className="mt-6 text-5xl font-bold tracking-tight text-gray-900 lg:text-7xl">
-            AI Sales Assistant for{" "}
-            <span className="text-[#FF6600]">Nigerian Businesses</span>
+            {place ? (
+              <>
+                AI Sales Assistant for Businesses in{" "}
+                <span className="text-[#FF6600]">{place}</span>
+              </>
+            ) : (
+              <>
+                AI Sales Assistant for{" "}
+                <span className="text-[#FF6600]">Nigerian Businesses</span>
+              </>
+            )}
           </h1>
 
           {/* Bottom line first: what it is, where it replies, what it costs. */}
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
-            {HERO_ANSWER}
+            {place
+              ? `Colly AI helps ${
+                  across ? `businesses across ${place}` : `${place} businesses`
+                } reply to customers 24/7 on Telegram and Web Chat without missing a sale.`
+              : HERO_ANSWER}
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -57,10 +89,13 @@ export function Hero() {
               Start Free
             </Link>
             <Link
-              href="#how-it-works"
+              /* The homepage has a "how it works" section further down; the
+                 GEO landing pages do not, so they point at the pricing block
+                 they do render instead of scrolling to a missing anchor. */
+              href={place ? "#pricing" : "#how-it-works"}
               className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-7 py-3.5 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50"
             >
-              See how it works
+              {place ? "See pricing" : "See how it works"}
             </Link>
           </div>
 

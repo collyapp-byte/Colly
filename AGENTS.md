@@ -67,6 +67,57 @@ academy content, or a pricing/credit rule.
 - Reports & alerts: `app/api/reports/weekly/route.ts` (HTML report: AI replies, manual replies, escalations, sales), owner notifications via Telegram.
 - Housekeeping: `app/api/health/route.ts` (liveness, no auth), `app/api/waitlist/route.ts` (WhatsApp waitlist: GET status for the signed-in business, POST with number normalisation + dedupe + in-process throttle), `app/api/business/nrs/route.ts` (NRS e-invoicing compliance fields on the business), `app/api/voice/transcribe-description/route.ts` (voice/image → product description).
 - Maintenance cron: `app/api/cron/maintenance/route.ts` (Bearer `CRON_SECRET`) — runs `downgradeExpiredPlan` + `ensureFreeGrant` for every business (batched, default 500) and, on Mondays or `?digest=force`, sends each owner a 7-day Telegram digest through `sendOwnerAlert`; triggered by `.github/workflows/maintenance.yml` every 6 hours.
+## GEO / AEO (public marketing surfaces)
+
+These exist so answer engines (ChatGPT, Perplexity, AI Overviews) and crawlers can read the
+site without parsing marketing prose. They are static data + prerendered pages, no database.
+
+- `public/llms.txt` — plain-text summary for LLMs (`# Colly AI`, blockquote, `## Core Pages`,
+  `## Countries` and `## Cities` sections with `[Name](https://colly.com.ng/…)` links and
+  prices). Served straight from `public/`, so it needs **no** route; `proxy.ts` must keep
+  excluding it from the matcher, otherwise a crawler gets a 307 to `/login`. Keep the prices in
+  it — and the country/city slugs it lists — in step with `lib/plans.ts`, `lib/countries.ts`
+  and `lib/locations.ts`.
+- `/locations/[city]` — `app/(marketing)/locations/[city]/page.tsx`, records in
+  `lib/locations.ts` (`getLocation(slug)`). One page per record via `generateStaticParams`;
+  JSON-LD from `lib/seo.ts#locationJsonLd` (City + `containedInPlace`, NGN offer price from
+  `lib/plans.ts`, `BreadcrumbList`). The hero/pricing components take an optional `place` prop
+  so the H1 and copy name the city (the hero's `across` flag switches to the country phrasing);
+  the pricing numbers are always interpolated, never typed.
+- `/countries/[country]` — `app/(marketing)/countries/[country]/page.tsx`, records in
+  `lib/countries.ts` (`getCountry(slug)`: `name`, ISO 4217 `currency`, `intro`, and the
+  `cities` it links). Same prerender/metadata pattern as the city pages; JSON-LD from
+  `lib/seo.ts#countryJsonLd`, which returns two nodes — a `Country` (`@id` …`#country`,
+  `containedInPlace` Africa) and the WebPage/Service shell whose `areaServed` cites that `@id`
+  (the shell itself is `placePageJsonLd`, shared with the city pages). The pages never claim a
+  local price list: one Naira price list through Paystack, stated in the buyer's `currency`.
+- `/vs/[competitor]` — `app/(marketing)/vs/[competitor]/page.tsx`, records in
+  `lib/competitors.ts` (`getCompetitor(slug)`, rows + `disclaimer`). Comparison cells are
+  hedged at category level and the page carries the dated review disclaimer; the schema is an
+  `ItemList` (`lib/seo.ts#comparisonJsonLd`). Never claim "WhatsApp Business API" and never
+  promise self-serve WhatsApp — WhatsApp is a manual waitlist.
+- Homepage FAQ — copy in `lib/marketing-faq.ts` (`MARKETING_FAQS`, exact questions ending in
+  `?`, 40–60-word self-contained answers, `FAQ_ANSWER_WORDS`), rendered **stacked and always
+  open** by `components/marketing/faq.tsx`, which owns the only `FAQPage` node on the site.
+  The homepage JSON-LD (`components/seo/json-ld.tsx`) is `SoftwareApplication` only: adding a
+  second `FAQPage` there re-introduces the duplicate-schema bug.
+- The city, country and competitor prefixes are all in `lib/site.ts#PUBLIC_PAGES` (sitemap +
+  canonicals) and in `SESSION_FREE_PATHS` (`lib/public-routes.ts`), so no crawler is bounced to
+  `/login`. Sitemap priority must stay non-increasing down `PUBLIC_PAGES` (`tests/seo.test.ts`
+  asserts it), hence cities 0.7 → countries 0.6 → competitors 0.6 → legal pages.
+- **Real 404s:** `cacheComponents: true` rules out `dynamicParams`/`ensureStatic`, and partial
+  prerendering streams the static shell before the page renders — so a page-level `notFound()`
+  keeps the `200` and only adds `noindex` (a soft 404, confirmed against `npm run start`).
+  `isUnknownGeoRoute()` (`lib/public-routes.ts`) is therefore checked first in
+  `lib/supabase/proxy.ts`, which rewrites an unlisted slug to `NOT_FOUND_REWRITE_PATH`
+  (`/not-found`, no route) and yields a real `404` with the app's not-found page. Add every new
+  programmatic route prefix (`locations`, `countries`, `vs`) to that helper.
+- `tests/geo.test.ts` locks the copy rules (city/country/competitor slugs, JSON-LD shape, NGN
+  prices, 40–60-word answers, single `FAQPage`, `llms.txt` contents, and the known-slug
+  200/unknown-slug 404 routing contract); `tests/seo.test.ts` locks the homepage's single
+  `SoftwareApplication` node.
+
+
 
 ## Agent academy & partner domain
 

@@ -24,9 +24,9 @@ export default function MarketingPage() {
     <>
       {/* Structured data renders first: `<main>` is the marketing layout's
           wrapper, so this <script> is the first element inside it. The product
-          and FAQ nodes are assembled in `lib/seo.ts` from `lib/plans.ts` and
-          `lib/marketing-faq.ts`, so the rich snippet can never quote a stale
-          price or an answer the page does not show. */}
+          node is assembled in `lib/seo.ts` from `lib/plans.ts`, and `<FAQ />`
+          emits its own FAQPage from `lib/marketing-faq.ts`, so neither can
+          quote a stale price or an answer the page does not show. */}
       <HomepageJsonLd />
       <Hero />
       <ProblemSection />

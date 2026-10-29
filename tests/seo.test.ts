@@ -324,10 +324,11 @@ test("the FAQPage schema mirrors the rendered FAQ list", () => {
   );
 });
 
-test("the homepage ships one document with the product and the FAQ answers", () => {
-  // The landing page renders `<HomepageJsonLd />`, which takes no props, so the
-  // nodes below are the only thing it can emit: prices cannot drift from
-  // lib/plans.ts and answers cannot drift from lib/marketing-faq.ts.
+test("the homepage script carries the product and leaves the FAQ to its component", () => {
+  // The landing page renders `<HomepageJsonLd />` (the product and its offers)
+  // and `<FAQ />`, which emits its own FAQPage from `lib/marketing-faq.ts`. The
+  // FAQ node deliberately does NOT live in this document: `/` must ship one
+  // FAQPage, not two, and the schema must sit next to the copy it describes.
   const element = HomepageJsonLd() as unknown as {
     props: { data: Array<Record<string, unknown>> };
   };
@@ -335,11 +336,11 @@ test("the homepage ships one document with the product and the FAQ answers", () 
 
   assert.deepEqual(
     document.map((node) => node["@type"]),
-    ["SoftwareApplication", "FAQPage"],
-    "the product answers first, then the FAQ rendered on the page",
+    ["SoftwareApplication"],
+    "the product answers on the homepage; the FAQPage belongs to <FAQ />",
   );
 
-  const [app, faq] = document;
+  const [app] = document;
 
   assert.equal(app.applicationCategory, "BusinessApplication");
   assert.ok(String(app.operatingSystem).includes("Web"));
@@ -367,20 +368,6 @@ test("the homepage ships one document with the product and the FAQ answers", () 
     "25000",
     "50000",
   ]);
-
-  // The FAQ node is the accordion, verbatim — not a second copy of the copy.
-  const entities = faq.mainEntity as Array<{
-    name: string;
-    acceptedAnswer: { text: string };
-  }>;
-  assert.deepEqual(
-    entities.map((entity) => entity.name),
-    MARKETING_FAQS.map((item) => item.q),
-  );
-  assert.deepEqual(
-    entities.map((entity) => entity.acceptedAnswer.text),
-    MARKETING_FAQS.map((item) => item.a),
-  );
 });
 
 test("the academy ItemList wraps all four courses", () => {

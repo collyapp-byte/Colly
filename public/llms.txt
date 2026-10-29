@@ -1,0 +1,16 @@
+# Colly AI
+> Colly AI is a Nigerian software company that builds 24/7 AI sales assistants for SMEs. It operates on Telegram, Discord, and Web Chat with zero CAC requirements.
+
+## Core Pages
+- [Pricing](https://colly.com.ng/pricing): Plans start at ₦15,000/month. Naira credit economy.
+- [Agent Academy](https://colly.com.ng/academy): 15% recurring commission for local agents.
+- [Product Features](https://colly.com.ng/features): Pidgin language, voice notes, Jiji sync.
+
+## Countries
+- [Nigeria](https://colly.com.ng/countries/nigeria): Home market; one Naira price list for shops and online sellers.
+- [Ghana](https://colly.com.ng/countries/ghana): Same assistant and price list, settled in GHS by the buyer's bank.
+- [Kenya](https://colly.com.ng/countries/kenya): Telegram, Discord and Web Chat replies for Kenyan businesses.
+- [South Africa](https://colly.com.ng/countries/south-africa): Catalogue-accurate price and stock answers for South African stores.
+
+## Cities
+- [City pages](https://colly.com.ng/locations/lagos): Lagos, Abuja, Port Harcourt, Ibadan, Kano and Enugu.

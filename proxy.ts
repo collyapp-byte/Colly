@@ -17,9 +17,12 @@ export const config = {
      * Everything except Next.js internals, static assets and the metadata
      * files: those are served straight from disk (or generated with no session
      * involvement), and running auth logic on them would break CSS, images and
-     * crawler access for signed-out visitors. `robots.txt` and `sitemap.xml`
-     * must stay reachable for Googlebot, which has no cookies to refresh.
+     * crawler access for signed-out visitors. `robots.txt`, `sitemap.xml` and
+     * `llms.txt` must stay reachable for crawlers (and for the AI engines that
+     * read `llms.txt`), which have no cookies to refresh — without the exclusion
+     * the auth redirect answers `/llms.txt` with a 307 to /login instead of the
+     * file.
      */
-    "/((?!api/health|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!api/health|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|llms.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
