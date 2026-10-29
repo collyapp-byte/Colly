@@ -32,6 +32,20 @@ export const SITE_NAME = "Colly Nigeria";
 /** Short brand name, used where a legal-style name would read oddly. */
 export const SITE_BRAND = "Colly";
 
+/**
+ * Schema alias that spells out the entity type. "Colly AI" on its own
+ * collides with a footballer and an industrial equipment company, so the
+ * structured data also publishes "Colly AI Software".
+ */
+export const SITE_ENTITY_ALIAS = "Colly AI Software";
+
+/**
+ * Plain-language disambiguation for JSON-LD `disambiguatingDescription`:
+ * the entity type first, then the namesakes Colly must not be merged with.
+ */
+export const SITE_DISAMBIGUATION =
+  "Colly AI is a Nigerian software company that builds AI sales assistants for small businesses. It is not affiliated with any footballer, industrial equipment company, or any other business or individual using the name Colly.";
+
 export const SITE_EMAIL = "support@colly.com.ng";
 
 /** Open Graph locale and BCP-47 language tag for the Nigerian market. */
@@ -44,8 +58,14 @@ export const SITE_TITLE_DEFAULT =
 /** Root title template: every page renders "<page> | Colly Nigeria". */
 export const SITE_TITLE_TEMPLATE = "%s | Colly Nigeria";
 
+/**
+ * Entity-first site description, reused by metadata, Open Graph and JSON-LD.
+ * The first sentence names the entity type ("Nigerian software company"),
+ * which is what separates Colly from the footballer and the industrial
+ * equipment company that share the name.
+ */
 export const SITE_DESCRIPTION =
-  "Colly is the AI sales and customer service assistant for Nigerian small businesses. It replies to customers on Telegram, Discord and Web Chat around the clock in English or Nigerian Pidgin, quotes your catalogue prices, never goes below your floor price, and hands the chat to you when a human is needed. Start free with 80 AI credits every month.";
+  "Colly AI is a Nigerian software company that builds an AI sales assistant for small businesses. It replies to customers 24/7 on Telegram, Discord and Web Chat in English or Nigerian Pidgin, quotes your catalogue prices, never goes below your floor price, and hands the chat to you when a human is needed. Start free with 80 AI credits every month.";
 
 export const SITE_KEYWORDS = [
   "AI sales assistant Nigeria",

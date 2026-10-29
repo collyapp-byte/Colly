@@ -17,7 +17,9 @@ import {
   OG_IMAGE,
   SITE_BRAND,
   SITE_DESCRIPTION,
+  SITE_DISAMBIGUATION,
   SITE_EMAIL,
+  SITE_ENTITY_ALIAS,
   SITE_LANGUAGE,
   SITE_LOCALE,
   SITE_NAME,
@@ -68,9 +70,11 @@ function planOffers(): JsonLdNode[] {
 }
 
 /**
- * The publisher, emitted once in the root layout. `name` is "Colly Nigeria" and
- * `alternateName` keeps the short brand, which is how the Nigerian entity is
- * separated from unrelated products that share the name.
+ * The publisher, emitted once in the root layout. `name` is "Colly Nigeria",
+ * `alternateName` carries the short brand plus the "Colly AI Software" alias,
+ * and `disambiguatingDescription` states the entity type in plain words, so
+ * search and AI answer engines do not merge the company with the footballer or
+ * the industrial equipment company that share the name.
  */
 export function organizationJsonLd(): JsonLdNode {
   return {
@@ -78,9 +82,12 @@ export function organizationJsonLd(): JsonLdNode {
     "@type": "Organization",
     "@id": ORGANIZATION_ID,
     name: SITE_NAME,
-    alternateName: SITE_BRAND,
+    // "Colly" alone collides with a footballer and an industrial equipment
+    // company, so the alias spells out the entity type.
+    alternateName: [SITE_BRAND, SITE_ENTITY_ALIAS],
     url: SITE_URL,
     description: SITE_DESCRIPTION,
+    disambiguatingDescription: SITE_DISAMBIGUATION,
     logo: {
       "@type": "ImageObject",
       url: absoluteUrl("/logo.png"),
@@ -107,7 +114,7 @@ export function websiteJsonLd(): JsonLdNode {
     "@type": "WebSite",
     "@id": WEBSITE_ID,
     name: SITE_NAME,
-    alternateName: SITE_BRAND,
+    alternateName: [SITE_BRAND, SITE_ENTITY_ALIAS],
     url: SITE_URL,
     description: SITE_DESCRIPTION,
     inLanguage: SITE_LANGUAGE,
@@ -132,13 +139,16 @@ export function softwareApplicationJsonLd(options?: {
     "@id": SOFTWARE_ID,
     name: SITE_NAME,
     // "Colly AI" is the exact phrase buyers type into ChatGPT/Perplexity, so it
-    // is listed as an alias next to the descriptive marketing name.
-    alternateName: ["Colly AI", "Colly AI Sales Assistant"],
+    // is listed as an alias next to the descriptive marketing name. The
+    // "Colly AI Software" alias pins the entity type, which keeps the product
+    // apart from the footballer and the industrial equipment company.
+    alternateName: ["Colly AI", SITE_ENTITY_ALIAS, "Colly AI Sales Assistant"],
     applicationCategory: "BusinessApplication",
     applicationSubCategory: "AI sales and customer service assistant",
     operatingSystem: "Web, Telegram, Discord",
     url: SITE_URL,
     description: SITE_DESCRIPTION,
+    disambiguatingDescription: SITE_DISAMBIGUATION,
     inLanguage: SITE_LANGUAGE,
     featureList: SOFTWARE_FEATURES,
     isAccessibleForFree: true,

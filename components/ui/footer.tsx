@@ -38,6 +38,13 @@ export function Footer() {
       </Link>
       <span aria-hidden="true">·</span>
       <p>© 2026 Colly. All rights reserved.</p>
+      {/* Entity declaration beside the copyright: every page carrying the
+          footer states what Colly is, and which namesakes it is not. */}
+      <p className="w-full text-center leading-relaxed">
+        Colly AI is a Nigerian software company building AI sales assistants for
+        SMEs. We are not affiliated with any other businesses or individuals
+        using the name Colly.
+      </p>
     </footer>
   );
 }

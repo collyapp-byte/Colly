@@ -15,7 +15,10 @@ import { formatNaira } from "@/lib/format";
  * advertise a price the billing code does not charge.
  */
 const HERO_ANSWER =
-  "Colly is an AI sales assistant that replies to customers 24/7 on Telegram, Discord, and Web Chat. " +
+  // Entity type first: "Nigerian software company" is what separates Colly from
+  // the footballer and the industrial equipment company that share the name.
+  "Colly AI is a Nigerian software company that builds an AI sales assistant for businesses. " +
+  "It replies to customers 24/7 on Telegram, Discord, and Web Chat. " +
   `It costs ${formatNaira(PLANS.green.monthly)}/month for ${PLANS.green.credits.toLocaleString()} credits, with a free tier available. ` +
   "It handles Pidgin, voice notes, and price negotiations so you never lose a sale.";
 

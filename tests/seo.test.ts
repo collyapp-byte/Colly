@@ -175,6 +175,17 @@ test("the software application schema prices every tier from lib/plans.ts", () =
   assert.equal(node.name, SITE_NAME);
   assert.equal(node.url, SITE_URL);
   assert.equal(node.applicationCategory, "BusinessApplication");
+  assert.ok(
+    String(node.description).startsWith(
+      "Colly AI is a Nigerian software company that builds",
+    ),
+    "the product description must state the entity type first",
+  );
+  assert.match(
+    String(node.disambiguatingDescription),
+    /not affiliated/,
+    "the product must disambiguate itself from unrelated namesakes",
+  );
   assert.equal(node.isAccessibleForFree, true, "the Free tier must stay true");
   // `isAccessibleForFree` promises a usable free tier: the monthly Free grant.
   assert.ok(FREE_PLAN_LIMITS.credits > 0);
@@ -218,7 +229,18 @@ test("organization, website and product nodes share stable @ids", () => {
   assert.equal(org["@context"], "https://schema.org");
   assert.equal(org["@type"], "Organization");
   assert.equal(org.name, "Colly Nigeria");
-  assert.equal(org.alternateName, "Colly");
+  assert.deepEqual(org.alternateName, ["Colly", "Colly AI Software"]);
+  assert.ok(
+    String(org.description).startsWith(
+      "Colly AI is a Nigerian software company that builds",
+    ),
+    "the organisation description must state the entity type first",
+  );
+  assert.match(
+    String(org.disambiguatingDescription),
+    /Nigerian software company/,
+    "the organisation must disambiguate itself from unrelated namesakes",
+  );
   assert.equal(org.url, SITE_URL);
   assert.ok(String(org["@id"]).endsWith("#organization"));
 
@@ -297,6 +319,10 @@ test("the homepage ships one document with the product and the FAQ answers", () 
   // be quotable by that name even though its `name` is the legal-style one.
   const aliases = [app.name, app.alternateName].flat();
   assert.ok(aliases.includes("Colly AI"));
+  assert.ok(
+    aliases.includes("Colly AI Software"),
+    "the alias must name the entity type, not just the brand",
+  );
 
   // Green, Blue and Black are all priced inside the document.
   const offers = app.offers as {

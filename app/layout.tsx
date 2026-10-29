@@ -90,10 +90,16 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  // Favicon. Google's favicon crawler only indexes raster formats (PNG/ICO) at a
+  // stable URL, so the SVG we shipped before (`/logo.svg`) was never picked up
+  // and search results showed the default globe. `/icon.png` is the 512x512 PNG
+  // in `app/icon.png`, served by the file-convention route; the three keys cover
+  // modern tabs (`icon`), the legacy `rel="shortcut icon"` link and the iOS
+  // home-screen icon, all pointing at the one file so every crawler resolves it.
   icons: {
-    icon: "/logo.svg",
-    shortcut: "/logo.svg",
-    apple: "/logo.svg",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 
