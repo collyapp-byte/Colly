@@ -40,6 +40,20 @@ type AcademyContent = {
   FINAL_EXAM_QUESTIONS: QuizQuestion[];
   FINAL_EXAM_SECTIONS: { start: number; end: number; title: string }[];
   finalExamRows: () => ExamRow[];
+  shuffleInPlace: (items: string[], random?: () => number) => string[];
+  shuffleQuestionOptions: (
+    question: QuizQuestion,
+    random?: () => number,
+  ) => QuizQuestion;
+  shuffleQuestionSet: (
+    questions: QuizQuestion[],
+    random?: () => number,
+  ) => QuizQuestion[];
+  shuffleCourseQuestions: (courses: Course[], random?: () => number) => Course[];
+  shuffleQuestionMap: (
+    quizzes: Record<string, QuizQuestion[]>,
+    random?: () => number,
+  ) => Record<string, QuizQuestion[]>;
 };
 
 // The academy content is authored as CommonJS so prisma/seed.cjs can require it.
@@ -207,5 +221,151 @@ test("new product areas are taught", () => {
   ]) {
     assert.ok(slugs.has(required), `missing lesson: ${required}`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// Option shuffling
+// ---------------------------------------------------------------------------
+// The authored content keeps its answers wherever the author put them, so the
+// tests below guard the load-time shuffle: the correct answer must follow its
+// text into the new slot and no question may fall back to a fixed position.
+
+test("shuffleInPlace is a Fisher-Yates permutation", () => {
+  const items = ["a", "b", "c", "d"];
+
+  // A constant 0 picks index 0 for every swap, which moves "a" to the tail.
+  assert.deepEqual(academy.shuffleInPlace([...items], () => 0), ["b", "c", "d", "a"]);
+  assert.deepEqual([...academy.shuffleInPlace([...items])].sort(), items);
+
+  const many = Array.from({ length: 40 }, (_, index) => String(index));
+  const shuffled = academy.shuffleInPlace([...many]);
+
+  assert.equal(shuffled.length, many.length);
+  assert.deepEqual([...shuffled].sort(), [...many].sort(), "no item may be lost");
+});
+
+test("shuffling options moves the answer with its text and never mutates the source", () => {
+  const question: QuizQuestion = {
+    question: "Which channel is live and self-serve today?",
+    options: ["WhatsApp", "Telegram", "Instagram", "SMS"],
+    correctIndex: 1,
+    explanation: "Telegram, Discord and Web Chat are self-serve; WhatsApp is a waitlist.",
+  };
+  const authoredOptions = [...question.options];
+
+  for (let run = 0; run < 60; run += 1) {
+    const shuffled = academy.shuffleQuestionOptions(question);
+
+    assert.deepEqual(
+      [...shuffled.options].sort(),
+      [...authoredOptions].sort(),
+      "the same four options must survive the shuffle",
+    );
+    assert.equal(
+      shuffled.options[shuffled.correctIndex],
+      "Telegram",
+      "the correct answer must stay correct after reordering",
+    );
+    assert.equal(
+      new Set(shuffled.options).size,
+      shuffled.options.length,
+      "shuffling must not duplicate an option",
+    );
+    assert.equal(shuffled.explanation, question.explanation);
+  }
+
+  assert.deepEqual(question.options, authoredOptions, "the input must not be mutated");
+  assert.equal(question.correctIndex, 1);
+
+  // A deterministic random makes the new slot predictable: every swap targets
+  // index 0, which leaves "Telegram" first.
+  const fixed = academy.shuffleQuestionOptions(question, () => 0);
+  assert.deepEqual(fixed.options, ["Telegram", "Instagram", "SMS", "WhatsApp"]);
+  assert.equal(fixed.correctIndex, 0);
+});
+
+test("shuffling rejects a question whose correctIndex is out of bounds", () => {
+  assert.throws(
+    () =>
+      academy.shuffleQuestionOptions({
+        question: "Broken question",
+        options: ["one", "two"],
+        correctIndex: 5,
+      }),
+    /correctIndex 5 is outside its 2 options/,
+  );
+});
+
+test("the set and map shufflers keep every answer correct", () => {
+  const question: QuizQuestion = {
+    question: "How much does an AI reply cost on Telegram?",
+    options: ["80 credits", "5 credits", "1 credit", "Free"],
+    correctIndex: 1,
+  };
+
+  const set = academy.shuffleQuestionSet([question, question]);
+  assert.equal(set.length, 2);
+  for (const entry of set) {
+    assert.equal(entry.options[entry.correctIndex], "5 credits");
+  }
+
+  const courses = academy.shuffleCourseQuestions([
+    { ...academy.AGENT_COURSES[0], questions: [question] },
+  ]);
+  assert.equal(courses[0].questions[0].options[courses[0].questions[0].correctIndex], "5 credits");
+  assert.deepEqual(courses[0].lessons, academy.AGENT_COURSES[0].lessons);
+
+  const map = academy.shuffleQuestionMap({ "understanding-colly": [question] });
+  assert.equal(map["understanding-colly"][0].options[map["understanding-colly"][0].correctIndex], "5 credits");
+});
+
+test("the loaded quiz and exam answers are not all on the first option", () => {
+  const quiz = academy.AGENT_COURSES.flatMap((course) => course.questions);
+  const exam = academy.finalExamRows();
+
+  for (const [label, questions] of [
+    ["quiz", quiz],
+    ["exam", exam],
+  ] as const) {
+    const slots = new Set(questions.map((question) => question.correctIndex));
+    const onFirst = questions.filter((question) => question.correctIndex === 0).length;
+
+    assert.ok(
+      slots.size > 1,
+      `${label} answers all sit on one slot (${[...slots].join(", ")})`,
+    );
+    assert.ok(
+      onFirst < questions.length,
+      `${label} answers are all option A — the shuffle did not run`,
+    );
+  }
+});
+
+test("a fresh module load reshuffles the options", () => {
+  const modulePath = require.resolve("../prisma/academy-content.cjs");
+  const firstLoad = academy.COURSE_QUIZZES["understanding-colly"];
+  assert.ok(firstLoad && firstLoad.length > 0, "the course quiz must exist");
+
+  delete require.cache[modulePath];
+  const reloaded = require("../prisma/academy-content.cjs") as AcademyContent;
+  const secondLoad = reloaded.COURSE_QUIZZES["understanding-colly"];
+
+  assert.equal(secondLoad.length, firstLoad.length);
+
+  const orderOf = (questions: QuizQuestion[]) =>
+    questions.map((question) => question.options.join(" | "));
+  const reordered = orderOf(secondLoad).filter(
+    (order, index) => order !== orderOf(firstLoad)[index],
+  );
+
+  assert.ok(reordered.length > 0, "loading the module again must reshuffle the options");
+
+  secondLoad.forEach((question, index) => {
+    assert.deepEqual(
+      [...question.options].sort(),
+      [...firstLoad[index].options].sort(),
+      "a reload must only reorder options, never change them",
+    );
+  });
 });
 

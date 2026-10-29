@@ -13,9 +13,83 @@
 //    wrong answer (AgentQuizQuestion.explanation).
 //  - Numbers must match lib/plans.ts. `tests/academy-content.test.ts` fails the
 //    build when they drift.
+//  - Write options in any order and keep `correctIndex` truthful: the option
+//    order is shuffled at load (see `shuffleQuestionOptions`), so a reader never
+//    learns a fixed position such as "the answer is always the first option".
+//    Never hand-write an answer position into a lesson or explanation.
 
-/** The four certification courses. */
-const COURSES = [
+// ---------------------------------------------------------------------------
+// Option shuffling
+// ---------------------------------------------------------------------------
+// Every question used to keep its correct answer at index 0, so a quiz (and the
+// final exam) could be passed by always tapping the first option. The option
+// order is now shuffled once per load — per `prisma/seed.cjs` run, per
+// `npm run academy:sync`, and per test run — and `correctIndex` follows its
+// answer to the new slot, so the correct option lands in a different place for
+// each question and each load.
+
+/**
+ * Fisher-Yates shuffle, in place. `random` is injectable so the order can be
+ * made deterministic in tests.
+ */
+function shuffleInPlace(items, random = Math.random) {
+  for (let index = items.length - 1; index > 0; index -= 1) {
+    const swapWith = Math.floor(random() * (index + 1));
+    const held = items[index];
+    items[index] = items[swapWith];
+    items[swapWith] = held;
+  }
+
+  return items;
+}
+
+/**
+ * Shuffles one question's options and moves `correctIndex` to wherever the
+ * correct answer landed. The answer *text* is what is tracked, so the option
+ * that was correct stays correct. The input question is not mutated.
+ */
+function shuffleQuestionOptions(question, random = Math.random) {
+  const options = [...question.options];
+  const answer = options[question.correctIndex];
+
+  if (typeof answer !== "string") {
+    throw new Error(
+      `Cannot shuffle "${question.question}": correctIndex ${question.correctIndex} is outside its ${options.length} options.`,
+    );
+  }
+
+  shuffleInPlace(options, random);
+
+  return { ...question, options, correctIndex: options.indexOf(answer) };
+}
+
+/** Shuffles the options of every question in a set. */
+function shuffleQuestionSet(questions, random = Math.random) {
+  return questions.map((question) => shuffleQuestionOptions(question, random));
+}
+
+/** Shuffles every quiz question attached to a course in a course list. */
+function shuffleCourseQuestions(courses, random = Math.random) {
+  return courses.map((course) => ({
+    ...course,
+    questions: course.questions
+      ? shuffleQuestionSet(course.questions, random)
+      : [],
+  }));
+}
+
+/** Shuffles every question in a `{ courseSlug: questions }` map. */
+function shuffleQuestionMap(quizzes, random = Math.random) {
+  return Object.fromEntries(
+    Object.entries(quizzes).map(([slug, questions]) => [
+      slug,
+      shuffleQuestionSet(questions, random),
+    ]),
+  );
+}
+
+/** The four certification courses, as authored (options still in source order). */
+const AUTHORED_COURSES = [
   {
     slug: "understanding-colly",
     title: "Understanding Colly",
@@ -1607,10 +1681,10 @@ Never quote the weekly numbers to a prospect as a guarantee; they are one shop's
 
 /**
  * Replacement quiz sets, keyed by course slug. A course listed here uses these
- * questions instead of the ones on `COURSES`; every question needs an
+ * questions instead of the ones on `AUTHORED_COURSES`; every question needs an
  * `explanation` (shown by the quiz page after a wrong answer).
  */
-const COURSE_QUIZZES = {
+const AUTHORED_COURSE_QUIZZES = {
   "understanding-colly": [
     {
       question: "Which channels are live and self-serve today?",
@@ -2122,7 +2196,7 @@ const COURSE_QUIZZES = {
 };
 
 /** The 40-question Final Certification Exam, grouped into the four sections. */
-const FINAL_EXAM_QUESTIONS = [
+const AUTHORED_FINAL_EXAM_QUESTIONS = [
   // --- Section 1: Understanding Colly ---
   {
     question: "What does Colly do for a small business?",
@@ -2601,6 +2675,23 @@ const FINAL_EXAM_QUESTIONS = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Apply the shuffle
+// ---------------------------------------------------------------------------
+// These three bindings are the module's public content: `prisma/seed.cjs`,
+// `scripts/sync-academy-content.cjs` and the tests all read them, so shuffling
+// here means every consumer gets a randomised option order without changing a
+// single authored question.
+
+/** The four certification courses, with every quiz option set shuffled. */
+const COURSES = shuffleCourseQuestions(AUTHORED_COURSES);
+
+/** Replacement quiz sets, keyed by course slug, with options shuffled. */
+const COURSE_QUIZZES = shuffleQuestionMap(AUTHORED_COURSE_QUIZZES);
+
+/** The 40-question Final Certification Exam, with options shuffled. */
+const FINAL_EXAM_QUESTIONS = shuffleQuestionSet(AUTHORED_FINAL_EXAM_QUESTIONS);
+
 /** Courses with the extra lessons appended and the final quiz set applied. */
 const AGENT_COURSES = COURSES.map((course) => {
   const extra = EXTRA_LESSONS[course.slug] ?? [];
@@ -2640,4 +2731,11 @@ module.exports = {
   FINAL_EXAM_SECTIONS,
   FINAL_EXAM_QUESTIONS,
   finalExamRows,
+  // Exported so tests/academy-content.test.ts exercises exactly the algorithm
+  // the load-time shuffle uses (and so a future data repair can reuse it).
+  shuffleInPlace,
+  shuffleQuestionOptions,
+  shuffleQuestionSet,
+  shuffleCourseQuestions,
+  shuffleQuestionMap,
 };
