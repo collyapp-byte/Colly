@@ -14,7 +14,16 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       <header className="border-b border-gray-100 bg-white">
         <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-4">
           <Link href="/login" className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="Colly" width={30} height={30} priority />
+            {/* Decorative: the word "Colly" beside it names the link, so the
+                image is hidden from assistive tech instead of repeating it. */}
+            <Image
+              src="/logo.svg"
+              alt=""
+              aria-hidden="true"
+              width={30}
+              height={30}
+              priority
+            />
             <span className="font-display text-lg tracking-tight text-gray-900">
               Colly
             </span>

@@ -178,7 +178,9 @@ export function Sidebar({
           className="mx-2 flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-50"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden">
-            <Image src="/logo.svg" alt="Colly" width={28} height={28} />
+            {/* Decorative: the switcher button already reads "Colly" from the
+                text beside it, so the mark must not repeat the name. */}
+            <Image src="/logo.svg" alt="" aria-hidden="true" width={28} height={28} />
           </div>
           <div className="flex flex-1 flex-col text-left">
             <span className="text-sm font-semibold text-gray-900">Colly</span>

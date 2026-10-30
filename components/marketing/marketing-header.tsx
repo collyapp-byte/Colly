@@ -57,7 +57,18 @@ export function MarketingHeader() {
     >
       <div className="max-w-5xl mx-auto px-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.svg" alt="Colly" width={30} height={30} priority />
+          {/* Decorative, not informative: the word "Colly" beside it is the
+              link's accessible name, so an `alt` of "Colly" made a screen
+              reader announce the brand twice ("Colly Colly"). An empty `alt`
+              plus `aria-hidden` keeps the link's name exactly "Colly". */}
+          <Image
+            src="/logo.svg"
+            alt=""
+            aria-hidden="true"
+            width={30}
+            height={30}
+            priority
+          />
           <span className="font-display text-lg tracking-tight text-gray-900">
             Colly
           </span>

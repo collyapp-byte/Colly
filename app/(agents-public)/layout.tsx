@@ -17,7 +17,16 @@ export default function AgentsPublicLayout({
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
           <div className="mb-6 flex items-center justify-center gap-2.5">
-            <Image src="/logo.svg" alt="Colly" width={40} height={40} priority />
+            {/* Decorative: the "Colly" wordmark beside it carries the brand, so
+                the mark is hidden from assistive tech rather than read twice. */}
+            <Image
+              src="/logo.svg"
+              alt=""
+              aria-hidden="true"
+              width={40}
+              height={40}
+              priority
+            />
             <span className="font-display text-2xl tracking-tight text-gray-900">
               Colly
             </span>
