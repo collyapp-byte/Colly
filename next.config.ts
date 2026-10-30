@@ -9,10 +9,21 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   // Modern formats first: AVIF (smallest, LCP-friendly) with WebP as the
   // fallback for browsers that do not accept it. The optimizer picks by the
-  // request's `Accept` header, so the hero JPEG (~284 kB raw) is served as a
-  // fraction of that size on mobile.
+  // request's `Accept` header, so the hero photo is served as a fraction of the
+  // raw JPEG's weight on mobile.
   images: {
     formats: ["image/avif", "image/webp"],
+    /* Supabase Storage uploads live on the project's own `<ref>.supabase.co`
+       host, which the optimizer refuses to fetch unless it is allow-listed
+       here. Scoped to the public-object path so signed URLs, the auth endpoints
+       and arbitrary third-party hosts stay outside the resize proxy. */
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
     /* No asset in `public/` is wider than ~2048 px, so asking the optimizer for
        a 3840 candidate only produces an upscaled AVIF -- the most memory-hungry
        transform in the pipeline, and the one that intermittently answered 502 on

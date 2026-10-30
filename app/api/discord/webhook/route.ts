@@ -3,6 +3,7 @@ import { after, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { debugLog } from "@/lib/logger";
 
 const DISCORD_API = "https://discord.com/api/v10";
 const FALLBACK_REPLY =
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
 
   const business = await resolveBusiness(token, guildId);
   if (!business) {
-    console.log(
+    debugLog(
       "[discord] No business found for token or guild id. Exiting.",
     );
     return NextResponse.json({ ok: true });
@@ -124,7 +125,7 @@ export async function POST(request: Request) {
       : null;
 
   if (!phone) {
-    console.log("[discord] Payload has no user or channel id. Exiting.");
+    debugLog("[discord] Payload has no user or channel id. Exiting.");
     return NextResponse.json({ ok: true });
   }
 
@@ -217,7 +218,7 @@ async function processMessage(args: MessageArgs): Promise<void> {
   });
 
   if (result.blocked || !result.reply) {
-    console.log(
+    debugLog(
       `[discord] Message saved, AI reply skipped (reason: ${
         result.blocked ? result.reason : "no_reply"
       })`,

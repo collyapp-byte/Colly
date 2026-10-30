@@ -5,6 +5,7 @@ import {
   FREE_PLAN_LIMITS,
   PLANS,
   REPLY_CREDIT_COSTS,
+  bonusCreditsBadge,
   creditReplyCalculator,
   getAiReplyCreditCost,
   getCreditPrice,
@@ -26,14 +27,38 @@ test("every paid tier advertises exactly the credits it pays out", () => {
       `${tier} total must be base + bonus`,
     );
     assert.ok(plan.credits > 0, `${tier} must grant credits`);
+    // The headline converts the bonus at the standard channel cost (5 credits a
+    // message): Telegram, Discord and Web Chat.
+    const bonusMessages = Math.floor(
+      plan.bonusCredits / REPLY_CREDIT_COSTS.standard,
+    ).toLocaleString("en-US");
     assert.equal(
-      plan.bonusDescription.includes(
-        Math.floor(plan.bonusCredits / REPLY_CREDIT_COSTS.whatsapp).toLocaleString(
-          "en-US",
-        ),
-      ),
+      plan.bonusDescription.includes(bonusMessages),
       true,
-      `${tier} bonus headline must match the WhatsApp reply count`,
+      `${tier} bonus headline must match the Telegram message count`,
+    );
+    // The claim is Telegram, never WhatsApp (the bug this test was added for).
+    assert.match(
+      plan.bonusDescription,
+      /free telegram messages/i,
+      `${tier} bonus headline must promise Free Telegram Messages`,
+    );
+    assert.match(
+      bonusCreditsBadge(plan.bonusCredits),
+      /free telegram messages/i,
+      `${tier} bonus badge must promise FREE Telegram Messages`,
+    );
+    // WhatsApp is onboarded from a manual waitlist, so no plan card may
+    // advertise WhatsApp messages or replies (see the pricing copy rule).
+    assert.equal(
+      /whatsapp/i.test(plan.bonusDescription),
+      false,
+      `${tier} bonus headline must not promise WhatsApp`,
+    );
+    assert.equal(
+      /whatsapp/i.test(bonusCreditsBadge(plan.bonusCredits)),
+      false,
+      `${tier} bonus badge must not promise WhatsApp`,
     );
   }
 });
@@ -131,6 +156,8 @@ test("prices, limits and fallbacks resolve without throwing", () => {
 test("the reply calculator converts credits into replies", () => {
   assert.equal(
     creditReplyCalculator(23_000),
-    `${naira(23_000)} Credits = ${naira(4_600)} Telegram replies OR ${naira(287)} WhatsApp replies`,
+    `${naira(23_000)} Credits = ${naira(4_600)} AI replies on Telegram, Discord or Web Chat`,
   );
+  // The calculator line never name-drops a waitlist-only channel.
+  assert.equal(creditReplyCalculator(23_000).includes("WhatsApp"), false);
 });

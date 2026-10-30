@@ -208,7 +208,7 @@ export async function downgradeExpiredPlan<T extends BusinessPlanRecord>(
     return business;
   }
 
-  console.log(
+  console.info(
     `[credits] downgraded business ${business.id} (${business.plan} -> free): paid period ended ${business.planExpiresAt.toISOString()}`,
   );
 

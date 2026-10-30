@@ -94,7 +94,7 @@ export async function POST() {
       },
     });
 
-    console.log("[payout] completed", {
+    console.info("[payout] completed", {
       agentId: agentId,
       amountNaira,
       reference,

@@ -1,5 +1,9 @@
 # QA Audit V2
 
+> **Historical snapshot.** This audit was written against `82b4fa9` and lives in `docs/` so
+> the repository root stays product code only. The detail below is preserved verbatim; the
+> status table under "Status" records what has since been fixed, deferred or superseded.
+
 **Auditor:** Senior QA Engineer / Lead Architect
 **Repo:** `colly` (Next.js 16 App Router · Prisma/Postgres · Supabase SSR · DeepSeek→Groq→OpenRouter · Paystack · Telegram/Discord/Web Chat)
 **HEAD at audit time:** `82b4fa9 fix: ensure free tier credits refresh on dashboard load` (clean working tree)

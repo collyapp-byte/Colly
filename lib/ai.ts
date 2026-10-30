@@ -190,7 +190,7 @@ export async function askAI(
         continue;
       }
 
-      console.log(`[ai] provider=${config.name} success`);
+      console.info(`[ai] provider=${config.name} success`);
       void alertProviderState(config.name, "up");
 
       return {

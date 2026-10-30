@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { embedText, toVectorLiteral } from "@/lib/embeddings";
 import { translatePidgin } from "@/lib/pidgin-translate";
+import { debugLog } from "@/lib/logger";
 
 /**
  * A product exactly as the AI should see it: plain JSON, with the Prisma
@@ -304,7 +305,7 @@ function buildEmbeddingTexts(query: string): string[] {
     return [query];
   }
 
-  console.log(`[search] Pidgin translated: "${query}" → "${translated}"`);
+  debugLog(`[search] Pidgin translated: "${query}" → "${translated}"`);
 
   const texts = [translated];
 

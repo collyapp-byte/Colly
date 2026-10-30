@@ -84,7 +84,7 @@ function cardFeatures(config: PlanConfig, tier: PlanTier): string[] {
     `${config.credits.toLocaleString()} credits every month (${config.baseCredits.toLocaleString()} base + ${config.bonusCredits.toLocaleString()} bonus)`,
     config.bonusDescription,
     `${REPLY_CREDIT_COSTS.standard} credits per Telegram, Discord & Web Chat reply`,
-    `${REPLY_CREDIT_COSTS.whatsapp} credits per WhatsApp reply`,
+    `${REPLY_CREDIT_COSTS.whatsapp} credits per WhatsApp reply (waitlist)`,
     "Product catalogue",
     "FAQ knowledge base",
     "Owner alerts",

@@ -265,7 +265,7 @@ export async function POST(request: Request) {
     }
 
     const event = JSON.parse(rawBody) as WebhookEvent;
-    console.log(`[billing] webhook: ${event.event}`);
+    console.info(`[billing] webhook: ${event.event}`);
     const data = event.data;
 
     switch (event.event) {

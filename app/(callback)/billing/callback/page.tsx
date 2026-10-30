@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, CircleAlert, LoaderCircle } from "lucide-react";
 
 type VerifyState = "loading" | "success" | "error";
@@ -43,6 +43,7 @@ function CallbackBody() {
 function VerifyStatus({ reference }: { reference: string }) {
   const [state, setState] = useState<VerifyState>("loading");
   const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -65,8 +66,12 @@ function VerifyStatus({ reference }: { reference: string }) {
 
         if (body?.ok) {
           setState("success");
+          // Client-side navigation (not `window.location.href`): the billing
+          // page is already in the router cache and `refresh()` re-reads the
+          // plan/credit pills from the server after the new grant.
           setTimeout(() => {
-            window.location.href = "/settings/billing";
+            router.replace("/settings/billing");
+            router.refresh();
           }, 1500);
         } else {
           setState("error");
@@ -88,7 +93,7 @@ function VerifyStatus({ reference }: { reference: string }) {
     return () => {
       cancelled = true;
     };
-  }, [reference]);
+  }, [reference, router]);
 
   if (state === "loading") return <VerifyLoader />;
 

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { debugLog } from "@/lib/logger";
 
 /**
  * Telegram Bot API root. `COLLY_TELEGRAM_BOT_TOKEN` is the token of the
@@ -76,7 +77,7 @@ async function deliverTelegramMessage(
       });
 
       if (response.ok) {
-        console.log("[owner-alerts] Telegram message delivered to chat", chatId);
+        console.info("[owner-alerts] Telegram message delivered to chat", chatId);
         return true;
       }
 
@@ -125,7 +126,7 @@ export async function sendOwnerAlert(
       return;
     }
 
-    console.log(
+    debugLog(
       "[OWNER ALERT] Attempting to send alert. ownerTelegramChatId:",
       business.ownerTelegramChatId,
     );
@@ -133,7 +134,7 @@ export async function sendOwnerAlert(
     const chatId = resolveOwnerChatId(business.ownerTelegramChatId);
 
     if (!chatId) {
-      console.log("[OWNER ALERT] No Chat ID found. Skipping alert.");
+      debugLog("[OWNER ALERT] No Chat ID found. Skipping alert.");
       console.warn(
         `[owner-alerts] escalation for "${business.name}" not delivered: no ownerTelegramChatId set.`,
       );
@@ -175,7 +176,7 @@ export async function sendEscalationAlert(args: {
   customerMessage: string;
   businessBotToken?: string | null;
 }): Promise<void> {
-  console.log("[TOOL FIRED] escalate_to_owner:", {
+  debugLog("[TOOL FIRED] escalate_to_owner:", {
     ownerChatId: args.ownerChatId,
     customerMessage: args.customerMessage,
   });

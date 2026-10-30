@@ -87,7 +87,9 @@ export async function POST(request: Request) {
       plan: paystackPlanCode,
     };
 
-    console.log("PAYSTACK INIT PAYLOAD:", payload);
+    // Intentionally not logged: the payload carries the customer's email
+    // address. The Paystack webhook and the verify route both record the
+    // outcome against the Transaction row.
 
     let initialized;
     try {

@@ -708,9 +708,21 @@ function ProductThumb({ image, name }: ThumbProps) {
   }
 
   return (
+    // Catalogue images are whatever the seller supplied: our Supabase Storage
+    // bucket for uploads, but the Jiji importer keeps the listing's third-party
+    // CDN URL (`lib/jiji.ts#readImageUrl`), which no `images.remotePatterns`
+    // allow-list can cover. That rules out `next/image` for this thumbnail, so
+    // the plain element carries the same guarantees by hand: explicit
+    // dimensions (no layout shift) and lazy decoding (a 50-row table must not
+    // fetch 50 images up front).
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={image}
       alt={name}
+      width={40}
+      height={40}
+      loading="lazy"
+      decoding="async"
       className="h-10 w-10 shrink-0 rounded-lg border border-gray-200 object-cover"
     />
   );

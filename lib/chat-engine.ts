@@ -1,5 +1,6 @@
 import { Prisma, type Conversation } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { debugLog } from "@/lib/logger";
 import {
   askAI,
   type AIResult,
@@ -679,7 +680,7 @@ async function runToolCall(
     }
     case "escalate_to_owner": {
       const reason = readArgument(toolCall.function.arguments, "reason");
-      console.log(
+      debugLog(
         "[TOOL] Executing escalate_to_owner for business:",
         businessId,
         "reason:",

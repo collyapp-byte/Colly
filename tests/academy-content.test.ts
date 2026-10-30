@@ -198,6 +198,10 @@ test("the curriculum never repeats a retired claim", () => {
     "within 24 hours",
     "switch on WhatsApp for them",
     "final-exam-questions.txt",
+    // The bonus grant is quoted in Telegram replies; advertising free WhatsApp
+    // messages promised a channel that is only onboarded via a waitlist.
+    "free WhatsApp messages",
+    "Free WhatsApp messages",
   ];
 
   for (const claim of retired) {

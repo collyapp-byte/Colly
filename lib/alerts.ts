@@ -40,7 +40,7 @@ export async function sendAlert(
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
     if (!token || !chatId) {
-      console.log("[alerts] Telegram not configured");
+      console.info("[alerts] Telegram not configured");
       return;
     }
 

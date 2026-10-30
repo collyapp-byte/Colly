@@ -7,9 +7,9 @@
 // serve.
 //
 // Every paid tier splits its monthly grant into `baseCredits` (what the price
-// pays for) and `bonusCredits` (a marketing giveaway funded by Meta's 1,000
-// free WhatsApp messages per month). The balance a business receives is always
-// the total, `baseCredits + bonusCredits`.
+// pays for) and `bonusCredits` (a marketing giveaway funded by the margin on
+// that price). The balance a business receives is always the total,
+// `baseCredits + bonusCredits`.
 
 export type PlanTier = "green" | "blue" | "black";
 
@@ -52,31 +52,43 @@ export type PlanConfig = {
   /** Credits the price pays for (1 credit = ₦1). */
   baseCredits: number;
   /**
-   * Bonus credits given away on top of the base grant. They are funded by
-   * Meta's 1,000 free WhatsApp messages per month, so they cost us nothing.
+   * Bonus credits given away on top of the base grant. They are funded by the
+   * margin on `baseCredits`, so a tier can advertise a total larger than its
+   * price without the wallet costing more than the subscription.
    */
   bonusCredits: number;
   /** Total credits granted per billing month: `baseCredits + bonusCredits`. */
   credits: number;
-  /** Bonus headline: "Includes 100 Free WhatsApp Messages!". */
+  /**
+   * Bonus headline: "Includes 1,600 Free Telegram Messages!". Counted on the
+   * standard channel cost (5 credits a message), never on WhatsApp — WhatsApp
+   * is onboarded from a manual waitlist, so it cannot be promised to a new
+   * customer.
+   */
   bonusDescription: string;
   /** One-line pitch shown on the plans page. */
   description: string;
 };
 
-/** How many free WhatsApp AI replies a bonus grant buys (80 credits each). */
-export function bonusWhatsappReplies(bonusCredits: number): number {
-  return Math.floor(bonusCredits / REPLY_CREDIT_COSTS.whatsapp);
+/**
+ * How many free messages a bonus grant buys on the standard channels (Telegram,
+ * Discord and Web Chat, 5 credits each). Bonus copy is always quoted in
+ * Telegram messages: WhatsApp costs 80 credits and is onboarded from a manual
+ * waitlist, so promising WhatsApp messages would advertise a channel a new
+ * business cannot switch on.
+ */
+export function bonusStandardReplies(bonusCredits: number): number {
+  return Math.floor(bonusCredits / REPLY_CREDIT_COSTS.standard);
 }
 
 /**
  * The conversion badge under a plan's credits:
- * "+ 8,000 Bonus Credits = 100 FREE WhatsApp Messages".
+ * "+ 8,000 Bonus Credits = 1,600 FREE Telegram Messages".
  */
 export function bonusCreditsBadge(bonusCredits: number): string {
-  return `+ ${bonusCredits.toLocaleString()} Bonus Credits = ${bonusWhatsappReplies(
+  return `+ ${bonusCredits.toLocaleString()} Bonus Credits = ${bonusStandardReplies(
     bonusCredits,
-  ).toLocaleString()} FREE WhatsApp Messages`;
+  ).toLocaleString()} FREE Telegram Messages`;
 }
 
 /**
@@ -94,14 +106,14 @@ function definePlan(config: {
   return {
     ...config,
     credits: config.baseCredits + config.bonusCredits,
-    bonusDescription: `Includes ${bonusWhatsappReplies(
+    bonusDescription: `Includes ${bonusStandardReplies(
       config.bonusCredits,
-    ).toLocaleString()} Free WhatsApp Messages!`,
+    ).toLocaleString()} Free Telegram Messages!`,
   };
 }
 
 export const PLANS: Record<PlanTier, PlanConfig> = {
-  // 15,000 base + 8,000 bonus = 23,000 credits (100 free WhatsApp replies).
+  // 15,000 base + 8,000 bonus = 23,000 credits (1,600 Telegram replies).
   green: definePlan({
     monthly: 15_000,
     yearly: 150_000,
@@ -110,7 +122,7 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
     description: "For small boutiques and vendors getting started.",
   }),
   // ₦25,000 = 25,000 base credits + 16,000 bonus = 41,000 credits
-  // (200 free WhatsApp replies). The base grant matches the price 1:1.
+  // (3,200 Telegram replies). The base grant matches the price 1:1.
   blue: definePlan({
     monthly: 25_000,
     yearly: 250_000,
@@ -119,7 +131,7 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
     description: "For growing shops replying to customers all day.",
   }),
   // ₦50,000 = 50,000 base credits + 40,000 bonus = 90,000 credits
-  // (500 free WhatsApp replies). The base grant matches the price 1:1.
+  // (8,000 Telegram replies). The base grant matches the price 1:1.
   black: definePlan({
     monthly: 50_000,
     yearly: 500_000,
@@ -271,13 +283,14 @@ export function getMonthlyCredits(plan?: string | null): number {
 }
 
 /**
- * "23,000 Credits = 4,600 Telegram replies OR 575 WhatsApp replies" — the
- * calculator line shown under a plan's (total) credits.
+ * "23,000 Credits = 4,600 AI replies on Telegram, Discord or Web Chat" — the
+ * calculator line shown under a plan's (total) credits. Deliberately silent
+ * about WhatsApp: the number is a promise the business can plan around, and
+ * WhatsApp is waitlist-only.
  */
 export function creditReplyCalculator(credits: number): string {
   const telegram = Math.floor(credits / REPLY_CREDIT_COSTS.standard);
-  const whatsapp = Math.floor(credits / REPLY_CREDIT_COSTS.whatsapp);
-  return `${credits.toLocaleString()} Credits = ${telegram.toLocaleString()} Telegram replies OR ${whatsapp.toLocaleString()} WhatsApp replies`;
+  return `${credits.toLocaleString()} Credits = ${telegram.toLocaleString()} AI replies on Telegram, Discord or Web Chat`;
 }
 
 /**

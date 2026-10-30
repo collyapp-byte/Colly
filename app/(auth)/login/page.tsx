@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useActionState, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { login } from "@/lib/auth-actions";
 import { agentLogin } from "@/lib/agent-auth-actions";
@@ -13,12 +13,22 @@ import { GoogleButton } from "@/components/auth/google-button";
 import { RoleChooser, type AuthRole } from "@/components/auth/role-chooser";
 import { Button } from "@/components/ui/button";
 
-async function hardSignOut() {
+type AppRouter = ReturnType<typeof useRouter>;
+
+/**
+ * Full sign-out: clears the Supabase session, then returns to the clean login
+ * screen. Navigation goes through the App Router instead of
+ * `window.location.href` (`@next/next/no-location-assign-relative-destination`);
+ * the extra `refresh()` is what discards the cached RSC payload, so the page
+ * cannot re-render from the tree that was built while the old session was live.
+ */
+async function hardSignOut(router: AppRouter) {
   try {
     const supabase = createClient();
     await supabase.auth.signOut();
   } finally {
-    window.location.href = "/login";
+    router.replace("/login");
+    router.refresh();
   }
 }
 
@@ -32,6 +42,7 @@ function viewFromParam(value: string | null): View {
 function BusinessLoginForm() {
   const [state, formAction, pending] = useActionState(login, INITIAL_AUTH_STATE);
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
@@ -122,7 +133,7 @@ function BusinessLoginForm() {
       <div className="mt-4 border-t border-gray-200 pt-4 text-center">
         <button
           type="button"
-          onClick={() => void hardSignOut()}
+          onClick={() => void hardSignOut(router)}
           className="text-sm font-medium text-colly transition-colors hover:text-colly-hover"
         >
           Not you? Sign out
@@ -138,6 +149,7 @@ function AgentLoginForm() {
     INITIAL_AUTH_STATE,
   );
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
@@ -216,7 +228,7 @@ function AgentLoginForm() {
       <div className="mt-4 border-t border-gray-200 pt-4 text-center">
         <button
           type="button"
-          onClick={() => void hardSignOut()}
+          onClick={() => void hardSignOut(router)}
           className="text-sm font-medium text-colly transition-colors hover:text-colly-hover"
         >
           Not you? Sign out

@@ -281,9 +281,9 @@ Log into your own Colly account. Click every menu item in the sidebar. Spend 10 
 
 We now have a single set of plans. Credits are shared across **all** connected channels (Telegram, Discord, Web Chat). 1 credit = ₦1.
 
-- **Green:** ₦15,000/month — 23,000 credits (15,000 base + 8,000 bonus = 100 free WhatsApp messages)
-- **Blue:** ₦25,000/month — 41,000 credits (25,000 base + 16,000 bonus = 200 free WhatsApp messages)
-- **Black:** ₦50,000/month — 90,000 credits (50,000 base + 40,000 bonus = 500 free WhatsApp messages)
+- **Green:** ₦15,000/month — 23,000 credits (15,000 base + 8,000 bonus = 1,600 free Telegram messages)
+- **Blue:** ₦25,000/month — 41,000 credits (25,000 base + 16,000 bonus = 3,200 free Telegram messages)
+- **Black:** ₦50,000/month — 90,000 credits (50,000 base + 40,000 bonus = 8,000 free Telegram messages)
 - **Reply costs:** Telegram/Discord/Web Chat replies cost 5 credits. WhatsApp replies cost 80 credits. Manual replies are free.
 - **Top-ups:** buy more credits any time at ₦1 per credit; they never expire.
 - **Free:** ₦0/month — 80 credits every 30 days, forever. No card required.`,

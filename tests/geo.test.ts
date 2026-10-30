@@ -690,5 +690,90 @@ test("the hubs publish an ItemList of every leaf page", () => {
   assert.ok(comparisonHubDescription().includes(COMPETITOR_REVIEWED));
 });
 
+/**
+ * The agent-facing surfaces are read by crawlers and autonomous agents that
+ * carry no cookies. Two things must hold or they silently receive a login page:
+ *
+ * 1. `public/.well-known/ard.json` is valid JSON with the schema.org shape an
+ *    agent parses (a broken manifest is worse than no manifest — the agent caches
+ *    the failure).
+ * 2. The proxy matcher keeps `.well-known`, `llms.txt`, `robots.txt` and
+ *    `sitemap.xml` out of the auth branch. `proxy.ts` is the only place that
+ *    decides this, so a future "simplify the matcher" edit breaks crawler access
+ *    and nothing else would notice.
+ */
+test("the ARD manifest is valid schema.org JSON", () => {
+  const manifest = JSON.parse(
+    readFileSync(new URL("../public/.well-known/ard.json", import.meta.url), "utf8"),
+  ) as {
+    "@context": string;
+    "@type": string;
+    name: string;
+    description: string;
+    agent: { "@type": string; name: string; applicationCategory: string };
+  };
+
+  assert.equal(manifest["@context"], "https://schema.org");
+  assert.equal(manifest["@type"], "WebSite");
+  assert.ok(manifest.name.length > 0, "an agent needs a name to cite");
+  assert.ok(
+    manifest.description.length > 40,
+    "the description must be a quotable sentence, not a label",
+  );
+  assert.equal(manifest.agent["@type"], "SoftwareApplication");
+  assert.ok(manifest.agent.name.length > 0);
+  assert.ok(manifest.agent.applicationCategory.length > 0);
+});
+
+test("the proxy never intercepts the crawler and agent files", () => {
+  const source = readFileSync(new URL("../proxy.ts", import.meta.url), "utf8");
+
+  // The matcher is the only quoted line in the file that starts with a path and
+  // mentions llms.txt. Reading it as text keeps this test free of the Supabase
+  // imports that proxy.ts pulls in at module scope.
+  const matcherLine = source
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => line.startsWith('"/') && line.includes("llms.txt"));
+
+  assert.ok(matcherLine, "proxy.ts must still export the matcher string");
+
+  // Strip the wrapping quotes and trailing comma: what is left is the raw text
+  // of the string literal, i.e. still carrying its `\\` source escapes.
+  const rawMatcher = matcherLine.slice(1, -2);
+
+  for (const excluded of [
+    "llms.txt",
+    "robots.txt",
+    "sitemap.xml",
+    "\\\\.well-known",
+  ]) {
+    assert.ok(
+      rawMatcher.includes(excluded),
+      `the matcher must exclude ${excluded} or anonymous requests are redirected to /login`,
+    );
+  }
+
+  // Undo the string-literal escaping and check the negative lookahead really
+  // lets the manifest through while the dashboard still enters the proxy.
+  const compiled = new RegExp(`^${rawMatcher.replace(/\\\\/g, "\\")}$`);
+
+  assert.equal(
+    compiled.test("/.well-known/ard.json"),
+    false,
+    "an anonymous request for /.well-known/ard.json must not enter the proxy",
+  );
+  assert.equal(
+    compiled.test("/llms.txt"),
+    false,
+    "an anonymous request for /llms.txt must not enter the proxy",
+  );
+  assert.equal(
+    compiled.test("/dashboard"),
+    true,
+    "the dashboard must still run through the session refresh",
+  );
+});
+
 
 

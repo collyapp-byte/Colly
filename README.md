@@ -13,7 +13,7 @@ channel on.
 
 | Area | Highlights |
 | --- | --- |
-| AI replies | DeepSeek via an OpenAI-compatible client; tool-calling forced for every product/price/stock question so answers come from the catalogue, never from memory. Plain-text replies, no stock quantities disclosed, automatic human takeover. |
+| AI replies | DeepSeek first, then Groq, then OpenRouter (all OpenAI-compatible); tool-calling forced for every product/price/stock question so answers come from the catalogue, never from memory. Plain-text replies, no stock quantities disclosed, automatic human takeover. |
 | Catalogue | Products with price, floor price (negotiation limit), negotiable flag, stock, images and descriptions; CSV upload; Jiji import + two-way price/stock sync; semantic search (Jina embeddings) with a `pg_trgm` fallback. |
 | Inbox | Conversation list ordered by last activity, message history, AI pause/resume (takeover), manual replies that cost no credits. |
 | CRM | Customer records ranked by activity, tags, and a four-stage deal pipeline (inquiry → negotiating → paid → delivered). |
@@ -26,12 +26,12 @@ channel on.
 
 Next.js 16 (App Router, Turbopack, `cacheComponents`) · React 19 · TypeScript ·
 Tailwind CSS v4 · Prisma 6 + PostgreSQL (Supabase) · Supabase Auth (`@supabase/ssr`) ·
-DeepSeek · Paystack · Jina embeddings · Umami + Microsoft Clarity (optional).
+DeepSeek → Groq → OpenRouter · Paystack · Jina embeddings · Umami + Microsoft Clarity (optional).
 
 ## Quick start
 
 ```bash
-cp .env.example .env   # fill in DATABASE_URL, DIRECT_URL, Supabase, DeepSeek
+cp .env.example .env   # fill in DATABASE_URL, DIRECT_URL, Supabase, one AI provider key
 npm install
 npx prisma migrate deploy   # or: npx prisma migrate dev
 npm run seed                # demo tenant + academy content (never against production)
@@ -63,13 +63,14 @@ app/
   (agents)/            agent training, quizzes, final exam, certificate, wallet, referrals
   api/                 ~60 route handlers (chat, channels, billing, products, agents, cron)
 components/            UI grouped by surface (dashboard, conversations, agents, products, ui)
-lib/                   domain logic: chat-engine, ai/deepseek, plans, credits, tools,
-                       negotiation, invoices, jiji, badges, certification, agent-auth,
-                       pagination
+lib/                   domain logic: chat-engine, ai (DeepSeek→Groq→OpenRouter), plans,
+                       credits, tools, logger, negotiation, invoices, jiji, badges,
+                       certification, agent-auth, pagination
 prisma/                schema, migrations, seed.cjs, academy-content.cjs
 scripts/               academy sync, embedding backfill
-tests/                 node:test suites (plans, academy content, negotiation)
-docs/                  content audit register + docs index
+tests/                 node:test suites (plans, academy content, negotiation, pagination,
+                       geo/AEO, SEO)
+docs/                  content audit register, QA audit snapshot, docs index
 ```
 
 Route handlers are thin: business logic lives in `lib/`, and `lib/chat-engine.ts` is the
@@ -95,13 +96,18 @@ is derived from it and asserted by `tests/plans.test.ts`.
 
 ## Testing and CI
 
-`npm test` runs four suites with the Node test runner (`tsx`, no Jest/Vitest):
+`npm test` runs six suites with the Node test runner (`tsx`, no Jest/Vitest):
 
-- `tests/plans.test.ts` — plan/credit invariants and the wallet spend order.
+- `tests/plans.test.ts` — plan/credit invariants, the wallet spend order and the rule that
+  no plan card advertises WhatsApp (waitlist-only) credits.
 - `tests/academy-content.test.ts` — course/lesson/quiz/exam integrity, plus a guard that
   fails on retired claims and on drift from `lib/plans.ts`.
 - `tests/negotiation.test.ts` — counter-offer ladder and offer parsing.
 - `tests/pagination.test.ts` — cursor encode/decode and page-size clamping.
+- `tests/geo.test.ts` — city/country/competitor pages, JSON-LD, FAQ copy, `llms.txt`,
+  the `public/.well-known/ard.json` manifest and the proxy matcher that must never
+  intercept crawler files.
+- `tests/seo.test.ts` — sitemap/robots/canonicals and the homepage structured data.
 
 `.github/workflows/ci.yml` runs lint → typecheck → test on every push and pull request.
 `npm run build` is not part of CI because it needs real provider credentials; run it
@@ -122,5 +128,5 @@ before deploying.
 - [`AGENTS.md`](./AGENTS.md) — repo contract for humans and AI agents (conventions, gotchas).
 - [`docs/README.md`](./docs/README.md) — docs index and the canonical-source table.
 - [`docs/CONTENT_AUDIT.md`](./docs/CONTENT_AUDIT.md) — what was stale, wrong or missing.
-- [`QA_AUDIT_V2.md`](./QA_AUDIT_V2.md) — engineering QA audit with a live status column.
+- [`docs/QA_AUDIT_V2.md`](./docs/QA_AUDIT_V2.md) — engineering QA audit with a live status column.
 
