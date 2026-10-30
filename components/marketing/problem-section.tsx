@@ -18,7 +18,10 @@ export function ProblemSection() {
           </p>
         </div>
 
-        <div>
+        {/* Same rule as the hero: the box is sized by CSS (4:5, then a fixed
+            600px band from `lg`), not by the decoded image, so this section
+            cannot grow after the photo arrives. */}
+        <div className="aspect-[4/5] w-full overflow-hidden rounded-3xl shadow-xl lg:aspect-auto lg:h-[600px]">
           <Image
             src="/a man chatting night time v.jpg"
             alt="Customer chatting with a business late at night"
@@ -28,7 +31,7 @@ export function ProblemSection() {
                below it — same breakpoint as the hero. Without this the browser
                assumes 100vw and pulls a far larger candidate than the box. */
             sizes="(max-width: 1023px) 100vw, 50vw"
-            className="rounded-3xl shadow-xl object-cover w-full aspect-[4/5] lg:aspect-auto lg:h-[600px]"
+            className="h-full w-full object-cover"
           />
         </div>
       </div>

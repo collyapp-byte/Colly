@@ -28,35 +28,76 @@ type Stat = {
 };
 
 /**
+ * The alert-banner inputs, read on the server by
+ * `app/(dashboard)/dashboard/page.tsx`.
+ *
+ * These four values decide whether the red/amber/orange banners exist. They
+ * used to arrive from `/api/business` *after* hydration, so the banners popped
+ * in above the stat grid and pushed every card on the page down — the biggest
+ * layout shift (CLS) on this route. Rendered from the server row instead, the
+ * banners are part of the first paint and nothing moves; the fetch in the
+ * effect below only refreshes them.
+ */
+export type DashboardStatus = {
+  /** Stored bank/transfer instructions. `null` or blank means "add them". */
+  paymentInstructions: string | null;
+  /** A channel credential is stored (Telegram or Discord bot token). */
+  isConnected: boolean;
+  planStatus: string | null;
+  /** ISO timestamp of the last failed charge, when there is one. */
+  paymentFailedAt: string | null;
+};
+
+/** Same shape `/api/products/sync-jiji` GET returns, seeded on the server. */
+export type JijiSyncStatus = {
+  lastJijiSyncAt: string | null;
+  hasJijiProducts: boolean;
+};
+
+/**
  * The interactive half of the Overview route.
  *
  * `app/(dashboard)/dashboard/page.tsx` is a Server Component because it reads
- * the setup-checklist flags straight from Prisma; everything below this line
- * needs client state (fetches for today's sales, invoices, channel status,
- * Jiji sync), so it lives here and is rendered as that page's child. The
- * page owns the `max-w-6xl` container and the "Overview" heading.
+ * the setup-checklist flags, the banner status and the Jiji status straight
+ * from Prisma; everything below this line needs client state (fetches for
+ * today's sales, invoices and live Jiji refreshes), so it lives here and is
+ * rendered as that page's child. The page owns the `max-w-6xl` container and
+ * the "Overview" heading.
+ *
+ * Both `status` and `initialJijiSync` arrive pre-filled from the server, so
+ * the alert banners and the store card are laid out in the first paint. They
+ * used to be fetched after hydration, which dropped ~100–200px of content in
+ * above the stat grid and pushed every card down — the page's main CLS source.
  */
-export function DashboardOverview() {
+export function DashboardOverview({
+  status,
+  initialJijiSync,
+}: {
+  status: DashboardStatus;
+  initialJijiSync: JijiSyncStatus;
+}) {
   const [today, setToday] = useState<{ total: number; count: number } | null>(
     null,
   );
   const [pendingInvoices, setPendingInvoices] = useState<number | null>(null);
-  const [isConnected, setIsConnected] = useState<boolean | null>(null);
+  // Seeded from the server so the banners below are laid out on the first
+  // paint; the `/api/business` fetch refreshes them in place.
+  const [isConnected, setIsConnected] = useState<boolean>(status.isConnected);
   const [paymentInstructions, setPaymentInstructions] = useState<
-    string | null | undefined
-  >(undefined);
-  const [planStatus, setPlanStatus] = useState<string | null>(null);
-  const [paymentFailedAt, setPaymentFailedAt] = useState<
-    string | null | undefined
-  >(undefined);
+    string | null
+  >(status.paymentInstructions);
+  const [planStatus, setPlanStatus] = useState<string | null>(
+    status.planStatus,
+  );
+  const [paymentFailedAt, setPaymentFailedAt] = useState<string | null>(
+    status.paymentFailedAt,
+  );
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [joiningWaitlist, setJoiningWaitlist] = useState(false);
-  // Jiji sync status for the store card; null until the status request lands so
-  // the card never flashes the "not connected" state at a connected shop.
-  const [jijiSync, setJijiSync] = useState<{
-    lastJijiSyncAt: string | null;
-    hasJijiProducts: boolean;
-  } | null>(null);
+  // Seeded from the server with the same values the status endpoint returns, so
+  // the store card is already in the first paint. The fetch below stays as a
+  // refresher for after the card's own auto-sync.
+  const [jijiSync, setJijiSync] = useState<JijiSyncStatus>(initialJijiSync);
 
   async function handleJoinWaitlist(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,7 +160,8 @@ export function DashboardOverview() {
         },
       )
       .catch(() => {
-        // The card is optional: hide it rather than block the overview.
+        // The card is optional: keep the server-seeded values rather than block
+        // the overview.
       });
 
     return () => {
@@ -246,7 +288,10 @@ export function DashboardOverview() {
         </div>
       )}
 
-      {paymentInstructions !== undefined && !paymentInstructions?.trim() && (
+      {/* Both conditions are now definite on the first render (the server row
+          supplies them), so these banners are part of the page's first paint
+          instead of being appended above the stat grid after hydration. */}
+      {!paymentInstructions?.trim() && (
         <div className="mb-6 flex flex-col gap-4 rounded-lg border border-amber-300 bg-amber-50 p-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
@@ -323,19 +368,17 @@ export function DashboardOverview() {
           );
         })}
 
-        {jijiSync && (
-          <div className="col-span-2 md:col-span-4">
-            <JijiSyncCard
-              lastSyncedAt={
-                jijiSync.lastJijiSyncAt
-                  ? new Date(jijiSync.lastJijiSyncAt)
-                  : null
-              }
-              hasJijiProducts={jijiSync.hasJijiProducts}
-              onSynced={handleJijiSynced}
-            />
-          </div>
-        )}
+        {/* Rendered unconditionally: the status comes from the server, so this
+            row — and everything below it — is positioned once. */}
+        <div className="col-span-2 md:col-span-4">
+          <JijiSyncCard
+            lastSyncedAt={
+              jijiSync.lastJijiSyncAt ? new Date(jijiSync.lastJijiSyncAt) : null
+            }
+            hasJijiProducts={jijiSync.hasJijiProducts}
+            onSynced={handleJijiSynced}
+          />
+        </div>
       </section>
 
       <Card className="mt-6 border-[color:var(--outline-subtle)]!">

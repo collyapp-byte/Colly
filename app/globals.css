@@ -278,6 +278,79 @@ button:active:not(:disabled) {
   display: none;
 }
 
+/* ── Scroll reveal (components/ui/scroll-reveal.tsx) ───────────────────────
+   Opacity + translate only: both are composited, so the reveal never triggers
+   layout and never re-rasterises the section - the previous framer-motion
+   version animated a `blur()` filter, which repainted the whole block on every
+   frame. `.reveal-hidden` is what the server HTML ships; the component swaps it
+   for `.reveal-visible` once an IntersectionObserver sees the section. */
+.reveal {
+  transition:
+    opacity 0.7s cubic-bezier(0.21, 0.47, 0.32, 0.98),
+    transform 0.7s cubic-bezier(0.21, 0.47, 0.32, 0.98);
+}
+
+.reveal-hidden {
+  opacity: 0;
+  transform: translate3d(0, 50px, 0);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* ── Pricing card tilt (components/ui/tilt-card.tsx) ───────────────────────
+   The pointer handler only writes --tilt-x/--tilt-y; the transform itself is
+   declarative, so the compositor does the work. */
+.tilt-card {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+
+  transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform-style: preserve-3d;
+  /* box-shadow stays in the list so the Tailwind `hover:shadow-xl` utility
+     still eases in; an unlayered rule would otherwise win over it. */
+  transition:
+    transform 0.25s ease-out,
+    box-shadow 0.15s ease-out;
+}
+
+/* Track the cursor exactly while it is over the card, then glide back. */
+.tilt-card[data-tilting="true"] {
+  transition: box-shadow 0.15s ease-out;
+}
+
+.tilt-card-inner {
+  transform: translateZ(30px);
+}
+
+/* No pointer, no motion: keep the cards flat for touch users and for anyone who
+   asked their OS to reduce motion. */
+@media (hover: none), (prefers-reduced-motion: reduce) {
+  .tilt-card,
+  .tilt-card[data-tilting="true"] {
+    transform: none;
+    transition: box-shadow 0.15s ease-out;
+  }
+
+  .tilt-card-inner {
+    transform: none;
+  }
+}
+
+/* Reduced motion also skips the reveal, and forces the content visible even if
+   the observer never fires (the class is only swapped from JS). */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-hidden,
+  .reveal-visible {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
 /* ── Print ─────────────────────────────────────────────────────────────────
    The in-store QR card (/settings/qr-code) is printed and taped to a counter,
    so the dashboard chrome must stay off the paper. Elements marked

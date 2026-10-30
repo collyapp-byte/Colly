@@ -8,9 +8,12 @@ import { ArrowRight, Check } from "lucide-react";
  *
  * The three flags are computed on the server (`app/(dashboard)/dashboard/page.tsx`
  * reads `Business.telegramBotToken` plus the product and customer-message
- * counts), so this component never queries: it only decides what to show. Once
- * all three are true it renders nothing, so the card leaves the overview for
- * good instead of nagging an activated owner.
+ * counts), so this component never queries: it only decides what to show, and
+ * its box is therefore already in the first paint — no skeleton needed here.
+ * The route's streaming placeholder lives in
+ * `app/(dashboard)/dashboard/loading.tsx` and reserves this card's height.
+ * Once all three steps are true it renders nothing, so the card leaves the
+ * overview for good instead of nagging an activated owner.
  */
 type SetupChecklistProps = {
   /** A Telegram bot token is stored on the business. */
@@ -111,7 +114,11 @@ export function SetupChecklist({
         {steps.map((step, index) => (
           <li
             key={step.title}
-            className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4"
+            /* `min-h` holds the row at the height it has while the step is
+               pending: completing one drops the action link, and without a floor
+               the card (and the whole page below it) would shrink each time a
+               step is ticked. */
+            className="flex min-h-[104px] items-start gap-3 rounded-lg border border-gray-200 bg-white p-4"
           >
             <span
               className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${

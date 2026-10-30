@@ -28,6 +28,19 @@ export default function MarketingPage() {
           emits its own FAQPage from `lib/marketing-faq.ts`, so neither can
           quote a stale price or an answer the page does not show. */}
       <HomepageJsonLd />
+      {/* Everything below the hero is imported statically on purpose.
+          These sections are Server Components — their copy, icons and JSON-LD
+          ship as prerendered HTML and only their two animation primitives
+          (`ScrollReveal`, `TiltCard`) add client JS — so `next/dynamic` would
+          buy nothing: with `ssr: false` the sections would arrive after
+          hydration (a fresh layout shift plus crawler-invisible content, and
+          this page exists for answer engines), and with the default `ssr` the
+          same chunks are still requested during load. The initial bundle was cut
+          where it actually mattered instead: framer-motion (~78KB minified,
+          ~27KB gzipped) no longer reaches this route. Its last user, the
+          dashboard's `AnimatedCounter`, is a plain rAF loop now, so the
+          dependency is gone from the app — and the hero stays a plain static
+          import so the LCP element is in the first paint. */}
       <Hero />
       <ProblemSection />
       <Features />
@@ -38,4 +51,5 @@ export default function MarketingPage() {
     </>
   );
 }
+
 

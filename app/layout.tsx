@@ -20,7 +20,25 @@ import {
 } from "@/lib/site";
 import { Toaster } from "sonner";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+/**
+ * `display: "optional"` instead of `"swap"`.
+ *
+ * With `swap` the browser paints the fallback immediately and then swaps in
+ * Inter whenever it arrives — every swap re-measures every line of text, which
+ * is the single biggest source of layout shift (CLS) on this site. `optional`
+ * gives the font a ~100 ms block period: if Inter is not ready by then the
+ * browser keeps the fallback for that page view and never swaps, so the text
+ * box is laid out once. Next still emits a metric-compatible fallback
+ * (`adjustFontFallback`, on by default) so the first paint already has the
+ * final line heights. Because the file is self-hosted and preloaded by
+ * `next/font`, it is warm on repeat visits, which is where the brand face
+ * should show up anyway.
+ */
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "optional",
+});
 
 /**
  * Site-wide metadata. Pages override this with `pageMetadata()` from

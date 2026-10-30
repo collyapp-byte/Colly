@@ -19,7 +19,11 @@ export function FounderAndCTA() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden py-20 text-center">
+      {/* `fill` positions the photo absolutely, so the section itself has to
+          carry the height: `min-h-[420px]` is the fixed floor the copy needs,
+          which keeps the block from collapsing to its text height before the
+          background image resolves. */}
+      <section className="relative min-h-[420px] overflow-hidden py-20 text-center">
         <Image
           src="/a man chatting night time h.jpg"
           alt=""
