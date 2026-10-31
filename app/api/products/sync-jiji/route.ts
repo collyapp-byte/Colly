@@ -274,9 +274,7 @@ export async function POST(request: Request) {
         // canonical form so the next sync reads the seller id straight away.
         ...(providedUrl
           ? {
-              jijiShopUrl: result.userId
-                ? `https://jiji.ng/sellerpage-${result.userId}`
-                : providedUrl,
+              jijiShopUrl: result.sellerPageUrl ?? providedUrl,
             }
           : {}),
       },

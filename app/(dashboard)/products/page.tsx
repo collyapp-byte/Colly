@@ -655,15 +655,15 @@ export default function ProductsPage() {
               inputMode="url"
               value={jijiUrl}
               onChange={(event) => setJijiUrl(event.target.value)}
-              placeholder="https://jiji.ng/lagos/mobile-phones/iphone-11-64gb-hdOZhLA7u0r6u5lqZ1gOJhn0.html"
+              placeholder="https://jiji.ng/lagos/computers-and-laptops/hp-elitebook-840-g5-hmJzdAFmEMmZMY8Ol8ENvVAy"
               disabled={jijiImporting}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20 disabled:bg-gray-50 disabled:text-gray-500"
             />
             <p className="mt-2 text-xs text-gray-500">
-              Paste any product link from your shop (it ends in .html) or your
-              shop link. We copy the title, price, description and first photo
-              from each listing. Products you already have with the same name are
-              skipped.
+              Paste any product link from your shop (with or without .html), your
+              shop link, or your Jiji seller id. We copy the title, price,
+              description and first photo from each listing. Products you already
+              have with the same name are skipped.
             </p>
 
             {jijiError && (

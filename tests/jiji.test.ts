@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  JIJI_ADVERT_API_PATHS,
+  JIJI_DEFAULT_HOST,
   JIJI_INVALID_TARGET_MESSAGE,
   JIJI_SOURCE,
   JIJI_UNREACHABLE_MESSAGE,
@@ -15,14 +17,21 @@ import {
   firstString,
   isJijiUserId,
   isLastJijiPage,
+  jijiAdvertUrl,
   jijiListingUrl,
+  jijiSellerPageUrl,
+  listingGuidFromPath,
+  looksLikeJijiGuid,
   mapListing,
   mockImportEnabled,
   normalizeName,
+  pageJsonBlocks,
   parseJijiTarget,
   payloadIsTrusted,
   readAdverts,
+  readJijiPageIdentity,
   readListCount,
+  sellerIdsFromHtml,
 } from "../lib/jiji";
 
 /**
@@ -182,12 +191,231 @@ test("a product link yields its advert guid, title words and region", () => {
     guid: "hdOZhLA7u0r6u5lqZ1gOJhn0",
     query: "iphone se 2020 64gb black",
     regionSlug: "gwarinpa",
+    url,
+    host: JIJI_DEFAULT_HOST,
   });
 
   // Nothing advert-shaped here.
   assert.equal(extractJijiListingGuid("https://jiji.ng/c/mobile-phones"), null);
   assert.equal(extractJijiListingGuid("https://jiji.ng/kevin-enterprise"), null);
   assert.equal(extractJijiListingGuid("https://example.com/x-abc.html"), null);
+});
+
+test("a product link works without the .html suffix", () => {
+  // Current Jiji pages: /<region>/<category>/<title>-<guid>, no suffix.
+  const dashed =
+    "https://jiji.ng/lagos/computers-and-laptops/hp-elitebook-840-g5-hmJzdAFmEMmZMY8Ol8ENvVAy";
+
+  assert.equal(extractJijiListingGuid(dashed), "hmJzdAFmEMmZMY8Ol8ENvVAy");
+  assert.deepEqual(parseJijiTarget(dashed), {
+    kind: "listing",
+    guid: "hmJzdAFmEMmZMY8Ol8ENvVAy",
+    query: "hp elitebook 840 g5",
+    regionSlug: "lagos",
+    url: dashed,
+    host: JIJI_DEFAULT_HOST,
+  });
+
+  // A bare hash as the last segment is the same advert.
+  assert.equal(
+    extractJijiListingGuid("https://jiji.ng/lagos/phones/hmJzdAFmEMmZMY8Ol8ENvVAy"),
+    "hmJzdAFmEMmZMY8Ol8ENvVAy",
+  );
+  assert.equal(
+    parseJijiTarget("https://jiji.ng/lagos/phones/hmJzdAFmEMmZMY8Ol8ENvVAy")?.kind,
+    "listing",
+  );
+
+  // Listing pages without a region prefix are read too.
+  assert.equal(
+    extractJijiListingGuid(
+      "https://jiji.ng/computers-and-laptops/hp-elitebook-hmJzdAFmEMmZMY8Ol8ENvVAy",
+    ),
+    "hmJzdAFmEMmZMY8Ol8ENvVAy",
+  );
+
+  // A trailing slash or a query string changes nothing.
+  assert.equal(
+    extractJijiListingGuid(`${dashed}/?page=2`),
+    "hmJzdAFmEMmZMY8Ol8ENvVAy",
+  );
+  assert.equal(listingGuidFromPath("/lagos/phones/hmJzdAFmEMmZMY8Ol8ENvVAy"), "hmJzdAFmEMmZMY8Ol8ENvVAy");
+
+  // Category, search, seller and `c/` pages stay pages: a category word is not
+  // a hash, so none of them can be imported as an advert.
+  for (const url of [
+    "https://jiji.ng/lagos/computers-and-laptops",
+    "https://jiji.ng/lagos/accessories",
+    "https://jiji.ng/c/computers-and-laptops",
+    "https://jiji.ng/lagos/computers-and-laptops/hp-elitebook-840-g5",
+    "https://jiji.ng/sellerpage-hmJzdAFmEMmZMY8Ol8ENvVAy",
+    "https://jiji.ng/kevin-enterprise",
+  ]) {
+    assert.equal(extractJijiListingGuid(url), null, url);
+  }
+
+  // The hash rule itself: long, mixed, and carrying a digit.
+  assert.equal(looksLikeJijiGuid("hmJzdAFmEMmZMY8Ol8ENvVAy"), true);
+  assert.equal(looksLikeJijiGuid("hdOZhLA7u0r6u5lqZ1gOJhn0"), true);
+  assert.equal(looksLikeJijiGuid("accessories"), false);
+  assert.equal(looksLikeJijiGuid("laptops"), false);
+  assert.equal(looksLikeJijiGuid("13pro"), false);
+});
+
+test("seller ids are read out of a product page's metadata", () => {
+  const guid = "hmJzdAFmEMmZMY8Ol8ENvVAy";
+  const jsonLd = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "HP EliteBook 840 G5",
+    offers: {
+      "@type": "Offer",
+      price: "250000",
+      seller: { "@type": "Person", name: "Kevin", id: 17389808 },
+    },
+  });
+  const html = [
+    `<link rel="canonical" href="https://jiji.ng/lagos/computers-and-laptops/hp-elitebook-${guid}">`,
+    '<meta property="og:type" content="product">',
+    `<script type="application/ld+json">${jsonLd}</script>`,
+  ].join("\n");
+
+  const identity = readJijiPageIdentity(html);
+  assert.equal(identity.advertGuid, guid);
+  assert.equal(identity.isProductPage, true);
+  assert.deepEqual(sellerIdsFromHtml(html, { advertGuid: guid }), ["17389808"]);
+
+  // The client state says the same thing when there is no JSON-LD.
+  const state = [
+    `<meta property="og:url" content="https://jiji.ng/gwarinpa/phones/iphone-11-${guid}.html">`,
+    `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
+      props: { advert: { guid, user_id: "17389808" } },
+    })}</script>`,
+  ].join("");
+  assert.deepEqual(sellerIdsFromHtml(state), ["17389808"]);
+
+  // A page that turns out to be a different advert yields nothing at all.
+  assert.deepEqual(
+    sellerIdsFromHtml(html, { advertGuid: "TOTALLYdifferentGU1dxyz" }),
+    [],
+  );
+
+  // A bare `user_id` only counts on a page that is about ONE advert: a grid
+  // names dozens of sellers, and the first one is not this shop's.
+  const grid = `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
+    adverts: [{ user_id: "11111111" }, { user_id: "22222222" }],
+  })}</script>`;
+  assert.deepEqual(sellerIdsFromHtml(grid), []);
+
+  // A non-numeric id is not a seller id (Jiji's numeric id is the only shape
+  // the listing endpoint filters on).
+  const nonNumeric = `<script type="application/ld+json">${JSON.stringify({
+    "@type": "Product",
+    seller: { id: "kevin" },
+  })}</script>`;
+  assert.deepEqual(sellerIdsFromHtml(nonNumeric), []);
+
+  // JSON-LD and client state are both optional, and junk is skipped.
+  assert.deepEqual(pageJsonBlocks("<div>no scripts</div>"), []);
+  assert.deepEqual(pageJsonBlocks('<script type="text/plain">{"user_id":1}</script>'), []);
+});
+
+test("a GUID seller page resolves through its own metadata", () => {
+  const guid = "ffkTwbRgL9mtIqdSX4svUuQx";
+  const target = parseJijiTarget(`https://jiji.ng/sellerpage-${guid}`);
+
+  assert.equal(target?.kind, "shop");
+  assert.equal(target?.kind === "shop" ? target.sellerGuid : "missing", guid);
+
+  const html = [
+    `<link rel="canonical" href="https://jiji.ng/sellerpage-${guid}">`,
+    `<script>window.__INITIAL_STATE__ = ${JSON.stringify({
+      seller: { id: "17389808", name: "Kevin" },
+    })};</script>`,
+    '<a href="https://jiji.ng/sellerpage-17389808">About this seller</a>',
+  ].join("\n");
+
+  assert.equal(readJijiPageIdentity(html).sellerGuid, guid);
+  assert.deepEqual(sellerIdsFromHtml(html, { sellerGuid: guid }), ["17389808"]);
+
+  // A page naming a different seller page cannot be used for this link.
+  assert.deepEqual(
+    sellerIdsFromHtml(html, { sellerGuid: "w6HRdifferentGu1dvalue123" }),
+    [],
+  );
+
+  // With no id in the markup, a `/sellerpage-<id>` link is the last resort.
+  const linkedOnly = [
+    `<link rel="canonical" href="https://jiji.ng/sellerpage-${guid}">`,
+    '<a href="https://jiji.ng/sellerpage-17389808">Shop</a>',
+  ].join("");
+  assert.deepEqual(sellerIdsFromHtml(linkedOnly, { sellerGuid: guid }), [
+    "17389808",
+  ]);
+});
+
+test("endpoints follow the link's own country domain", () => {
+  assert.equal(
+    jijiListingUrl({ user_id: "17389808", page: 2 }, "jiji.com.gh"),
+    "https://jiji.com.gh/api_web/v1/listing?user_id=17389808&page=2",
+  );
+
+  // A pasted host can never redirect the request: only jiji.* is accepted.
+  assert.equal(
+    jijiListingUrl({ user_id: "17389808" }, "evil.example"),
+    "https://jiji.ng/api_web/v1/listing?user_id=17389808",
+  );
+
+  assert.equal(
+    jijiSellerPageUrl("17389808", "jiji.co.ke"),
+    "https://jiji.co.ke/sellerpage-17389808",
+  );
+  assert.equal(
+    jijiSellerPageUrl("17389808"),
+    "https://jiji.ng/sellerpage-17389808",
+  );
+
+  // The advert endpoints are tried in order, on the same country domain. The
+  // live spelling is `/item`; the others are older fallbacks.
+  assert.equal(JIJI_ADVERT_API_PATHS[0], "/api_web/v1/item");
+  assert.equal(
+    jijiAdvertUrl(
+      "hmJzdAFmEMmZMY8Ol8ENvVAy",
+      JIJI_ADVERT_API_PATHS[0],
+      "jiji.com.gh",
+    ),
+    "https://jiji.com.gh/api_web/v1/item/hmJzdAFmEMmZMY8Ol8ENvVAy",
+  );
+  assert.equal(JIJI_ADVERT_API_PATHS.length >= 2, true);
+
+  // A guid can never inject a path or a host.
+  assert.equal(
+    jijiAdvertUrl("../../etc/passwd", "/api_web/v1/adverts"),
+    "https://jiji.ng/api_web/v1/adverts/..%2F..%2Fetc%2Fpasswd",
+  );
+
+  // The country domain travels with the parsed target.
+  const ghana = parseJijiTarget(
+    "https://jiji.com.gh/accra/mobile-phones/iphone-11-hmJzdAFmEMmZMY8Ol8ENvVAy",
+  );
+  assert.equal(ghana?.kind === "listing" ? ghana.host : null, "jiji.com.gh");
+  assert.equal(ghana?.kind === "listing" ? ghana.regionSlug : null, "accra");
+
+  const www = parseJijiTarget("https://www.jiji.ng/sellerpage-17389808");
+  assert.equal(www?.kind === "user" ? www.host : null, "jiji.ng");
+});
+
+test("a shop page's suffix-free listing links are followed too", () => {
+  const html = [
+    '<a href="/lagos/computers-and-laptops/hp-elitebook-hmJzdAFmEMmZMY8Ol8ENvVAy">HP</a>',
+    '<a href="/lagos/computers-and-laptops">Category</a>',
+    '<a href="/sellerpage-17389808">Shop</a>',
+    '<a href="//evil.example/lagos/computers-and-laptops/x-hmJzdAFmEMmZMY8Ol8ENvVAy">x</a>',
+  ].join("");
+
+  assert.deepEqual(advertHrefsFromHtml(html), [
+    "/lagos/computers-and-laptops/hp-elitebook-hmJzdAFmEMmZMY8Ol8ENvVAy",
+  ]);
 });
 
 test("a seller id is recognised in every form Jiji offers it", () => {
@@ -197,14 +425,19 @@ test("a seller id is recognised in every form Jiji offers it", () => {
   assert.equal(isJijiUserId("12"), false);
 
   // Bare id and the two seller-page forms.
-  assert.deepEqual(parseJijiTarget("17389808"), { kind: "user", userId: "17389808" });
+  assert.deepEqual(parseJijiTarget("17389808"), {
+    kind: "user",
+    userId: "17389808",
+    host: JIJI_DEFAULT_HOST,
+  });
   assert.deepEqual(parseJijiTarget("https://jiji.ng/sellerpage-17389808"), {
     kind: "user",
     userId: "17389808",
+    host: "jiji.ng",
   });
   assert.deepEqual(
     parseJijiTarget("https://jiji.ng/gwarinpa/sellerpage-17389808/"),
-    { kind: "user", userId: "17389808" },
+    { kind: "user", userId: "17389808", host: "jiji.ng" },
   );
 });
 
@@ -213,26 +446,42 @@ test("shop pages are accepted, to be resolved through a listing link", () => {
     kind: "shop",
     handle: null,
     url: "https://jiji.ng/shop/12345/gadgets",
+    sellerGuid: null,
+    host: "jiji.ng",
   });
   assert.deepEqual(parseJijiTarget("https://jiji.ng/kevin-enterprise"), {
     kind: "shop",
     handle: "kevin-enterprise",
     url: "https://jiji.ng/kevin-enterprise",
+    sellerGuid: null,
+    host: "jiji.ng",
   });
   assert.deepEqual(parseJijiTarget("kevin-enterprise"), {
     kind: "shop",
     handle: "kevin-enterprise",
     url: null,
+    sellerGuid: null,
+    host: JIJI_DEFAULT_HOST,
   });
 
-  // A seller page without a numeric id: the page has to be read for a listing.
+  // A seller page without a numeric id: the guid is kept so the page's own
+  // metadata can be matched against it.
   assert.deepEqual(
     parseJijiTarget("https://jiji.ng/sellerpage-ffkTwbRgL9mtIqdSX4svUuQx"),
     {
       kind: "shop",
       handle: null,
       url: "https://jiji.ng/sellerpage-ffkTwbRgL9mtIqdSX4svUuQx",
+      sellerGuid: "ffkTwbRgL9mtIqdSX4svUuQx",
+      host: "jiji.ng",
     },
+  );
+
+  // A seller page whose guid is not guid-shaped carries no id to match on.
+  assert.equal(
+    (parseJijiTarget("https://jiji.ng/sellerpage-short") as { sellerGuid: string | null })
+      .sellerGuid,
+    null,
   );
 });
 
@@ -287,6 +536,8 @@ test("the demo fixtures need an explicit dev-only opt-in", async () => {
     assert.equal(result.ok === true && result.mocked, true);
     // Fixtures belong to no seller, so there is no id to remember.
     assert.equal(result.ok === true && result.userId, null);
+    // ...and no shop URL either.
+    assert.equal(result.ok === true && result.sellerPageUrl, null);
 
     const listings = result.ok === true ? result.listings : [];
     assert.equal(listings.length, 3);
@@ -453,6 +704,26 @@ test("only Jiji hosts are accepted", () => {
   assert.equal(
     extractJijiListingGuid("https://notjiji.ng/gwarinpa/x-abc123456789.html"),
     null,
+  );
+
+  // A page is fetched directly, so credentials and an odd port are refused
+  // rather than normalised into a request nobody asked for.
+  assert.equal(
+    parseJijiTarget(
+      "https://user:pass@jiji.ng/lagos/phones/x-hmJzdAFmEMmZMY8Ol8ENvVAy",
+    ),
+    null,
+  );
+  assert.equal(
+    parseJijiTarget("https://jiji.ng:8443/lagos/phones/x-hmJzdAFmEMmZMY8Ol8ENvVAy"),
+    null,
+  );
+  // The https default port is not an odd port.
+  assert.equal(
+    parseJijiTarget(
+      "https://jiji.ng:443/lagos/phones/laptop-hmJzdAFmEMmZMY8Ol8ENvVAy",
+    )?.kind,
+    "listing",
   );
 });
 

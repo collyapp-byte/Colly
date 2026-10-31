@@ -24,10 +24,48 @@
 //    (`isLastJijiPage()`).
 // 3. There is no `price` field — the amount lives in `price_obj.value` (and the
 //    display string in `price_title`). The product HTML has no `og:price` and no
-//    JSON-LD either, which is why this module reads JSON instead of pages.
+//    JSON-LD price either, which is why the catalogue itself is always read as
+//    JSON; a product page's HTML is only ever read for the seller's numeric id.
+//
+// What an owner can paste has changed twice, and both shapes are supported:
+// product links now usually arrive WITHOUT the legacy `.html` suffix
+// (`/lagos/computers-and-laptops/hp-elitebook-840-g5-<guid>`), and a shop can be
+// pasted as a GUID seller page (`/sellerpage-w6HR…`) that names no numeric id in
+// its URL at all. The numeric id in both cases comes from the page's own
+// metadata — canonical/`og:url`, JSON-LD `seller`, `__NEXT_DATA__`/
+// `__INITIAL_STATE__` `user_id`, or a `/sellerpage-<id>` link — read by
+// `readJijiPageIdentity()` and `sellerIdsFromHtml()`. The domain is taken from
+// the link too (`jiji.com.gh`, `jiji.co.ke`, …), so a shop is always read from
+// its own country's marketplace.
 
-/** Jiji's public listing endpoint. No key, no account. */
-export const JIJI_LISTING_API = "https://jiji.ng/api_web/v1/listing";
+/**
+ * The Jiji domain used when a link does not name one (a bare seller id, a bare
+ * handle). Every other country is read from the link itself: jiji.com.gh,
+ * jiji.co.ke, jiji.ug, ... all answer the same endpoints, so a Ghanaian owner's
+ * shop must not be queried against jiji.ng.
+ */
+export const JIJI_DEFAULT_HOST = "jiji.ng";
+
+/** Path of the public listing endpoint, relative to the country host. */
+export const JIJI_LISTING_API_PATH = "/api_web/v1/listing";
+
+/** Jiji's public listing endpoint (Nigeria). No key, no account. */
+export const JIJI_LISTING_API = `https://${JIJI_DEFAULT_HOST}${JIJI_LISTING_API_PATH}`;
+
+/**
+ * Candidate paths for a single advert's JSON, tried in order.
+ *
+ * `/api_web/v1/item/<guid>` is the live one: it answers `{ advert, seller }` for
+ * exactly one advert, which is the cheapest way to learn a seller's numeric id
+ * from a product link. The other two are older spellings of the same idea, kept
+ * as fallbacks because Jiji's web client has moved them before and a 404 here
+ * only means "try the next one".
+ */
+export const JIJI_ADVERT_API_PATHS = [
+  "/api_web/v1/item",
+  "/api_web/v1/adverts",
+  "/api_web/v1/advert",
+] as const;
 
 /** Jiji can hang; fail before the owner's spinner outlives their patience. */
 export const JIJI_TIMEOUT_MS = 15_000;
@@ -168,7 +206,12 @@ export type MappedListing = {
  * (`resolveSellerId()`).
  */
 export type JijiTarget =
-  | { kind: "user"; userId: string }
+  | {
+      kind: "user";
+      userId: string;
+      /** Country host to query; `jiji.ng` for a bare id. */
+      host: string;
+    }
   | {
       kind: "listing";
       /** Advert guid from the listing URL, the identity Jiji's search can match. */
@@ -177,8 +220,20 @@ export type JijiTarget =
       query: string;
       /** `region_slug` from the URL path, which narrows the search enormously. */
       regionSlug: string | null;
+      /** The advert page itself, read for the seller its metadata names. */
+      url: string;
+      /** Country host the link came from (`jiji.com.gh`, ...). */
+      host: string;
     }
-  | { kind: "shop"; handle: string | null; url: string | null };
+  | {
+      kind: "shop";
+      handle: string | null;
+      url: string | null;
+      /** `/sellerpage-<guid>` — the guid form of a seller page. */
+      sellerGuid: string | null;
+      /** Country host the link came from (`jiji.com.gh`, ...). */
+      host: string;
+    };
 
 export type JijiListingsResult =
   | {
@@ -187,6 +242,8 @@ export type JijiListingsResult =
       mocked: boolean;
       /** Numeric seller id the listings were read from; null for fixtures. */
       userId: string | null;
+      /** Canonical shop URL to remember for the sync job; null for fixtures. */
+      sellerPageUrl: string | null;
     }
   | { ok: false; status: number; error: string; detail?: string };
 
@@ -290,7 +347,14 @@ export function isJijiUserId(value: string): boolean {
   return JIJI_USER_ID_PATTERN.test(value.trim());
 }
 
-/** A Jiji URL, or null for anything else (including plain text without a host). */
+/**
+ * A Jiji URL, or null for anything else (including plain text without a host).
+ *
+ * A pasted product or shop page is fetched directly, so the URL has to be a
+ * plain one: credentials and a non-default port are not Jiji, and a link that
+ * carries them is refused rather than normalised into a request nobody asked
+ * for. Only `https` is ever constructed.
+ */
 function asJijiUrl(raw: string): URL | null {
   const value = raw.trim();
   if (!value) {
@@ -306,7 +370,117 @@ function asJijiUrl(raw: string): URL | null {
     return null;
   }
 
-  return JIJI_HOST_PATTERN.test(url.hostname) ? url : null;
+  if (
+    !JIJI_HOST_PATTERN.test(url.hostname) ||
+    url.username ||
+    url.password ||
+    (url.port && url.port !== "443")
+  ) {
+    return null;
+  }
+
+  return url;
+}
+
+/**
+ * The country host a Jiji link belongs to, or the Nigerian default.
+ *
+ * Always a bare hostname: no scheme, no port, no credentials, and `www.`
+ * stripped, so it can be dropped straight into an API URL. An input that is not
+ * a Jiji host is replaced by `JIJI_DEFAULT_HOST` rather than trusted — the value
+ * comes from a pasted link, which is owner-controlled.
+ */
+export function jijiHostOf(value: URL | string): string {
+  const raw = typeof value === "string" ? value : value.hostname;
+  const host = raw
+    .trim()
+    .toLowerCase()
+    .replace(/^www\./, "")
+    .replace(/:\d+$/, "");
+
+  return JIJI_HOST_PATTERN.test(host) ? host : JIJI_DEFAULT_HOST;
+}
+
+/** `https://<country host>`, e.g. `https://jiji.com.gh`. */
+export function jijiOrigin(host: string = JIJI_DEFAULT_HOST): string {
+  return `https://${jijiHostOf(host)}`;
+}
+
+/**
+ * Whether a path segment's tail is an advert guid rather than a category word.
+ *
+ * Jiji guids are base62-ish hashes (`hmJzdAFmEMmZMY8Ol8ENvVAy`): long, mixed
+ * case, and almost always carrying a digit. Every one of those properties is
+ * required, because a category path (`/lagos/accessories`) satisfies the plain
+ * alphanumeric pattern and must never be read as an advert.
+ */
+export function looksLikeJijiGuid(value: string): boolean {
+  const guid = value.trim();
+  return (
+    JIJI_ADVERT_GUID_PATTERN.test(guid) &&
+    guid.length >= 15 &&
+    /\d/.test(guid) &&
+    /[a-z]/i.test(guid)
+  );
+}
+
+/**
+ * The advert guid of a Jiji pathname, with or without the legacy `.html` suffix.
+ *
+ * Both shapes Jiji serves today are accepted:
+ *
+ * - `/gwarinpa/mobile-phones/iphone-se-2020-64gb-black-<guid>.html` (legacy,
+ *   and still the canonical form on many listings);
+ * - `/lagos/computers-and-laptops/hp-elitebook-840-g5-<guid>` and
+ *   `/lagos/computers-and-laptops/<guid>` (current pages, no suffix).
+ *
+ * Returns null for everything else, including category pages, seller pages and
+ * `c/` listings, so a page that is not one advert cannot become one.
+ */
+export function listingGuidFromPath(pathname: string): string | null {
+  const segments = pathname
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => decodeSegment(segment));
+
+  const last = segments.at(-1);
+  if (!last) {
+    return null;
+  }
+
+  // `/sellerpage-<guid>` is a shop, not an advert — its tail is guid-shaped.
+  if (/^sellerpage-/i.test(last)) {
+    return null;
+  }
+
+  const hasHtml = /\.html$/i.test(last);
+  const slug = last.replace(/\.html$/i, "");
+  const dash = slug.lastIndexOf("-");
+  const tail = dash >= 0 ? slug.slice(dash + 1) : slug;
+  const title = dash >= 0 ? slug.slice(0, dash) : "";
+
+  if (!JIJI_ADVERT_GUID_PATTERN.test(tail)) {
+    return null;
+  }
+
+  // `.html` only ever appears on an advert page, so the suffix itself is the
+  // proof; the guid is still required to be the trailing dash token.
+  if (hasHtml) {
+    return dash >= 0 ? tail : null;
+  }
+
+  if (!looksLikeJijiGuid(tail)) {
+    return null;
+  }
+
+  if (dash >= 0) {
+    // `<title>-<guid>`: the title half has to be a real word, otherwise a
+    // category whose last word is guid-shaped would pass.
+    return title.trim().length >= 2 ? tail : null;
+  }
+
+  // A bare `<guid>` segment only means an advert under a region/category path.
+  return segments.length >= 2 ? tail : null;
 }
 
 /** `sellerpage-<id>` in any path position (region prefixes are allowed). */
@@ -348,33 +522,23 @@ function listingTitleQuery(url: URL): string {
 }
 
 /**
- * Reads the advert guid out of a listing URL.
+ * Reads the advert guid out of a listing URL — with or without `.html`.
  *
  * Listing URLs look like
  * `https://jiji.ng/gwarinpa/mobile-phones/iphone-se-2020-64gb-black-hdOZ….html`
- * and the guid is the last dash-separated token before `.html`. It is the same
- * `guid` the API returns per advert, which is what makes a pasted link
- * traceable back to the seller who posted it.
+ * on the legacy pages and like
+ * `https://jiji.ng/lagos/computers-and-laptops/hp-elitebook-840-g5-hmJzdAF…`
+ * (or `.../<guid>` on its own) on the current ones. Either way the guid is the
+ * trailing dash-separated token, or the whole last segment when it is a bare
+ * hash. It is the same `guid` the API returns per advert, which is what makes a
+ * pasted link traceable back to the seller who posted it.
+ *
+ * Returns null for anything that is not an advert page, which is what keeps a
+ * pasted category URL from being imported as a product.
  */
 export function extractJijiListingGuid(raw: string): string | null {
   const url = asJijiUrl(raw);
-  if (!url) {
-    return null;
-  }
-
-  const last = url.pathname.split("/").filter(Boolean).at(-1) ?? "";
-  if (!/\.html$/i.test(last)) {
-    return null;
-  }
-
-  const slug = decodeSegment(last).replace(/\.html$/i, "");
-  const dash = slug.lastIndexOf("-");
-  if (dash < 0) {
-    return null;
-  }
-
-  const guid = slug.slice(dash + 1);
-  return JIJI_ADVERT_GUID_PATTERN.test(guid) ? guid : null;
+  return url ? listingGuidFromPath(url.pathname) : null;
 }
 
 /**
@@ -385,9 +549,13 @@ export function extractJijiListingGuid(raw: string): string | null {
  * - a numeric seller id (`17389808`) — the API filters on this;
  * - a seller page with a numeric id (`https://jiji.ng/sellerpage-17389808`) —
  *   same thing, in URL form;
- * - a listing URL — resolved through Jiji's own search (`resolveSellerId()`);
- * - a shop page (`/shop/<shop_id>/…`, `/shops/<handle>`, `/<handle>`, or a
- *   `/sellerpage-<guid>` page) — the page is read for one listing link first.
+ * - a seller page with a guid (`https://jiji.ng/sellerpage-w6HR...`) — its
+ *   `<script>`/meta data names the numeric id (`resolveShopSeller()`);
+ * - a listing URL, with or without `.html`, on any Jiji country domain — the
+ *   advert page is read for its seller, then Jiji's own search
+ *   (`resolveSellerId()`);
+ * - a shop page (`/shop/<shop_id>/…`, `/shops/<handle>`, `/<handle>`) — the
+ *   page is read for its seller or for one listing link.
  *
  * Search, category and profile URLs return null: they are pages about Jiji, not
  * about this seller, and "importing" one used to create a phantom shop called
@@ -400,18 +568,32 @@ export function parseJijiTarget(raw: string): JijiTarget | null {
   }
 
   if (JIJI_USER_ID_PATTERN.test(value)) {
-    return { kind: "user", userId: value };
+    return { kind: "user", userId: value, host: JIJI_DEFAULT_HOST };
   }
 
   const url = asJijiUrl(value);
   if (!url) {
-    // Bare handle, no scheme: `my-shop-name`.
+    // Bare handle, no scheme: `my-shop-name`. Anything with a slash, a scheme or
+    // a dot is a URL that was refused above and must stay refused — falling back
+    // to "first path segment" is what once made `/profile?guid=…` import a
+    // phantom shop called `profile`.
+    if (/[/:.]/.test(value)) {
+      return null;
+    }
+
     const handle = extractJijiUsername(value);
     return handle?.length && handle.length >= 3
-      ? { kind: "shop", handle, url: null }
+      ? {
+          kind: "shop",
+          handle,
+          url: null,
+          sellerGuid: null,
+          host: JIJI_DEFAULT_HOST,
+        }
       : null;
   }
 
+  const host = jijiHostOf(url);
   const segments = url.pathname
     .split("/")
     .filter(Boolean)
@@ -419,18 +601,30 @@ export function parseJijiTarget(raw: string): JijiTarget | null {
 
   const sellerPage = sellerPageSegment(segments);
   if (sellerPage) {
+    const sellerGuid = JIJI_ADVERT_GUID_PATTERN.test(sellerPage)
+      ? sellerPage
+      : null;
+
     return isJijiUserId(sellerPage)
-      ? { kind: "user", userId: sellerPage.trim() }
-      : { kind: "shop", handle: null, url: url.toString() };
+      ? { kind: "user", userId: sellerPage.trim(), host }
+      : {
+          kind: "shop",
+          handle: null,
+          url: url.toString(),
+          sellerGuid,
+          host,
+        };
   }
 
-  const guid = extractJijiListingGuid(url.toString());
+  const guid = listingGuidFromPath(url.pathname);
   if (guid) {
     return {
       kind: "listing",
       guid,
       query: listingTitleQuery(url),
       regionSlug: regionSlugOf(segments),
+      url: url.toString(),
+      host,
     };
   }
 
@@ -441,14 +635,20 @@ export function parseJijiTarget(raw: string): JijiTarget | null {
       return lower === "shop" || lower === "shops";
     })
   ) {
-    return { kind: "shop", handle: null, url: url.toString() };
+    return {
+      kind: "shop",
+      handle: null,
+      url: url.toString(),
+      sellerGuid: null,
+      host,
+    };
   }
 
   // `/my-shop-name`: one path segment and not one of Jiji's own pages.
   if (segments.length === 1) {
     const handle = extractJijiUsername(segments[0]);
     if (handle && handle.length >= 3) {
-      return { kind: "shop", handle, url: url.toString() };
+      return { kind: "shop", handle, url: url.toString(), sellerGuid: null, host };
     }
   }
 
@@ -682,25 +882,383 @@ export function isLastJijiPage(status: number): boolean {
 /**
  * Advert links found in a shop page's HTML.
  *
- * Shop and seller pages are mostly rendered by the browser, so this usually
- * finds nothing; when Jiji does server-render the page it yields the one link
- * needed to trace the shop back to its numeric seller id. Only Jiji paths that
- * end in an advert guid are returned.
+ * Jiji renders shop pages on the server, so they normally carry advert links —
+ * often with tracking query strings (`?page=1&pos=1&…`) that are stripped here.
+ * Every same-origin path that names an advert is returned — the legacy `….html`
+ * form and the current suffix-free form alike — and category, `c/` and seller
+ * links are dropped because they name a page rather than a listing.
  */
 export function advertHrefsFromHtml(html: string): string[] {
   const found = new Set<string>();
 
-  for (const match of html.matchAll(/href="(\/[^"'\s]*?\.html)"/gi)) {
-    const href = match[1];
-    if (href && extractJijiListingGuid(`https://jiji.ng${href}`)) {
-      found.add(href);
+  for (const match of html.matchAll(/href=["']([^"'\s]+)["']/gi)) {
+    const raw = match[1];
+    // Only paths on Jiji itself; an absolute or protocol-relative link could
+    // point anywhere and the guid check alone would not make it safe.
+    if (!raw || !raw.startsWith("/") || raw.startsWith("//")) {
+      continue;
     }
+
+    const pathname = raw.split(/[?#]/)[0] ?? "";
+    if (!listingGuidFromPath(pathname)) {
+      continue;
+    }
+
+    found.add(pathname);
     if (found.size >= 5) {
       break;
     }
   }
 
   return [...found];
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** `content` of a `<meta property|name="…">` tag, whichever order it is written. */
+function metaContent(html: string, property: string): string | null {
+  const key = escapeRegExp(property);
+  const patterns = [
+    new RegExp(
+      `<meta[^>]+(?:property|name)=["']${key}["'][^>]*content=["']([^"']*)["']`,
+      "i",
+    ),
+    new RegExp(
+      `<meta[^>]+content=["']([^"']*)["'][^>]*(?:property|name)=["']${key}["']`,
+      "i",
+    ),
+  ];
+
+  for (const pattern of patterns) {
+    const match = pattern.exec(html);
+    if (match?.[1]?.trim()) {
+      return match[1].trim();
+    }
+  }
+
+  return null;
+}
+
+/** `href` of `<link rel="canonical">`, whichever order it is written. */
+function canonicalHref(html: string): string | null {
+  const patterns = [
+    /<link[^>]+rel=["']canonical["'][^>]*href=["']([^"']+)["']/i,
+    /<link[^>]+href=["']([^"']+)["'][^>]*rel=["']canonical["']/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = pattern.exec(html);
+    if (match?.[1]?.trim()) {
+      return match[1].trim();
+    }
+  }
+
+  return null;
+}
+
+/** Script tags that carry a page's data: its JSON-LD and its client state. */
+const JIJI_STATE_SCRIPT =
+  /__NEXT_DATA__|__NUXT_DATA__|__INITIAL_STATE__|__PRELOADED_STATE__|__NUXT__|__APOLLO_STATE__/;
+
+/**
+ * The JSON blobs a Jiji page embeds.
+ *
+ * Jiji is server-rendered, so the advert or seller a page is about is usually in
+ * the HTML twice: as schema.org JSON-LD and as the client state
+ * (`__NEXT_DATA__`, `window.__INITIAL_STATE__`, ...). Both are read here, and
+ * both are optional — anything that is not parseable JSON is skipped rather than
+ * guessed at.
+ */
+export function pageJsonBlocks(html: string): unknown[] {
+  const blocks: unknown[] = [];
+
+  for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    const attributes = match[1] ?? "";
+    const body = (match[2] ?? "").trim();
+    if (!body || body.length > 500_000) {
+      continue;
+    }
+
+    const isJsonLd = /type=["']application\/ld\+json["']/i.test(attributes);
+    // `window.__INITIAL_STATE__ = {...}` has no attribute to match on, so the
+    // assignment itself counts as the marker.
+    const stripped = body.replace(
+      /^(?:window|self)\.[A-Za-z_$][\w$.]*\s*=\s*/,
+      "",
+    );
+    const isState = JIJI_STATE_SCRIPT.test(attributes) || stripped !== body;
+
+    if (!isJsonLd && !isState) {
+      continue;
+    }
+
+    const text = stripped.replace(/;\s*$/, "").trim();
+    if (!text.startsWith("{") && !text.startsWith("[")) {
+      continue;
+    }
+
+    try {
+      blocks.push(JSON.parse(text) as unknown);
+    } catch {
+      // Truncated or escaped: not data we can read.
+    }
+  }
+
+  return blocks;
+}
+
+/** What a Jiji page says about itself, from its canonical/og URLs and JSON-LD. */
+export type JijiPageIdentity = {
+  canonicalUrl: string | null;
+  ogUrl: string | null;
+  /** The advert the page claims to be, when the page is an advert page. */
+  advertGuid: string | null;
+  /** The guid seller page the page claims to be, e.g. `w6HR…`. */
+  sellerGuid: string | null;
+  /** True when the page describes a single product (JSON-LD Product/Offer). */
+  isProductPage: boolean;
+};
+
+/**
+ * Reads a page's own identity.
+ *
+ * This is the cross-check the resolvers need: a page whose canonical URL names a
+ * different advert or a different seller is not the page that was pasted, so
+ * nothing on it may be attributed to the shop being imported.
+ */
+export function readJijiPageIdentity(html: string): JijiPageIdentity {
+  const canonicalUrl = canonicalHref(html);
+  const ogUrl = metaContent(html, "og:url");
+
+  let advertGuid: string | null = null;
+  let sellerGuid: string | null = null;
+
+  for (const declared of [canonicalUrl, ogUrl]) {
+    if (!declared) {
+      continue;
+    }
+
+    let url: URL;
+    try {
+      url = new URL(declared, `https://${JIJI_DEFAULT_HOST}`);
+    } catch {
+      continue;
+    }
+
+    advertGuid ??= listingGuidFromPath(url.pathname);
+
+    const segments = url.pathname
+      .split("/")
+      .filter(Boolean)
+      .map((segment) => decodeSegment(segment));
+    const sellerPage = sellerPageSegment(segments);
+
+    if (
+      !sellerGuid &&
+      sellerPage &&
+      !isJijiUserId(sellerPage) &&
+      JIJI_ADVERT_GUID_PATTERN.test(sellerPage)
+    ) {
+      sellerGuid = sellerPage;
+    }
+  }
+
+  const isProductPage =
+    /<meta[^>]+property=["']og:type["'][^>]*content=["']product["']/i.test(html) ||
+    /["']@type["']\s*:\s*["'](?:product|individualproduct|offer)["']/i.test(html);
+
+  return { canonicalUrl, ogUrl, advertGuid, sellerGuid, isProductPage };
+}
+
+/** JSON keys that name a seller outright. */
+const SELLER_SCOPED_KEYS = new Set([
+  "seller",
+  "sellerinfo",
+  "owner",
+  "advertiser",
+  "author",
+  "offeredby",
+  "brand",
+]);
+
+/** Keys that hold the id of the object they sit in. */
+const SELLER_ID_KEYS = ["id", "user_id", "userId", "seller_id", "sellerId"];
+
+/** Keys that hold a seller id anywhere in a document. */
+const GENERIC_SELLER_ID_KEYS = new Set([
+  "user_id",
+  "userid",
+  "seller_id",
+  "sellerid",
+]);
+
+type SellerIdBuckets = {
+  /** Ids read from a `seller`/`author`/`offeredBy` object: about this page. */
+  strong: string[];
+  /** Ids read from a bare `user_id` anywhere in the document. */
+  weak: string[];
+};
+
+function usableUserId(value: unknown): string | null {
+  const id = firstString(value).trim();
+  return id && isJijiUserId(id) ? id : null;
+}
+
+/** `https://jiji.ng/sellerpage-17389808` or `?user_id=17389808` → the id. */
+function sellerIdFromLink(link: string): string | null {
+  const path = /\/sellerpage-(\d{5,12})(?:[/?#]|$)/i.exec(link);
+  if (path?.[1]) {
+    return path[1];
+  }
+
+  const query = /[?&](?:user_id|seller_id)=(\d{5,12})(?:&|#|$)/i.exec(link);
+  return query?.[1] ?? null;
+}
+
+function collectSellerIds(
+  value: unknown,
+  buckets: SellerIdBuckets,
+  depth = 0,
+): void {
+  if (depth > 10 || buckets.strong.length + buckets.weak.length > 20) {
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectSellerIds(item, buckets, depth + 1);
+    }
+    return;
+  }
+
+  const record = asRecord(value);
+  if (!record) {
+    return;
+  }
+
+  for (const [key, child] of Object.entries(record)) {
+    // `sellerId`, `seller_id` and `seller id` all collapse to `sellerid`.
+    const lower = key.toLowerCase().replace(/[^a-z_]/g, "");
+
+    if (GENERIC_SELLER_ID_KEYS.has(lower)) {
+      const id = usableUserId(child);
+      if (id) {
+        buckets.weak.push(id);
+      }
+      continue;
+    }
+
+    if (!SELLER_SCOPED_KEYS.has(lower)) {
+      collectSellerIds(child, buckets, depth + 1);
+      continue;
+    }
+
+    const nested = asRecord(child);
+    if (nested) {
+      for (const idKey of SELLER_ID_KEYS) {
+        const id = usableUserId(nested[idKey]);
+        if (id) {
+          buckets.strong.push(id);
+          break;
+        }
+      }
+
+      for (const linkKey of [
+        "@id",
+        "url",
+        "link",
+        "identifier",
+        "profileUrl",
+        // A seller object may put its page URL in `id` rather than an id.
+        "id",
+      ]) {
+        const link = firstString(nested[linkKey]);
+        const id = link ? sellerIdFromLink(link) : null;
+        if (id) {
+          buckets.strong.push(id);
+          break;
+        }
+      }
+    }
+
+    collectSellerIds(child, buckets, depth + 1);
+  }
+}
+
+/** Which page the ids found in an HTML document have to belong to. */
+export type SellerIdOptions = {
+  /** The advert the page must be about, when the owner pasted a product link. */
+  advertGuid?: string | null;
+  /** The guid seller page the owner pasted, e.g. `w6HR…`. */
+  sellerGuid?: string | null;
+};
+
+/**
+ * Numeric seller ids a Jiji page names, most trustworthy first.
+ *
+ * This is what makes a product link without `.html`, or a `/sellerpage-<guid>`
+ * link, resolvable at all: neither carries a numeric id, but the pages they open
+ * publish one in their metadata. The order is deliberate —
+ *
+ * 1. ids from a `seller` / `author` / `offeredBy` object (JSON-LD or state),
+ * 2. ids from a bare `user_id` in the page's client state,
+ * 3. ids in `/sellerpage-<id>` links,
+ *
+ * and 2 and 3 are only believed when the page is recognisably about ONE advert
+ * or ONE seller. A category grid names dozens of sellers, and picking the first
+ * one would import a stranger's catalogue.
+ *
+ * A page whose canonical URL names a different advert or seller than the one
+ * asked for yields nothing at all.
+ */
+export function sellerIdsFromHtml(
+  html: string,
+  options: SellerIdOptions = {},
+): string[] {
+  const identity = readJijiPageIdentity(html);
+
+  const advertMatches =
+    !options.advertGuid ||
+    !identity.advertGuid ||
+    identity.advertGuid.toLowerCase() === options.advertGuid.toLowerCase();
+  const sellerMatches =
+    !options.sellerGuid ||
+    !identity.sellerGuid ||
+    identity.sellerGuid.toLowerCase() === options.sellerGuid.toLowerCase();
+
+  if (!advertMatches || !sellerMatches) {
+    return [];
+  }
+
+  const buckets: SellerIdBuckets = { strong: [], weak: [] };
+  for (const block of pageJsonBlocks(html)) {
+    collectSellerIds(block, buckets);
+  }
+
+  const linkedIds: string[] = [];
+  for (const match of html.matchAll(
+    /\/sellerpage-(\d{5,12})(?=["'<>\s?#]|$)/gi,
+  )) {
+    if (match[1]) {
+      linkedIds.push(match[1]);
+    }
+  }
+
+  const pageScope =
+    identity.isProductPage ||
+    Boolean(identity.advertGuid) ||
+    Boolean(identity.sellerGuid) ||
+    Boolean(options.advertGuid) ||
+    Boolean(options.sellerGuid);
+
+  const ids = [
+    ...buckets.strong,
+    ...(pageScope ? [...buckets.weak, ...linkedIds] : []),
+  ];
+
+  return [...new Set(ids.filter(isJijiUserId))];
 }
 
 /**
@@ -828,11 +1386,11 @@ export const JIJI_UNREACHABLE_MESSAGE =
  * HTML; one product link is always enough.
  */
 export const JIJI_SHOP_UNRESOLVED_MESSAGE =
-  "We couldn't match that shop page to its listings. Open your shop on Jiji, copy ONE of your product links (it ends in .html) and paste that instead.";
+  "We couldn't match that shop page to its listings. Open your shop on Jiji, copy ONE of your product links and paste that instead.";
 
 /** Input that is not a shop, a product link or a seller id. */
 export const JIJI_INVALID_TARGET_MESSAGE =
-  "That is not a Jiji shop or product link. Paste a product link from your shop (it ends in .html), your shop link, or your Jiji seller id.";
+  "That is not a Jiji shop or product link. Paste a product link from your shop, your shop link, or your Jiji seller id.";
 
 /** A shop we could read, but which has no live listings. */
 export const JIJI_EMPTY_SHOP_MESSAGE =
@@ -869,11 +1427,16 @@ function sleep(ms: number): Promise<void> {
  * `user_id` is the one that matters (numeric seller id). `query` and
  * `region_slug` are how a pasted listing link is traced back to its seller.
  * Anything empty is dropped rather than sent as `""`.
+ *
+ * `host` is the country domain the owner's link came from, so a Ghanaian or
+ * Kenyan shop is read from its own marketplace. An input that is not a Jiji host
+ * falls back to jiji.ng (`jijiHostOf()`), never to whatever was pasted.
  */
 export function jijiListingUrl(
   params: Record<string, string | number | null | undefined>,
+  host: string = JIJI_DEFAULT_HOST,
 ): string {
-  const url = new URL(JIJI_LISTING_API);
+  const url = new URL(`${jijiOrigin(host)}${JIJI_LISTING_API_PATH}`);
 
   for (const [key, value] of Object.entries(params)) {
     if (value !== null && value !== undefined && value !== "") {
@@ -882,6 +1445,32 @@ export function jijiListingUrl(
   }
 
   return url.toString();
+}
+
+/**
+ * One advert's JSON on the given endpoint path.
+ *
+ * The path comes from `JIJI_ADVERT_API_PATHS`; the guid is URL-encoded because a
+ * guid is alphanumeric today but must never be able to change the request path.
+ */
+export function jijiAdvertUrl(
+  guid: string,
+  path: string,
+  host: string = JIJI_DEFAULT_HOST,
+): string {
+  return `${jijiOrigin(host)}${path.replace(/\/+$/, "")}/${encodeURIComponent(guid)}`;
+}
+
+/**
+ * The canonical shop URL for a seller id — what `Business.jijiShopUrl` stores so
+ * a later sync reads the id straight away instead of tracing a product link
+ * again. Kept on the seller's own country domain.
+ */
+export function jijiSellerPageUrl(
+  userId: string,
+  host: string = JIJI_DEFAULT_HOST,
+): string {
+  return `${jijiOrigin(host)}/sellerpage-${encodeURIComponent(userId.trim())}`;
 }
 
 /** A failed request, already in the shape the routes return. */
@@ -1059,27 +1648,160 @@ function advertListingUrl(raw: unknown): string | null {
 }
 
 
+/** The first advert in a payload that carries the guid we asked for. */
+function findAdvertByGuid(
+  payload: unknown,
+  guid: string,
+): Record<string, unknown> | null {
+  const record = asRecord(payload);
+  const candidates: unknown[] = [
+    payload,
+    ...readAdverts(payload),
+    record?.advert,
+    record?.advert_data,
+    record?.data,
+    record?.item,
+  ];
+
+  for (const candidate of candidates) {
+    if (advertGuid(candidate)?.toLowerCase() === guid) {
+      return asRecord(candidate);
+    }
+  }
+
+  return null;
+}
+
+/**
+ * The seller id of an item-envelope payload (`/api_web/v1/item/<guid>`).
+ *
+ * That endpoint answers `{ advert, seller }`, and the advert itself carries no
+ * `user_id` at all — the id lives on `seller.id`. The two blocks are tied by
+ * `seller.advert_id === advert.id`, so a seller block that belongs to some other
+ * advert is refused rather than attributed to this one.
+ */
+function envelopeSellerId(
+  payload: unknown,
+  advert: Record<string, unknown>,
+): string | null {
+  const seller = asRecord(asRecord(payload)?.seller);
+  if (!seller) {
+    return null;
+  }
+
+  const advertId = firstString(advert.id, advert.advert_id, advert.advertId);
+  const linkedId = firstString(seller.advert_id, seller.advertId);
+
+  if (advertId && linkedId && advertId !== linkedId) {
+    return null;
+  }
+
+  return usableUserId(seller.user_id ?? seller.seller_id ?? seller.id);
+}
+
+/**
+ * The seller a listing page names in its own metadata.
+ *
+ * One request, and the most direct answer there is: the canonical URL and the
+ * JSON-LD/state of an advert page name the seller that posted it. Jiji's current
+ * pages carry neither (`__NUXT_DATA__` is a devalue index table), so this is a
+ * best-effort step before the advert endpoint — but it is the only source that
+ * can answer when the advert endpoint is unavailable.
+ */
+async function sellerFromListingPage(
+  target: Extract<JijiTarget, { kind: "listing" }>,
+): Promise<SellerLookup | null> {
+  const html = await jijiGetHtml(target.url);
+  if (!html) {
+    return null;
+  }
+
+  const [userId] = sellerIdsFromHtml(html, { advertGuid: target.guid });
+  return userId ? { ok: true, userId } : null;
+}
+
+/**
+ * The seller behind an advert, from Jiji's advert endpoint.
+ *
+ * The paths in `JIJI_ADVERT_API_PATHS` are tried in order and a 404 simply moves
+ * on to the next one. A payload is only believed when it names the advert whose
+ * guid we hold, so a stale or wrong path can never attribute a shop to another
+ * seller. A timeout ends the attempt at once: more 15-second waits would only
+ * delay the same answer.
+ */
+async function sellerFromAdvertApi(
+  target: Extract<JijiTarget, { kind: "listing" }>,
+): Promise<SellerLookup | null> {
+  const wanted = target.guid.toLowerCase();
+
+  for (const path of JIJI_ADVERT_API_PATHS) {
+    const result = await jijiGetPage(
+      jijiAdvertUrl(target.guid, path, target.host),
+    );
+
+    if (result.kind !== "page") {
+      if (result.kind === "error" && result.result.status === 504) {
+        return null;
+      }
+      continue;
+    }
+
+    const advert = findAdvertByGuid(result.payload, wanted);
+    if (!advert) {
+      continue;
+    }
+
+    const userId =
+      advertUserId(advert) ?? envelopeSellerId(result.payload, advert);
+    if (userId && isJijiUserId(userId)) {
+      return { ok: true, userId };
+    }
+  }
+
+  return null;
+}
+
 /**
  * Traces a listing link back to the seller who posted it.
  *
- * The advert is found with Jiji's own search (`query` + `region_slug`, both taken
- * from the pasted URL), which takes ~46,000 adverts down to a couple of pages;
- * the advert guid then identifies the right row and its `user_id` is the seller.
- * Five pages is the ceiling: past that the query did not narrow, and guessing
- * from a weaker match would import someone else's catalogue.
+ * Three sources, cheapest and most reliable first:
+ *
+ * 1. Jiji's advert endpoint, matched on the guid (`sellerFromAdvertApi()`) — one
+ *    small JSON request, and the source that works on Jiji's current pages;
+ * 2. the advert page's own metadata (`sellerFromListingPage()`), for a page that
+ *    publishes its seller in JSON-LD or its client state;
+ * 3. Jiji's own search (`query` + `region_slug`, both taken from the pasted
+ *    URL), which takes ~46,000 adverts down to a couple of pages; the advert
+ *    guid then identifies the right row and its `user_id` is the seller.
+ *
+ * Five search pages is the ceiling: past that the query did not narrow, and
+ * guessing from a weaker match would import someone else's catalogue.
  */
 async function resolveListingSeller(
   target: Extract<JijiTarget, { kind: "listing" }>,
 ): Promise<SellerLookup> {
+  const fromAdvert = await sellerFromAdvertApi(target);
+  if (fromAdvert) {
+    return fromAdvert;
+  }
+
+  const fromPage = await sellerFromListingPage(target);
+  if (fromPage) {
+    return fromPage;
+  }
+
   const wanted = target.guid.toLowerCase();
 
   for (let page = 1; page <= JIJI_MAX_SEARCH_PAGES; page += 1) {
     const result = await jijiGetPage(
-      jijiListingUrl({
-        query: target.query || undefined,
-        region_slug: target.regionSlug,
-        page,
-      }),
+      jijiListingUrl(
+        {
+          query: target.query || undefined,
+          region_slug: target.regionSlug,
+          page,
+        },
+        target.host,
+      ),
     );
 
     if (result.kind === "end") {
@@ -1119,16 +1841,24 @@ async function resolveListingSeller(
 /**
  * Traces a shop page back to its seller.
  *
- * Shop and seller pages are rendered in the browser, so their HTML usually holds
- * no advert links and no numeric id. When it does hold one, that listing is all
- * the resolution needed; when it does not, the owner is told to paste a product
- * link instead of being left with an empty catalogue.
+ * A `/sellerpage-<guid>` link names no numeric id in the URL, so the page is read
+ * for one. Two sources, in order:
+ *
+ * 1. the page's own `<script>`/meta data (`sellerIdsFromHtml()`) — the id when
+ *    the page publishes it;
+ * 2. an advert link on the page, traced back through `resolveListingSeller()` —
+ *    which is how Jiji's current Nuxt pages resolve, since their state is a
+ *    devalue index table rather than readable `user_id` fields.
+ *
+ * When neither works the owner is told to paste a product link instead of being
+ * left with an empty catalogue.
  */
 async function resolveShopSeller(
   target: Extract<JijiTarget, { kind: "shop" }>,
 ): Promise<SellerLookup> {
   const pageUrl =
-    target.url ?? (target.handle ? `https://jiji.ng/${target.handle}` : null);
+    target.url ??
+    (target.handle ? `${jijiOrigin(target.host)}/${target.handle}` : null);
 
   if (!pageUrl) {
     return { ok: false, status: 400, error: JIJI_INVALID_TARGET_MESSAGE };
@@ -1144,15 +1874,22 @@ async function resolveShopSeller(
     };
   }
 
+  const [userId] = sellerIdsFromHtml(html, { sellerGuid: target.sellerGuid });
+  if (userId) {
+    return { ok: true, userId };
+  }
+
   const [href] = advertHrefsFromHtml(html);
-  const listing = href ? parseJijiTarget(`https://jiji.ng${href}`) : null;
+  const listing = href
+    ? parseJijiTarget(`${jijiOrigin(target.host)}${href}`)
+    : null;
 
   if (!listing || listing.kind !== "listing") {
     return {
       ok: false,
       status: 404,
       error: JIJI_SHOP_UNRESOLVED_MESSAGE,
-      detail: "the shop page carried no listing link to follow",
+      detail: "the shop page carried no seller id and no listing link to follow",
     };
   }
 
@@ -1195,7 +1932,13 @@ export async function fetchSellerListings(
   }
 
   if (mockImportEnabled()) {
-    return { ok: true, listings: MOCK_LISTINGS, mocked: true, userId: null };
+    return {
+      ok: true,
+      listings: MOCK_LISTINGS,
+      mocked: true,
+      userId: null,
+      sellerPageUrl: null,
+    };
   }
 
   const seller = await resolveSellerId(target);
@@ -1207,7 +1950,9 @@ export async function fetchSellerListings(
   const listings: unknown[] = [];
 
   for (let page = 1; page <= JIJI_MAX_PAGES; page += 1) {
-    const result = await jijiGetPage(jijiListingUrl({ user_id: userId, page }));
+    const result = await jijiGetPage(
+      jijiListingUrl({ user_id: userId, page }, target.host),
+    );
 
     // Past the last page (or no such seller): nothing left to read.
     if (result.kind === "end") {
@@ -1241,6 +1986,9 @@ export async function fetchSellerListings(
     listings: listings.slice(0, MAX_LISTINGS),
     mocked: false,
     userId,
+    // Canonical form, on the seller's own country domain: the importer and the
+    // sync job store this so the next run never traces a link again.
+    sellerPageUrl: jijiSellerPageUrl(userId, target.host),
   };
 }
 

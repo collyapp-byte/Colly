@@ -155,9 +155,7 @@ export async function POST(request: Request) {
     await prisma.business.update({
       where: { id: businessId },
       data: {
-        jijiShopUrl: result.userId
-          ? `https://jiji.ng/sellerpage-${result.userId}`
-          : jijiUrl,
+        jijiShopUrl: result.sellerPageUrl ?? jijiUrl,
       },
     });
 
