@@ -20,6 +20,7 @@ import {
   parseBookingSlot,
 } from "@/lib/bookings";
 import { formatInLagosTimezone } from "@/lib/timezone";
+import { isPublicStorageUrl } from "@/lib/supabase/storage-path";
 
 /**
  * A product exactly as the AI should see it: plain JSON, with the Prisma
@@ -732,38 +733,13 @@ const MAX_RECEIPT_DESCRIPTION_LENGTH = 500;
 const MAX_RECEIPT_NAME_LENGTH = 120;
 
 /**
- * Whether `value` is a public object URL in Colly's own Supabase Storage bucket.
- *
- * The image pipeline only ever fetches URLs shaped like this (see
- * `isTrustedStorageUrl` in `app/api/chat/route.ts`), and the owner clicks the
- * receipt link from the dashboard, so a model-supplied "receipt" URL from
- * customer text must never be stored: it could point anywhere on the web.
- */
-function isStorageUrl(value: string): boolean {
-  const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!projectUrl) {
-    return false;
-  }
-
-  try {
-    const url = new URL(value);
-
-    if (url.protocol !== "https:") return false;
-    if (url.username || url.password) return false;
-    if (url.port && url.port !== "443") return false;
-    if (!url.pathname.startsWith("/storage/v1/object/public/")) return false;
-
-    return (
-      url.hostname.toLowerCase() === new URL(projectUrl).hostname.toLowerCase()
-    );
-  } catch {
-    return false;
-  }
-}
-
-/**
  * What `generateInvoiceFromReceipt` hands back to the model, and therefore to
  * the customer's chat turn.
+ *
+ * The AI supplies the amount, sender and description; the shape here is what the
+ * model is told about the write. `receiptUrl` is checked against
+ * `isPublicStorageUrl()` first, so a model-supplied "receipt" URL from customer
+ * text can never be stored — it could point anywhere on the web.
  */
 export type ReceiptInvoiceResult =
   | {
@@ -823,13 +799,12 @@ export async function generateInvoiceFromReceipt(args: {
   }
 
   const receiptUrl = args.receiptUrl.trim();
-  if (!isStorageUrl(receiptUrl)) {
+  if (!isPublicStorageUrl(receiptUrl)) {
     return {
       created: false,
       error: "The customer's receipt picture is missing or is not a valid link.",
     };
   }
-
 
   const conversation = await prisma.conversation.findFirst({
     where: { id: args.conversationId, businessId: args.businessId },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { isPublicStorageUrl } from "@/lib/supabase/storage-path";
 
 /** Longest message a web visitor may send, matching the widget input. */
 const MAX_MESSAGE_LENGTH = 2000;
@@ -17,7 +18,8 @@ const FALLBACK_REPLY =
   "Thanks for your message. A member of our team will get back to you shortly.";
 
 // GET /api/chat/web?businessId=...
-// Public business name for the widget header. Only the name is exposed.
+// Public identity for the widget header: the business name and its profile
+// picture. Nothing else is exposed.
 export async function GET(request: Request) {
   try {
     const businessId = new URL(request.url).searchParams
@@ -33,7 +35,7 @@ export async function GET(request: Request) {
 
     const business = await prisma.business.findUnique({
       where: { id: businessId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, avatarUrl: true },
     });
 
     if (!business) {
@@ -43,7 +45,19 @@ export async function GET(request: Request) {
       );
     }
 
-    return NextResponse.json({ business });
+    return NextResponse.json({
+      business: {
+        id: business.id,
+        name: business.name,
+        // This response is anonymous, so only a Colly Storage object is echoed:
+        // a hand-edited row must not be able to make every visitor's browser
+        // load a third-party image (or a non-https scheme).
+        avatarUrl:
+          business.avatarUrl && isPublicStorageUrl(business.avatarUrl)
+            ? business.avatarUrl
+            : null,
+      },
+    });
   } catch (error) {
     console.error("[WEB CHAT] Failed to load business:", error);
     return NextResponse.json(

@@ -111,7 +111,7 @@ export default function ProductsPage() {
 
     const shopUrl = jijiUrl.trim();
     if (!shopUrl) {
-      setJijiError("Paste your Jiji shop URL to continue.");
+      setJijiError("Paste your Jiji shop or product link to continue.");
       return;
     }
 
@@ -127,6 +127,9 @@ export default function ProductsPage() {
       const data = (await res.json().catch(() => null)) as {
         success?: boolean;
         count?: number;
+        created?: number;
+        adopted?: number;
+        mocked?: boolean;
         error?: string;
       } | null;
 
@@ -134,21 +137,30 @@ export default function ProductsPage() {
         throw new Error(data?.error ?? "Failed to import products");
       }
 
-      toast.success(
-        `Successfully imported ${data.count ?? 0} products from Jiji!`,
-      );
+      if (data.mocked) {
+        // Only reachable with JIJI_MOCK_IMPORT=1 on a dev server, but say it out
+        // loud: these rows are fixtures, not the seller's shop.
+        toast.warning(
+          `Demo mode: added ${data.count ?? 0} sample products. These are not your Jiji listings.`,
+        );
+      } else {
+        toast.success(
+          `Successfully imported ${data.count ?? 0} products from Jiji!`,
+        );
+      }
       setJijiOpen(false);
       setJijiUrl("");
       refresh();
     } catch (err) {
-      toast.error("Failed to import products. Check the URL and try again.");
-      // The API explains 4xx cases ("not a Jiji shop link") far better than the
-      // generic toast, so surface it in the dialog too.
-      setJijiError(
+      // The API explains 4xx/5xx cases far better than a generic toast ("that is
+      // not a Jiji shop or product link", "couldn't read that shop from Jiji"), so
+      // the same sentence goes to the toast and to the dialog.
+      const message =
         err instanceof Error && err.message
           ? err.message
-          : "Failed to import products. Check the URL and try again.",
-      );
+          : "Failed to import products. Check the URL and try again.";
+      toast.error(message);
+      setJijiError(message);
     } finally {
       setJijiImporting(false);
     }
@@ -635,7 +647,7 @@ export default function ProductsPage() {
               htmlFor="jiji-shop-url"
               className="mb-1 block text-sm font-medium text-gray-700"
             >
-              Jiji Shop URL
+              Jiji shop or product link
             </label>
             <input
               id="jiji-shop-url"
@@ -643,13 +655,15 @@ export default function ProductsPage() {
               inputMode="url"
               value={jijiUrl}
               onChange={(event) => setJijiUrl(event.target.value)}
-              placeholder="https://jiji.ng/your-shop-name"
+              placeholder="https://jiji.ng/lagos/mobile-phones/iphone-11-64gb-hdOZhLA7u0r6u5lqZ1gOJhn0.html"
               disabled={jijiImporting}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20 disabled:bg-gray-50 disabled:text-gray-500"
             />
             <p className="mt-2 text-xs text-gray-500">
-              We copy the title, price, description and first photo from each
-              listing. Products you already have with the same name are skipped.
+              Paste any product link from your shop (it ends in .html) or your
+              shop link. We copy the title, price, description and first photo
+              from each listing. Products you already have with the same name are
+              skipped.
             </p>
 
             {jijiError && (

@@ -1,5 +1,7 @@
 // Shared types and helpers for a business profile (Settings page + API).
 
+import { isPublicStorageUrl } from "@/lib/supabase/storage-path";
+
 /** The AI writing tones a business can choose between. */
 export const TONES = ["formal", "friendly"] as const;
 
@@ -110,6 +112,9 @@ export type Business = {
   description: string | null;
   /** Bank/transfer instructions the AI can share with customers. */
   paymentInstructions: string | null;
+  /** Public URL of the business profile picture, shown in the web chat header.
+   * null means the widget renders the business name's initial instead. */
+  avatarUrl: string | null;
   /** Two-Number Model: false until the dedicated AI line is provisioned. */
   aiLineConnected: boolean;
   /** Messaging channel this business runs on: "TELEGRAM" | "DISCORD". */
@@ -157,6 +162,7 @@ export type BusinessRecord = {
   address: string | null;
   description: string | null;
   paymentInstructions: string | null;
+  avatarUrl: string | null;
   aiLineConnected: boolean;
   channel: string;
   connectionStatus: string;
@@ -176,6 +182,20 @@ export type BusinessRecord = {
   nrsExemptReason: string | null;
   nrsLastDismissedAt: Date | null;
 };
+
+/**
+ * The avatar URL the widget may render: a validated public Storage object, or
+ * null.
+ *
+ * `avatarUrl` is written by `PATCH /api/business` behind `isPublicStorageUrl()`,
+ * but serialization is the last line of defence — the public web chat renders this
+ * for anonymous visitors, so a stored value that is not an https URL in *this*
+ * project's public bucket is dropped here rather than handed to an `<img src>`.
+ */
+function publicAvatarUrl(value: string | null): string | null {
+  if (!value) return null;
+  return isPublicStorageUrl(value) ? value : null;
+}
 
 /**
  * Converts a Prisma Business row into the JSON-friendly `Business` shape.
@@ -198,6 +218,10 @@ export function serializeBusiness(business: BusinessRecord): Business {
     address: business.address,
     description: business.description,
     paymentInstructions: business.paymentInstructions,
+    // Stored only after a Storage-URL check (PATCH /api/business), but a hand-
+    // edited row could hold anything: only an https URL in this project's public
+    // bucket reaches the public widget, otherwise it falls back to the initial.
+    avatarUrl: publicAvatarUrl(business.avatarUrl),
     aiLineConnected: business.aiLineConnected,
     // Unknown stored values fall back to the defaults used at signup so the
     // client always gets a valid option back.

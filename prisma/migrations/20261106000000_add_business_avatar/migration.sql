@@ -1,0 +1,12 @@
+-- Business profile picture for the web chat header (and anywhere else the
+-- business is introduced to a customer).
+--
+-- "Business"."avatarUrl" stores a PUBLIC object URL in Colly's own Supabase
+-- Storage bucket — the same `product-images` bucket the product form uploads to,
+-- under a `{businessId}/avatar/` prefix. It is validated on write
+-- (`app/api/business/route.ts` → `isPublicStorageUrl()`), so a hand-edited row or
+-- a crafted PATCH body can never point the widget at a third-party host.
+--
+-- Nullable on purpose: every pre-existing business keeps the initial letter the
+-- widget renders today, and no seed data needs to change.
+ALTER TABLE "Business" ADD COLUMN "avatarUrl" TEXT;

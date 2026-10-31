@@ -87,6 +87,69 @@ export function sanitizeStoragePath(fileName: string): string {
 }
 
 /**
+ * Object key for a business's chat profile picture:
+ * `{businessId}/avatar/{unique}.{extension}`.
+ *
+ * Same shape as `receiptObjectPath()`: every upload stays under the tenant's own
+ * prefix, and the key is a pure function of its inputs so it is assertable.
+ */
+export function avatarObjectPath(args: {
+  businessId: string;
+  extension: string;
+  unique: string;
+}): string {
+  const extension = args.extension.trim().toLowerCase();
+  const safeExtension = CONTENT_TYPES.has(extension)
+    ? extension
+    : DEFAULT_EXTENSION;
+
+  return sanitizeStoragePath(
+    `${args.businessId}/avatar/${args.unique}.${safeExtension}`,
+  );
+}
+
+/** Path every Supabase Storage public object URL starts with. */
+const STORAGE_PUBLIC_PATH = "/storage/v1/object/public/";
+
+/**
+ * Whether `value` is a public object URL in THIS project's Supabase Storage.
+ *
+ * Used for anything the app renders or fetches from a URL a user can influence:
+ * the voice/image pipelines in `app/api/chat/route.ts` (an unvalidated URL there
+ * made the route an SSRF proxy), the business profile picture shown by the public
+ * web chat, and the PATCH that stores it. Only
+ * `https://<project>.supabase.co/storage/v1/object/public/...` is accepted — the
+ * exact shape `lib/supabase/storage.ts` produces for every upload. Anything else
+ * (other host, plain http, credentials in the URL, a custom port, a signed or
+ * non-storage path) is rejected.
+ */
+export function isPublicStorageUrl(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+
+  // https only: no http, javascript:, data:, file: or protocol-relative forms.
+  if (url.protocol !== "https:") return false;
+  // Embedded credentials and odd ports are classic SSRF bypasses.
+  if (url.username || url.password) return false;
+  if (url.port && url.port !== "443") return false;
+  // Must be a public object in the storage API, not a signed/internal path.
+  if (!url.pathname.startsWith(STORAGE_PUBLIC_PATH)) return false;
+
+  const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!projectUrl) return false;
+
+  try {
+    return url.hostname.toLowerCase() === new URL(projectUrl).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Object key for a picture a customer sent in chat:
  * `{businessId}/{chatKey}/{unique}.{extension}`.
  *

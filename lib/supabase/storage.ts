@@ -1,12 +1,14 @@
 import { createClient } from "./client";
+import { avatarObjectPath } from "./storage-path";
 
 /**
- * Supabase Storage helpers for product images.
+ * Supabase Storage helpers for product images and the business profile picture.
  *
  * Both functions use the browser client, so they must only be called from
  * Client Components. Files live in the public `product-images` bucket under a
  * `${businessId}/${productId}/` prefix, which keeps each tenant's uploads
- * separate.
+ * separate. The business profile picture uses the same bucket under
+ * `${businessId}/avatar/` — one picture per tenant, shown by the web chat header.
  */
 const BUCKET = "product-images";
 
@@ -41,6 +43,55 @@ export async function uploadProductImage(
  * or hand-edited value is a safe no-op.
  */
 export async function deleteProductImage(url: string): Promise<void> {
+  const path = publicUrlToPath(url);
+  if (!path) {
+    return;
+  }
+
+  const supabase = createClient();
+  const { error } = await supabase.storage.from(BUCKET).remove([path]);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+/**
+ * Uploads a business profile picture and returns its public URL.
+ *
+ * The key is `{businessId}/avatar/{timestamp}-{name}.{ext}` (see
+ * `avatarObjectPath()`), so a re-upload never clobbers the previous picture and
+ * the tenant prefix check in `PATCH /api/business` can prove the URL belongs to
+ * the caller. The caller stores the returned URL on `Business.avatarUrl`.
+ */
+export async function uploadBusinessAvatar(
+  businessId: string,
+  file: File,
+): Promise<string> {
+  const supabase = createClient();
+  const path = avatarObjectPath({
+    businessId,
+    extension: file.name.split(".").pop() ?? "jpg",
+    unique: `${Date.now()}-${file.name.replace(/\.[^.]+$/, "")}`,
+  });
+
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, file, { contentType: file.type, upsert: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+/**
+ * Deletes a business profile picture by its public URL. A URL that is not in this
+ * bucket is a safe no-op, like `deleteProductImage()`.
+ */
+export async function deleteBusinessAvatar(url: string): Promise<void> {
   const path = publicUrlToPath(url);
   if (!path) {
     return;

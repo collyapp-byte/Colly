@@ -5,11 +5,11 @@ import {
   MAX_LISTINGS,
   MOCK_EXTERNAL_ID_PREFIX,
   asRecord,
-  extractJijiUsername,
   fetchSellerListings,
   firstString,
   mapListing,
   normalizeName,
+  parseJijiTarget,
   type MappedListing,
 } from "@/lib/jiji";
 
@@ -114,8 +114,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const username = extractJijiUsername(shopUrl);
-    if (!username) {
+    if (!parseJijiTarget(shopUrl)) {
       return Response.json(
         {
           error:
@@ -144,7 +143,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await fetchSellerListings(username);
+    const result = await fetchSellerListings(shopUrl);
     if (!result.ok) {
       return Response.json(
         result.detail
@@ -166,7 +165,7 @@ export async function POST(request: Request) {
     }
 
     // An empty payload would mark the whole catalogue out of stock; treat it as
-    // a scraper hiccup and change nothing.
+    // a Jiji hiccup and change nothing.
     if (listings.length === 0) {
       return Response.json(
         { error: "Jiji returned no listings for this shop, so nothing changed." },
@@ -187,7 +186,7 @@ export async function POST(request: Request) {
         return Response.json(
           {
             error:
-              "Live Jiji sync is not configured. Add REEF_API_KEY and try again.",
+              "Demo mode is on, so this sync cannot refresh real Jiji listings. Turn off JIJI_MOCK_IMPORT and try again.",
           },
           { status: 503 },
         );
@@ -213,7 +212,7 @@ export async function POST(request: Request) {
         continue;
       }
 
-      // Name is the fallback: an id the scraper omitted on import may come back
+      // Name is the fallback: an id the payload omitted on import may come back
       // as a different placeholder, but the listing title still matches.
       const live =
         liveById.get(product.externalId) ??
@@ -271,8 +270,15 @@ export async function POST(request: Request) {
       data: {
         lastJijiSyncAt: syncedAt,
         // Only written when a caller supplies a shop link; the dashboard and
-        // Products page sync the storefront saved by the importer.
-        ...(providedUrl ? { jijiShopUrl: providedUrl } : {}),
+        // Products page sync the storefront saved by the importer. Stored in its
+        // canonical form so the next sync reads the seller id straight away.
+        ...(providedUrl
+          ? {
+              jijiShopUrl: result.userId
+                ? `https://jiji.ng/sellerpage-${result.userId}`
+                : providedUrl,
+            }
+          : {}),
       },
     });
 

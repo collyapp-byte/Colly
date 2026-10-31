@@ -353,45 +353,71 @@ button:active:not(:disabled) {
 
 /* ── Print ─────────────────────────────────────────────────────────────────
    The in-store QR card (/settings/qr-code) is printed and taped to a counter,
-   so the dashboard chrome must stay off the paper. Elements marked
-   `data-print-hide` (sidebar, top bar, mobile nav, action buttons) are dropped,
-   and the shell's full-height scroll containers are unwound - a scroll
-   container would otherwise clip the sheet to its first screen. */
+   so the dashboard chrome must stay off the paper and the card must land on a
+   single sheet.
+
+   `[data-print-hide]` is hidden on every page - printing the inbox should not
+   put the sidebar and the mobile tab bar on paper either. Everything that
+   unwinds the dashboard shell is scoped to `body[data-print-qr]`, a marker the
+   QR page sets for as long as it is mounted (see its `useEffect`); without that
+   scope, printing any other dashboard page would drop its layout too. */
 @media print {
   [data-print-hide] {
     display: none !important;
   }
 
-  [data-dashboard-shell],
-  [data-dashboard-shell] > div,
-  [data-dashboard-shell] main,
-  [data-dashboard-shell] main > div {
+  html,
+  body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Full-height, scrolling containers clip the sheet to the first screen, and a
+     leftover `100vh` spills a blank second page - so unwind them. */
+  body[data-print-qr] [data-dashboard-shell],
+  body[data-print-qr] [data-dashboard-shell] > div,
+  body[data-print-qr] [data-dashboard-shell] main,
+  body[data-print-qr] [data-dashboard-shell] main > div,
+  body[data-print-qr] [data-print-flush] {
+    display: block !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
     overflow: visible !important;
+    flex: none !important;
     margin: 0 !important;
     padding: 0 !important;
+    border-radius: 0 !important;
     background: #ffffff !important;
     backdrop-filter: none !important;
     box-shadow: none !important;
   }
 
-  html,
-  body {
-    background: #ffffff !important;
-  }
-
-  /* Printers strip backgrounds by default; the QR modules and the brand
-     accents are the whole point of this sheet, so keep them. */
-  [data-print-card],
-  [data-print-card] canvas {
+  /* Printers strip backgrounds by default; the QR modules and the brand accents
+     are the whole point of this sheet, so keep them. */
+  body[data-print-qr] [data-print-card],
+  body[data-print-qr] [data-print-card] canvas {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  [data-print-card] {
+  /* One sheet: a fixed card width, centred, never split or pushed onto a
+     following page. */
+  body[data-print-qr] [data-print-card] {
+    width: 90mm !important;
+    max-width: 90mm !important;
+    margin: 0 auto !important;
+    padding: 8mm 6mm !important;
     box-shadow: none !important;
     break-inside: avoid;
+    break-before: avoid;
+    break-after: avoid;
+    page-break-inside: avoid;
+  }
+
+  body[data-print-qr] [data-print-card] canvas {
+    width: 62mm !important;
+    height: 62mm !important;
   }
 }

@@ -2,15 +2,16 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
 import { reembedProduct } from "@/lib/embedding-pipeline";
 import {
+  JIJI_INVALID_TARGET_MESSAGE,
   JIJI_SOURCE,
   MAX_LISTINGS,
   asRecord,
   createExternalId,
-  extractJijiUsername,
   fetchSellerListings,
   firstString,
   mapListing,
   normalizeName,
+  parseJijiTarget,
   type MappedListing,
 } from "@/lib/jiji";
 
@@ -48,10 +49,12 @@ function embedImportedProducts(ids: string[]): void {
 // POST /api/products/import-jiji
 // Body: { jijiUrl: string }
 // Copies the seller's Jiji listings into the signed-in business's catalogue,
-// skipping names it already sells. Every row is tagged with externalSource
-// "JIJI" and the listing's id, which is what /api/products/sync-jiji matches on
-// later; a product that already exists by name is tagged in place instead of
-// being duplicated.
+// skipping names it already sells. `jijiUrl` is whatever the owner pasted: a
+// product link from their shop, their shop link, or their numeric seller id —
+// `fetchSellerListings()` resolves all three against Jiji's public listing
+// endpoint. Every row is tagged with externalSource "JIJI" and the listing's id,
+// which is what /api/products/sync-jiji matches on later; a product that already
+// exists by name is tagged in place instead of being duplicated.
 export async function POST(request: Request) {
   try {
     const businessId = await getCurrentBusinessId();
@@ -64,20 +67,17 @@ export async function POST(request: Request) {
     const jijiUrl = firstString(asRecord(body)?.jijiUrl);
 
     if (!jijiUrl) {
-      return badRequest("Paste your Jiji shop URL to continue.");
+      return badRequest("Paste your Jiji shop or product link to continue.");
     }
     if (jijiUrl.length > 500) {
       return badRequest("That Jiji shop URL is too long.");
     }
 
-    const username = extractJijiUsername(jijiUrl);
-    if (!username) {
-      return badRequest(
-        "That does not look like a Jiji shop link. Copy the URL from your shop page (for example https://jiji.ng/your-shop-name).",
-      );
+    if (!parseJijiTarget(jijiUrl)) {
+      return badRequest(JIJI_INVALID_TARGET_MESSAGE);
     }
 
-    const result = await fetchSellerListings(username);
+    const result = await fetchSellerListings(jijiUrl);
     if (!result.ok) {
       return Response.json(
         result.detail
@@ -96,6 +96,14 @@ export async function POST(request: Request) {
       if (listing) {
         listings.push(listing);
       }
+    }
+
+    if (result.mocked) {
+      // Fixtures only reach here with JIJI_MOCK_IMPORT=1 on a dev server. Say so
+      // in the log: these rows land in a real database.
+      console.warn(
+        "[products/import-jiji] inserting MOCK listings (JIJI_MOCK_IMPORT=1); these are not the seller's products",
+      );
     }
 
     if (listings.length === 0) {
@@ -140,11 +148,17 @@ export async function POST(request: Request) {
       rows.push({ ...listing, externalId });
     }
 
-    // Remember the storefront for the sync job. Saved even when every listing
-    // was already in the catalogue, so a re-import just refreshes the link.
+    // Remember the storefront for the sync job — in its canonical form once the
+    // seller id is known, so a sync never has to trace a listing link again.
+    // Saved even when every listing was already in the catalogue, so a re-import
+    // just refreshes the link.
     await prisma.business.update({
       where: { id: businessId },
-      data: { jijiShopUrl: jijiUrl },
+      data: {
+        jijiShopUrl: result.userId
+          ? `https://jiji.ng/sellerpage-${result.userId}`
+          : jijiUrl,
+      },
     });
 
     if (adoptions.size > 0) {
@@ -188,7 +202,7 @@ export async function POST(request: Request) {
       adopted: adoptions.size,
       skipped,
       mocked: result.mocked,
-      username,
+      sellerId: result.userId,
     });
   } catch (error) {
     console.error("[POST /api/products/import-jiji]", error);

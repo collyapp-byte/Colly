@@ -1500,10 +1500,12 @@ const EXTRA_LESSONS = {
 
 **How it works**
 
-1. Ask for the shop's Jiji seller page (the profile URL) or their Jiji username.
-2. In Colly, open Products > Import from Jiji and paste it.
-3. Colly reads the seller's live listings and creates products with the name, price, description and listing id.
+1. Ask for ONE product link from the shop: open any item on their Jiji page and copy the address (it ends in .html).
+2. In Colly, open Products > Import from Jiji and paste it. Their shop link or seller id works too.
+3. Colly finds the seller through that listing and reads every live advert: name, price, description and listing id. Sold adverts and "Contact for price" adverts are left out.
 4. Every imported row is tagged as coming from Jiji, so the importer can find it again on the next run.
+
+**What never works:** a Jiji profile, search or category page (jiji.ng/profile?guid=…, jiji.ng/search?query=…, jiji.ng/c/…). Those pages belong to Jiji, not to the shop, so Colly refuses them with a message instead of importing nothing.
 
 **Keeping it in sync**
 
@@ -1521,7 +1523,7 @@ The dashboard shows a Jiji card with the last sync time. A sync:
 - duplicates where the seller listed the same item twice on Jiji,
 - stock 0 items that should be marked sold out.
 
-**Never** promise that an import is instant for a huge shop: large catalogues are fetched and embedded in batches.`,
+**Never** promise that an import is instant for a huge shop: one run stops at 500 listings and embeds them in batches, so re-run it to pick up the rest.`,
     },
     {
       slug: "web-chat-embed-and-qr",
@@ -1874,14 +1876,14 @@ const AUTHORED_COURSE_QUIZZES = {
     {
       question: "What does the Jiji importer need?",
       options: [
-        "The seller's Jiji profile URL or username",
+        "One product link from the shop (a shop link or seller id works too)",
         "The seller's Jiji password",
         "A CAC certificate",
         "The seller's bank details",
       ],
       correctIndex: 0,
       explanation:
-        "Only public seller details are used; Colly never asks for Jiji credentials.",
+        "Colly reads Jiji's public listings itself — no password, no key. One product link is enough to find the seller; profile and search links are refused.",
     },
     {
       question: "What should you check right after a Jiji import?",
@@ -2369,7 +2371,7 @@ const AUTHORED_FINAL_EXAM_QUESTIONS = [
     ],
     correctIndex: 0,
     explanation:
-      "Owners importing from Jiji get their listings in Colly, with a sync that updates stock and prices both ways.",
+      "Owners importing from Jiji get their listings in Colly, and the sync follows price and stock changes from Jiji.",
   },
   {
     question: "What does Web Chat need to go live?",

@@ -42,6 +42,8 @@ function getOrCreateVisitorId(): string {
 export default function PublicChat({ businessId }: { businessId: string }) {
   const [businessState, setBusinessState] = useState<BusinessState>("loading");
   const [businessName, setBusinessName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -55,7 +57,9 @@ export default function PublicChat({ businessId }: { businessId: string }) {
     fetch(`/api/chat/web?businessId=${encodeURIComponent(businessId)}`)
       .then(async (res) => {
         if (!res.ok) throw new Error("Business not found");
-        return (await res.json()) as { business?: { name?: string } };
+        return (await res.json()) as {
+          business?: { name?: string; avatarUrl?: string | null };
+        };
       })
       .then((data) => {
         if (cancelled) return;
@@ -64,6 +68,9 @@ export default function PublicChat({ businessId }: { businessId: string }) {
           return;
         }
         setBusinessName(data.business.name);
+        // The server already refuses anything that is not a public Colly Storage
+        // object; a null/absent value just keeps the initial letter.
+        setAvatarUrl(data.business.avatarUrl ?? null);
         setBusinessState("ready");
       })
       .catch(() => {
@@ -149,9 +156,24 @@ export default function PublicChat({ businessId }: { businessId: string }) {
   return (
     <main className="flex h-[100dvh] flex-col bg-background">
       <header className="flex items-center gap-3 border-b border-gray-200 bg-surface px-4 py-3 shadow-sm">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-colly text-base font-semibold text-white">
-          {(businessName ?? "C").charAt(0).toUpperCase()}
-        </div>
+        {avatarUrl && !avatarFailed ? (
+          // Business profile picture (Settings → Web Chat). A plain <img> because
+          // the src is an arbitrary public Storage URL; a broken/nonexistent
+          // object falls back to the initial letter via onError.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt=""
+            width={40}
+            height={40}
+            onError={() => setAvatarFailed(true)}
+            className="h-10 w-10 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-colly text-base font-semibold text-white">
+            {(businessName ?? "C").charAt(0).toUpperCase()}
+          </div>
+        )}
         <div className="min-w-0">
           <h1 className="truncate font-display text-sm tracking-wide text-gray-900">
             {businessName ?? "Live chat"}

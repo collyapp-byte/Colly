@@ -9,6 +9,7 @@ import {
 } from "@/lib/chat-engine";
 import { askAI, type AIResult } from "@/lib/ai";
 import { LOW_CREDIT_MESSAGE } from "@/lib/plans";
+import { isPublicStorageUrl } from "@/lib/supabase/storage-path";
 
 type ChatRequestBody = {
   businessId?: unknown;
@@ -29,49 +30,14 @@ const DASHBOARD_ASSISTANT_PROMPT =
   "Help them understand their sales, manage their products, and train their " +
   "WhatsApp/Telegram bot. Keep answers short and actionable.";
 
-/** Path every Supabase Storage public object URL starts with. */
-const STORAGE_PUBLIC_PATH = "/storage/v1/object/public/";
-
 /**
- * Whether `value` points at Colly's own Supabase Storage bucket.
- *
- * `audioUrl` / `imageUrl` arrive in the request body and the voice and image
- * pipelines fetch them SERVER-SIDE (`lib/stt.ts`, `lib/vision.ts`). Unvalidated,
- * this route was an SSRF proxy: any signed-in caller could make the server GET
- * an internal host (localhost, 169.254.169.254, a private IP), a cloud metadata
- * endpoint, or an arbitrary remote file, and read the failure details back.
- *
- * Only `https://<project>.supabase.co/storage/v1/object/public/...` is accepted —
- * the exact shape `lib/supabase/storage.ts` produces for every upload. Anything
- * else (other host, plain http, credentials in the URL, a custom port, a
- * non-storage path) is rejected before a single byte is fetched.
+ * The voice and image pipelines fetch `audioUrl` / `imageUrl` SERVER-SIDE
+ * (`lib/stt.ts`, `lib/vision.ts`). Both arrive in the request body, so they go
+ * through `isPublicStorageUrl()` first: unvalidated, this route was an SSRF proxy
+ * that would GET an internal host, a cloud metadata endpoint or an arbitrary
+ * remote file for any signed-in caller. Any other URL is a 400, before a byte is
+ * fetched.
  */
-function isTrustedStorageUrl(value: string): boolean {
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
-    return false;
-  }
-
-  // https only: no http, javascript:, data:, file: or protocol-relative forms.
-  if (url.protocol !== "https:") return false;
-  // Embedded credentials and odd ports are classic SSRF bypasses.
-  if (url.username || url.password) return false;
-  if (url.port && url.port !== "443") return false;
-  // Must be a public object in the storage API, not a signed/internal path.
-  if (!url.pathname.startsWith(STORAGE_PUBLIC_PATH)) return false;
-  // Fragments/queries are allowed (Supabase appends none today) but the host
-  // has to be this project's own Supabase domain.
-  const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!projectUrl) return false;
-
-  try {
-    return url.hostname.toLowerCase() === new URL(projectUrl).hostname.toLowerCase();
-  } catch {
-    return false;
-  }
-}
 
 // POST /api/chat
 // Body: { businessId: string, customerId: string, message: string }
@@ -87,7 +53,7 @@ function isTrustedStorageUrl(value: string): boolean {
 // When `audioUrl` or `imageUrl` is present, the audio/image is processed first
 // and the transcript/description stands in for `message`; priority is audioUrl >
 // imageUrl > message. Both URLs are fetched server-side, so they must be https
-// URLs inside this project's Supabase Storage bucket (see `isTrustedStorageUrl`)
+// URLs inside this project's Supabase Storage bucket (see `isPublicStorageUrl`)
 // — anything else is rejected with 400 before a request is made. `businessId`
 // may be omitted when the caller is signed in,
 // in which case the session decides the tenant. A caller with no dashboard
@@ -111,7 +77,7 @@ export async function POST(request: Request) {
 
     // SSRF guard: both URLs are fetched server-side by the pipelines, so they
     // have to be Colly's own Storage URLs. Reject anything else outright.
-    if (audioUrl && !isTrustedStorageUrl(audioUrl)) {
+    if (audioUrl && !isPublicStorageUrl(audioUrl)) {
       return Response.json(
         {
           error:
@@ -120,7 +86,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    if (imageUrl && !isTrustedStorageUrl(imageUrl)) {
+    if (imageUrl && !isPublicStorageUrl(imageUrl)) {
       return Response.json(
         {
           error:

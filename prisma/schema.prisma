@@ -41,6 +41,11 @@ model Business {
   description       String?
   /// Payment details (bank/transfer instructions) the AI can share to close sales.
   paymentInstructions String? @db.Text
+  /// Public URL of the business's profile picture: an object in Colly's own
+  /// public Storage bucket (validated on write, so it can never point at a
+  /// third-party host). The public web chat renders it in place of the initial
+  /// letter; null keeps the initial.
+  avatarUrl String?
 
   /// The vertical this business sells in. It selects the AI persona —
   /// `buildSystemPrompt()` in lib/chat-engine.ts appends the HOTEL block only

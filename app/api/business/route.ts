@@ -8,6 +8,7 @@ import {
   TONES,
 } from "@/lib/business";
 import { STAFF_DENIED_MESSAGE, STAFF_DENIED_VALUE } from "@/lib/team";
+import { isPublicStorageUrl } from "@/lib/supabase/storage-path";
 
 type BusinessRequestBody = {
   name?: unknown;
@@ -19,6 +20,7 @@ type BusinessRequestBody = {
   address?: unknown;
   description?: unknown;
   paymentInstructions?: unknown;
+  avatarUrl?: unknown;
   ownerTelegramChatId?: unknown;
 };
 
@@ -125,6 +127,7 @@ export async function PATCH(request: Request) {
       address?: string | null;
       description?: string | null;
       paymentInstructions?: string | null;
+      avatarUrl?: string | null;
       ownerTelegramChatId?: string | null;
     } = {};
 
@@ -180,6 +183,41 @@ export async function PATCH(request: Request) {
         return badRequest(`${field} must be a string`);
       }
       data[field] = value.trim() || null;
+    }
+
+    // Business profile picture (web chat header). The browser uploads the file to
+    // Storage first (`uploadBusinessAvatar()`), so this field is always a URL —
+    // never file bytes. Validated twice on purpose:
+    //
+    // 1. `isPublicStorageUrl()` — an https public object in THIS project's
+    //    Supabase Storage, exactly the shape the upload helper returns. A crafted
+    //    body cannot make the public widget load an arbitrary remote image
+    //    (which would leak every visitor's IP to a third party), and it cannot
+    //    point at `javascript:`/`data:`/`http:`.
+    // 2. the `/{businessId}/` prefix — the picture must be the caller's own
+    //    upload, not another tenant's product photo or (worse) a customer's
+    //    receipt in the `receipts` bucket.
+    //
+    // An empty string clears the picture so the widget falls back to the initial.
+    if (body.avatarUrl !== undefined) {
+      if (typeof body.avatarUrl !== "string") {
+        return badRequest("avatarUrl must be a string");
+      }
+      const avatarUrl = body.avatarUrl.trim();
+
+      if (!avatarUrl) {
+        data.avatarUrl = null;
+      } else {
+        if (!isPublicStorageUrl(avatarUrl)) {
+          return badRequest(
+            "Profile picture must be uploaded through Colly. Use the upload button on this page.",
+          );
+        }
+        if (!new URL(avatarUrl).pathname.includes(`/${user.businessId}/`)) {
+          return badRequest("Profile picture must belong to your own business.");
+        }
+        data.avatarUrl = avatarUrl;
+      }
     }
 
     // The owner's personal Telegram chat id (from @userinfobot): digits with an

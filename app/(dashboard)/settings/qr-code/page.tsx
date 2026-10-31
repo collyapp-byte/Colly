@@ -63,6 +63,18 @@ export default function QrCodePage() {
 
   const chatLink = business ? `${WEB_CHAT_ORIGIN}/chat/${business.id}` : "";
 
+  // Printing is the point of this page, so it flags the document while it is
+  // mounted: `app/globals.css` unwinds the dashboard shell and sizes the card
+  // for a single sheet under `body[data-print-qr]`, and no other page wants that
+  // when someone prints an invoice or an inbox thread. The cleanup keeps a
+  // client-side navigation away from leaving the marker behind.
+  useEffect(() => {
+    document.body.dataset.printQr = "true";
+    return () => {
+      delete document.body.dataset.printQr;
+    };
+  }, []);
+
   /** Saves the canvas as colly-qr-<businessId>.png. */
   function handleDownload() {
     const canvas = canvasRef.current;
@@ -84,7 +96,7 @@ export default function QrCodePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <div data-print-flush className="mx-auto w-full max-w-3xl">
       <div data-print-hide>
         <Link
           href="/settings/web-chat"
@@ -114,9 +126,9 @@ export default function QrCodePage() {
 
       {business ? (
         <>
-          {/* The printable card. `data-print-card` keeps its colours and drops
-              the screen shadow once the page reaches a printer. */}
-          <div className="mt-6 flex justify-center">
+          {/* The printable card. `data-print-card` keeps its colours, sizes it
+              for one sheet and drops the screen shadow (see app/globals.css). */}
+          <div data-print-flush className="mt-6 flex justify-center">
             <div
               data-print-card
               className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white px-6 py-8 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.25)]"

@@ -149,6 +149,15 @@ export default function AiLinePage() {
   const telegramIsConnected = Boolean(business?.telegramConnected);
   const discordIsConnected = Boolean(business?.discordConnected);
 
+  // The Telegram card is one section with two steps (bot, then owner alerts),
+  // so it can say plainly which half is still missing.
+  const telegramSetupComplete = telegramIsConnected && ownerLinked;
+  const telegramStepProgress = !telegramIsConnected
+    ? "Step 1 of 2 to do"
+    : !ownerLinked
+      ? "Step 2 of 2 to do"
+      : "";
+
   // The owner's shareable bot link once the bot is connected.
   const shareLink = business?.telegramBotUsername
     ? `https://t.me/${business.telegramBotUsername}`
@@ -530,11 +539,52 @@ export default function AiLinePage() {
             </div>
           </section>
 
-          {/* TELEGRAM CONNECTION - the primary section, always first. */}
+          {/* TELEGRAM SETUP - one section, two steps: the bot customers talk to,
+              then the owner's own chat where the handoff alerts arrive. These
+              used to be two separate cards, which let an owner connect a bot and
+              never notice that escalations were going nowhere. `#connect-telegram`
+              (linked from Channel Status) stays on the section, `#owner-alerts`
+              on step 2. */}
           <section id="connect-telegram" className={SECTION_CLASS}>
-            <h2 className={HEADING_CLASS}>Connect your Telegram Bot</h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className={HEADING_CLASS}>Telegram setup</h2>
+              {telegramSetupComplete ? (
+                <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
+                  <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                  Both steps done
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#FF6600]/30 bg-[#FFF4EC] px-2.5 py-0.5 text-[12px] font-medium text-[#C2410C]">
+                  <Clock className="h-3.5 w-3.5" aria-hidden />
+                  {telegramStepProgress}
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-sm text-gray-600">
+              Two steps, both inside Telegram: connect the bot your customers
+              chat with, then link your own chat so handoff alerts reach you.
+            </p>
 
-            {telegramIsConnected ? (
+            {/* STEP 1: the customer-facing bot. */}
+            <div className="mt-5 rounded-lg border border-gray-200 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-[#FFF4EC] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#C2410C]">
+                    Step 1 of 2
+                  </span>
+                  <h3 className="font-display text-sm font-semibold text-gray-900">
+                    Connect your bot
+                  </h3>
+                </div>
+                {telegramIsConnected ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
+                    <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                    Connected
+                  </span>
+                ) : null}
+              </div>
+
+              {telegramIsConnected ? (
               <div
                 role="status"
                 className="mt-4 rounded-lg border border-green-200 bg-green-50 p-5"
@@ -688,29 +738,49 @@ export default function AiLinePage() {
                 </form>
               </>
             )}
-          </section>
-
-          {/* OWNER NOTIFICATIONS (personal Telegram) - second, right after the
-              bot connection. Highlighted with a thicker orange border while
-              still unset. */}
-          <section
-            id="owner-alerts"
-            className={`${SECTION_CLASS} ${
-              !business.ownerTelegramChatId
-                ? "border-2 border-[#FF6600]"
-                : ""
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <BellRing className="h-4 w-4 text-[#FF6600]" aria-hidden />
-              <h2 className={HEADING_CLASS}>Owner Notifications (Telegram)</h2>
             </div>
-            {!ownerLinked && (
-              <p className="mt-3 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm font-medium text-[#C2410C]">
-                Required for AI handoffs. If not set, you will not know when the
-                AI needs your help.
-              </p>
-            )}
+
+            {/* STEP 2: the owner's personal chat. Highlighted while unset, because
+                without it an AI handoff notifies nobody. */}
+            <div
+              id="owner-alerts"
+              className={`mt-4 rounded-lg border p-4 ${
+                ownerLinked ? "border-gray-200" : "border-2 border-[#FF6600]"
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <BellRing
+                    className="h-4 w-4 shrink-0 text-[#FF6600]"
+                    aria-hidden
+                  />
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-[#FFF4EC] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#C2410C]">
+                    Step 2 of 2
+                  </span>
+                  <h3 className="font-display text-sm font-semibold text-gray-900">
+                    Get alerts on your phone
+                  </h3>
+                </div>
+                {ownerLinked ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
+                    <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                    Active
+                  </span>
+                ) : null}
+              </div>
+              {!ownerLinked && (
+                <p className="mt-3 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm font-medium text-[#C2410C]">
+                  Required for AI handoffs. If not set, you will not know when
+                  the AI needs your help.
+                </p>
+              )}
+              {!telegramIsConnected && (
+                <p className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                  Do step 1 first. The{" "}
+                  <span className="font-mono text-[13px]">/startowner</span>{" "}
+                  command below only works once your bot is connected.
+                </p>
+              )}
             <p className="mt-3 text-sm text-gray-600">
               Get alerts on your personal phone when the AI needs you to step
               in - for example a waybill question or a custom quote. Alerts go
@@ -762,14 +832,16 @@ export default function AiLinePage() {
                 type="button"
                 variant="primary"
                 isLoading={ownerChecking}
+                disabled={!telegramIsConnected}
                 onClick={handleVerifyOwnerAlerts}
               >
                 Verify Connection
               </Button>
             </div>
+            </div>
           </section>
 
-          {/* DISCORD CONNECTION - below Owner Notifications. */}
+          {/* DISCORD CONNECTION - below the Telegram section. */}
           <section id="connect-discord" className={SECTION_CLASS}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className={HEADING_CLASS}>Connect Discord</h2>
