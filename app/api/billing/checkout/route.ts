@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { requireOwnerApi } from "@/lib/auth";
 import { initializeTransactionRaw } from "@/lib/paystack";
 import {
   getPlanPrice,
@@ -41,21 +41,23 @@ function getPaystackPlanCode(plan: PlanTier, interval: PlanInterval): string {
   return planCode;
 }
 
-function unauthorized() {
-  return Response.json({ error: "Not signed in" }, { status: 401 });
-}
-
 // POST /api/billing/checkout
 // Starts a Paystack subscription checkout for a paid plan. Returns the
 // authorization URL the owner is redirected to; a pending Transaction row is
 // created so the result can be reconciled by /api/billing/verify.
+//
+// Owner-only (Team Collaboration): a subscription spends the business's money,
+// so an invited STAFF session gets the 403 from `requireOwnerApi()`. The proxy
+// skips `/api`, which makes this guard the real gate.
 export async function POST(request: Request) {
   try {
-    const user = await getCurrentUser();
+    const auth = await requireOwnerApi();
 
-    if (!user) {
-      return unauthorized();
+    if (!auth.ok) {
+      return auth.response;
     }
+
+    const user = auth.user;
 
     const body = (await request
       .json()

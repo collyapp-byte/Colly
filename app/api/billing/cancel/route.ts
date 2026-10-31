@@ -1,21 +1,22 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentBusinessId } from "@/lib/auth";
+import { requireOwnerApi } from "@/lib/auth";
 import { disableSubscription } from "@/lib/paystack";
-
-function unauthorized() {
-  return Response.json({ error: "Not signed in" }, { status: 401 });
-}
 
 // POST /api/billing/cancel
 // Cancels a Paystack subscription. The business keeps its plan until the paid
 // period ends (planExpiresAt), then billing stops.
+//
+// Owner-only (Team Collaboration): inviting staff must never hand them the
+// ability to cancel the subscription, so a STAFF session gets 403 here.
 export async function POST() {
   try {
-    const businessId = await getCurrentBusinessId();
+    const auth = await requireOwnerApi();
 
-    if (!businessId) {
-      return unauthorized();
+    if (!auth.ok) {
+      return auth.response;
     }
+
+    const businessId = auth.user.businessId;
 
     const business = await prisma.business.findUniqueOrThrow({
       where: { id: businessId },

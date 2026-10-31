@@ -6,6 +6,7 @@ import {
   isUnknownGeoRoute,
   NOT_FOUND_REWRITE_PATH,
 } from "@/lib/public-routes";
+import { isOwnerOnlyPath, STAFF_DENIED_REDIRECT, type TeamRole } from "@/lib/team";
 
 import { getSupabaseEnv, isMissingConfigError } from "./env";
 
@@ -42,43 +43,55 @@ function matchesPath(pathname: string, paths: string[]): boolean {
 }
 
 /**
- * Whether the signed-in Supabase user already has a tenant (`User` row).
+ * The role the signed-in Supabase user has inside a business, or null when the
+ * account has no tenant at all.
  *
- * Mirrors the matching in `lib/auth.ts` `loadTenant`: link on `supabaseUserId`,
- * falling back to an unclaimed row with the same email (the row `loadTenant`
- * would adopt). Only called for /login, so the proxy stays cheap on every other
- * request. If the lookup fails we report `false` (allow /login through): a
- * database blip must not lock an owner out of the only page that can sign them
- * out.
+ * Mirrors the matching in `lib/auth.ts` `loadTenant`: the owner's `User` row is
+ * looked up on `supabaseUserId`, falling back to an unclaimed row with the same
+ * email (the row `loadTenant` would adopt). Only when neither matches is the
+ * address looked up in `TeamMember`, which is what makes an invited account
+ * STAFF. Called only for /login and the owner-only settings paths, so the proxy
+ * stays cheap on every other request.
+ *
+ * A failed lookup reports `null` (no tenant): a database blip must not lock an
+ * owner out of the only page that can sign them out, and the owner-only pages
+ * re-check the session in `requireAuth()` / `requireOwner()` anyway.
  */
-async function userHasTenant(authUser: {
+async function resolveTenantRole(authUser: {
   id: string;
   email?: string | null;
-}): Promise<boolean> {
+}): Promise<TeamRole | null> {
   try {
     const byId = await prisma.user.findFirst({
       where: { supabaseUserId: authUser.id },
       select: { id: true },
     });
-    if (byId) return true;
+    if (byId) return "OWNER";
 
-    if (!authUser.email) return false;
+    if (!authUser.email) return null;
 
     const unclaimed = await prisma.user.findFirst({
       where: { email: authUser.email, supabaseUserId: null },
       select: { id: true },
     });
-    return unclaimed !== null;
+    if (unclaimed) return "OWNER";
+
+    const staff = await prisma.teamMember.findFirst({
+      where: { email: { equals: authUser.email, mode: "insensitive" } },
+      select: { id: true },
+    });
+
+    return staff ? "STAFF" : null;
   } catch (error) {
-    console.error("[proxy] could not check for a tenant row:", error);
-    return false;
+    console.error("[proxy] could not resolve the tenant role:", error);
+    return null;
   }
 }
 
 /**
  * Runs before every matched request (see the root `proxy.ts`).
  *
- * Three jobs:
+ * Four jobs:
  *  1. Answer `/locations/<unknown>`, `/countries/<unknown>` and `/vs/<unknown>`
  *     with a real 404 (see `isUnknownGeoRoute`) before any rendering starts.
  *  2. Refresh the Supabase session and write the rotated cookies back onto the
@@ -88,10 +101,15 @@ async function userHasTenant(authUser: {
  *     dashboard page, and signed-in users *with a tenant* are sent away from
  *     /login. Signed-in accounts without a tenant can reach both /login and
  *     /signup, so they can sign out or switch accounts instead of looping.
+ *  4. Keep invited STAFF out of the owner-only settings areas
+ *     (`OWNER_ONLY_PATHS`: billing, AI line, team) by bouncing them to
+ *     `/dashboard?denied=staff_restricted`, which the dashboard turns into a
+ *     toast.
  *
  * This is deliberately *not* the authorization layer. `requireAuth()` and
  * `getCurrentBusinessId()` re-check the session where the data is actually
- * read, which is what protects the API routes.
+ * read, which is what protects the API routes — and because `/api` is skipped
+ * here, the owner-only mutation routes check `requireOwnerApi()` themselves.
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -170,12 +188,24 @@ export async function updateSession(request: NextRequest) {
     if (
       user &&
       matchesPath(pathname, SIGNED_IN_BLOCKED_PATHS) &&
-      (await userHasTenant(user))
+      (await resolveTenantRole(user)) !== null
     ) {
       const dashboardUrl = request.nextUrl.clone();
       dashboardUrl.pathname = "/dashboard";
       dashboardUrl.search = "";
       return NextResponse.redirect(dashboardUrl);
+    }
+
+    // Team Collaboration: an invited STAFF account may use the dashboard, but
+    // not the owner's money or channel settings. The flag in the redirect target
+    // is the closest a proxy can get to a toast — the overview page raises it.
+    if (
+      user &&
+      isOwnerOnlyPath(pathname) &&
+      (await resolveTenantRole(user)) === "STAFF"
+    ) {
+      const deniedUrl = new URL(STAFF_DENIED_REDIRECT, request.nextUrl.origin);
+      return NextResponse.redirect(deniedUrl);
     }
   }
 

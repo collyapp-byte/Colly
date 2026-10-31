@@ -90,6 +90,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/">) {
         telegramConnected={Boolean(business?.telegramBotToken)}
         ownerAlertsLinked={Boolean(business?.ownerTelegramChatId)}
         hasNoChannels={!business?.telegramBotToken && !business?.discordBotToken}
+        isOwner={user.role === "OWNER"}
       >
         {children}
         <Footer />

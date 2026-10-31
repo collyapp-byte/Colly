@@ -3,8 +3,10 @@ import { connection } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { JIJI_SOURCE } from "@/lib/jiji";
+import { STAFF_DENIED_PARAM, STAFF_DENIED_VALUE } from "@/lib/team";
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import { SetupChecklist } from "@/components/dashboard/setup-checklist";
+import { StaffDeniedToast } from "@/components/dashboard/staff-denied-toast";
 
 /**
  * Overview route.
@@ -24,11 +26,19 @@ import { SetupChecklist } from "@/components/dashboard/setup-checklist";
  * dashboard layout next door: `requireAuth()` talks to Supabase Auth and the
  * counts are per-tenant. `export const dynamic = "force-dynamic"` is not an
  * option here (`cacheComponents: true` rejects it).
+ *
+ * `searchParams` is only read for the Team Collaboration bounce: the proxy
+ * sends an invited STAFF account here as `/dashboard?denied=staff_restricted`
+ * and this page raises the "owner only" toast.
  */
-export default async function OverviewPage() {
+export default async function OverviewPage({
+  searchParams,
+}: PageProps<"/dashboard">) {
   await connection(); // prerendering stops here
 
   const user = await requireAuth();
+  const denied =
+    (await searchParams)[STAFF_DENIED_PARAM] === STAFF_DENIED_VALUE;
 
   const [business, productCount, messageCount, jijiProductCount] =
     await Promise.all([
@@ -64,6 +74,7 @@ export default async function OverviewPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl">
+      {denied && <StaffDeniedToast />}
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl">
           Overview

@@ -306,10 +306,12 @@ export async function signup(
  * Re-linking here is at least as safe as the render-time adoption in
  * `loadTenant`: Supabase has just checked the password for this exact address.
  *
- * Returns whether the account has a tenant to show. `false` means there is no
- * `User` row for this address at all: the caller sends such an account to
- * /signup, because a dashboard render would answer with "signed in, but no
- * business is linked to this account yet".
+ * Returns whether the account has a tenant to show. `false` means there is
+ * neither a `User` row nor an invited `TeamMember` row for this address: the
+ * caller sends such an account to /signup, because a dashboard render would
+ * answer with "signed in, but no business is linked to this account yet".
+ * Invited staff are matched on `TeamMember.email` (they never get a `User` row),
+ * so a staff sign-in lands on /dashboard instead of the signup form.
  *
  * A failure must not fail the sign-in -- the session is already valid and the
  * render-time lookup gets another chance on the next request -- so problems are
@@ -323,6 +325,15 @@ async function linkTenantToAuthUser(
     const row = await prisma.user.findUnique({ where: { email } });
 
     if (!row) {
+      // Not an owner. It may still be an invited staff member (Team
+      // Collaboration), whose only link to the business is this email address.
+      const teamMember = await prisma.teamMember.findFirst({
+        where: { email: { equals: email, mode: "insensitive" } },
+        select: { id: true },
+      });
+
+      if (teamMember) return true;
+
       console.warn(
         `[login] Supabase user ${supabaseUserId} (${email}) is signed in but has no User row. ` +
           "Sending the account to /signup to create its business.",

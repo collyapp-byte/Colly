@@ -1,12 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { requireOwnerApi } from "@/lib/auth";
 import { getAppUrl } from "@/lib/app-url";
 import { initializeTransaction } from "@/lib/paystack";
 import { creditsToNaira, getCreditPackage } from "@/lib/plans";
-
-function unauthorized() {
-  return Response.json({ error: "Not signed in" }, { status: 401 });
-}
 
 // POST /api/billing/credits/checkout
 // Starts a Paystack checkout for a one-off credit top-up. Every pack is sold at
@@ -14,13 +10,18 @@ function unauthorized() {
 // multiplied by 1 (3,000 credits = ₦3,000, with no markup). Unlike a
 // subscription checkout there is no plan code: the payment is a single charge
 // and the credits are added to the balance by /api/billing/verify.
+//
+// Owner-only (Team Collaboration): the top-up is a purchase, and the Paystack
+// metadata attributes it to the business, so an invited STAFF session gets 403.
 export async function POST() {
   try {
-    const user = await getCurrentUser();
+    const auth = await requireOwnerApi();
 
-    if (!user) {
-      return unauthorized();
+    if (!auth.ok) {
+      return auth.response;
     }
+
+    const user = auth.user;
 
     const business = await prisma.business.findUniqueOrThrow({
       where: { id: user.businessId },

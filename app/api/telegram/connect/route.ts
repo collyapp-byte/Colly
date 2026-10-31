@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { requireOwnerApi } from "@/lib/auth";
 
 type TelegramConnectBody = {
   botToken?: unknown;
@@ -44,12 +44,17 @@ function badRequest(error: string) {
 // Self-serve Telegram connection. The owner pastes a token from @BotFather; we
 // verify it with getMe, point the bot's webhook at our handler (with a secret
 // so the webhook can tell our bots apart) and mark the business CONNECTED.
+//
+// Owner-only (Team Collaboration): re-pointing the bot token redirects every
+// customer message of the business, so staff get the 403 from
+// `requireOwnerApi()`. The proxy skips `/api`, hence the guard here.
 export async function POST(request: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return Response.json({ error: "Not signed in" }, { status: 401 });
+    const auth = await requireOwnerApi();
+    if (!auth.ok) {
+      return auth.response;
     }
+    const user = auth.user;
 
     const body = (await request.json().catch(() => null)) as
       | TelegramConnectBody
@@ -173,13 +178,14 @@ export async function POST(request: Request) {
 // DELETE /api/telegram/connect
 // Disconnect the owner's Telegram bot: clear the stored token/username and
 // flip the business back to DISCONNECTED so the AI Line page shows the
-// connect form again.
+// connect form again. Owner-only, like the POST above.
 export async function DELETE() {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return Response.json({ error: "Not signed in" }, { status: 401 });
+    const auth = await requireOwnerApi();
+    if (!auth.ok) {
+      return auth.response;
     }
+    const user = auth.user;
 
     await prisma.business.update({
       where: { id: user.businessId },

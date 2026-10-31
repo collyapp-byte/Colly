@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { isTone, serializeBusiness, TONES } from "@/lib/business";
+import { STAFF_DENIED_MESSAGE, STAFF_DENIED_VALUE } from "@/lib/team";
 
 type BusinessRequestBody = {
   name?: unknown;
@@ -77,6 +78,9 @@ export async function GET() {
       ownerName,
       businessName: business.name,
       pendingTasks,
+      // OWNER or STAFF — the Settings page uses it to keep owner-only cards
+      // (team management, billing) out of a staff member's view.
+      role: user.role,
     });
   } catch (error) {
     console.error("[GET /api/business]", error);
@@ -161,7 +165,18 @@ export async function PATCH(request: Request) {
 
     // The owner's personal Telegram chat id (from @userinfobot): digits with an
     // optional leading minus (group chats are negative). Empty clears it.
+    //
+    // Owner alerts go to this chat, so it is the owner's to set: a staff account
+    // must not be able to re-point the owner's notifications at a chat it
+    // controls (or silence them by clearing the field).
     if (body.ownerTelegramChatId !== undefined) {
+      if (user.role !== "OWNER") {
+        return Response.json(
+          { error: STAFF_DENIED_MESSAGE, reason: STAFF_DENIED_VALUE },
+          { status: 403 },
+        );
+      }
+
       if (typeof body.ownerTelegramChatId !== "string") {
         return badRequest("ownerTelegramChatId must be a string");
       }

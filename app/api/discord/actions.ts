@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { STAFF_DENIED_MESSAGE } from "@/lib/team";
 
 export type SaveDiscordResult =
   | { ok: true; discordGuildId: string | null }
@@ -19,6 +20,13 @@ export async function saveDiscordBotToken(input: {
   const user = await getCurrentUser();
   if (!user) {
     return { ok: false, error: "You need to sign in to connect Discord." };
+  }
+
+  // Team Collaboration: the Discord bot token is the business's channel, so
+  // only the owner may set it. Server actions are POSTs to the page they are
+  // used from, which the proxy does not gate — the role check has to be here.
+  if (user.role !== "OWNER") {
+    return { ok: false, error: STAFF_DENIED_MESSAGE };
   }
 
   const botToken =

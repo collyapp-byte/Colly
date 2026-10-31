@@ -17,6 +17,12 @@ type DashboardShellProps = {
   telegramConnected?: boolean;
   ownerAlertsLinked?: boolean;
   hasNoChannels?: boolean;
+  /**
+   * False for an invited staff account: owner-only settings links (and the
+   * "complete setup" banner that points at one) are hidden instead of shown as
+   * dead ends. The server is still the gate — see `lib/team.ts`.
+   */
+  isOwner?: boolean;
   children: ReactNode;
 };
 
@@ -29,6 +35,7 @@ export function DashboardShell({
   telegramConnected = true,
   ownerAlertsLinked = true,
   hasNoChannels = false,
+  isOwner = true,
   children,
 }: DashboardShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -95,6 +102,7 @@ export function DashboardShell({
               hasNoFaqs={hasNoFaqs}
               hasPendingEscalations={hasPendingEscalations}
               hasNoChannels={hasNoChannels}
+              isOwner={isOwner}
             />
           </div>
         </div>
@@ -111,12 +119,13 @@ export function DashboardShell({
             hasNoFaqs={hasNoFaqs}
             hasPendingEscalations={hasPendingEscalations}
             hasNoChannels={hasNoChannels}
+            isOwner={isOwner}
           />
         </aside>
 
         {/* Right column */}
         <div className="flex w-full min-w-0 flex-1 flex-col overflow-x-hidden px-0 md:px-4 md:pt-4 md:pb-4 md:min-h-0">
-          {(!telegramConnected || !ownerAlertsLinked) && (
+          {isOwner && (!telegramConnected || !ownerAlertsLinked) && (
             <div
               role="alert"
               data-print-hide

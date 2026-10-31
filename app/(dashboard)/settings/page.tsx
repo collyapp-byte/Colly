@@ -56,9 +56,18 @@ function toFormState(business: Business): FormState {
 export default function SettingsPage() {
   const [form, setForm] = useState<FormState | null>(null);
   const [ownerEmail, setOwnerEmail] = useState("");
+  /**
+   * OWNER or STAFF, as reported by `GET /api/business`. Until it arrives the
+   * page assumes OWNER, which is the common case; a staff account sees the
+   * owner-only cards disappear once the profile loads (the links never work for
+   * them anyway — the proxy bounces them and the APIs answer 403).
+   */
+  const [role, setRole] = useState<"OWNER" | "STAFF" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const isOwner = role !== "STAFF";
 
   useEffect(() => {
     let active = true;
@@ -72,11 +81,12 @@ export default function SettingsPage() {
         if (!res.ok) {
           throw new Error(`Request failed with status ${res.status}`);
         }
-        const data: { business: Business; ownerEmail: string } =
+        const data: { business: Business; ownerEmail: string; role?: "OWNER" | "STAFF" } =
           await res.json();
         if (!active) return;
         setForm(toFormState(data.business));
         setOwnerEmail(data.ownerEmail);
+        setRole(data.role === "STAFF" ? "STAFF" : "OWNER");
       } catch (err) {
         if (active) {
           setError(err instanceof Error ? err.message : "Something went wrong");
@@ -140,12 +150,19 @@ export default function SettingsPage() {
         customers.
       </p>
 
-      <Link
-        href="/settings/billing"
-        className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-colly transition-colors hover:text-colly-hover"
-      >
-        Manage billing →
-      </Link>
+      {isOwner ? (
+        <Link
+          href="/settings/billing"
+          className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-colly transition-colors hover:text-colly-hover"
+        >
+          Manage billing →
+        </Link>
+      ) : (
+        <p className="mt-2 text-sm text-gray-500">
+          Billing, channel setup and team changes are handled by the business
+          owner.
+        </p>
+      )}
 
       {saved && (
         <div
@@ -163,6 +180,27 @@ export default function SettingsPage() {
 
       {form && (
         <div className="mt-6 space-y-6">
+          {isOwner && (
+            <section
+              className={`${SECTION_CLASS} flex flex-wrap items-start justify-between gap-4`}
+            >
+              <div>
+                <h2 className={HEADING_CLASS}>TEAM MEMBERS</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Invite staff to work in your dashboard. They get the inbox,
+                  customers, products and invoices; billing, channel setup and
+                  team changes stay with you.
+                </p>
+              </div>
+              <Link
+                href="/settings/team"
+                className="inline-flex items-center gap-1 text-sm font-medium text-colly transition-colors hover:text-colly-hover"
+              >
+                Manage team →
+              </Link>
+            </section>
+          )}
+
           <form
             id="settings-form"
             onSubmit={handleSubmit}

@@ -182,6 +182,10 @@ model Business {
   commissionEndsAt  DateTime?
 
   users         User[]
+  /// Invited staff. They sign in with their own Supabase account and share this
+  /// business's dashboard, but the owner-only settings areas stay closed to them
+  /// (see lib/team.ts#OWNER_ONLY_PATHS).
+  teamMembers   TeamMember[]
   customers     Customer[]
   products      Product[]
   sales         Sale[]
@@ -227,6 +231,30 @@ model User {
   supabaseUserId String? @unique
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+}
+
+/// Team Collaboration: a staff member the business owner invited.
+///
+/// A `TeamMember` row is the tenant link for a staff account, exactly as a
+/// `User` row is for the owner: `lib/auth.ts#loadTenant` matches the signed-in
+/// Supabase account to one of these by email and hands back the row's
+/// `businessId` plus `role: "STAFF"`. Invited staff never get a `User` row, so
+/// the owner (a `User`) is always resolved first and wins if both exist.
+///
+/// `email` is unique across the whole table because it is what the session is
+/// matched on — one address can only ever belong to one business. `role` is
+/// "OWNER" | "STAFF" and defaults to "STAFF"; only "STAFF" is granted today (the
+/// column is reserved for finer-grained permissions later).
+model TeamMember {
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  email      String   @unique
+  name       String
+  role       String   @default("STAFF")
+  createdAt  DateTime @default(now())
 
   @@index([businessId])
 }

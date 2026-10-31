@@ -23,6 +23,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { logout } from "@/lib/auth-actions";
+import { isOwnerOnlyPath } from "@/lib/team";
 
 type NavItem = {
   label: string;
@@ -60,6 +61,11 @@ const SECONDARY_ITEMS: NavItem[] = [
     href: "/settings/qr-code",
     icon: QrCode,
   },
+  {
+    label: "Team Members",
+    href: "/settings/team",
+    icon: Users,
+  },
 ];
 
 const BOTTOM_ITEMS: NavItem[] = [
@@ -76,6 +82,12 @@ type SidebarProps = {
   hasNoFaqs?: boolean;
   hasPendingEscalations?: boolean;
   hasNoChannels?: boolean;
+  /**
+   * False for an invited staff account: the owner-only areas
+   * (`lib/team.ts#OWNER_ONLY_PATHS`) are hidden rather than shown as links that
+   * would only bounce back to the dashboard with a "staff restricted" toast.
+   */
+  isOwner?: boolean;
 };
 
 export function Sidebar({
@@ -84,6 +96,7 @@ export function Sidebar({
   hasNoFaqs = false,
   hasPendingEscalations = false,
   hasNoChannels = false,
+  isOwner = true,
 }: SidebarProps) {
   const pathname = usePathname();
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -216,15 +229,17 @@ export function Sidebar({
               Account settings
             </Link>
 
-            <Link
-              href="/settings/billing"
-              role="menuitem"
-              onClick={() => setSwitcherOpen(false)}
-              className="mx-1.5 flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              <CreditCard className="h-3.5 w-3.5" aria-hidden />
-              Billing &amp; plan
-            </Link>
+            {isOwner && (
+              <Link
+                href="/settings/billing"
+                role="menuitem"
+                onClick={() => setSwitcherOpen(false)}
+                className="mx-1.5 flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-[13px] text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                <CreditCard className="h-3.5 w-3.5" aria-hidden />
+                Billing &amp; plan
+              </Link>
+            )}
 
             <form action={logout} className="mx-1.5">
               <button
@@ -288,7 +303,12 @@ export function Sidebar({
       <div className="px-2">
         <nav aria-label="Manage navigation">
           <ul className="flex flex-col gap-0.5">
-            {SECONDARY_ITEMS.map((item) => {
+            {SECONDARY_ITEMS.filter(
+              // Owner-only areas (Team Collaboration) stay out of a staff
+              // member's nav. This is cosmetic: the proxy bounces the page and
+              // `/api/team` answers 403, so hiding the link is not the gate.
+              (item) => isOwner || !isOwnerOnlyPath(item.href),
+            ).map((item) => {
               const active = isActivePath(pathname, item.href);
               const Icon = item.icon;
               return (
@@ -336,7 +356,8 @@ export function Sidebar({
                 !(
                   item.href === "/settings" &&
                   (pathname.startsWith("/settings/ai-line") ||
-                    pathname === "/settings/qr-code")
+                    pathname === "/settings/qr-code" ||
+                    pathname === "/settings/team")
                 );
               const Icon = item.icon;
               return (
