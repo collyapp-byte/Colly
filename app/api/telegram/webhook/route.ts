@@ -1,7 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
+import { processImageMessage } from "@/lib/image-pipeline";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { transcribeAudioFromBuffer } from "@/lib/stt";
+import {
+  isStorageAdminConfigured,
+  uploadFileToSupabase,
+} from "@/lib/supabase/storage-admin";
+import {
+  RECEIPTS_BUCKET,
+  extensionForContentType,
+  receiptObjectPath,
+} from "@/lib/supabase/storage-path";
+import { randomUUID } from "node:crypto";
 
 // The slice of a Telegram update we care about.
 type TelegramUpdate = {
@@ -9,7 +20,10 @@ type TelegramUpdate = {
     chat?: { id?: number | string };
     from?: { first_name?: string };
     text?: string;
+    caption?: string;
     voice?: { file_id?: string };
+    /** Telegram sends every photo as an array of sizes, smallest first. */
+    photo?: { file_id?: string; file_size?: number }[];
   };
 };
 
@@ -37,12 +51,26 @@ export async function POST(request: Request) {
     const chatIdRaw = update.message?.chat?.id;
     const text = update.message?.text;
     const voiceFileId = update.message?.voice?.file_id;
+    const caption =
+      typeof update.message?.caption === "string"
+        ? update.message.caption.trim()
+        : "";
+    // Telegram sends every photo in several sizes, smallest first: the last
+    // entry is the largest, which is the only one worth reading a receipt from.
+    const photo = update.message?.photo;
+    const photoFileId =
+      Array.isArray(photo) && photo.length > 0
+        ? photo[photo.length - 1]?.file_id
+        : undefined;
 
-    // No chat, or no text/voice (stickers, joins, edits, ...): nothing to answer.
+    // No chat, or no text/voice/photo (stickers, joins, edits, ...): nothing to
+    // answer.
     if (
       chatIdRaw === undefined ||
       chatIdRaw === null ||
-      ((typeof text !== "string" || text.trim().length === 0) && !voiceFileId)
+      ((typeof text !== "string" || text.trim().length === 0) &&
+        !voiceFileId &&
+        !photoFileId)
     ) {
       return new Response("OK", { status: 200 });
     }
@@ -123,6 +151,43 @@ export async function POST(request: Request) {
       }
     }
 
+    // Pictures: payment receipts mostly. Telegram only hands out a file id, so
+    // the file is downloaded and re-uploaded to Colly's Supabase Storage first —
+    // that URL is what Groq Vision reads, what the invoices page links to and
+    // what the receipt-to-invoice tool stores as proof. A picture we cannot
+    // store gets a friendly prompt instead of a silent drop.
+    let imageUrl: string | null = null;
+    if (photoFileId) {
+      if (!isStorageAdminConfigured()) {
+        console.error(
+          "[telegram] picture received but SUPABASE_SERVICE_ROLE_KEY / NEXT_PUBLIC_SUPABASE_URL is not configured",
+        );
+        await sendTelegramMessage({
+          botToken: business.telegramBotToken,
+          chatId: telegramChatId,
+          text: "Sorry, I can't open pictures right now. Please type your message.",
+        });
+        return Response.json({ ok: true });
+      }
+
+      try {
+        imageUrl = await storeTelegramPhoto({
+          botToken: business.telegramBotToken,
+          fileId: photoFileId,
+          businessId: business.id,
+          chatKey: telegramChatId,
+        });
+      } catch (error) {
+        console.error("[telegram] picture download/upload failed:", error);
+        await sendTelegramMessage({
+          botToken: business.telegramBotToken,
+          chatId: telegramChatId,
+          text: "Sorry, I couldn't open that picture. Please send it again or type your message.",
+        });
+        return Response.json({ ok: true });
+      }
+    }
+
     // First message from a freshly connected bot: record this chat for the
     // business while every update continues to resolve by bot token.
     if (!business.telegramChatId) {
@@ -175,13 +240,48 @@ export async function POST(request: Request) {
         conversationStatus === "ESCALATED" ||
         conversationStatus === "HUMAN_TAKEOVER"
       ) {
+        // Persist the message (picture included) so the owner can see it and
+        // reply from the dashboard even while the AI is switched off.
         await prisma.message.create({
           data: {
             businessId: business.id,
             conversationId: activeConversation.id,
             sender: "customer",
-            content: messageText,
+            content:
+              messageText ||
+              caption ||
+              (imageUrl ? "[Customer sent a picture]" : ""),
+            ...(imageUrl ? { messageType: "image", imageUrl } : {}),
           },
+        });
+        return Response.json({ ok: true });
+      }
+    }
+
+    // A picture is described — and, when it is not a product shot, read as a
+    // possible payment receipt — by the vision pipeline, which stores the
+    // customer message itself, so the engine is told not to duplicate it.
+    // `imageUrl` rides along so the receipt-to-invoice tool can attach the
+    // server-verified picture without trusting a URL from the model.
+    let effectiveMessage = messageText;
+    let customerMessageAlreadySaved = false;
+
+    if (imageUrl) {
+      try {
+        const image = await processImageMessage({
+          businessId: business.id,
+          customerId: customer.id,
+          imageUrl,
+          caption: caption || undefined,
+        });
+        effectiveMessage = image.description;
+        customerMessageAlreadySaved = true;
+      } catch (error) {
+        console.error("[telegram] image understanding failed:", error);
+        await sendTelegramMessage({
+          botToken: business.telegramBotToken,
+          chatId: telegramChatId,
+          text: "Sorry, I couldn't read that picture. Please describe it in words or send it again.",
         });
         return Response.json({ ok: true });
       }
@@ -190,7 +290,9 @@ export async function POST(request: Request) {
     const result = await handleIncomingMessage({
       businessId: business.id,
       customerPhone: telegramChatId,
-      message: messageText,
+      message: effectiveMessage,
+      skipCustomerMessage: customerMessageAlreadySaved,
+      imageUrl,
     });
 
     // The engine always saves the customer's message first (so the owner can
@@ -273,6 +375,70 @@ type TelegramGetFileResponse = {
   result?: { file_path?: string };
   description?: string;
 };
+
+/**
+ * Downloads a picture the customer sent to Telegram and stores it in Colly's
+ * Supabase Storage with the service role, returning its public URL.
+ *
+ * Telegram never exposes the bytes directly: `getFile` hands back a private
+ * path, which is then fetched with the bot token. Re-uploading matters because
+ * the rest of the product only reads pictures from our own Storage — Groq
+ * Vision fetches them, the invoices page links the receipt, and
+ * `generate_invoice_from_receipt` stores that verified URL as proof.
+ */
+async function storeTelegramPhoto(args: {
+  botToken: string;
+  fileId: string;
+  businessId: string;
+  chatKey: string;
+}): Promise<string> {
+  const fileResponse = await fetch(
+    `https://api.telegram.org/bot${args.botToken}/getFile?file_id=${encodeURIComponent(args.fileId)}`,
+    { cache: "no-store", signal: AbortSignal.timeout(15_000) },
+  );
+  const fileData = (await fileResponse
+    .json()
+    .catch(() => null)) as TelegramGetFileResponse | null;
+  const filePath = fileData?.result?.file_path;
+
+  if (!fileResponse.ok || !fileData?.ok || !filePath) {
+    throw new Error(
+      fileData?.description ?? `getFile failed (${fileResponse.status})`,
+    );
+  }
+
+  // Telegram answers with a relative path such as `photos/file_12.jpg`. An
+  // absolute path or a `..` segment would point the download somewhere else.
+  if (filePath.startsWith("/") || filePath.includes("..")) {
+    throw new Error("Unexpected file path from Telegram.");
+  }
+
+  const download = await fetch(
+    `https://api.telegram.org/file/bot${args.botToken}/${filePath}`,
+    { cache: "no-store", signal: AbortSignal.timeout(30_000) },
+  );
+  if (!download.ok) {
+    throw new Error(`File download failed (${download.status})`);
+  }
+
+  const rawType = download.headers.get("content-type") || "image/jpeg";
+  const contentType =
+    rawType.split(";")[0]?.trim().toLowerCase() || "image/jpeg";
+
+  if (!contentType.startsWith("image/")) {
+    throw new Error(`Unsupported picture type: ${contentType}`);
+  }
+
+  const buffer = await download.arrayBuffer();
+  const objectPath = receiptObjectPath({
+    businessId: args.businessId,
+    chatKey: args.chatKey,
+    extension: extensionForContentType(contentType),
+    unique: `${Date.now()}-${randomUUID()}`,
+  });
+
+  return uploadFileToSupabase(buffer, objectPath, RECEIPTS_BUCKET);
+}
 
 /** Fetch a Telegram voice note by file id and transcribe it to text. */
 async function transcribeTelegramVoice(

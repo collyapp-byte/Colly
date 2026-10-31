@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import {
+  Check,
   CircleAlert,
   Eye,
   LoaderCircle,
@@ -14,7 +15,7 @@ import { Modal } from "@/components/ui/modal";
 import { BackButton } from "@/components/ui/back-button";
 import { formatNaira } from "@/lib/format";
 
-const INVOICE_STATUSES = ["draft", "sent", "failed", "cancelled"] as const;
+const INVOICE_STATUSES = ["draft", "sent", "paid", "failed", "cancelled"] as const;
 type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
 
 type Invoice = {
@@ -25,12 +26,16 @@ type Invoice = {
   vat: number;
   total: number;
   createdAt: string;
+  /** Proof of payment the customer sent in chat, when the AI drafted this. */
+  receiptUrl: string | null;
+  notes: string | null;
   customer: { id: string; name: string; phone: string } | null;
 };
 
 const STATUS_LABELS: Record<InvoiceStatus, string> = {
   draft: "Draft",
   sent: "Sent",
+  paid: "Paid",
   failed: "Failed",
   cancelled: "Cancelled",
 };
@@ -38,6 +43,7 @@ const STATUS_LABELS: Record<InvoiceStatus, string> = {
 const STATUS_BADGE: Record<InvoiceStatus, string> = {
   draft: "bg-amber-100 text-amber-700",
   sent: "bg-green-100 text-green-700",
+  paid: "bg-emerald-600 text-white",
   failed: "bg-red-100 text-red-700",
   cancelled: "bg-gray-100 text-gray-600",
 };
@@ -84,6 +90,8 @@ export default function InvoicesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Invoice | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -159,6 +167,37 @@ export default function InvoicesPage() {
       setDeleteError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setDeleting(false);
+    }
+  }
+
+  /**
+   * Owner approval for a payment. The AI only ever leaves invoices as drafts, so
+   * this is the human check: the receipt is on screen, and the API also moves the
+   * customer to the PAID column of the CRM Kanban.
+   */
+  async function handleApprove(invoice: Invoice) {
+    setApprovingId(invoice.id);
+    setActionError(null);
+
+    try {
+      const res = await fetch(`/api/invoices/${invoice.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "paid" }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to approve payment");
+      }
+
+      refresh();
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Something went wrong",
+      );
+    } finally {
+      setApprovingId(null);
     }
   }
 
@@ -278,6 +317,16 @@ export default function InvoicesPage() {
         </div>
       )}
 
+      {actionError && (
+        <div className="mb-4 flex items-start gap-3 rounded-lg border border-danger/30 bg-danger/5 p-4 text-sm text-danger">
+          <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <div>
+            <p className="font-medium">Could not approve payment</p>
+            <p className="text-danger/80">{actionError}</p>
+          </div>
+        </div>
+      )}
+
       {invoices && invoices.length === 0 && (
         <div className="rounded-lg border border-dashed border-gray-200 bg-surface p-10 text-center">
           <Receipt className="mx-auto h-8 w-8 text-gray-300" aria-hidden />
@@ -330,6 +379,7 @@ export default function InvoicesPage() {
                     </td>
                     <td className="px-6 py-4 text-gray-700">
                       {invoice.customer?.name ?? "Walk-in Customer"}
+                      <ReceiptLink invoice={invoice} />
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 font-medium text-gray-900">
                       {formatNaira(invoice.total)}
@@ -341,6 +391,8 @@ export default function InvoicesPage() {
                       <div className="flex justify-end">
                         <InvoiceActions
                           invoice={invoice}
+                          approving={approvingId === invoice.id}
+                          onApprove={() => handleApprove(invoice)}
                           onDelete={() => {
                             setDeleteError(null);
                             setDeleteTarget(invoice);
@@ -376,12 +428,17 @@ export default function InvoicesPage() {
                   </div>
                   <StatusBadge status={invoice.status} />
                 </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <p className="font-display text-lg text-gray-900">
-                    {formatNaira(invoice.total)}
-                  </p>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-display text-lg text-gray-900">
+                      {formatNaira(invoice.total)}
+                    </p>
+                    <ReceiptLink invoice={invoice} />
+                  </div>
                   <InvoiceActions
                     invoice={invoice}
+                    approving={approvingId === invoice.id}
+                    onApprove={() => handleApprove(invoice)}
                     onDelete={() => {
                       setDeleteError(null);
                       setDeleteTarget(invoice);
@@ -445,17 +502,63 @@ export default function InvoicesPage() {
   );
 }
 
+/**
+ * "View Receipt" link for an invoice the AI drafted from a customer's payment
+ * picture. The URL is a server-validated public Storage link when it was stored,
+ * but it is still opened in a new tab with `noopener`.
+ */
+function ReceiptLink({ invoice }: { invoice: Invoice }) {
+  if (!invoice.receiptUrl) {
+    return null;
+  }
+
+  return (
+    <a
+      href={invoice.receiptUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-1 flex w-fit items-center gap-1 text-xs font-medium text-colly transition-colors hover:underline"
+    >
+      <Receipt className="h-3.5 w-3.5" aria-hidden />
+      View Receipt
+    </a>
+  );
+}
+
 function InvoiceActions({
   invoice,
   onDelete,
+  onApprove,
+  approving,
 }: {
   invoice: Invoice;
   onDelete: () => void;
+  onApprove: () => void;
+  approving: boolean;
 }) {
   const deletable = invoice.status === "draft" || invoice.status === "cancelled";
+  // The AI can only ever create drafts, so approving is the owner's step.
+  const approvable = invoice.status === "draft";
 
   return (
-    <div className="flex gap-1">
+    <div className="flex items-center gap-1">
+      {approvable && (
+        <button
+          type="button"
+          onClick={onApprove}
+          disabled={approving}
+          aria-label={`Approve payment for invoice ${invoice.invoiceNumber}`}
+          title="Approve Payment"
+          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-semibold whitespace-nowrap text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+        >
+          {approving ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+          ) : (
+            <Check className="h-4 w-4" aria-hidden />
+          )}
+          Approve Payment
+        </button>
+      )}
       <Link
         href={`/invoices/${invoice.id}`}
         aria-label={`View invoice ${invoice.invoiceNumber}`}

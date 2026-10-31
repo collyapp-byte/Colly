@@ -278,6 +278,9 @@ export async function POST(request: Request) {
       customerPhone: customer.phone,
       message: effectiveMessage,
       skipCustomerMessage: customerMessageAlreadySaved,
+      // Lets the engine hand the receipt picture to the invoice tool without
+      // trusting a URL the model typed.
+      imageUrl,
     });
 
     if (result.blocked) {

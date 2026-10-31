@@ -392,6 +392,11 @@ model Message {
   /// "text" | "voice" | "image". Stored as text so a new kind is not a migration.
   messageType      String  @default("text")
 
+  /// The Paystack checkout URL of an amount the business asked the customer to
+  /// pay in this chat (POST /api/payments/create-link). Kept on the message so
+  /// the thread still shows the charge after the link is sent.
+  paymentUrl       String?
+
   business     Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
@@ -419,7 +424,7 @@ model Invoice {
 
   /// Human-readable, unique per business, e.g. "INV-2026-0001".
   invoiceNumber String
-  /// "draft" | "sent" | "failed" | "cancelled".
+  /// "draft" | "sent" | "paid" | "failed" | "cancelled".
   status        String @default("draft")
 
   subtotal Decimal @db.Decimal(10, 2)
@@ -427,6 +432,13 @@ model Invoice {
   total    Decimal @db.Decimal(10, 2)
   /// Line items: `[{ name, quantity, unitPrice, total }]`.
   items    Json
+
+  /// Free-text note for the owner. A draft created from a customer's payment
+  /// receipt explains that it still needs verification.
+  notes      String? @db.Text
+  /// Proof of payment supplied by the customer: the public URL of the receipt
+  /// picture they sent in chat. null for manual and sale-backed invoices.
+  receiptUrl String?
 
   /// Invoice Reference Number returned by the NRS.
   irn       String?

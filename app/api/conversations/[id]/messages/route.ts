@@ -3,7 +3,24 @@ import { getCurrentBusinessId } from "@/lib/auth";
 
 type MessageRequestBody = {
   content?: unknown;
+  paymentUrl?: unknown;
 };
+
+/**
+ * A chat payment link, when the reply carries one. Only an absolute https URL is
+ * accepted: the value is handed to the customer as a link, so a `javascript:` or
+ * `data:` payload must never be stored.
+ */
+function readPaymentUrl(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
 
 function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
@@ -41,6 +58,17 @@ export async function POST(
       return Response.json({ error: "Message content is required" }, { status: 400 });
     }
 
+    const paymentUrlInput =
+      typeof body.paymentUrl === "string" ? body.paymentUrl.trim() : "";
+    const paymentUrl = paymentUrlInput ? readPaymentUrl(paymentUrlInput) : null;
+
+    if (paymentUrlInput && !paymentUrl) {
+      return Response.json(
+        { error: "paymentUrl must be an absolute https URL" },
+        { status: 400 },
+      );
+    }
+
     const conversation = await prisma.conversation.findFirst({
       where: { id, businessId },
       include: { customer: true, business: true },
@@ -68,6 +96,7 @@ export async function POST(
           conversationId: conversation.id,
           sender: "agent",
           content,
+          paymentUrl,
         },
       }),
     ]);
@@ -115,6 +144,7 @@ export async function POST(
           sender: message.sender,
           content: message.content,
           createdAt: message.createdAt,
+          paymentUrl: message.paymentUrl,
         },
       },
       { status: 200 },

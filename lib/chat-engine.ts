@@ -10,10 +10,12 @@ import {
 } from "@/lib/ai";
 import {
   findSimilarProducts,
+  generateInvoiceFromReceipt,
   searchFAQs,
   searchProducts,
   type FaqMatch,
   type ProductMatch,
+  type ReceiptInvoiceResult,
 } from "@/lib/tools";
 import {
   calculateCounterOffer,
@@ -72,6 +74,13 @@ const SYSTEM_PROMPT_RULES = [
   "2. Say: \"Once you've paid, send the receipt here so my boss/oga can confirm and dispatch.\"",
   "",
   "If the customer asks how to pay AND `paymentInstructions` is MISSING, trigger `escalate_to_owner`.",
+  "",
+  "--- PAYMENT PROOF (RECEIPTS) ---",
+  "PAYMENT PROOF: If a customer claims they have paid, you MUST ask them to send a picture of the payment receipt. Once they send the image, use your vision capabilities to read the receipt. Extract the Amount, the Sender's Name, and the Date. Then, use the `generate_invoice_from_receipt` tool to create a draft invoice. Finally, tell the customer: 'Thank you! I have received your receipt and generated an invoice. My boss/oga will verify it and confirm your delivery shortly.'",
+  "1. A receipt picture arrives as a message that starts with `[Customer sent a payment receipt]:`. Those details were already read from the picture: use that amount, sender and date exactly and never invent, round or re-guess them.",
+  "2. Call `generate_invoice_from_receipt` ONCE per receipt, with `customerName`, `amount` (the receipt total in Naira, digits only), `description` (what the payment is for) and `receiptUrl` (the RECEIPT IMAGE URL from the system note, copied exactly). Never call it for a message that is not a receipt.",
+  "3. If the amount could not be read from the picture, ask the customer for the exact amount they paid instead of guessing, then call the tool once they reply.",
+  "4. Never say the payment is confirmed and never say the invoice is paid: only my boss/oga can verify the receipt and approve the invoice. Never mention drafts, invoices or the dashboard beyond the sentence in rule 1.",
   "",
   "--- KILL SWITCH ---",
   "When you trigger `escalate_to_owner`:",
@@ -154,6 +163,39 @@ const TOOLS: ChatTool[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "generate_invoice_from_receipt",
+      description:
+        "Create a DRAFT invoice from a payment receipt picture the customer sent. Only call this after a receipt has been read from a message starting with `[Customer sent a payment receipt]:`. The draft still needs my boss/oga to verify the picture and approve it; the AI can never mark an invoice as paid.",
+      parameters: {
+        type: "object",
+        properties: {
+          customerName: {
+            type: "string",
+            description:
+              "The sender's name as printed on the receipt (e.g. 'Ada Obi')",
+          },
+          amount: {
+            type: "number",
+            description:
+              "The exact amount on the receipt, in Naira, e.g. 25000.50. Never guess or round it.",
+          },
+          description: {
+            type: "string",
+            description: "What the payment is for (e.g. 'iPhone 13 128GB')",
+          },
+          receiptUrl: {
+            type: "string",
+            description:
+              "The public URL of the receipt picture the customer sent, copied exactly from the RECEIPT IMAGE URL in the system note.",
+          },
+        },
+        required: ["customerName", "amount", "description", "receiptUrl"],
+      },
+    },
+  },
 ];
 
 const MAX_TOOL_ROUNDS = 2;
@@ -173,6 +215,7 @@ type ToolResult =
   | { query: string; count: number; products: ProductMatch[] }
   | { query: string; count: number; faqs: FaqMatch[] }
   | { escalated: true; reason: string }
+  | ReceiptInvoiceResult
   | { error: string };
 
 type StoredNegotiation = NegotiationState & {
@@ -205,6 +248,7 @@ export async function handleIncomingMessage({
   customerPhone,
   message,
   skipCustomerMessage = false,
+  imageUrl = null,
 }: {
   businessId: string;
   customerPhone: string;
@@ -215,6 +259,12 @@ export async function handleIncomingMessage({
    * set this so the engine does not store a duplicate.
    */
   skipCustomerMessage?: boolean;
+  /**
+   * The picture attached to this turn, when the customer just sent an image.
+   * The vision pipeline has already described it; this URL is what
+   * `generate_invoice_from_receipt` stores as the receipt proof.
+   */
+  imageUrl?: string | null;
 }): Promise<EngineResult> {
   const incoming = message.trim();
   if (!incoming) {
@@ -319,6 +369,16 @@ export async function handleIncomingMessage({
   });
   history.reverse();
 
+  // The receipt the customer is talking about: the picture attached to this
+  // turn when the caller passed one, otherwise the last picture they sent. The
+  // URL is a server-verified Supabase Storage link, so the tool can store it as
+  // proof without trusting a URL the model typed.
+  const receiptImageUrl =
+    imageUrl ??
+    history.filter((msg) => msg.sender === "customer" && msg.imageUrl).at(-1)
+      ?.imageUrl ??
+    null;
+
   const chatMessages: ChatMessage[] = [];
   const tone = isTone(business.tone) ? business.tone : "friendly";
   let systemPrompt = buildSystemPrompt(
@@ -330,6 +390,12 @@ export async function handleIncomingMessage({
   );
   const language = detectLanguage(incoming);
   systemPrompt += getLanguageInstruction(language);
+  if (receiptImageUrl) {
+    systemPrompt +=
+      "\n\nRECEIPT IMAGE URL (the picture the customer just sent): " +
+      receiptImageUrl +
+      "\nIf that picture is a payment receipt, pass this exact URL as `receiptUrl` to generate_invoice_from_receipt. Never use any other URL.";
+  }
 
   chatMessages.push({ role: "system", content: systemPrompt });
   for (const msg of history) {
@@ -371,7 +437,14 @@ export async function handleIncomingMessage({
         chatMessages.push({
           role: "tool",
           tool_call_id: toolCall.id,
-          content: JSON.stringify(await runToolCall(businessId, conversation.id, toolCall)),
+          content: JSON.stringify(
+            await runToolCall(
+              businessId,
+              conversation.id,
+              toolCall,
+              receiptImageUrl,
+            ),
+          ),
         });
       }
       result = await askAI(chatMessages, TOOLS);
@@ -660,6 +733,7 @@ async function runToolCall(
   businessId: string,
   conversationId: string,
   toolCall: ChatToolCall,
+  receiptImageUrl: string | null,
 ): Promise<ToolResult> {
   if (toolCall.type !== "function") {
     return { error: `Unknown tool: ${toolCall.type}` };
@@ -689,6 +763,28 @@ async function runToolCall(
       await escalateConversation(businessId, conversationId, reason);
       return { escalated: true, reason };
     }
+    case "generate_invoice_from_receipt": {
+      debugLog(
+        "[TOOL] Executing generate_invoice_from_receipt for business:",
+        businessId,
+      );
+
+      // The picture already attached to this conversation wins over a URL the
+      // model typed: the receipt is a real file the customer sent, and the
+      // amount is the only part the model extracted.
+      return generateInvoiceFromReceipt({
+        businessId,
+        conversationId,
+        customerName: readArgument(toolCall.function.arguments, "customerName"),
+        amountNaira:
+          readNumberArgument(toolCall.function.arguments, "amount") ??
+          Number.NaN,
+        description: readArgument(toolCall.function.arguments, "description"),
+        receiptUrl:
+          receiptImageUrl ??
+          readArgument(toolCall.function.arguments, "receiptUrl"),
+      });
+    }
     default:
       return { error: `Unknown tool: ${toolCall.function.name}` };
   }
@@ -702,6 +798,31 @@ function readArgument(rawArguments: string, key: string): string {
   } catch {
     return "";
   }
+}
+
+/**
+ * Read a number field out of a tool call's JSON argument object (null when it
+ * is missing, not finite, or not positive). Accepts a numeric string such as
+ * "25000" or "₦25,000.50" because models occasionally quote the amount.
+ */
+function readNumberArgument(rawArguments: string, key: string): number | null {
+  let raw: unknown;
+
+  try {
+    const parsed = JSON.parse(rawArguments) as Record<string, unknown>;
+    raw = parsed?.[key];
+  } catch {
+    return null;
+  }
+
+  const value =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string"
+        ? Number(raw.replace(/[^0-9.]/g, ""))
+        : Number.NaN;
+
+  return Number.isFinite(value) && value > 0 ? value : null;
 }
 
 async function loadNegotiation(

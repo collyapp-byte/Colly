@@ -9,9 +9,12 @@ import {
 
 /** Statuses an invoice may move to, keyed by its current status. */
 const ALLOWED_TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
-  draft: ["sent", "cancelled"],
-  sent: ["cancelled"],
+  // "paid" is the owner approving a verified payment; the AI can never reach
+  // this transition (it only ever creates drafts).
+  draft: ["sent", "paid", "cancelled"],
+  sent: ["paid", "cancelled"],
   failed: ["draft", "cancelled"],
+  paid: [],
   cancelled: [],
 };
 
@@ -86,7 +89,7 @@ export async function PATCH(
 
     if (!isInvoiceStatus(body.status)) {
       return badRequest(
-        'Status must be one of "draft", "sent", "failed" or "cancelled"',
+        'Status must be one of "draft", "sent", "paid", "failed" or "cancelled"',
       );
     }
     const nextStatus = body.status;
@@ -110,10 +113,23 @@ export async function PATCH(
       );
     }
 
-    const invoice = await prisma.invoice.update({
-      where: { id },
-      data: { status: nextStatus },
-      include: INVOICE_INCLUDE,
+    // Approving a payment moves the customer along the CRM Kanban in the same
+    // transaction, so the board never disagrees with the invoice it was paid on.
+    const invoice = await prisma.$transaction(async (tx) => {
+      const updated = await tx.invoice.update({
+        where: { id },
+        data: { status: nextStatus },
+        include: INVOICE_INCLUDE,
+      });
+
+      if (nextStatus === "paid" && existing.customerId) {
+        await tx.customer.updateMany({
+          where: { id: existing.customerId, businessId },
+          data: { dealStatus: "PAID" },
+        });
+      }
+
+      return updated;
     });
 
     return Response.json({ invoice: serializeInvoice(invoice) });

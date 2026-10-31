@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { debugLog } from "@/lib/logger";
+import { formatNaira } from "@/lib/format";
 
 /**
  * Telegram Bot API root. `COLLY_TELEGRAM_BOT_TOKEN` is the token of the
@@ -156,6 +157,36 @@ export async function sendOwnerAlert(
       error instanceof Error ? error.message : error,
     );
   }
+}
+
+/**
+ * Tell the owner that a customer has sent a payment receipt and the AI has
+ * drafted an invoice from it.
+ *
+ * The AI can never mark an invoice as paid, so this alert is the handover: the
+ * owner opens the dashboard, checks the picture, and approves (or rejects) the
+ * draft. Never throws — a failed alert must not break the customer's reply.
+ */
+export async function sendReceiptAlert(args: {
+  businessId: string;
+  customerName: string;
+  /** The amount on the receipt, in integer kobo. */
+  amountKobo: number;
+}): Promise<void> {
+  const customerName = args.customerName.trim() || "A customer";
+  const amount = formatNaira(Math.round(args.amountKobo) / 100);
+
+  debugLog("[TOOL FIRED] generate_invoice_from_receipt:", {
+    businessId: args.businessId,
+    amountKobo: args.amountKobo,
+  });
+
+  await sendOwnerAlert(
+    args.businessId,
+    `🚨 NEW PAYMENT RECEIPT: Customer ${customerName} claims to have paid ${amount}. ` +
+      "A draft invoice has been created. Please log into your dashboard to verify " +
+      "the receipt and approve the invoice.",
+  );
 }
 
 /**

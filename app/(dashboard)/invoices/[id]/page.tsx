@@ -3,14 +3,15 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, CircleAlert, Printer, Send } from "lucide-react";
+import { ArrowLeft, CircleAlert, Printer, Receipt, Send } from "lucide-react";
 import { formatNaira } from "@/lib/format";
 
-type InvoiceStatus = "draft" | "sent" | "failed" | "cancelled";
+type InvoiceStatus = "draft" | "sent" | "paid" | "failed" | "cancelled";
 
 const STATUS_LABELS: Record<InvoiceStatus, string> = {
   draft: "Draft",
   sent: "Sent",
+  paid: "Paid",
   failed: "Failed",
   cancelled: "Cancelled",
 };
@@ -18,6 +19,7 @@ const STATUS_LABELS: Record<InvoiceStatus, string> = {
 const STATUS_BADGE: Record<InvoiceStatus, string> = {
   draft: "bg-amber-100 text-amber-700",
   sent: "bg-green-100 text-green-700",
+  paid: "bg-emerald-600 text-white",
   failed: "bg-red-100 text-red-700",
   cancelled: "bg-gray-100 text-gray-600",
 };
@@ -42,6 +44,9 @@ type Invoice = {
   nrsSentAt: string | null;
   nrsError: string | null;
   createdAt: string;
+  /** Payment proof the customer sent in chat, when the AI drafted this. */
+  receiptUrl: string | null;
+  notes: string | null;
   customer: { id: string; name: string; phone: string } | null;
 };
 
@@ -162,6 +167,28 @@ function InvoiceDetail() {
                 <p className="text-sm text-gray-500">{invoice.customer.phone}</p>
               )}
             </div>
+
+            {(invoice.receiptUrl || invoice.notes) && (
+              <div className="mt-4 border-t border-gray-100 pt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                  Payment proof
+                </p>
+                {invoice.notes && (
+                  <p className="mt-1 text-sm text-gray-700">{invoice.notes}</p>
+                )}
+                {invoice.receiptUrl && (
+                  <a
+                    href={invoice.receiptUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-colly transition-colors hover:underline"
+                  >
+                    <Receipt className="h-4 w-4" aria-hidden />
+                    View customer receipt
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Line items */}

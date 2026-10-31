@@ -7,6 +7,7 @@ export const VAT_RATE = 7.5;
 export const INVOICE_STATUSES = [
   "draft",
   "sent",
+  "paid",
   "failed",
   "cancelled",
 ] as const;
@@ -38,6 +39,32 @@ export const INVOICE_INCLUDE = {
 export function roundMoney(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
+
+/**
+ * Converts Naira to integer kobo.
+ *
+ * Invoices store money as `Decimal(10, 2)` Naira, but every calculation that
+ * touches customer-supplied amounts (an AI reading a receipt, a Paystack
+ * charge) runs on integer kobo: `0.1 + 0.2` is not `0.3` in binary floating
+ * point, so a receipt for ₦25,000.10 must not drift by a kobo on the way to the
+ * database or into the owner's alert.
+ */
+export function nairaToKobo(amountNaira: number): number {
+  return Math.round(amountNaira * 100);
+}
+
+/** Converts integer kobo back to Naira for a `Decimal(10, 2)` column. */
+export function koboToNaira(amountKobo: number): number {
+  return Math.round(amountKobo) / 100;
+}
+
+/**
+ * Note stamped on a draft invoice the AI creates from a customer's payment
+ * receipt. The AI can never mark an invoice as paid: the owner verifies the
+ * receipt and approves it in the dashboard.
+ */
+export const RECEIPT_INVOICE_NOTE =
+  "Auto-generated from customer receipt. Needs owner verification.";
 
 /** Computes subtotal, VAT and total from line items. */
 export function computeTotals(items: InvoiceItem[], vatRate = VAT_RATE) {

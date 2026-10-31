@@ -102,6 +102,9 @@ export async function GET(
         sender: message.sender,
         content: message.content,
         createdAt: message.createdAt,
+        // Set when the reply carried an in-chat Paystack link, so the thread can
+        // render it as a payment card (POST /api/payments/create-link).
+        paymentUrl: message.paymentUrl,
       })),
       plan: {
         plan: business.plan,

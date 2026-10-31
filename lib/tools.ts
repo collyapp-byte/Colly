@@ -3,6 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { embedText, toVectorLiteral } from "@/lib/embeddings";
 import { translatePidgin } from "@/lib/pidgin-translate";
 import { debugLog } from "@/lib/logger";
+import {
+  generateInvoiceNumber,
+  koboToNaira,
+  nairaToKobo,
+  RECEIPT_INVOICE_NOTE,
+  type InvoiceItem,
+} from "@/lib/invoices";
+import { sendReceiptAlert } from "@/lib/owner-alerts";
 
 /**
  * A product exactly as the AI should see it: plain JSON, with the Prisma
@@ -696,3 +704,239 @@ export async function searchFAQs(
 
   return keywordSearchFAQs(businessId, query);
 }
+
+// ---------------------------------------------------------------------------
+// Receipt-to-invoice
+// ---------------------------------------------------------------------------
+
+/**
+ * Ceiling for a receipt-generated invoice, in kobo (₦10,000,000). It matches
+ * the cap on in-chat Paystack links: an OCR misread that turns ₦25,000 into
+ * ₦25,000,000 must fail loudly rather than create a nonsense invoice.
+ */
+const MAX_RECEIPT_AMOUNT_KOBO = 10_000_000 * 100;
+
+/** Longest line description we store from the model. */
+const MAX_RECEIPT_DESCRIPTION_LENGTH = 500;
+
+/** Longest customer name we store in the owner alert. */
+const MAX_RECEIPT_NAME_LENGTH = 120;
+
+/**
+ * Whether `value` is a public object URL in Colly's own Supabase Storage bucket.
+ *
+ * The image pipeline only ever fetches URLs shaped like this (see
+ * `isTrustedStorageUrl` in `app/api/chat/route.ts`), and the owner clicks the
+ * receipt link from the dashboard, so a model-supplied "receipt" URL from
+ * customer text must never be stored: it could point anywhere on the web.
+ */
+function isStorageUrl(value: string): boolean {
+  const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!projectUrl) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value);
+
+    if (url.protocol !== "https:") return false;
+    if (url.username || url.password) return false;
+    if (url.port && url.port !== "443") return false;
+    if (!url.pathname.startsWith("/storage/v1/object/public/")) return false;
+
+    return (
+      url.hostname.toLowerCase() === new URL(projectUrl).hostname.toLowerCase()
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * What `generateInvoiceFromReceipt` hands back to the model, and therefore to
+ * the customer's chat turn.
+ */
+export type ReceiptInvoiceResult =
+  | {
+      created: true;
+      invoiceId: string;
+      invoiceNumber: string;
+      /** Always "draft" for a new invoice: only the owner can approve it. */
+      status: string;
+      /** The receipt total in integer kobo. */
+      totalKobo: number;
+      /** True when this picture had already been turned into an invoice. */
+      duplicate: boolean;
+    }
+  | { created: false; error: string };
+
+/**
+ * Creates a DRAFT invoice from a payment receipt the customer sent in chat.
+ *
+ * The AI extracts the amount, sender and description; this function owns the
+ * database write so the assistant can never mark an invoice as paid:
+ *
+ * - the status is always "draft" (the owner verifies the picture and approves),
+ * - the total is computed in integer kobo from the Naira amount,
+ * - VAT is 0, because the receipt total already includes whatever tax was
+ *   charged — adding 7.5% on top would invoice more than the customer paid,
+ * - the customer is the one on the conversation (found by its chat session id),
+ * - the picture the customer sent is stored on the invoice as `receiptUrl` so
+ *   the owner can see exactly what was sent (a public object in Colly's own
+ *   Storage bucket only — never a URL the model or the customer typed),
+ * - a receipt picture already invoiced in this business is not invoiced twice.
+ *
+ * The owner is alerted on Telegram. Never throws for a business rule failure:
+ * the caller gets `{ created: false, error }`, which is returned to the model.
+ */
+export async function generateInvoiceFromReceipt(args: {
+  businessId: string;
+  conversationId: string;
+  customerName: string;
+  amountNaira: number;
+  description: string;
+  receiptUrl: string;
+}): Promise<ReceiptInvoiceResult> {
+  const amountKobo = nairaToKobo(args.amountNaira);
+
+  if (!Number.isFinite(args.amountNaira) || amountKobo <= 0) {
+    return {
+      created: false,
+      error: "The receipt amount must be a positive number of Naira.",
+    };
+  }
+
+  if (amountKobo > MAX_RECEIPT_AMOUNT_KOBO) {
+    return {
+      created: false,
+      error: "That receipt amount is too large to turn into an invoice.",
+    };
+  }
+
+  const receiptUrl = args.receiptUrl.trim();
+  if (!isStorageUrl(receiptUrl)) {
+    return {
+      created: false,
+      error: "The customer's receipt picture is missing or is not a valid link.",
+    };
+  }
+
+
+  const conversation = await prisma.conversation.findFirst({
+    where: { id: args.conversationId, businessId: args.businessId },
+    select: {
+      customerId: true,
+      customer: { select: { id: true, name: true } },
+    },
+  });
+
+  if (!conversation) {
+    return {
+      created: false,
+      error: "No active conversation to attach this invoice to.",
+    };
+  }
+
+  const customer = conversation.customer;
+
+  // The same picture may reach the tool twice (a model retry, a redelivered
+  // webhook). Returning the existing draft keeps one invoice per receipt.
+  const existing = await prisma.invoice.findFirst({
+    where: { businessId: args.businessId, receiptUrl },
+    select: { id: true, invoiceNumber: true, status: true, total: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (existing) {
+    return {
+      created: true,
+      invoiceId: existing.id,
+      invoiceNumber: existing.invoiceNumber,
+      status: existing.status,
+      totalKobo: nairaToKobo(Number(existing.total)),
+      duplicate: true,
+    };
+  }
+
+  const description =
+    args.description.trim().slice(0, MAX_RECEIPT_DESCRIPTION_LENGTH) ||
+    "Payment received";
+  const customerName =
+    args.customerName.trim().slice(0, MAX_RECEIPT_NAME_LENGTH) ||
+    customer.name;
+
+  const totalNaira = koboToNaira(amountKobo);
+  const item: InvoiceItem = {
+    name: description,
+    quantity: 1,
+    unitPrice: totalNaira,
+    total: totalNaira,
+  };
+
+  try {
+    // Two attempts: `generateInvoiceNumber` reads the last number, so an owner
+    // creating an invoice at the same moment can win the race and trip the
+    // (businessId, invoiceNumber) unique constraint.
+    let invoice: {
+      id: string;
+      invoiceNumber: string;
+      status: string;
+    } | null = null;
+
+    for (let attempt = 0; attempt < 2 && !invoice; attempt++) {
+      try {
+        invoice = await prisma.invoice.create({
+          data: {
+            businessId: args.businessId,
+            customerId: customer.id,
+            invoiceNumber: await generateInvoiceNumber(args.businessId),
+            // Crucial: the AI cannot mark an invoice as paid.
+            status: "draft",
+            subtotal: totalNaira,
+            vat: 0,
+            total: totalNaira,
+            items: [item],
+            notes: RECEIPT_INVOICE_NOTE,
+            receiptUrl,
+          },
+          select: { id: true, invoiceNumber: true, status: true },
+        });
+      } catch (error) {
+        const isNumberClash =
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002";
+
+        if (!isNumberClash || attempt === 1) {
+          throw error;
+        }
+      }
+    }
+
+    if (!invoice) {
+      return { created: false, error: "Could not create the draft invoice." };
+    }
+
+    await sendReceiptAlert({
+      businessId: args.businessId,
+      customerName,
+      amountKobo,
+    });
+
+    return {
+      created: true,
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      status: invoice.status,
+      totalKobo: amountKobo,
+      duplicate: false,
+    };
+  } catch (error) {
+    console.error(
+      "[tools] generate_invoice_from_receipt failed for business",
+      args.businessId,
+      error instanceof Error ? error.message : error,
+    );
+    return { created: false, error: "Could not create the draft invoice." };
+  }
+}
+
