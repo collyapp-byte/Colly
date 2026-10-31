@@ -7,13 +7,20 @@ import { QRCodeCanvas } from "qrcode.react";
 import { ArrowLeft, Download, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  QR_CARD_SUBLINE,
+  QR_CARD_TAGLINE,
+  drawQrCard,
+  qrCardFileName,
+} from "@/lib/qr-card";
 
 const WEB_CHAT_ORIGIN = "https://colly.com.ng";
+const LOGO_SRC = "/logo.svg";
 
 /**
- * The canvas is rendered at this many pixels and shrunk with CSS. Drawing at
- * screen size would download a blurry 224px PNG; at 1024px the file stays sharp
- * when the shop prints it on a counter card.
+ * The QR canvas is rendered at this many pixels and shrunk with CSS. Drawing at
+ * screen size would save a blurry 224px code; at 1024px it stays sharp on the
+ * downloaded card and on paper.
  */
 const QR_PIXEL_SIZE = 1024;
 
@@ -23,9 +30,22 @@ type QrBusiness = {
   name: string;
 };
 
+/** Loads the brand mark so it can be drawn onto the downloaded card. */
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    // `document.createElement` rather than `new Image()`: this module already
+    // imports Next's `<Image />`, and the bare constructor would shadow it.
+    const image = document.createElement("img");
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`Could not load ${src}`));
+    image.src = src;
+  });
+}
+
 export default function QrCodePage() {
   const [business, setBusiness] = useState<QrBusiness | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // The id comes from the session's business rather than the URL, so the page
@@ -70,28 +90,57 @@ export default function QrCodePage() {
   // client-side navigation away from leaving the marker behind.
   useEffect(() => {
     document.body.dataset.printQr = "true";
+
+    // The browser prints its own date / page-title / URL header inside the page
+    // margin, and no CSS selector can reach it - it is why a sheet used to come
+    // out with "Dashboard | Colly Nigeria" and the URL on it. A zero page margin
+    // leaves no margin box to print that header in. The tag is injected here
+    // rather than added to globals.css so it only applies while this page is
+    // open: invoice and inbox prints keep their normal margins.
+    const pageStyle = document.createElement("style");
+    pageStyle.id = "qr-print-page";
+    pageStyle.textContent = "@page { size: auto; margin: 0; }";
+    document.head.appendChild(pageStyle);
+
     return () => {
       delete document.body.dataset.printQr;
+      pageStyle.remove();
     };
   }, []);
 
-  /** Saves the canvas as colly-qr-<businessId>.png. */
-  function handleDownload() {
-    const canvas = canvasRef.current;
-    if (!canvas || !business) return;
+  /**
+   * Saves the whole card - lockup, business name, QR code and the two lines -
+   * as colly-qr-<businessId>.png. The QR is copied from the live canvas at its
+   * 1024px intrinsic size, so the file is sharp when printed.
+   */
+  async function handleDownload() {
+    const qrCanvas = canvasRef.current;
+    if (!qrCanvas || !business) return;
 
+    setSaving(true);
     try {
-      const dataUrl = canvas.toDataURL("image/png");
+      // A missing logo must not block the download: the card still works
+      // without the mark, so the failure is swallowed here only.
+      const logo = await loadImage(LOGO_SRC).catch(() => null);
+      const canvas = drawQrCard({
+        businessName: business.name,
+        qr: qrCanvas,
+        logo,
+      });
+
       const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = `colly-qr-${business.id}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.download = qrCardFileName(business.id);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast.success("QR code downloaded");
+      toast.success("QR card downloaded");
     } catch {
-      // A tainted canvas is the only realistic failure; printing still works.
+      // A tainted canvas or a blocked document.createElement("a") download is
+      // the only realistic failure; printing still works.
       toast.error("Could not save the image. Use Print instead.");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -127,49 +176,50 @@ export default function QrCodePage() {
       {business ? (
         <>
           {/* The printable card. `data-print-card` keeps its colours, sizes it
-              for one sheet and drops the screen shadow (see app/globals.css). */}
+              for one sheet and drops the screen shadow (see app/globals.css).
+              Contents, in order: the Colly lockup small, the business's own name
+              big, the QR code, and the two lines a customer reads. Nothing else
+              belongs on a counter card - no site navigation, no footer. */}
           <div data-print-flush className="mt-6 flex justify-center">
             <div
               data-print-card
-              className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white px-6 py-8 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.25)]"
+              className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white px-8 py-10 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.25)]"
             >
               <div className="flex items-center justify-center gap-2">
                 <Image
                   src="/logo.svg"
                   alt=""
-                  width={30}
-                  height={30}
+                  width={22}
+                  height={22}
                   aria-hidden
                 />
-                <span className="font-display text-xl tracking-wide text-gray-900">
+                <span className="font-display text-sm tracking-wide text-gray-900">
                   Colly
                 </span>
               </div>
 
+              <h2 className="mt-5 text-center text-2xl font-bold leading-tight break-words text-gray-900">
+                {business.name}
+              </h2>
+
               <div className="mt-6 flex justify-center">
-                <div className="rounded-xl border border-gray-100 bg-white p-3">
-                  <QRCodeCanvas
-                    ref={canvasRef}
-                    value={chatLink}
-                    size={QR_PIXEL_SIZE}
-                    level="M"
-                    marginSize={2}
-                    title={`Chat with ${business.name}`}
-                    aria-label={`QR code that opens the Colly chat for ${business.name}`}
-                    className="block h-56 w-56"
-                  />
-                </div>
+                <QRCodeCanvas
+                  ref={canvasRef}
+                  value={chatLink}
+                  size={QR_PIXEL_SIZE}
+                  level="M"
+                  marginSize={2}
+                  title={`Chat with ${business.name}`}
+                  aria-label={`QR code that opens the Colly chat for ${business.name}`}
+                  className="block h-52 w-52"
+                />
               </div>
 
               <p className="mt-6 text-center text-base font-bold text-gray-900">
-                Scan to chat with our AI Assistant
+                {QR_CARD_TAGLINE}
               </p>
               <p className="mt-1 text-center text-sm text-gray-500">
-                Instant replies. Available 24/7.
-              </p>
-
-              <p className="mt-4 truncate text-center text-[11px] font-medium text-gray-400">
-                {chatLink}
+                {QR_CARD_SUBLINE}
               </p>
             </div>
           </div>
@@ -178,9 +228,14 @@ export default function QrCodePage() {
             data-print-hide
             className="mt-6 flex flex-wrap justify-center gap-3"
           >
-            <Button type="button" variant="primary" onClick={handleDownload}>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleDownload}
+              isLoading={saving}
+            >
               <Download className="mr-2 h-4 w-4" aria-hidden />
-              Download QR Code (PNG)
+              Download QR Card (PNG)
             </Button>
             <Button
               type="button"
@@ -201,10 +256,11 @@ export default function QrCodePage() {
 function QrCardSkeleton() {
   return (
     <div className="mt-6 flex justify-center">
-      <div className="w-full max-w-sm animate-pulse rounded-2xl border border-gray-200 bg-white px-6 py-8">
-        <div className="mx-auto h-7 w-24 rounded bg-gray-100" />
-        <div className="mx-auto mt-6 h-56 w-56 rounded-xl bg-gray-100" />
-        <div className="mx-auto mt-6 h-4 w-56 rounded bg-gray-100" />
+      <div className="w-full max-w-sm animate-pulse rounded-2xl border border-gray-200 bg-white px-8 py-10">
+        <div className="mx-auto h-5 w-20 rounded bg-gray-100" />
+        <div className="mx-auto mt-5 h-7 w-44 rounded bg-gray-100" />
+        <div className="mx-auto mt-6 h-52 w-52 rounded-lg bg-gray-100" />
+        <div className="mx-auto mt-6 h-4 w-52 rounded bg-gray-100" />
         <div className="mx-auto mt-2 h-3 w-40 rounded bg-gray-100" />
       </div>
     </div>

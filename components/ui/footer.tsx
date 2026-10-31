@@ -100,7 +100,10 @@ function FooterColumn({
 
 export function Footer() {
   return (
-    <footer className="border-t border-gray-100 px-4 py-10 text-xs text-gray-500">
+    <footer
+      data-print-hide
+      className="border-t border-gray-100 px-4 py-10 text-xs text-gray-500"
+    >
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>

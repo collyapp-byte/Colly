@@ -357,10 +357,17 @@ button:active:not(:disabled) {
    single sheet.
 
    `[data-print-hide]` is hidden on every page - printing the inbox should not
-   put the sidebar and the mobile tab bar on paper either. Everything that
-   unwinds the dashboard shell is scoped to `body[data-print-qr]`, a marker the
-   QR page sets for as long as it is mounted (see its `useEffect`); without that
-   scope, printing any other dashboard page would drop its layout too. */
+   put the sidebar and the mobile tab bar on paper either. The sitewide Footer
+   and the floating Colly assistant carry the attribute too: the footer's
+   navigation columns and its entity disclaimer are website furniture, and they
+   used to print underneath the QR card. Everything that unwinds the dashboard
+   shell is scoped to `body[data-print-qr]`, a marker the QR page sets for as
+   long as it is mounted (see its `useEffect`); without that scope, printing any
+   other dashboard page would drop its layout too.
+
+   The browser's own date / page-title / URL header is not HTML, so no selector
+   here can reach it. The QR page injects `@page { margin: 0 }` while it is open,
+   which leaves no margin box to print that header in - see the note there. */
 @media print {
   [data-print-hide] {
     display: none !important;
@@ -371,6 +378,14 @@ button:active:not(:disabled) {
     background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  /* The browser's own date / title / URL header lives in the page margin, and
+     the QR page removes that margin (it injects `@page { margin: 0 }` while it
+     is open). Give the sheet its breathing room back on the body instead, so the
+     card is not jammed against the printer's unprintable edge. */
+  body[data-print-qr] {
+    padding: 12mm !important;
   }
 
   /* Full-height, scrolling containers clip the sheet to the first screen, and a
