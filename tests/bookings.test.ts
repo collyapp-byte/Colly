@@ -8,6 +8,9 @@ import {
   DEFAULT_BOOKING_DURATION_MINUTES,
   bookingEndTime,
   isBookingStatus,
+  normalizeBookingDate,
+  normalizeBookingTime,
+  parseBookingSlot,
   serializeBooking,
 } from "../lib/bookings";
 import {
@@ -112,7 +115,70 @@ test("booking statuses are the three lifecycle values", () => {
   }
 });
 
+test("a booking slot accepts what a model or a person writes", () => {
+  assert.equal(normalizeBookingDate("2026-11-05"), "2026-11-05");
+  assert.equal(normalizeBookingDate("2026-11-5"), "2026-11-05");
+  assert.equal(normalizeBookingDate(" 2026-1-9 "), "2026-01-09");
+  for (const value of [
+    "",
+    "5 November 2026",
+    "05/11/2026",
+    "2026-11",
+    "2026-11-05T10:00",
+  ]) {
+    assert.equal(normalizeBookingDate(value), null, `should reject ${value}`);
+  }
+
+  assert.equal(normalizeBookingTime("14:00"), "14:00");
+  assert.equal(normalizeBookingTime("9:05"), "09:05");
+  assert.equal(normalizeBookingTime("14:00:00"), "14:00");
+  assert.equal(normalizeBookingTime("2pm"), "14:00");
+  assert.equal(normalizeBookingTime("2:30 pm"), "14:30");
+  assert.equal(normalizeBookingTime("9 AM"), "09:00");
+  // Midnight and noon are the two that a naive % 12 gets wrong.
+  assert.equal(normalizeBookingTime("12am"), "00:00");
+  assert.equal(normalizeBookingTime("12pm"), "12:00");
+  for (const value of ["", "25:00", "14:60", "0pm", "13pm", "2:5", "evening"]) {
+    assert.equal(normalizeBookingTime(value), null, `should reject ${value}`);
+  }
+});
+
+test("the AI's date + time pair is one Lagos instant, whatever the server zone", () => {
+  const slot = parseBookingSlot("2026-11-05", "14:00");
+  assert.ok(slot);
+  assert.equal(slot.toISOString(), "2026-11-05T13:00:00.000Z");
+
+  // The same appointment written the way a model (or a customer) might.
+  assert.equal(
+    parseBookingSlot("2026-11-5", "2pm")?.toISOString(),
+    "2026-11-05T13:00:00.000Z",
+  );
+  assert.equal(
+    parseBookingSlot("2026-11-05", "2:00 PM")?.toISOString(),
+    "2026-11-05T13:00:00.000Z",
+  );
+  // Lagos midnight is still the previous day in UTC.
+  assert.equal(
+    parseBookingSlot("2026-11-05", "00:30")?.toISOString(),
+    "2026-11-04T23:30:00.000Z",
+  );
+
+  for (const [date, time] of [
+    ["2026-02-31", "10:00"], // a day that does not exist
+    ["2026-11-05", "25:00"],
+    ["2026-11-05", ""],
+    ["", "10:00"],
+  ] as const) {
+    assert.equal(
+      parseBookingSlot(date, time),
+      null,
+      `should reject ${date} ${time}`,
+    );
+  }
+});
+
 test("a booking ends one hour after it starts by default", () => {
+
   assert.equal(DEFAULT_BOOKING_DURATION_MINUTES, 60);
 
   const start = new Date("2026-11-03T09:00:00Z");

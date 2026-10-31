@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
+  Calendar,
   ChevronDown,
   ChevronRight,
   CreditCard,
@@ -45,6 +46,11 @@ const PRIMARY_ITEMS: NavItem[] = [
 ];
 
 const SECONDARY_ITEMS: NavItem[] = [
+  {
+    label: "Bookings",
+    href: "/bookings",
+    icon: Calendar,
+  },
   {
     label: "Products",
     href: "/products",

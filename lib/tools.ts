@@ -11,6 +11,14 @@ import {
   type InvoiceItem,
 } from "@/lib/invoices";
 import { sendReceiptAlert } from "@/lib/owner-alerts";
+import {
+  bookingEndTime,
+  MAX_BOOKING_SERVICE_LENGTH,
+  normalizeBookingDate,
+  normalizeBookingTime,
+  parseBookingSlot,
+} from "@/lib/bookings";
+import { formatInLagosTimezone } from "@/lib/timezone";
 
 /**
  * A product exactly as the AI should see it: plain JSON, with the Prisma
@@ -937,6 +945,173 @@ export async function generateInvoiceFromReceipt(args: {
       error instanceof Error ? error.message : error,
     );
     return { created: false, error: "Could not create the draft invoice." };
+  }
+}
+
+
+// ---------------------------------------------------------------------------
+// Bookings
+// ---------------------------------------------------------------------------
+
+/**
+ * What `createBooking` hands back to the model, and therefore to the customer's
+ * chat turn. Mirrors `ReceiptInvoiceResult`: a business-rule failure is a
+ * `created: false` result (the model asks for the missing detail), never a
+ * throw, so a bad date cannot take the customer's reply down with it.
+ */
+export type BookingResult =
+  | {
+      created: true;
+      bookingId: string;
+      customerName: string;
+      serviceName: string;
+      /** The slot normalised to Lagos `YYYY-MM-DD` and `HH:MM`. */
+      date: string;
+      time: string;
+      /** The same slot as Lagos renders it, e.g. "Thursday, 5 November 2026 at 14:00". */
+      startTimeLagos: string;
+      /** Always PENDING for a new appointment: only my boss/oga confirms it. */
+      status: string;
+      /** True when this customer already had this slot on the books. */
+      duplicate: boolean;
+      /** One line the model can say back to the customer. */
+      message: string;
+    }
+  | { created: false; error: string };
+
+/**
+ * Books an appointment for the customer on the current conversation.
+ *
+ * The AI collects the service, date and time; this function owns the write:
+ *
+ * - the customer is the one on the conversation (checked against `businessId`,
+ *   so a guessed id can never book for another tenant's customer),
+ * - the slot is parsed through `parseBookingSlot()`, i.e. a zone-less wall clock
+ *   is read as **Lagos** time — the same instant on a UTC server and on a Lagos
+ *   laptop — and an impossible day (`2026-02-31`) is refused,
+ * - a slot in the past is refused: the model must ask for another day,
+ * - `status` is left to the schema default (`PENDING`); the assistant can never
+ *   confirm its own appointment, that stays with my boss/oga in the dashboard,
+ * - the slot is one hour long (`bookingEndTime`),
+ * - the same customer + service + instant is not booked twice (a model retry or
+ *   a redelivered webhook must not create two appointments).
+ */
+export async function createBooking(args: {
+  businessId: string;
+  customerId: string;
+  serviceName: string;
+  date: string;
+  time: string;
+}): Promise<BookingResult> {
+  const serviceName = args.serviceName
+    .trim()
+    .slice(0, MAX_BOOKING_SERVICE_LENGTH);
+
+  if (!serviceName) {
+    return {
+      created: false,
+      error:
+        "The appointment needs a service: ask the customer what they want to book.",
+    };
+  }
+
+  const date = normalizeBookingDate(args.date);
+  const time = normalizeBookingTime(args.time);
+  const startTime = parseBookingSlot(args.date, args.time);
+  if (!date || !time || !startTime) {
+    return {
+      created: false,
+      error:
+        "That date or time could not be read. Ask the customer for the day (YYYY-MM-DD) and the time (HH:MM, Lagos time) again.",
+    };
+  }
+
+  if (startTime.getTime() < Date.now()) {
+    return {
+      created: false,
+      error: `That slot (${args.date} ${args.time}) is in the past. Ask the customer for a future date and time.`,
+    };
+  }
+
+  const customer = await prisma.customer.findFirst({
+    where: { id: args.customerId, businessId: args.businessId },
+    select: { id: true, name: true, phone: true },
+  });
+
+  if (!customer) {
+    return {
+      created: false,
+      error: "There is no customer on this conversation to book for.",
+    };
+  }
+
+  // The model's strings are canonicalised, so "2026-11-5" and "2pm" are stored
+  // and echoed back as "2026-11-05" and "14:00".
+  const startTimeLagos = formatInLagosTimezone(startTime);
+  const customerName = customer.name || customer.phone;
+
+  try {
+    const existing = await prisma.booking.findFirst({
+      where: {
+        businessId: args.businessId,
+        customerId: customer.id,
+        serviceName,
+        startTime,
+        status: { not: "CANCELLED" },
+      },
+      select: { id: true, status: true },
+    });
+
+    if (existing) {
+      return {
+        created: true,
+        bookingId: existing.id,
+        customerName,
+        serviceName,
+        date,
+        time,
+        startTimeLagos,
+        status: existing.status,
+        duplicate: true,
+        message: `Booking already exists for ${customerName} on ${date} at ${time}.`,
+      };
+    }
+
+    const booking = await prisma.booking.create({
+      data: {
+        businessId: args.businessId,
+        customerId: customer.id,
+        serviceName,
+        startTime,
+        endTime: bookingEndTime(startTime),
+        // status stays at the schema default: PENDING.
+      },
+      select: { id: true, status: true },
+    });
+
+    return {
+      created: true,
+      bookingId: booking.id,
+      customerName,
+      serviceName,
+      date,
+      time,
+      startTimeLagos,
+      status: booking.status,
+      duplicate: false,
+      message: `Booking created for ${customerName} on ${date} at ${time}`,
+    };
+  } catch (error) {
+    console.error(
+      "[tools] create_booking failed for business",
+      args.businessId,
+      error instanceof Error ? error.message : error,
+    );
+    return {
+      created: false,
+      error:
+        "Could not save the appointment. Ask the customer to try again in a moment.",
+    };
   }
 }
 

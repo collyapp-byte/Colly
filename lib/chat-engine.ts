@@ -9,10 +9,12 @@ import {
   type ChatToolCall,
 } from "@/lib/ai";
 import {
+  createBooking,
   findSimilarProducts,
   generateInvoiceFromReceipt,
   searchFAQs,
   searchProducts,
+  type BookingResult,
   type FaqMatch,
   type ProductMatch,
   type ReceiptInvoiceResult,
@@ -60,6 +62,14 @@ const SYSTEM_PROMPT_RULES = [
   "2. If the tool returns partial matches (e.g., \"iPhone 12\" for \"iPhone\"), offer them as alternatives.",
   "3. If the customer asks for an image, only send it if the tool returns an `imageUrl`. Use the tag `[IMAGE: url]`.",
   "4. If the tool returns ZERO results, say \"I don't have that right now, let me check with my boss/oga\" and IMMEDIATELY trigger `escalate_to_owner`.",
+  "",
+  "--- BOOKINGS (APPOINTMENTS) ---",
+  "BOOKINGS: If a customer wants to book an appointment, ask them for the Date, Time, and Service. Once you have all three, use the `create_booking` tool. After the tool succeeds, tell the customer: 'Your appointment is booked for [Date] at [Time]. My boss/oga will confirm it shortly.'",
+  "1. Never call `create_booking` until you have all three: what they want to book (service), the date and the time. If one is missing, ask for it and wait for the answer.",
+  "2. Pass the date as YYYY-MM-DD and the time as HH:MM in 24-hour Lagos time (for example 2026-11-05 and 14:00). Work out a day the customer describes relatively: 'tomorrow' is the day after today.",
+  "3. Never invent a date or time the customer did not give you, and never book a slot in the past. If the tool says the slot is in the past, ask for another day.",
+  "4. Only say an appointment is booked after `create_booking` returns `created: true`. If it returns an error, ask the customer for the detail it complains about and try once more — never pretend the booking worked.",
+  "5. You never confirm an appointment yourself: it stays pending until my boss/oga confirms it in the dashboard. Never say it is confirmed and never promise when the confirmation will come.",
   "",
   "--- PAYMENT & ESCALATION RULES (THE IF LOOP) ---",
   "You MUST trigger `escalate_to_owner` under ANY of these circumstances:",
@@ -147,6 +157,39 @@ const TOOLS: ChatTool[] = [
   {
     type: "function",
     function: {
+      name: "create_booking",
+      description:
+        "Book an appointment for the customer who is chatting. Only call it after the customer has given you all three of the service, the date and the time. The appointment starts as PENDING and only my boss/oga confirms it.",
+      parameters: {
+        type: "object",
+        properties: {
+          customerId: {
+            type: "string",
+            description:
+              "The customer's id. The system fills this in from the conversation — never invent one.",
+          },
+          serviceName: {
+            type: "string",
+            description:
+              "What the customer is coming for, in their own words (e.g. 'Haircut', 'Phone screen repair', 'Braiding')",
+          },
+          date: {
+            type: "string",
+            description: "The appointment day as YYYY-MM-DD, e.g. 2026-11-05",
+          },
+          time: {
+            type: "string",
+            description:
+              "The appointment time as 24-hour HH:MM in Lagos time, e.g. 14:00",
+          },
+        },
+        required: ["serviceName", "date", "time"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "escalate_to_owner",
       description:
         "Hand the conversation to the human owner. Call this when the customer asks something no other tool can answer: waybill or delivery logistics not covered by the FAQs, a custom or bulk quote, or a product detail the description does not include. The owner is alerted on their phone with the customer's exact question, so only call it for the customer's live question and only promise to check with the owner when you call it.",
@@ -216,6 +259,7 @@ type ToolResult =
   | { query: string; count: number; faqs: FaqMatch[] }
   | { escalated: true; reason: string }
   | ReceiptInvoiceResult
+  | BookingResult
   | { error: string };
 
 type StoredNegotiation = NegotiationState & {
@@ -441,6 +485,7 @@ export async function handleIncomingMessage({
             await runToolCall(
               businessId,
               conversation.id,
+              conversation.customerId,
               toolCall,
               receiptImageUrl,
             ),
@@ -732,6 +777,11 @@ async function escalateConversation(
 async function runToolCall(
   businessId: string,
   conversationId: string,
+  /**
+   * The customer on this conversation. Trusted: `create_booking` books for this
+   * customer, never for an id the model typed.
+   */
+  customerId: string,
   toolCall: ChatToolCall,
   receiptImageUrl: string | null,
 ): Promise<ToolResult> {
@@ -762,6 +812,20 @@ async function runToolCall(
       );
       await escalateConversation(businessId, conversationId, reason);
       return { escalated: true, reason };
+    }
+    case "create_booking": {
+      debugLog("[TOOL] Executing create_booking for business:", businessId);
+
+      // The conversation's customer wins over the model's `customerId`
+      // argument: a model cannot know a real id, and a guessed one must never
+      // book an appointment for another customer (or another tenant).
+      return createBooking({
+        businessId,
+        customerId,
+        serviceName: readArgument(toolCall.function.arguments, "serviceName"),
+        date: readArgument(toolCall.function.arguments, "date"),
+        time: readArgument(toolCall.function.arguments, "time"),
+      });
     }
     case "generate_invoice_from_receipt": {
       debugLog(

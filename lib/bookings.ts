@@ -1,6 +1,10 @@
 import type { Booking } from "@prisma/client";
 
-import { formatInLagosTimezone, LAGOS_TIMEZONE } from "@/lib/timezone";
+import {
+  formatInLagosTimezone,
+  LAGOS_TIMEZONE,
+  parseLagosDateTime,
+} from "@/lib/timezone";
 
 /**
  * Booking lifecycle. A new booking starts at `PENDING` (the schema default) and
@@ -36,6 +40,84 @@ export function bookingEndTime(
 ): Date {
   return new Date(start.getTime() + durationMinutes * MINUTE_MS);
 }
+
+/** Longest service name an appointment may carry. */
+export const MAX_BOOKING_SERVICE_LENGTH = 120;
+
+/** `YYYY-MM-DD`, tolerating a one-digit month or day. */
+const BOOKING_DATE_PATTERN = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+
+/**
+ * Canonicalises a date to `YYYY-MM-DD`.
+ *
+ * The AI tool passes the model's `date` argument through here, so "2026-11-5"
+ * and "2026-11-05" mean the same day. Only the shape is checked: whether that
+ * day exists (31 February) is decided by `parseBookingSlot()`, which reads the
+ * result as a Lagos wall clock.
+ */
+export function normalizeBookingDate(value: string): string | null {
+  const match = BOOKING_DATE_PATTERN.exec(value.trim());
+  if (!match) {
+    return null;
+  }
+
+  const [, year, month, day] = match;
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
+/**
+ * Canonicalises a time to 24-hour `HH:MM`.
+ *
+ * Accepts what a model or a person actually writes — "14:00", "14:00:00",
+ * "2pm", "2:30 pm", "9 AM" — because the model is asked for `HH:MM` but does
+ * not always produce it. Returns null for anything that is not a time of day.
+ */
+export function normalizeBookingTime(value: string): string | null {
+  const match =
+    /^(\d{1,2})(?::(\d{2}))?(?::\d{2})?\s*(am|pm)?$/i.exec(value.trim());
+  if (!match) {
+    return null;
+  }
+
+  const minutes = match[2] ? Number(match[2]) : 0;
+  if (minutes > 59) {
+    return null;
+  }
+
+  let hours = Number(match[1]);
+  const meridiem = match[3]?.toLowerCase();
+
+  if (meridiem) {
+    if (hours < 1 || hours > 12) {
+      return null;
+    }
+    hours = (hours % 12) + (meridiem === "pm" ? 12 : 0);
+  } else if (hours > 23) {
+    return null;
+  }
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+/**
+ * The instant a date + time pair names, in Lagos time.
+ *
+ * The pair is normalised first (so "2pm" and "14:00" agree and "2026-11-5" is
+ * padded), then handed to `parseLagosDateTime()` as a zone-less wall clock,
+ * which reads it as Lagos time on a UTC server too. Returns null when either
+ * half is unusable or the day does not exist in that month — a booking must
+ * never fall back to the runtime's own zone.
+ */
+export function parseBookingSlot(date: string, time: string): Date | null {
+  const normalizedDate = normalizeBookingDate(date);
+  const normalizedTime = normalizeBookingTime(time);
+  if (!normalizedDate || !normalizedTime) {
+    return null;
+  }
+
+  return parseLagosDateTime(`${normalizedDate}T${normalizedTime}`);
+}
+
 
 /**
  * A booking as the API returns it.
