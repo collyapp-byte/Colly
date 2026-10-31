@@ -44,6 +44,20 @@ export function bookingEndTime(
 /** Longest service name an appointment may carry. */
 export const MAX_BOOKING_SERVICE_LENGTH = 120;
 
+const MINUTES_PER_DAY = 24 * 60;
+
+/**
+ * Whole nights between two instants — the unit a hotel quotes a stay in.
+ *
+ * Pure arithmetic, like `bookingEndTime()`, so the answer does not depend on the
+ * runtime's timezone: 14:00 WAT on 5 November to 11:00 WAT on 8 November is
+ * three nights (stored instants 13:00Z → 10:00Z). `Math.round` keeps a check-out
+ * an hour earlier than the check-in time from counting as a lost night.
+ */
+export function bookingNights(start: Date, end: Date): number {
+  return Math.round((end.getTime() - start.getTime()) / (MINUTES_PER_DAY * MINUTE_MS));
+}
+
 /** `YYYY-MM-DD`, tolerating a one-digit month or day. */
 const BOOKING_DATE_PATTERN = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
 

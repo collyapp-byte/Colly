@@ -1,0 +1,13 @@
+-- Hotel Management vertical: the industry a business sells in.
+--
+-- "Business"."industry" is text, like "tone" and "channel", so adding a vertical
+-- later is a data change rather than a migration. It is read by two places:
+--   * lib/chat-engine.ts#buildSystemPrompt() — "HOTEL" appends the receptionist
+--     persona (check-in + check-out dates, nightly total, create_booking);
+--   * the signup flow (`/signup?industry=hotel`) and the Settings dropdown.
+--
+-- The NOT NULL DEFAULT backfills every existing tenant in place (Postgres 11+
+-- stores the default without rewriting the table), so no seeded or live
+-- business changes behaviour: they all stay "RETAIL" and keep the generic
+-- sales-assistant persona.
+ALTER TABLE "Business" ADD COLUMN "industry" TEXT NOT NULL DEFAULT 'RETAIL';

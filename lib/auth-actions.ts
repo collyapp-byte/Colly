@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { isMissingConfigError } from "@/lib/supabase/env";
 import { FREE_PLAN_LIMITS, isPlanTierName } from "@/lib/plans";
-import { isChannel } from "@/lib/business";
+import { DEFAULT_INDUSTRY, isChannel, isIndustry } from "@/lib/business";
 import {
   isValidEmail,
   isStrongPassword,
@@ -65,6 +65,11 @@ export async function signup(
   // anything missing or unrecognised falls back to the schema default.
   const channelField = readField(formData, "channel");
   const channel = isChannel(channelField) ? channelField : "TELEGRAM";
+  // The vertical from `/signup?industry=hotel`. Hidden field, so it is
+  // re-validated here; an unknown or missing value leaves the Business row on
+  // the schema default ("RETAIL").
+  const industryField = readField(formData, "industry");
+  const industry = isIndustry(industryField) ? industryField : null;
   // The tier picked on the pricing page (?plan=green). Kept only when it is a
   // real tier, so the billing page can pre-select it.
   const planField = readField(formData, "plan");
@@ -217,6 +222,16 @@ export async function signup(
           data: { selectedPlan },
         });
       }
+
+      // Same for the vertical: an owner who signed up from /hotels keeps the
+      // hotel persona even when their tenant row was pre-created (a seeded demo
+      // business or an agent-provisioned account).
+      if (industry) {
+        await prisma.business.update({
+          where: { id: existing.businessId },
+          data: { industry },
+        });
+      }
     } else {
       // A business and its owner must appear together, or neither.
       await prisma.$transaction(async (tx) => {
@@ -229,6 +244,9 @@ export async function signup(
             // Channel picked on the signup form; drives which connection flow
             // the AI Line settings page shows.
             channel,
+            // The vertical the owner arrived from (/hotels → "HOTEL"). It picks
+            // the AI persona; signup without a vertical stays on the default.
+            industry: industry ?? DEFAULT_INDUSTRY,
             // Every new account starts on the permanent Free tier: no card, no
             // expiry, 80 AI credits every month. A successful plan charge
             // overwrites both `plan` and `planCredits`.

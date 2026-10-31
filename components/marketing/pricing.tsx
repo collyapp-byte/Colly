@@ -12,6 +12,7 @@ import {
   creditReplyCalculator,
 } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
+import { industrySlug, type Industry } from "@/lib/business";
 
 /**
  * Every card carries its plan's accent colour in the credits figure and the
@@ -22,7 +23,7 @@ import { formatNaira } from "@/lib/format";
  *
  * `place` localizes the section heading for the programmatic place pages
  * (`/locations/[city]` and `/countries/[country]`). Prices do not change per
- * city or country — Colly sells one Naira price list everywhere — so the prop
+ * city or country â€” Colly sells one Naira price list everywhere â€” so the prop
  * only ever touches the copy around the cards.
  */
 type CardTone = "neutral" | "emerald" | "blue";
@@ -66,18 +67,31 @@ type PlanCard = {
   tone: CardTone;
 };
 
-export function Pricing({ place }: { place?: string } = {}) {
+export function Pricing({
+  place,
+  industry,
+}: {
+  place?: string;
+  /**
+   * Vertical landing pages (`/hotels`) pass their industry so the plan buttons
+   * keep it through signup â€” the signup form posts it as a hidden field and the
+   * new Business row starts in that vertical (hotel = receptionist persona).
+   */
+  industry?: Industry;
+} = {}) {
+  const industryParam = industry ? `&industry=${industrySlug(industry)}` : "";
+  const signupHref = `/signup?role=business${industryParam}`;
   const plans: PlanCard[] = [
     {
       name: "Free",
-      price: "₦0",
+      price: "â‚¦0",
       desc: "Free forever. No card required.",
       credits: FREE_PLAN_LIMITS.credits,
       bonusCredits: 0,
       free: true,
       features: ["Unlimited manual replies", "Dashboard inbox", "Product catalogue"],
       cta: "Start Free",
-      href: "/signup?role=business",
+      href: signupHref,
       highlight: false,
       tone: "neutral"
     },
@@ -89,7 +103,7 @@ export function Pricing({ place }: { place?: string } = {}) {
       bonusCredits: PLANS.green.bonusCredits,
       features: [PLANS.green.bonusDescription, "Telegram, Discord & Web Chat", `${REPLY_CREDIT_COSTS.standard} credits per Telegram reply`, `${REPLY_CREDIT_COSTS.whatsapp} credits per WhatsApp reply (waitlist)`, "All AI features", "Owner alerts"],
       cta: "Get Green",
-      href: "/signup?role=business&plan=green",
+      href: `${signupHref}&plan=green`,
       highlight: false,
       tone: "emerald"
     },
@@ -101,7 +115,7 @@ export function Pricing({ place }: { place?: string } = {}) {
       bonusCredits: PLANS.blue.bonusCredits,
       features: [PLANS.blue.bonusDescription, "Telegram, Discord & Web Chat", `${REPLY_CREDIT_COSTS.standard} credits per Telegram reply`, `${REPLY_CREDIT_COSTS.whatsapp} credits per WhatsApp reply (waitlist)`, "All AI features", "Priority support"],
       cta: "Get Blue",
-      href: "/signup?role=business&plan=blue",
+      href: `${signupHref}&plan=blue`,
       highlight: true,
       tone: "blue"
     },
@@ -113,7 +127,7 @@ export function Pricing({ place }: { place?: string } = {}) {
       bonusCredits: PLANS.black.bonusCredits,
       features: [PLANS.black.bonusDescription, "Telegram, Discord & Web Chat", `${REPLY_CREDIT_COSTS.standard} credits per Telegram reply`, `${REPLY_CREDIT_COSTS.whatsapp} credits per WhatsApp reply (waitlist)`, "Unlimited manual replies", "Dedicated onboarding"],
       cta: "Get Black",
-      href: "/signup?role=business&plan=black",
+      href: `${signupHref}&plan=black`,
       highlight: false,
       tone: "neutral"
     }

@@ -155,6 +155,10 @@ export const PUBLIC_PAGES: readonly PublicPage[] = [
   { path: "/", changeFrequency: "weekly", priority: 1 },
   { path: "/pricing", changeFrequency: "monthly", priority: 0.9 },
   { path: "/academy", changeFrequency: "monthly", priority: 0.8 },
+  // Industry landing pages (`/hotels` is the first): one page per vertical, and
+  // the only front door that carries `?industry=…` into signup. Same priority as
+  // `/academy` keeps the list non-increasing, which `tests/seo.test.ts` asserts.
+  { path: "/hotels", changeFrequency: "monthly", priority: 0.8 },
   // Programmatic GEO pages: city, country and competitor landing pages. Every
   // list is derived from its data module, so a new city, country or competitor
   // is one object away from being in the sitemap, the public-route allowlist

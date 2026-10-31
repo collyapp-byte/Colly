@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { ReactNode } from "react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { PLANS } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
@@ -32,6 +33,16 @@ const HERO_ANSWER =
 export function Hero({
   place,
   across = false,
+  badge = "Colly AI 2.0 is live",
+  heading,
+  subhead,
+  ctaHref = "/signup?role=business",
+  ctaLabel = "Start Free",
+  secondaryHref,
+  secondaryLabel,
+  imageSrc = "/man chatting daytime v.jpg",
+  imageAlt = "Business owner chatting with a customer through Colly AI",
+  footnote = "No SIM card required to start · Cancel anytime",
 }: {
   /** Place name for a localized page: a city (`Lagos`) or a country (`Nigeria`). */
   place?: string;
@@ -41,6 +52,28 @@ export function Hero({
    * "across", which is how the country pages phrase it.
    */
   across?: boolean;
+  /** Small pill above the H1. */
+  badge?: string;
+  /**
+   * Replaces the whole H1. Used by the industry landing pages (`/hotels`),
+   * whose answer is "AI receptionist", not "AI sales assistant" — a vertical
+   * with its own vocabulary gets its own words, not a keyword-swapped copy of
+   * the homepage.
+   */
+  heading?: ReactNode;
+  /** Replaces the answer paragraph under the H1. */
+  subhead?: string;
+  /** Primary call to action. Industry pages carry `&industry=…` so signup keeps it. */
+  ctaHref?: string;
+  ctaLabel?: string;
+  /** Secondary (ghost) button; defaults to the in-page anchor of the variant. */
+  secondaryHref?: string;
+  secondaryLabel?: string;
+  /** Hero photo. */
+  imageSrc?: string;
+  imageAlt?: string;
+  /** Fine print under the buttons. */
+  footnote?: string;
 } = {}) {
   return (
     <section className="relative overflow-hidden bg-[#f5f5f5] pt-8 pb-16 sm:pt-32 sm:pb-24">
@@ -55,53 +88,54 @@ export function Hero({
             HTML as visible text so the LCP element does not wait for hydration. */}
         <ScrollReveal immediate>
           <span className="inline-flex items-center rounded-full border border-[#FF6600]/30 bg-white px-4 py-1.5 text-[13px] font-semibold text-[#FF6600]">
-            Colly AI 2.0 is live
+            {badge}
           </span>
 
           <h1 className="mt-6 text-5xl font-bold tracking-tight text-gray-900 lg:text-7xl">
-            {place ? (
-              <>
-                AI Sales Assistant for Businesses in{" "}
-                <span className="text-[#FF6600]">{place}</span>
-              </>
-            ) : (
-              <>
-                AI Sales Assistant for{" "}
-                <span className="text-[#FF6600]">Nigerian Businesses</span>
-              </>
-            )}
+            {heading ??
+              (place ? (
+                <>
+                  AI Sales Assistant for Businesses in{" "}
+                  <span className="text-[#FF6600]">{place}</span>
+                </>
+              ) : (
+                <>
+                  AI Sales Assistant for{" "}
+                  <span className="text-[#FF6600]">Nigerian Businesses</span>
+                </>
+              ))}
           </h1>
 
           {/* Bottom line first: what it is, where it replies, what it costs. */}
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
-            {place
-              ? `Colly AI helps ${
-                  across ? `businesses across ${place}` : `${place} businesses`
-                } reply to customers 24/7 on Telegram and Web Chat without missing a sale.`
-              : HERO_ANSWER}
+            {subhead ??
+              (place
+                ? `Colly AI helps ${
+                    across ? `businesses across ${place}` : `${place} businesses`
+                  } reply to customers 24/7 on Telegram and Web Chat without missing a sale.`
+                : HERO_ANSWER)}
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/signup?role=business"
+              href={ctaHref}
               className="inline-flex items-center justify-center rounded-xl bg-[#FF6600] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5 hover:bg-[#E65C00]"
             >
-              Start Free
+              {ctaLabel}
             </Link>
             <Link
               /* The homepage has a "how it works" section further down; the
-                 GEO landing pages do not, so they point at the pricing block
-                 they do render instead of scrolling to a missing anchor. */
-              href={place ? "#pricing" : "#how-it-works"}
+                 GEO and industry landing pages do not, so they point at the
+                 pricing block they do render instead of scrolling to a missing
+                 anchor. */
+              href={secondaryHref ?? (place ? "#pricing" : "#how-it-works")}
               className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-7 py-3.5 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50"
             >
-              {place ? "See pricing" : "See how it works"}
+              {secondaryLabel ?? (place ? "See pricing" : "See how it works")}
             </Link>
           </div>
 
-          <p className="mt-4 text-[13px] text-gray-500">
-            No SIM card required to start · Cancel anytime
-          </p>
+          <p className="mt-4 text-[13px] text-gray-500">{footnote}</p>
         </ScrollReveal>
 
         {/* Right column: customer conversation image. Also `immediate`: this is
@@ -115,8 +149,8 @@ export function Hero({
               — nothing below the hero can move while the photo decodes. */}
           <div className="aspect-[4/5] w-full overflow-hidden rounded-3xl border border-gray-100 shadow-2xl lg:aspect-auto lg:h-[500px]">
             <Image
-              src="/man chatting daytime v.jpg"
-              alt="Business owner chatting with a customer through Colly AI"
+              src={imageSrc}
+              alt={imageAlt}
               width={900}
               height={700}
               /* LCP element. `preload` inserts <link rel="preload"> in <head> so the

@@ -4,6 +4,7 @@
 ## Core Pages
 - [Pricing](https://colly.com.ng/pricing): Plans start at ₦15,000/month. Naira credit economy.
 - [Agent Academy](https://colly.com.ng/academy): 15% recurring commission for local agents.
+- [For hotels](https://colly.com.ng/hotels): AI receptionist mode for hotels and guest houses — room rates, check-in and check-out bookings, deposits.
 - [Product Features](https://colly.com.ng/features): Pidgin language, voice notes, Jiji sync.
 - [All locations](https://colly.com.ng/locations): Every city and country page in one index.
 - [Comparisons](https://colly.com.ng/vs): Colly AI vs DMLY, Revoply AI, WATI, Zella AI, Loop56, Buvvo AI, Accessplanet and WABot.

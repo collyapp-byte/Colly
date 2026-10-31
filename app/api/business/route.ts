@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { isTone, serializeBusiness, TONES } from "@/lib/business";
+import {
+  INDUSTRIES,
+  isIndustry,
+  isTone,
+  serializeBusiness,
+  TONES,
+} from "@/lib/business";
 import { STAFF_DENIED_MESSAGE, STAFF_DENIED_VALUE } from "@/lib/team";
 
 type BusinessRequestBody = {
@@ -8,6 +14,7 @@ type BusinessRequestBody = {
   phone?: unknown;
   whatsappNumber?: unknown;
   tone?: unknown;
+  industry?: unknown;
   businessHours?: unknown;
   address?: unknown;
   description?: unknown;
@@ -113,6 +120,7 @@ export async function PATCH(request: Request) {
       phone?: string;
       whatsappNumber?: string;
       tone?: string;
+      industry?: string;
       businessHours?: string | null;
       address?: string | null;
       description?: string | null;
@@ -146,6 +154,17 @@ export async function PATCH(request: Request) {
         return badRequest(`Tone must be one of: ${TONES.join(", ")}`);
       }
       data.tone = body.tone;
+    }
+
+    // The vertical. It selects the AI persona (lib/chat-engine.ts appends the
+    // hotel block for "HOTEL"), so an unknown value is rejected rather than
+    // stored — `serializeBusiness` would read it back as RETAIL and the owner
+    // would think the change had saved.
+    if (body.industry !== undefined) {
+      if (!isIndustry(body.industry)) {
+        return badRequest(`Industry must be one of: ${INDUSTRIES.join(", ")}`);
+      }
+      data.industry = body.industry;
     }
 
     // Optional free-text fields: an empty string clears them (stored as null).

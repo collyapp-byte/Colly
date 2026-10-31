@@ -44,6 +44,27 @@ const TONE_INSTRUCTIONS: Record<Tone, string> = {
   friendly: "Use a warm, casual tone with light emoji.",
 };
 
+/**
+ * The hotel-receptionist persona.
+ *
+ * Appended by `buildSystemPrompt()` when `Business.industry === "HOTEL"`
+ * (Settings → Industry, or `/signup?industry=hotel` from the `/hotels` landing
+ * page). A hotel does not sell stock, it sells nights: the generic booking
+ * rules ask for one date and one time, which would record a three-night stay as
+ * a one-hour slot, so the persona requires BOTH dates before booking and tells
+ * the model where each half goes in the `create_booking` arguments (the tool
+ * turns `checkOutDate` into the stay's end and derives the night count).
+ *
+ * The rate is never invented: rooms are the hotel's catalogue, so a nightly
+ * price still comes from `search_products` like any other product price.
+ */
+const HOTEL_PERSONA =
+  "HOTEL MODE: You are a hotel receptionist. If a guest wants to book a room, you must ask for their Check-in Date and Check-out Date. " +
+  "Calculate the total cost based on the number of nights. Once they agree, use the `create_booking` tool. Do not book unless you have both dates. " +
+  "HOTEL BOOKING FIELDS: pass the room as `serviceName`, the check-in day as `date` in YYYY-MM-DD, the check-in time as `time` in HH:MM Lagos time (use 14:00 and say so when the guest does not name one) and the check-out day as `checkOutDate` in YYYY-MM-DD. " +
+  "A nightly rate must come from `search_products`: never quote a rate the catalogue does not have, and never promise a room is held or paid for — my boss/oga confirms the booking and the deposit.";
+
+
 const SYSTEM_PROMPT_RULES = [
   "You are Colly, the AI sales assistant for {Business Name}.",
   "Your job is to answer questions, recommend products, and close sales.",
@@ -159,7 +180,7 @@ const TOOLS: ChatTool[] = [
     function: {
       name: "create_booking",
       description:
-        "Book an appointment for the customer who is chatting. Only call it after the customer has given you all three of the service, the date and the time. The appointment starts as PENDING and only my boss/oga confirms it.",
+        "Book an appointment for the customer who is chatting. Only call it after the customer has given you all three of the service, the date and the time. In hotel mode pass the check-out day as `checkOutDate` so the whole stay is recorded as one booking. The appointment starts as PENDING and only my boss/oga confirms it.",
       parameters: {
         type: "object",
         properties: {
@@ -171,16 +192,22 @@ const TOOLS: ChatTool[] = [
           serviceName: {
             type: "string",
             description:
-              "What the customer is coming for, in their own words (e.g. 'Haircut', 'Phone screen repair', 'Braiding')",
+              "What the customer is coming for, in their own words (e.g. 'Haircut', 'Phone screen repair', 'Braiding', 'Deluxe room')",
           },
           date: {
             type: "string",
-            description: "The appointment day as YYYY-MM-DD, e.g. 2026-11-05",
+            description:
+              "The appointment day as YYYY-MM-DD, e.g. 2026-11-05. In hotel mode this is the CHECK-IN day.",
           },
           time: {
             type: "string",
             description:
-              "The appointment time as 24-hour HH:MM in Lagos time, e.g. 14:00",
+              "The appointment time as 24-hour HH:MM in Lagos time, e.g. 14:00. In hotel mode this is the check-in time.",
+          },
+          checkOutDate: {
+            type: "string",
+            description:
+              "Hotel stays only: the CHECK-OUT day as YYYY-MM-DD, e.g. 2026-11-08. The system records the nights between the two days and ends the booking at the check-out date. Omit it for a normal appointment.",
           },
         },
         required: ["serviceName", "date", "time"],
@@ -397,6 +424,7 @@ export async function handleIncomingMessage({
     select: {
       name: true,
       tone: true,
+      industry: true,
       description: true,
       businessHours: true,
       paymentInstructions: true,
@@ -690,6 +718,13 @@ function buildSystemPrompt(
     description: string | null;
     businessHours: string | null;
     paymentInstructions: string | null;
+    /**
+     * The vertical. `"HOTEL"` swaps the sales-assistant stance for the hotel
+     * receptionist persona (check-in + check-out before booking). Anything else
+     * — including a stored value outside `INDUSTRIES` — keeps the generic
+     * prompt, so an unknown string can never switch on a persona.
+     */
+    industry: string;
   },
   tone: Tone,
   negotiation: StoredNegotiation | null,
@@ -743,6 +778,11 @@ function buildSystemPrompt(
       ". The next offer you must make is " +
       next +
       " Naira. If the customer rejects this offer, politely decline further negotiation.";
+  }
+  // Vertical persona. Added before the tone instruction so the tone still comes
+  // last — it is what biases the voice, and the repo appends it at the end.
+  if (business.industry === "HOTEL") {
+    systemPrompt += "\n\n" + HOTEL_PERSONA;
   }
   systemPrompt += " " + TONE_INSTRUCTIONS[tone];
   return systemPrompt;
@@ -819,12 +859,16 @@ async function runToolCall(
       // The conversation's customer wins over the model's `customerId`
       // argument: a model cannot know a real id, and a guessed one must never
       // book an appointment for another customer (or another tenant).
+      // `checkOutDate` is only read in hotel mode — the persona tells the model
+      // to send it there, and an appointment simply has no check-out.
       return createBooking({
         businessId,
         customerId,
         serviceName: readArgument(toolCall.function.arguments, "serviceName"),
         date: readArgument(toolCall.function.arguments, "date"),
         time: readArgument(toolCall.function.arguments, "time"),
+        checkOutDate:
+          readArgument(toolCall.function.arguments, "checkOutDate") || undefined,
       });
     }
     case "generate_invoice_from_receipt": {

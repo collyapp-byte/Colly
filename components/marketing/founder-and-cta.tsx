@@ -1,7 +1,16 @@
 import Link from "next/link";
 import Image from "next/image";
 
-export function FounderAndCTA() {
+export function FounderAndCTA({
+  signupHref = "/signup?role=business",
+}: {
+  /**
+   * Where "Start Free" goes. Vertical landing pages (`/hotels`) pass their own
+   * signup URL so the industry is carried into the form and the new Business row
+   * starts in that vertical.
+   */
+  signupHref?: string;
+} = {}) {
   return (
     <>
       <section className="bg-[#f5f5f5] py-20 sm:py-28">
@@ -36,7 +45,7 @@ export function FounderAndCTA() {
           <h2 className="font-display text-3xl font-bold text-white sm:text-4xl">Ready to stop losing sales?</h2>
           <p className="mt-4 mb-8 text-gray-200">Set up your AI receptionist in 5 minutes. 80 AI credits free every month. No card required.</p>
           <Link
-            href="/signup?role=business"
+            href={signupHref}
             className="inline-block rounded-lg bg-[#FF6600] px-8 py-4 text-base font-semibold text-white transition-all hover:scale-105 hover:bg-[#E65C00] active:scale-95 shadow-lg shadow-orange-500/20"
           >
             Start Free

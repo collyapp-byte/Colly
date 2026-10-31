@@ -42,6 +42,14 @@ model Business {
   /// Payment details (bank/transfer instructions) the AI can share to close sales.
   paymentInstructions String? @db.Text
 
+  /// The vertical this business sells in. It selects the AI persona —
+  /// `buildSystemPrompt()` in lib/chat-engine.ts appends the HOTEL block only
+  /// for "HOTEL" — and is what `/signup?industry=hotel` and the Settings
+  /// dropdown write. One of "RETAIL" | "HOTEL" | "SERVICES" (validated by
+  /// `isIndustry()` in lib/business.ts); stored as text, like `tone`, so adding
+  /// an industry is not a migration. Every pre-existing row is "RETAIL".
+  industry String @default("RETAIL")
+
   /// Two-Number Model: the business keeps its own WhatsApp on the owner's
   /// phone; Colly assigns a separate dedicated AI line. `aiLineConnected` is
   /// false until that line is provisioned and live (no Meta/telephony

@@ -24,6 +24,62 @@ export function isChannel(value: unknown): value is Channel {
   );
 }
 
+/**
+ * The verticals a business can sell in.
+ *
+ * `Business.industry` is stored as one of these strings. It is not cosmetic: the
+ * AI persona depends on it — `buildSystemPrompt()` in lib/chat-engine.ts
+ * appends the hotel-receptionist block for "HOTEL" — so a stored value this
+ * list does not know is read as "RETAIL" (the schema default) rather than
+ * silently switching on a persona nobody validated.
+ */
+export const INDUSTRIES = ["RETAIL", "HOTEL", "SERVICES"] as const;
+
+export type Industry = (typeof INDUSTRIES)[number];
+
+/** The industry every business starts on (schema default). */
+export const DEFAULT_INDUSTRY: Industry = "RETAIL";
+
+/** Narrows an unknown value (e.g. a PATCH body field) to a valid Industry. */
+export function isIndustry(value: unknown): value is Industry {
+  return (
+    typeof value === "string" && (INDUSTRIES as readonly string[]).includes(value)
+  );
+}
+
+/** Display names for the Settings dropdown and the marketing copy. */
+export const INDUSTRY_LABELS: Record<Industry, string> = {
+  RETAIL: "Retail",
+  HOTEL: "Hotel",
+  SERVICES: "Services",
+};
+
+/**
+ * Reads an industry out of a URL slug (`/signup?industry=hotel`).
+ *
+ * The signup links spell the industry in lower case, so "hotel" and "HOTEL"
+ * both mean the same vertical; an unknown or missing slug returns null and the
+ * Business row keeps its schema default. "service" is accepted as a sibling of
+ * "services" because it is the spelling a person types.
+ */
+export function industryFromSlug(value: unknown): Industry | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim().toUpperCase();
+  if (normalized === "SERVICE") {
+    return "SERVICES";
+  }
+
+  return isIndustry(normalized) ? normalized : null;
+}
+
+/** The industry slug a signup link carries: `/signup?role=business&industry=hotel`. */
+export function industrySlug(industry: Industry): string {
+  return industry.toLowerCase();
+}
+
   /** Channel connection states, matching `Business.connectionStatus`. */
 export const CONNECTION_STATUSES = [
   "DISCONNECTED",
@@ -47,6 +103,8 @@ export type Business = {
   phone: string;
   whatsappNumber: string;
   tone: Tone;
+  /** The vertical this business sells in — selects the AI persona. */
+  industry: Industry;
   businessHours: string | null;
   address: string | null;
   description: string | null;
@@ -94,6 +152,7 @@ export type BusinessRecord = {
   phone: string;
   whatsappNumber: string;
   tone: string;
+  industry: string;
   businessHours: string | null;
   address: string | null;
   description: string | null;
@@ -130,6 +189,11 @@ export function serializeBusiness(business: BusinessRecord): Business {
     phone: business.phone,
     whatsappNumber: business.whatsappNumber,
     tone: isTone(business.tone) ? business.tone : "friendly",
+    // An unknown stored industry falls back to the schema default rather than
+    // enabling a persona the list does not know about.
+    industry: isIndustry(business.industry)
+      ? business.industry
+      : DEFAULT_INDUSTRY,
     businessHours: business.businessHours,
     address: business.address,
     description: business.description,

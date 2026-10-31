@@ -6,6 +6,7 @@ import { useActionState, useEffect, useRef, useState, type FormEvent } from "rea
 import { Check, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { signup } from "@/lib/auth-actions";
+import type { Industry } from "@/lib/business";
 import { trackEvent } from "@/lib/analytics";
 import { INITIAL_AUTH_STATE, emailVerificationMessage } from "@/lib/auth-form";
 import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
@@ -26,9 +27,12 @@ import { Button } from "@/components/ui/button";
 export function BusinessSignupForm({
   referredBy,
   selectedPlan,
+  industry,
 }: {
   referredBy?: string;
   selectedPlan?: string;
+  /** Vertical from `/signup?industry=hotel`, already normalised by the page. */
+  industry?: Industry | null;
 }) {
   const [state, formAction, pending] = useActionState(
     signup,
@@ -226,6 +230,14 @@ export function BusinessSignupForm({
             submitted with the form and stored on the Business row. */}
         {selectedPlan ? (
           <input type="hidden" name="plan" value={selectedPlan} />
+        ) : null}
+
+        {/* The vertical the customer arrived from (/hotels sends
+            ?industry=hotel). Stored on the Business row and used to pick the AI
+            persona — a hotel's assistant is a receptionist that asks for
+            check-in and check-out dates. The signup action re-validates it. */}
+        {industry ? (
+          <input type="hidden" name="industry" value={industry} />
         ) : null}
 
         {/* Channel choice: kept for compatibility with the signup action. */}

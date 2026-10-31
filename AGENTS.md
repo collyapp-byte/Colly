@@ -34,6 +34,7 @@ academy content, or a pricing/credit rule.
 - Seed: `prisma/seed.cjs` (dotenv-loaded). Wipes all data (cascade-safe order). Creates business `test-biz-1` ("ABC Electronics"), demo owner `demo@colly.test` (password empty, `supabaseUserId` null), products, 3 conversations with messages (including one agent-sent message). Re-running is safe. Note: seed cannot create Supabase Auth user; signup with demo email links the unclaimed User row to auth. Academy content is read from `prisma/academy-content.cjs`: lessons are upserted by slug (agent progress survives), quiz questions and the final exam are replaced on each run.
 - Use Prisma Accelerate mentioned in schema only if needed; not required locally.
 - `Conversation.lastMessageAt` (newest message stamp) is denormalised and maintained by the `message_touch_conversation_activity` trigger from `prisma/migrations/20261026000000_qa_indexes`; app code never writes it, and the trigger leaves `updatedAt` alone (the Telegram takeover clock reads it). That migration also creates `pg_trgm` + `product_name_trgm_idx` (lib/tools.ts fuzzy search) and the composite Message/Conversation indexes the inbox, history and usage queries need.
+- `Business.industry` (text, `@default("RETAIL")`, one of `RETAIL | HOTEL | SERVICES`) is the tenant's vertical. It is not cosmetic: `buildSystemPrompt()` appends the hotel-receptionist persona for `HOTEL` (see "Industry verticals" below). Migration `20261105000000_add_business_industry` is a single `ALTER TABLE … ADD COLUMN … NOT NULL DEFAULT 'RETAIL'`, so every pre-existing row is backfilled in place. It was applied by hand (`prisma db execute --file …` → `prisma migrate resolve --applied` → `prisma generate`), the same way `add_bookings` and `add_team_members` were, because `prisma migrate diff` also reports the raw-SQL trigram index and `Business` timestamp drift.
 
 ## Auth (Supabase)
 
@@ -45,7 +46,7 @@ academy content, or a pricing/credit rule.
 ## Chat / AI (DeepSeek → Groq → OpenRouter)
 
 - Provider chain: `lib/ai.ts` (`askAI()`). There is no per-provider module any more; all three providers speak the OpenAI-compatible API through the `openai` SDK. `PROVIDERS` is ordered — `deepseek` (`deepseek-chat`, `DEEPSEEK_API_KEY` + optional `DEEPSEEK_BASE_URL`, default `https://api.deepseek.com`), `groq` (`openai/gpt-oss-120b`, `GROQ_API_KEY` + `GROQ_BASE_URL`), `openrouter` (`nvidia/nemotron-3-ultra-550b-a55b:free`, `OPENROUTER_API_KEY` + `OPENROUTER_BASE_URL`). `askAI()` walks the list in order, reports each provider's down/up state through `lib/alerts.ts`, and returns `provider: "fallback"` with a static reply when all three fail — callers must then refund the credits they reserved (see the dashboard assistant below). Overloads: no tools returns `string`, with tools returns the full `ChatCompletion`.
-- Chat engine: `lib/chat-engine.ts` - `handleIncomingMessage({ businessId, customerPhone, message, skipCustomerMessage? })` returns an `EngineResult`. This is where all reply generation lives: resolves/creates the customer by phone, reuses latest conversation or creates new (status OPEN), saves the customer message (unless `skipCustomerMessage`), respects `conversation.pausedUntil` (human takeover), loads last HISTORY_LIMIT=20 messages (desc->reverse), builds the system prompt via `buildSystemPrompt()` (identity, optional business.description/hours, SYSTEM_PROMPT_RULES, tone last), loops tool calls up to MAX_TOOL_ROUNDS=2, computes AI usage, and saves the AI reply as sender "ai". Tool: `search_products` (defined in TOOLS) - returns up to 5 matches (name, price in Naira, stock, description); `runToolCall()` calls `searchProducts(businessId, query)` from `lib/tools.ts`; `readQuery()` defensively parses JSON args. Other tools: `search_faqs`, `find_similar_products`, `escalate_to_owner`, `generate_invoice_from_receipt` and `create_booking` — the last one books an appointment through `createBooking()` in `lib/tools.ts`, always for the **conversation's** customer (`runToolCall()` receives `conversation.customerId`; the model's own `customerId` argument is ignored, because a model cannot know a real id and a guessed one must never book for another customer). Sender values stored: "customer", "ai", "agent".
+- Chat engine: `lib/chat-engine.ts` - `handleIncomingMessage({ businessId, customerPhone, message, skipCustomerMessage? })` returns an `EngineResult`. This is where all reply generation lives: resolves/creates the customer by phone, reuses latest conversation or creates new (status OPEN), saves the customer message (unless `skipCustomerMessage`), respects `conversation.pausedUntil` (human takeover), loads last HISTORY_LIMIT=20 messages (desc->reverse), builds the system prompt via `buildSystemPrompt()` (identity, optional business.description/hours, SYSTEM_PROMPT_RULES, tone last), loops tool calls up to MAX_TOOL_ROUNDS=2, computes AI usage, and saves the AI reply as sender "ai". Tool: `search_products` (defined in TOOLS) - returns up to 5 matches (name, price in Naira, stock, description); `runToolCall()` calls `searchProducts(businessId, query)` from `lib/tools.ts`; `readQuery()` defensively parses JSON args. Other tools: `search_faqs`, `find_similar_products`, `escalate_to_owner`, `generate_invoice_from_receipt` and `create_booking` — the last one books an appointment through `createBooking()` in `lib/tools.ts`, always for the **conversation's** customer (`runToolCall()` receives `conversation.customerId`; the model's own `customerId` argument is ignored, because a model cannot know a real id and a guessed one must never book for another customer). `create_booking` also takes an optional `checkOutDate`, which is the hotel mode's second date (see "Industry verticals"). Sender values stored: "customer", "ai", "agent".
 - Chat route: `app/api/chat/route.ts` - now a thin adapter over `lib/chat-engine.ts`. Accepts `{ businessId?, customerId, message }`; authorizes via session or `X-Colly-Internal-Secret`, validates the customer belongs to the business, converts voice/image to text, then delegates to the engine. `audioUrl`/`imageUrl` are fetched server-side by the pipelines, so they are SSRF-checked first by `isTrustedStorageUrl()`: https only, no credentials/odd port, host must equal `NEXT_PUBLIC_SUPABASE_URL`'s host and the path must start `/storage/v1/object/public/` — anything else is a 400. Maps engine `blocked` -> `{ reply: null, paused: true }` and `no_message` -> 400.
 - Dashboard assistant: `isDashboardAssistant: true` on `POST /api/chat` is an owner-only path (no customer, no conversation) and is metered like any other AI reply — `chargeAiReply(user.businessId, business.channel)` reserves credits before `askAI()`, the route returns 402 with `LOW_CREDIT_MESSAGE` (`{ blocked: true, reason: "no_credits" }`) when the wallet cannot cover it, and refunds through `refundAiReply()` on a thrown error or `provider === "fallback"` (503, reason `ai_unavailable`).
 - Telegram channel: `app/api/telegram/webhook/route.ts` - parses a Telegram update, ignores anything without text, a voice note or a photo (stickers, joins, edits — always 200), finds the `Business` by `telegramChatId` + `channel: "TELEGRAM"`, upserts a `Customer` via the `businessId_phone` unique (phone=`chat.id`, name=`first_name`), calls the engine, and POSTs the reply to the Telegram Bot API. Silent on cap_hit/paused/failure. Voice notes are transcribed inline (`lib/stt.ts`). **Photos** (payment receipts) arrive as an array of sizes — the last entry is the largest — and are never handed to the vision pipeline as a Telegram URL: the webhook downloads the file with `getFile` → `https://api.telegram.org/file/bot<token>/<file_path>`, re-uploads it with the service role (`uploadFileToSupabase()` in `lib/supabase/storage-admin.ts`, public `receipts` bucket, key `{businessId}/{chatId}/{stamp}.{ext}` by `lib/supabase/storage-path.ts`) and only then calls `processImageMessage()`, passing the resulting public URL to the engine as `imageUrl`. That upload needs `SUPABASE_SERVICE_ROLE_KEY`: without it the customer gets "I can't open pictures right now" and a `console.error`, never a crash. A caption rides along as `caption` and is appended to the stored text. A paused (escalated / human-takeover) conversation skips vision entirely but still stores the picture row (`messageType: "image"`), so the owner sees the receipt in the dashboard.
@@ -77,11 +78,63 @@ academy content, or a pricing/credit rule.
 - Two rules the module exists to enforce. Never format a stored instant with the runtime's own zone (`toLocaleString()` without `timeZone`): production runs in UTC, so a 10:00 WAT slot would render as 09:00. Never pass a zone-less string to `new Date()`: it means the *runtime's* local time, so the same request body would book a different moment on a UTC server than on a Lagos laptop.
 - `lib/bookings.ts` mirrors `lib/invoices.ts`: `BOOKING_STATUSES`/`isBookingStatus()`, `DEFAULT_BOOKING_DURATION_MINUTES = 60`, `bookingEndTime(start, minutes = 60)` (pure instant arithmetic) and `serializeBooking()` (ISO-8601 UTC strings plus `startTimeLagos`/`endTimeLagos` and `timezone`, so no client re-implements the conversion). It also holds the slot parser the AI tool and any future scheduler share: `normalizeBookingDate()` (`2026-11-5` → `2026-11-05`), `normalizeBookingTime()` (`2pm`, `2:30 pm`, `14:00:00` → 24-hour `HH:MM`; `12am` → `00:00`) and `parseBookingSlot(date, time)` — normalise both halves, then `parseLagosDateTime()` as a Lagos wall clock, `null` for an impossible day such as `2026-02-31`.
 - `create_booking` (declared in TOOLS, implemented by `createBooking()` in `lib/tools.ts`) is the AI's booking path: the model supplies `serviceName`/`date`/`time`, the tool always books for the **conversation's** customer, caps the service at 120 chars, parses the slot through `parseBookingSlot()`, refuses a past slot, sets `endTime` = start + 1 hour, leaves `status` to the schema default (`PENDING`) and does not insert the same customer + service + instant twice (`duplicate: true`). Its `BookingResult` mirrors `ReceiptInvoiceResult` — a business-rule failure is `{ created: false, error }` for the model, never a throw — and `message` is the exact line the AI repeats ("Booking created for Chidi on 2026-11-05 at 14:00").
+- **Hotel stays.** `createBooking()` takes an optional `checkOutDate` (`YYYY-MM-DD`, the hotel mode's second date). When it is present the record is a stay rather than a one-hour slot: `endTime` becomes the check-out instant (same time-of-day, read as a Lagos wall clock), `bookingNights(start, end)` in `lib/bookings.ts` supplies the whole-night count, `notes` is written as `Check-out 2026-11-08, 3 nights`, and the result echoes `checkOutDate` / `nights` / `endTimeLagos` with the message "Booking created for Ada from 2026-11-05 to 2026-11-08 (3 nights)". A check-out that is not after check-in (including the same day) or an impossible day is `{ created: false, error }`. Without `checkOutDate` nothing changes: one hour, `notes` null.
 - Dashboard schedule: `app/(dashboard)/bookings/page.tsx` is a Server Component (`await connection()`, `requireAuth()` — staff included, working the diary is not owner-only) that reads the tenant's rows with `orderBy: [{ startTime: "asc" }, { id: "asc" }]` and `take: 100` (and says so when it truncates), rendering every instant through `formatInLagosTimezone()` server-side. `components/dashboard/bookings-list.tsx` is the client list (status badge, Confirm/Cancel on PENDING) and calls `updateBookingStatus()` in `app/(dashboard)/bookings/actions.ts`: a Server Action that re-reads the tenant with `getCurrentBusinessId()`, allows `PENDING → CONFIRMED | CANCELLED` and `CONFIRMED → CANCELLED` (never back to PENDING), validates the value with `isBookingStatus()` because a Server Action is a network endpoint, calls `revalidatePath("/bookings")` and returns `{ ok } | { ok: false, error }` (the client then `router.refresh()`es). The sidebar's `MANAGE` section links it with the `Calendar` icon.
 - `POST /api/bookings` 401s without a session, validates `serviceName` (≤ 120 chars) / `notes` (≤ 1000) / `startTime`, `404`s a `customerId` that is not this business's, sets `endTime` to start + 1 hour, leaves `status` to the schema default, and returns `201 { booking }`. No credits or payments are involved.
 - Migration `20261104000000_add_bookings` is hand-written (like `add_team_members`) rather than generated with `prisma migrate diff --from-schema-datasource`, which also reports the raw-SQL `product_name_trgm_idx` / `Business` timestamp drift left by the `qa_indexes` migration.
 
-## GEO / AEO (public marketing surfaces)
+## Industry verticals (Hotel Management)
+
+The vertical a business sells in is a stored flag, not a separate product: `Business.industry`
+(`RETAIL | HOTEL | SERVICES`, default `RETAIL`) plus one persona and one landing page per vertical.
+`lib/business.ts` owns the vocabulary — `INDUSTRIES`, `Industry`, `isIndustry()`, `DEFAULT_INDUSTRY`,
+`INDUSTRY_LABELS`, `industryFromSlug()` (URL form: `hotel`, `HOTEL`, ` Hotel `, and `service` as a
+sibling of `services`; unknown/missing → `null`) and `industrySlug()`. `serializeBusiness()` reads an
+unknown stored value as `RETAIL`, so a hand-edited row can never switch on a persona nobody reviewed.
+
+- **Signup.** `/hotels` links to `/signup?role=business&industry=hotel`. `app/(auth)/signup/page.tsx`
+  reads `searchParams.industry` after `await connection()`, normalises it with `industryFromSlug()`,
+  and passes it to `SignupClient` → `BusinessSignupForm`, which renders it as a hidden `industry`
+  field next to `plan`/`channel`. The `signup()` server action in `lib/auth-actions.ts` re-validates
+  with `isIndustry()` (a hidden field is client-controlled) and writes `industry: industry ??
+  DEFAULT_INDUSTRY` on a new Business row — and updates an adopted, pre-created tenant too, exactly
+  like `selectedPlan`. So a hotel that signs up from the landing page lands in Hotel mode.
+- **Settings.** `app/(dashboard)/settings/page.tsx` has an `INDUSTRY` section with a `<select>` over
+  `INDUSTRIES` (labels from `INDUSTRY_LABELS`, guarded by `isIndustry()` on change), submitted with
+  the rest of the form; `PATCH /api/business` validates it (`Industry must be one of: …`, 400) and
+  stores it on the caller's own business. Like tone, it is a profile field, not an owner-only setting.
+- **The persona.** `buildSystemPrompt()` in `lib/chat-engine.ts` appends `HOTEL_PERSONA` when
+  `business.industry === "HOTEL"` — before the tone instruction, which stays last. The text is the
+  contract: "HOTEL MODE: You are a hotel receptionist… you must ask for their Check-in Date and
+  Check-out Date… Calculate the total cost based on the number of nights. Once they agree, use the
+  `create_booking` tool. Do not book unless you have both dates." A `HOTEL BOOKING FIELDS` sentence
+  tells the model where each half goes (`serviceName` = room, `date`/`time` = check-in,
+  `checkOutDate` = check-out, 14:00 + say so when the guest names no time) and that a nightly rate
+  must come from `search_products`. `handleIncomingMessage()` therefore selects `industry` with the
+  rest of the business profile; nothing else about the engine changes.
+- **The landing page.** `app/(marketing)/hotels/page.tsx` is a prerendered Server Component:
+  `pageMetadata({ path: "/hotels" })` + `softwareApplicationJsonLd()` (no `FAQPage` — the homepage's
+  `<FAQ />` owns that node), then `<Hero>` with hotel copy, a `HOTEL_BENEFITS` grid ("Instant rate
+  quotes", "Automated deposits", "Check-in and check-out, one booking", "Multilingual guest support",
+  the 2am enquiry, "Nothing confirmed without you"), `<Features content={HOTEL_FEATURES} />`,
+  `<Pricing industry="HOTEL" />` and `<FounderAndCTA signupHref={SIGNUP_HREF} />`. Prices and credit
+  counts are interpolated from `lib/plans.ts`, and the copy never promises self-serve WhatsApp or an
+  auto-confirmed room.
+- **Component props (defaults are the homepage).** `Hero` accepts `badge`, `heading` (ReactNode),
+  `subhead`, `ctaHref`/`ctaLabel`, `secondaryHref`/`secondaryLabel`, `imageSrc`/`imageAlt` and
+  `footnote`; `Features` accepts `content?: FeaturesContent` (`heading`, `description`, `cards` of
+  `{ icon, title, body, variant, pill?, aside? }`) and renders the generic `FeatureGrid` only when it
+  is given — without it the original JSX is untouched; `Pricing` accepts `industry?: Industry` and
+  appends `&industry=…` to every plan link; `FounderAndCTA` accepts `signupHref`.
+- **Routing/SEO.** `/hotels` is in `PUBLIC_PAGES` (`lib/site.ts`, priority 0.8 next to `/academy`),
+  so it is in `sitemap.xml`, gets a canonical, and `lib/public-routes.ts` keeps it session-free (no
+  307 to `/login`); the footer's `Product` column links it and `public/llms.txt` lists it. New
+  vertical pages follow the same three steps.
+- `tests/industry.test.ts` locks it: the vocabulary matches the schema default (the `prisma` line is
+  read directly), `isIndustry`/`industryFromSlug` accept and reject the right strings,
+  `bookingNights` counts a 5→8 November stay as three nights, the persona text and its
+  `business.industry === "HOTEL"` gate are present in `lib/chat-engine.ts`, and `/hotels` is
+  public + sitemapped with CTAs that carry `&industry=hotel`.
 
 These exist so answer engines (ChatGPT, Perplexity, AI Overviews) and crawlers can read the
 site without parsing marketing prose. They are static data + prerendered pages, no database.
@@ -89,7 +142,8 @@ site without parsing marketing prose. They are static data + prerendered pages, 
 - `public/llms.txt` — plain-text summary for LLMs (`# Colly AI`, blockquote, `## Core Pages`,
   `## Countries` and `## Cities` sections with `[Name](https://colly.com.ng/…)` links and
   prices; `## Core Pages` also lists the `All locations` (`/locations`) and `Comparisons`
-  (`/vs`) hubs). Served straight from `public/`, so it needs **no** route; `proxy.ts` must keep
+  (`/vs`) hubs, and the vertical landing pages such as `For hotels` (`/hotels`)). Served straight
+  from `public/`, so it needs **no** route; `proxy.ts` must keep
   excluding it from the matcher, otherwise a crawler gets a 307 to `/login`. Keep the prices in
   it — and the country/city slugs it lists — in step with `lib/plans.ts`, `lib/countries.ts`
   and `lib/locations.ts`.
@@ -128,7 +182,8 @@ site without parsing marketing prose. They are static data + prerendered pages, 
   `#placesHubJsonLd` — a `CollectionPage` whose `mainEntity` is an `ItemList` of every leaf
   URL, built from the same arrays the cards render. `/countries` deliberately has no hub:
   `/locations` indexes both levels.
-- `components/ui/footer.tsx` carries the sitewide internal links: a `Product` column, a
+- `components/ui/footer.tsx` carries the sitewide internal links: a `Product` column (`/pricing`,
+  the vertical landing page `/hotels`, `/academy`, `/find-an-agent`), a
   `Compare` column (`/vs` plus every competitor, derived from `lib/competitors.ts`) and a
   `Locations` column (`/locations` plus Nigeria, Ghana, Lagos and Abuja — a curated slice,
   because the hub links all ten place pages). Keep those two columns when the footer is
@@ -143,7 +198,8 @@ site without parsing marketing prose. They are static data + prerendered pages, 
   `/login`; the hub entries use `LOCATIONS_HUB_PATH` / `COMPETITORS_HUB_PATH` from the data
   modules. Sitemap priority must stay non-increasing down `PUBLIC_PAGES` (`tests/seo.test.ts`
   asserts it), hence the `/locations` hub 0.7 → cities 0.7 → countries 0.6 → the `/vs` hub
-  0.6 → competitors 0.6 → legal pages: each hub sits directly above its leaves.
+  0.6 → competitors 0.6 → legal pages: each hub sits directly above its leaves. The industry
+  landing pages (`/hotels`) sit near the top at 0.8, beside `/academy`.
 - **Real 404s:** `cacheComponents: true` rules out `dynamicParams`/`ensureStatic`, and partial
   prerendering streams the static shell before the page renders — so a page-level `notFound()`
   keeps the `200` and only adds `noindex` (a soft 404, confirmed against `npm run start`).
@@ -215,4 +271,5 @@ site without parsing marketing prose. They are static data + prerendered pages, 
 - `tests/bookings.test.ts` locks the Africa/Lagos contract: Lagos rendering (including the midnight rollover), a zone-less value parsed as Lagos time (identical on a UTC box and a Lagos laptop), explicit offsets honoured, impossible/incomplete dates rejected, the one-hour default slot, the ISO + `...Lagos` fields of `serializeBooking()`, and the AI slot parser (`normalizeBookingDate`/`normalizeBookingTime`/`parseBookingSlot`: `2pm` and `2:00 PM` are 14:00, `12am`/`12pm`, a day that does not exist, and one Lagos slot mapping to one UTC instant).
 - `tests/geo.test.ts` locks the GEO/AEO surface: city/country/competitor slugs, JSON-LD shape, NGN prices, 40–60-word FAQ answers, a single `FAQPage`, the `llms.txt` contents, the known-slug 200 / unknown-slug 404 routing contract, and — new — that `public/.well-known/ard.json` parses as schema.org JSON and that the `proxy.ts` matcher still excludes `.well-known`, `llms.txt`, `robots.txt` and `sitemap.xml` (a regression there silently answers crawlers and agents with a 307 to `/login`).
 - `tests/seo.test.ts` locks the homepage's single `SoftwareApplication` node, canonical/sitemap priority order and the social card.
+- `tests/industry.test.ts` locks the hotel vertical: the `INDUSTRIES` list against the schema default (`Business.industry`, read from `prisma/schema.prisma`), `isIndustry()`/`industryFromSlug()` accept/reject tables, the `industrySlug()` round trip, `bookingNights()` (a 5→8 November stay is three nights), the verbatim HOTEL MODE persona and its `business.industry === "HOTEL"` gate in `lib/chat-engine.ts`, the `checkOutDate` argument, and that `/hotels` is in `PUBLIC_PAGES` + session-free with CTAs that carry `&industry=hotel`.
 - No integration/e2e tests and no DB in CI: anything touching Prisma (chat engine, billing, cron) is verified manually against the seeded demo tenant. Do not point tests at `DATABASE_URL`.

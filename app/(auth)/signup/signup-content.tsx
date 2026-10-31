@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { NIGERIAN_STATES } from "@/lib/nigerian-states";
+import type { Industry } from "@/lib/business";
 import { isPlanTierName } from "@/lib/plans";
 import { trackEvent } from "@/lib/analytics";
 import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
@@ -232,7 +233,7 @@ function AgentSignupForm() {
   );
 }
 
-function SignupContent() {
+function SignupContent({ industry }: { industry: Industry | null }) {
   const searchParams = useSearchParams();
   const isAgentSignup = searchParams.get("role") === "agent";
   const isFresh = searchParams.get("fresh") === "true";
@@ -261,16 +262,25 @@ function SignupContent() {
         <BusinessSignupForm
           referredBy={referredBy}
           selectedPlan={selectedPlan}
+          industry={industry}
         />
       )}
     </div>
   );
 }
 
-export default function SignupClient() {
+/**
+ * `industry` is the vertical from `/signup?industry=hotel`, normalised by the
+ * page (`app/(auth)/signup/page.tsx`) before it reaches the form.
+ */
+export default function SignupClient({
+  industry = null,
+}: {
+  industry?: Industry | null;
+}) {
   return (
     <Suspense fallback={<div className="h-64" aria-hidden />}>
-      <SignupContent />
+      <SignupContent industry={industry} />
     </Suspense>
   );
 }

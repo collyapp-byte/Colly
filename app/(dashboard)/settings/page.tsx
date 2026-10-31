@@ -4,7 +4,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { CheckCircle2, CircleAlert, LogOut } from "lucide-react";
 import { logout } from "@/lib/auth-actions";
-import type { Business, Tone } from "@/lib/business";
+import type { Business, Industry, Tone } from "@/lib/business";
+import { INDUSTRIES, INDUSTRY_LABELS, isIndustry } from "@/lib/business";
 import { Button } from "@/components/ui/button";
 import { VoiceInput } from "@/components/ui/voice-input";
 
@@ -33,6 +34,8 @@ type FormState = {
   phone: string;
   whatsappNumber: string;
   tone: Tone;
+  /** The vertical: it selects the AI persona (HOTEL = receptionist mode). */
+  industry: Industry;
   businessHours: string;
   address: string;
   description: string;
@@ -46,6 +49,7 @@ function toFormState(business: Business): FormState {
     phone: business.phone,
     whatsappNumber: business.whatsappNumber,
     tone: business.tone,
+    industry: business.industry,
     businessHours: business.businessHours ?? "",
     address: business.address ?? "",
     description: business.description ?? "",
@@ -297,6 +301,39 @@ export default function SettingsPage() {
                     What does your business sell? The AI uses this for context.
                   </p>
                 </div>
+              </div>
+            </section>
+
+            {/* INDUSTRY */}
+            <section className={SECTION_CLASS}>
+              <h2 className={HEADING_CLASS}>INDUSTRY</h2>
+              <div className="mt-4">
+                <label htmlFor="business-industry" className={LABEL_CLASS}>
+                  What do you sell?
+                </label>
+                <select
+                  id="business-industry"
+                  value={form.industry}
+                  onChange={(event) => {
+                    // A <select> only offers the three options, but the guard
+                    // keeps the state typed without an unchecked cast.
+                    if (isIndustry(event.target.value)) {
+                      update("industry", event.target.value);
+                    }
+                  }}
+                  className={INPUT_CLASS}
+                >
+                  {INDUSTRIES.map((industry) => (
+                    <option key={industry} value={industry}>
+                      {INDUSTRY_LABELS[industry]}
+                    </option>
+                  ))}
+                </select>
+                <p className={HINT_CLASS}>
+                  In Hotel mode your assistant acts as a receptionist: it asks for
+                  the check-in and check-out dates, quotes the stay by the night
+                  and records the room booking for your front desk to confirm.
+                </p>
               </div>
             </section>
 

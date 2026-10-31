@@ -13,6 +13,7 @@ import {
 import { sendReceiptAlert } from "@/lib/owner-alerts";
 import {
   bookingEndTime,
+  bookingNights,
   MAX_BOOKING_SERVICE_LENGTH,
   normalizeBookingDate,
   normalizeBookingTime,
@@ -974,6 +975,12 @@ export type BookingResult =
       status: string;
       /** True when this customer already had this slot on the books. */
       duplicate: boolean;
+      /** Hotel stays only: the check-out day (`YYYY-MM-DD`) the stay ends on. */
+      checkOutDate?: string;
+      /** Hotel stays only: whole nights between check-in and check-out. */
+      nights?: number;
+      /** Hotel stays only: the stay's end as Lagos renders it. */
+      endTimeLagos?: string;
       /** One line the model can say back to the customer. */
       message: string;
     }
@@ -992,7 +999,10 @@ export type BookingResult =
  * - a slot in the past is refused: the model must ask for another day,
  * - `status` is left to the schema default (`PENDING`); the assistant can never
  *   confirm its own appointment, that stays with my boss/oga in the dashboard,
- * - the slot is one hour long (`bookingEndTime`),
+ * - the slot is one hour long (`bookingEndTime`) — unless `checkOutDate` is
+ *   given, which is the hotel case: the booking then runs from check-in to
+ *   check-out, `bookingNights()` supplies the night count and the check-out day
+ *   plus the nights are written to `notes` so the front desk can price the stay,
  * - the same customer + service + instant is not booked twice (a model retry or
  *   a redelivered webhook must not create two appointments).
  */
@@ -1002,6 +1012,11 @@ export async function createBooking(args: {
   serviceName: string;
   date: string;
   time: string;
+  /**
+   * Hotel stays only: the check-out day (`YYYY-MM-DD`). Omitted for an
+   * ordinary appointment, which keeps its one-hour slot.
+   */
+  checkOutDate?: string;
 }): Promise<BookingResult> {
   const serviceName = args.serviceName
     .trim()
@@ -1033,6 +1048,36 @@ export async function createBooking(args: {
     };
   }
 
+  // Hotel stays. A check-out day turns the one-hour appointment slot into the
+  // whole stay, so the dashboard and the front desk see the real dates: the
+  // booking ends at the check-out day and `notes` carries the night count the
+  // model quoted the guest. A check-out that is not after check-in is a
+  // business-rule failure for the model to fix, never a throw.
+  let endTime = bookingEndTime(startTime);
+  let checkOutDate: string | undefined;
+  let nights: number | undefined;
+  if (args.checkOutDate) {
+    const checkOut = normalizeBookingDate(args.checkOutDate);
+    const checkOutTime = checkOut ? parseBookingSlot(checkOut, time) : null;
+    if (!checkOut || !checkOutTime) {
+      return {
+        created: false,
+        error:
+          "That check-out date could not be read. Ask the guest for the check-out day as YYYY-MM-DD.",
+      };
+    }
+    if (checkOutTime.getTime() <= startTime.getTime()) {
+      return {
+        created: false,
+        error:
+          "The check-out date must be after the check-in date. Ask the guest which day they are checking out.",
+      };
+    }
+    endTime = checkOutTime;
+    checkOutDate = checkOut;
+    nights = bookingNights(startTime, endTime);
+  }
+
   const customer = await prisma.customer.findFirst({
     where: { id: args.customerId, businessId: args.businessId },
     select: { id: true, name: true, phone: true },
@@ -1049,6 +1094,19 @@ export async function createBooking(args: {
   // and echoed back as "2026-11-05" and "14:00".
   const startTimeLagos = formatInLagosTimezone(startTime);
   const customerName = customer.name || customer.phone;
+
+  // The stay fields only exist for a hotel booking; an appointment keeps the
+  // exact `message` shape it had before this feature.
+  const stay = checkOutDate
+    ? {
+        checkOutDate,
+        nights,
+        endTimeLagos: formatInLagosTimezone(endTime),
+      }
+    : {};
+  const stayLine = checkOutDate
+    ? ` from ${date} to ${checkOutDate} (${nights} ${nights === 1 ? "night" : "nights"})`
+    : ` on ${date} at ${time}`;
 
   try {
     const existing = await prisma.booking.findFirst({
@@ -1073,7 +1131,8 @@ export async function createBooking(args: {
         startTimeLagos,
         status: existing.status,
         duplicate: true,
-        message: `Booking already exists for ${customerName} on ${date} at ${time}.`,
+        ...stay,
+        message: `Booking already exists for ${customerName}${stayLine}.`,
       };
     }
 
@@ -1083,7 +1142,13 @@ export async function createBooking(args: {
         customerId: customer.id,
         serviceName,
         startTime,
-        endTime: bookingEndTime(startTime),
+        // One hour for an appointment, check-out for a hotel stay.
+        endTime,
+        // The front desk prices a stay by its nights; appointments leave this
+        // null, exactly as before.
+        notes: checkOutDate
+          ? `Check-out ${checkOutDate}, ${nights} ${nights === 1 ? "night" : "nights"}`
+          : undefined,
         // status stays at the schema default: PENDING.
       },
       select: { id: true, status: true },
@@ -1099,7 +1164,8 @@ export async function createBooking(args: {
       startTimeLagos,
       status: booking.status,
       duplicate: false,
-      message: `Booking created for ${customerName} on ${date} at ${time}`,
+      ...stay,
+      message: `Booking created for ${customerName}${stayLine}`,
     };
   } catch (error) {
     console.error(

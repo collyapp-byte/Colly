@@ -5,6 +5,7 @@ import {
   ImageIcon,
   ShieldAlert,
   Tag,
+  type LucideIcon,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { DEFAULT_MAX_ROUNDS } from "@/lib/negotiation";
@@ -19,7 +20,15 @@ import { REPLY_CREDIT_COSTS } from "@/lib/plans";
  * "does it handle delivery questions?" or "can it negotiate price?". Replies,
  * rounds and credits come from the libraries that implement them.
  */
-export function Features() {
+export function Features({ content }: { content?: FeaturesContent } = {}) {
+  // Industry variant (`/hotels`): the same section shell and visual language,
+  // with the four cards carrying the vertical's own copy. The homepage path
+  // below is untouched — without `content` it renders exactly the markup it
+  // always did.
+  if (content) {
+    return <FeatureGrid content={content} />;
+  }
+
   return (
     <section className="bg-white py-24">
       <ScrollReveal className="mx-auto max-w-7xl px-4">
@@ -159,3 +168,144 @@ export function Features() {
     </section>
   );
 }
+
+/**
+ * One card of the industry variant.
+ *
+ * `variant` picks the styling of the homepage's four cards — "primary" is the
+ * dark two-column card, "warm" the orange one, "muted" the grey one and
+ * "outline" the bordered two-column card — so a vertical page looks like part
+ * of the same site rather than a second design system.
+ */
+export type FeatureCard = {
+  icon: LucideIcon;
+  title: string;
+  body: string;
+  variant: "primary" | "warm" | "muted" | "outline";
+  /** Small labelled pill under the copy, e.g. "Rate quoted from your own rooms". */
+  pill?: { icon: LucideIcon; label: string };
+  /** Right-hand figure block, e.g. a sample stay and its total. */
+  aside?: { label: string; value: string; note: string };
+};
+
+/** Copy for the industry variant of `<Features />`. */
+export type FeaturesContent = {
+  heading: string;
+  description: string;
+  cards: FeatureCard[];
+};
+
+const CARD_STYLES: Record<
+  FeatureCard["variant"],
+  { wrapper: string; icon: string; title: string; body: string }
+> = {
+  primary: {
+    wrapper: "rounded-3xl bg-[#1E3A8A] p-8 text-white md:col-span-2",
+    icon: "bg-white/10 text-white",
+    title: "text-2xl font-bold",
+    body: "text-blue-100",
+  },
+  warm: {
+    wrapper: "rounded-3xl bg-orange-50 p-8",
+    icon: "bg-white text-[#FF6600] shadow-sm",
+    title: "text-xl font-bold text-gray-900",
+    body: "text-gray-600",
+  },
+  muted: {
+    wrapper: "rounded-3xl bg-gray-50 p-8",
+    icon: "bg-white text-[#FF6600] shadow-sm",
+    title: "text-xl font-bold text-gray-900",
+    body: "text-gray-600",
+  },
+  outline: {
+    wrapper: "rounded-3xl border border-gray-200 bg-white p-8 md:col-span-2",
+    icon: "bg-orange-50 text-[#FF6600]",
+    title: "text-2xl font-bold text-gray-900",
+    body: "text-gray-600",
+  },
+};
+
+function FeatureGrid({ content }: { content: FeaturesContent }) {
+  return (
+    <section className="bg-white py-24">
+      <ScrollReveal className="mx-auto max-w-7xl px-4">
+        <div className="mx-auto mb-16 max-w-3xl text-center">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            {content.heading}
+          </h2>
+          <p className="mt-4 text-gray-600">{content.description}</p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          {content.cards.map((card) => {
+            const style = CARD_STYLES[card.variant];
+            const Icon = card.icon;
+            const isDark = card.variant === "primary";
+            return (
+              <div key={card.title} className={style.wrapper}>
+                <div
+                  className={
+                    card.aside
+                      ? "flex h-full flex-col gap-8 sm:flex-row sm:items-center sm:justify-between"
+                      : ""
+                  }
+                >
+                  <div className={card.aside ? "max-w-sm" : ""}>
+                    <span
+                      className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${style.icon}`}
+                    >
+                      <Icon className="h-5 w-5" aria-hidden />
+                    </span>
+                    <h3 className={`mt-6 ${style.title}`}>{card.title}</h3>
+                    <p className={`mt-3 text-sm leading-relaxed ${style.body}`}>
+                      {card.body}
+                    </p>
+
+                    {card.pill ? (
+                      <div
+                        className={`mt-6 flex items-center gap-2 rounded-xl border px-3 py-2.5 ${
+                          isDark
+                            ? "border-white/20 bg-white/10"
+                            : "border-orange-200 bg-white"
+                        }`}
+                      >
+                        <card.pill.icon
+                          className={`h-4 w-4 shrink-0 ${
+                            isDark ? "text-white" : "text-[#FF6600]"
+                          }`}
+                          aria-hidden
+                        />
+                        <span
+                          className={`text-xs font-medium ${
+                            isDark ? "text-blue-50" : "text-gray-700"
+                          }`}
+                        >
+                          {card.pill.label}
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {card.aside ? (
+                    <div className="shrink-0 rounded-2xl border-2 border-dashed border-[#FF6600]/40 bg-orange-50 px-6 py-5 text-center">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#C2410C]">
+                        {card.aside.label}
+                      </p>
+                      <p className="mt-1 text-2xl font-bold text-gray-900">
+                        {card.aside.value}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-gray-500">
+                        {card.aside.note}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollReveal>
+    </section>
+  );
+}
+

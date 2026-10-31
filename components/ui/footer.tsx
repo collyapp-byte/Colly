@@ -30,6 +30,7 @@ type FooterLink = { href: string; label: string };
 
 const PRODUCT_LINKS: readonly FooterLink[] = [
   { href: "/pricing", label: "Pricing" },
+  { href: "/hotels", label: "For hotels" },
   { href: "/academy", label: "Agent Academy" },
   { href: "/find-an-agent", label: "Find an Agent" },
 ];
