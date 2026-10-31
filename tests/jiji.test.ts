@@ -1,12 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import {
+  JIJI_ACCEPT_HTML,
+  JIJI_ACCEPT_JSON,
   JIJI_ADVERT_API_PATHS,
   JIJI_DEFAULT_HOST,
+  JIJI_FETCH_FAILED_MESSAGE,
   JIJI_INVALID_TARGET_MESSAGE,
   JIJI_SOURCE,
   JIJI_UNREACHABLE_MESSAGE,
+  JIJI_USER_AGENT,
   MOCK_EXTERNAL_ID_PREFIX,
   advertGuid,
   advertHrefsFromHtml,
@@ -18,6 +23,7 @@ import {
   isJijiUserId,
   isLastJijiPage,
   jijiAdvertUrl,
+  jijiHeaders,
   jijiListingUrl,
   jijiSellerPageUrl,
   listingGuidFromPath,
@@ -574,6 +580,65 @@ test("the failure copy never says the importer is not connected", () => {
   assert.doesNotMatch(JIJI_UNREACHABLE_MESSAGE, /REEF|api key|admin/i);
 });
 
+test("an unreadable Jiji is one sentence, and it is shown verbatim", () => {
+  // The exact copy the routes return with a 422. It names the link because that
+  // is the only thing the owner can change, and it never mentions a gateway or a
+  // status code they cannot act on.
+  assert.equal(
+    JIJI_FETCH_FAILED_MESSAGE,
+    "Could not fetch listings from Jiji. Please check the link and try again.",
+  );
+  assert.doesNotMatch(JIJI_FETCH_FAILED_MESSAGE, /502|bad gateway|crash|500/i);
+});
+
+test("every Jiji request is dressed as a browser", () => {
+  // Jiji's edge serves the default node/undici user agent an HTML challenge page
+  // or drops the socket, which is what used to surface as a 502 on the routes.
+  assert.match(JIJI_USER_AGENT, /^Mozilla\/5\.0 .*Chrome\/\d+/);
+  assert.doesNotMatch(JIJI_USER_AGENT, /node|undici|bot/i);
+
+  const json = jijiHeaders(
+    "https://jiji.ng/api_web/v1/listing?user_id=13247589&page=1",
+  );
+
+  assert.equal(json["User-Agent"], JIJI_USER_AGENT);
+  assert.equal(json.Accept, JIJI_ACCEPT_JSON);
+  // Accept and Accept-Language are always present on a browser request.
+  assert.match(json["Accept-Language"], /^en-NG/);
+  // The referer is the marketplace being read, not a hardcoded jiji.ng.
+  assert.equal(json.Referer, "https://jiji.ng/");
+  assert.equal(json.Origin, "https://jiji.ng");
+  // A JSON call is the page's own script, so it is a same-origin `fetch`.
+  assert.equal(json["Sec-Fetch-Dest"], "empty");
+  assert.equal(json["Sec-Fetch-Mode"], "cors");
+
+  // A Ghanaian shop looks like it was opened in Ghana.
+  const ghana = jijiHeaders(
+    jijiListingUrl({ user_id: "13247589", page: 1 }, "jiji.com.gh"),
+    JIJI_ACCEPT_HTML,
+  );
+
+  assert.equal(ghana.Referer, "https://jiji.com.gh/");
+  assert.equal(ghana.Origin, "https://jiji.com.gh");
+  assert.equal(ghana.Accept, JIJI_ACCEPT_HTML);
+  // A page request is a navigation.
+  assert.equal(ghana["Sec-Fetch-Dest"], "document");
+  assert.equal(ghana["Sec-Fetch-Mode"], "navigate");
+});
+
+test("the module has exactly one fetch, and it sends the browser headers", () => {
+  // The importer's bot protection story only holds if there is no second, bare
+  // fetch waiting to be added; everything must go through `jijiRequest()`.
+  const source = readFileSync(new URL("../lib/jiji.ts", import.meta.url), "utf8");
+  const calls = source.match(/await fetch\(/g) ?? [];
+
+  assert.equal(calls.length, 1);
+  assert.match(
+    source,
+    /const response = await fetch\(url, \{[\s\S]{0,200}?headers: jijiHeaders\(url, accept\)/,
+  );
+});
+
 test("a live advert maps onto the columns the catalogue stores", () => {
   const mapped = mapListing({
     id: 882134,
@@ -739,5 +804,39 @@ test("firstString prefers strings and keeps numbers usable", () => {
   assert.equal(firstString(undefined, "", "  keep me  ", "nope"), "keep me");
   assert.equal(firstString(null, 42), "42");
   assert.equal(firstString(null, undefined, {}), "");
+});
+
+
+test("both Jiji routes answer 422 instead of letting a failure become a 502", () => {
+  const routes = [
+    "../app/api/products/import-jiji/route.ts",
+    "../app/api/products/sync-jiji/route.ts",
+  ];
+
+  for (const path of routes) {
+    const source = readFileSync(new URL(path, import.meta.url), "utf8");
+    const label = path.split("/").at(-2) ?? path;
+
+    // The read is wrapped, so a thrown fetch cannot escape the handler.
+    assert.match(
+      source,
+      /try \{\s*result = await fetchSellerListings\(/,
+      `${label} must wrap fetchSellerListings in a try block`,
+    );
+    assert.match(
+      source,
+      /catch \(error\) \{[\s\S]{0,400}?jijiUnavailable\(\)/,
+      `${label} must answer the caught error with the 422 helper`,
+    );
+
+    // The helper carries the exact owner-facing copy and the 422 status.
+    assert.match(source, /JIJI_FETCH_FAILED_MESSAGE \}, \{ status: 422 \}/);
+    assert.match(source, /import \{[\s\S]*?JIJI_FETCH_FAILED_MESSAGE/);
+
+    // Nothing on these paths may answer 502: that status is what made a blocked
+    // upstream look like Colly's own gateway falling over. (A 500 stays for a
+    // genuine write/database failure, which is not the upstream's problem.)
+    assert.doesNotMatch(source, /status: 502/);
+  }
 });
 

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
 import {
+  JIJI_FETCH_FAILED_MESSAGE,
   JIJI_SOURCE,
   MAX_LISTINGS,
   MOCK_EXTERNAL_ID_PREFIX,
@@ -10,11 +11,23 @@ import {
   mapListing,
   normalizeName,
   parseJijiTarget,
+  type JijiListingsResult,
   type MappedListing,
 } from "@/lib/jiji";
 
 function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
+}
+
+/**
+ * 422: this shop is known and the link is valid, but Jiji could not be read.
+ *
+ * The same answer the importer gives — a blocked, reset, timed-out or 5xx Jiji
+ * is a failed dependency, not a failed request, and never a status that reads as
+ * our own gateway falling over.
+ */
+function jijiUnavailable() {
+  return Response.json({ error: JIJI_FETCH_FAILED_MESSAGE }, { status: 422 });
 }
 
 /** Writes are grouped so a large catalogue never becomes one huge transaction. */
@@ -143,8 +156,28 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await fetchSellerListings(shopUrl);
+    let result: JijiListingsResult;
+
+    try {
+      result = await fetchSellerListings(shopUrl);
+    } catch (error) {
+      // An exception escaping the handler is served as a bodiless 502; the owner
+      // gets one sentence instead, and nothing in the catalogue is touched.
+      console.error("[products/sync-jiji] Jiji request failed", error);
+      return jijiUnavailable();
+    }
+
     if (!result.ok) {
+      // Anything the upstream got wrong (blocked, reset, unreadable body) is a
+      // failed dependency: 422, never a 5xx that looks like our own outage.
+      if (result.status >= 500) {
+        console.warn(
+          "[products/sync-jiji] Jiji could not be read",
+          result.detail ?? result.error,
+        );
+        return jijiUnavailable();
+      }
+
       return Response.json(
         result.detail
           ? { error: result.error, detail: result.detail }
@@ -167,10 +200,8 @@ export async function POST(request: Request) {
     // An empty payload would mark the whole catalogue out of stock; treat it as
     // a Jiji hiccup and change nothing.
     if (listings.length === 0) {
-      return Response.json(
-        { error: "Jiji returned no listings for this shop, so nothing changed." },
-        { status: 502 },
-      );
+      console.warn("[products/sync-jiji] Jiji returned no listings; nothing changed");
+      return jijiUnavailable();
     }
 
     // A mock payload only knows mock-* ids. If the catalogue holds real Jiji

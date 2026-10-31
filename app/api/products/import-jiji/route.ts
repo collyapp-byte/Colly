@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
 import { reembedProduct } from "@/lib/embedding-pipeline";
 import {
+  JIJI_FETCH_FAILED_MESSAGE,
   JIJI_INVALID_TARGET_MESSAGE,
   JIJI_SOURCE,
   MAX_LISTINGS,
@@ -12,6 +13,7 @@ import {
   mapListing,
   normalizeName,
   parseJijiTarget,
+  type JijiListingsResult,
   type MappedListing,
 } from "@/lib/jiji";
 
@@ -21,6 +23,20 @@ function badRequest(error: string) {
 
 function unauthorized() {
   return Response.json({ error: "Not signed in" }, { status: 401 });
+}
+
+/**
+ * 422: the link was fine, but Jiji could not be read.
+ *
+ * Deliberately not a 5xx. The request reached us, parsed, and passed every check
+ * we make on it; only the upstream dependency failed — a dropped socket, a bot
+ * block, a timeout or a 5xx from Jiji. A gateway/served-error status here is
+ * exactly what made the importer look like a crashed server (a bare `502` with
+ * no body the dialog could show), so the failure is reported as a client-actionable
+ * 422 carrying one sentence the owner can act on.
+ */
+function jijiUnavailable() {
+  return Response.json({ error: JIJI_FETCH_FAILED_MESSAGE }, { status: 422 });
 }
 
 /**
@@ -77,8 +93,28 @@ export async function POST(request: Request) {
       return badRequest(JIJI_INVALID_TARGET_MESSAGE);
     }
 
-    const result = await fetchSellerListings(jijiUrl);
+    let result: JijiListingsResult;
+
+    try {
+      result = await fetchSellerListings(jijiUrl);
+    } catch (error) {
+      // Nothing below could run without listings, and an exception escaping this
+      // handler is what the platform renders as a bodiless 502.
+      console.error("[products/import-jiji] Jiji request failed", error);
+      return jijiUnavailable();
+    }
+
     if (!result.ok) {
+      // A 5xx from Jiji means the upstream was unreadable (blocked, reset, or a
+      // body that was not JSON), not that the owner pasted the wrong link.
+      if (result.status >= 500) {
+        console.warn(
+          "[products/import-jiji] Jiji could not be read",
+          result.detail ?? result.error,
+        );
+        return jijiUnavailable();
+      }
+
       return Response.json(
         result.detail
           ? { error: result.error, detail: result.detail }

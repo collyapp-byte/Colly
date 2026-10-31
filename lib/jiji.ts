@@ -1397,6 +1397,18 @@ export const JIJI_EMPTY_SHOP_MESSAGE =
   "We could not find any live listings on that Jiji shop yet.";
 
 /**
+ * The one line the Jiji routes answer with when Jiji itself could not be read.
+ *
+ * A dropped connection, bot protection that swallows the request, a DNS failure
+ * and a 5xx all end here, because they are the upstream's problem and not
+ * something the owner can fix by editing their link. The routes answer `422` —
+ * a request we understood whose dependency failed — so the owner never sees a
+ * `502` they cannot interpret (and never a page with no body at all).
+ */
+export const JIJI_FETCH_FAILED_MESSAGE =
+  "Could not fetch listings from Jiji. Please check the link and try again.";
+
+/**
  * Mock listings are demo fixtures, so they are opt-in and never available in a
  * production build: `JIJI_MOCK_IMPORT=1` in a local `.env` only.
  */
@@ -1407,15 +1419,68 @@ export function mockImportEnabled(): boolean {
   );
 }
 
-/** Headers the listing endpoint answers as JSON to. */
-const JIJI_HEADERS: Record<string, string> = {
-  "Accept-Language": "en-NG,en;q=0.9",
-  Referer: "https://jiji.ng/",
-  // A bare fetch User-Agent is served the HTML shell; the JSON endpoint expects
-  // a browser.
-  "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
-};
+/**
+ * A desktop Chrome user agent.
+ *
+ * Jiji's edge answers an automation-looking request with a `200` HTML challenge
+ * page, or just drops the connection — which surfaces either as "that is not
+ * JSON" or as a thrown `fetch`, never as the listing payload. A bare `undici`
+ * user agent is the first thing that earns that treatment, so every request
+ * pretends to be the browser a real owner would use.
+ */
+export const JIJI_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36";
+
+/** What Chrome sends for a `fetch()`ed JSON endpoint. */
+export const JIJI_ACCEPT_JSON = "application/json, text/plain, */*";
+
+/** What Chrome sends when it navigates to a page. */
+export const JIJI_ACCEPT_HTML =
+  "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8";
+
+/**
+ * The browser headers for one Jiji request.
+ *
+ * `Referer` and `Origin` are derived from the URL being fetched, so a Ghanaian or
+ * Kenyan shop looks like it was opened on that marketplace instead of being
+ * cross-linked from jiji.ng — a mismatched origin is one of the signals bot
+ * protection scores, and this module reads shops from every country domain.
+ * The rest are browser constants, so they never vary per request.
+ */
+export function jijiHeaders(
+  url: string,
+  accept: string = JIJI_ACCEPT_JSON,
+): Record<string, string> {
+  let origin = `https://${JIJI_DEFAULT_HOST}`;
+
+  try {
+    origin = new URL(url).origin;
+  } catch {
+    // Every URL here is built by this module from a validated host, so an
+    // unparsable one is a bug rather than input: fall back to the default origin
+    // and let the request itself be the thing that fails.
+  }
+
+  // A document asks for HTML; the JSON endpoints are called by page script.
+  const document = /html/i.test(accept);
+
+  return {
+    "User-Agent": JIJI_USER_AGENT,
+    Accept: accept,
+    "Accept-Language": "en-NG,en-US;q=0.9,en;q=0.8",
+    Referer: `${origin}/`,
+    Origin: origin,
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+    "sec-ch-ua": '"Chromium";v="129", "Not=A?Brand";v="8", "Google Chrome";v="129"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "Sec-Fetch-Dest": document ? "document" : "empty",
+    "Sec-Fetch-Mode": document ? "navigate" : "cors",
+    "Sec-Fetch-Site": "same-origin",
+    "Upgrade-Insecure-Requests": "1",
+  };
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -1486,17 +1551,23 @@ type JijiResponse =
 /**
  * One GET against Jiji.
  *
- * Every outcome that is not "a 2xx body" becomes a `JijiFailure` with copy the
- * owner can act on, because the alternative — a partial read that looks like a
- * successful one — is what put strangers' products in tenants' catalogues before.
+ * Every request is sent as a browser would send it (`jijiHeaders()`): the default
+ * runtime user agent is answered with an HTML challenge page or a dropped socket,
+ * and both used to surface as a `502` on the route. Every outcome that is not
+ * "a 2xx body" still becomes a `JijiFailure` with copy the owner can act on,
+ * because the alternative — a partial read that looks like a successful one — is
+ * what put strangers' products in tenants' catalogues before.
  */
-async function jijiRequest(url: string, accept: string): Promise<JijiResponse> {
+async function jijiRequest(
+  url: string,
+  accept: string = JIJI_ACCEPT_JSON,
+): Promise<JijiResponse> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), JIJI_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, {
-      headers: { ...JIJI_HEADERS, Accept: accept },
+      headers: jijiHeaders(url, accept),
       cache: "no-store",
       // Profile and shop URLs redirect to their canonical page; following that
       // is cheaper than resolving it ourselves.
@@ -1589,7 +1660,7 @@ async function jijiRequest(url: string, accept: string): Promise<JijiResponse> {
  * stock.
  */
 async function jijiGetPage(url: string): Promise<JijiPage> {
-  const response = await jijiRequest(url, "application/json, text/plain, */*");
+  const response = await jijiRequest(url, JIJI_ACCEPT_JSON);
 
   if (response.kind === "error") {
     return response.result.status === 404
@@ -1626,7 +1697,7 @@ async function jijiGetPage(url: string): Promise<JijiPage> {
 
 /** A page's HTML, or null when it could not be read. */
 async function jijiGetHtml(url: string): Promise<string | null> {
-  const response = await jijiRequest(url, "text/html,application/xhtml+xml");
+  const response = await jijiRequest(url, JIJI_ACCEPT_HTML);
   return response.kind === "ok" ? response.body : null;
 }
 
