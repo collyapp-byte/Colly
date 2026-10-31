@@ -1492,38 +1492,44 @@ const EXTRA_LESSONS = {
   ],
   "setting-up-a-business": [
     {
-      slug: "importing-from-jiji",
-      title: "Importing a Catalogue from Jiji",
+      slug: "importing-a-catalogue",
+      title: "Importing a Catalogue from a Spreadsheet",
       order: 7,
-      durationMin: 8,
-      bodyMarkdown: `Most shops you onboard already sell on Jiji. Typing 200 products by hand is where onboarding dies, so use the importer.
+      durationMin: 7,
+      bodyMarkdown: `Most shops you onboard already keep a price list in Excel or Google Sheets. Typing 200 products by hand is where onboarding dies, so take their sheet instead.
 
-**How it works**
+**What the file needs**
 
-1. Ask for ONE product link from the shop: open any item on their Jiji page and copy the address (it ends in .html).
-2. In Colly, open Products > Import from Jiji and paste it. Their shop link or seller id works too.
-3. Colly finds the seller through that listing and reads every live advert: name, price, description and listing id. Sold adverts and "Contact for price" adverts are left out.
-4. Every imported row is tagged as coming from Jiji, so the importer can find it again on the next run.
+Save the sheet as a CSV with four columns. Only two are required:
 
-**What never works:** a Jiji profile, search or category page (jiji.ng/profile?guid=…, jiji.ng/search?query=…, jiji.ng/c/…). Those pages belong to Jiji, not to the shop, so Colly refuses them with a message instead of importing nothing.
+- name — the product name, required,
+- price — the selling price in Naira, required (₦ and commas are fine: ₦1,200,000),
+- description — optional, but it is what the AI answers from, so ask for it,
+- stock — optional whole number.
 
-**Keeping it in sync**
+**How to import**
 
-The dashboard shows a Jiji card with the last sync time. A sync:
+1. In Colly, open Products > Import CSV and choose the file.
+2. Every valid row becomes a product. A row whose name already matches a product in the catalogue (any capitalisation) is counted as a duplicate and skipped, so importing the same sheet twice never doubles the catalogue.
+3. Rows with no name, no price, or a stock that is not a whole number are reported as errors and left out.
+4. Imported rows arrive with no picture. Open the products you actually sell and upload their images from the product form.
 
-- refreshes prices when the seller changes them on Jiji,
-- updates stock when a listing is sold or relisted,
-- never drops a product the agent added by hand in Colly,
-- protects the floor price: if a lower Jiji price would push the floor above the list price, the floor is cleared instead of blocking the sale.
+**The limits to quote**
+
+- One CSV per upload, 2 MB maximum.
+- The import reports three counts: imported, duplicates and errors. If the errors are not zero, ask the seller to fix those rows before you upload the file again.
+- Nothing is deleted: an import only adds rows.
 
 **What to check after importing**
 
-- a handful of prices, especially the ones with "negotiable" in the title,
+- a handful of prices, especially the ones with "negotiable" in the name,
 - products with no description (they answer badly, so improve the top sellers),
-- duplicates where the seller listed the same item twice on Jiji,
-- stock 0 items that should be marked sold out.
+- duplicates the seller listed under two different names,
+- stock numbers for items that should already be sold out.
 
-**Never** promise that an import is instant for a huge shop: one run stops at 500 listings and embeds them in batches, so re-run it to pick up the rest.`,
+**Never** test a price by typing it into the chat yourself: the assistant reads the catalogue, so fix the row instead.
+
+Do this now: ask your first shop for their price list as a CSV file, not a photo of a notebook.`,
     },
     {
       slug: "web-chat-embed-and-qr",
@@ -1842,7 +1848,7 @@ const AUTHORED_COURSE_QUIZZES = {
       options: [
         "A name, a price and a description",
         "A photo only",
-        "A Jiji listing",
+        "A social media page",
         "A barcode",
       ],
       correctIndex: 0,
@@ -1874,28 +1880,28 @@ const AUTHORED_COURSE_QUIZZES = {
         "No floor means no room to negotiate, so the listed price stands.",
     },
     {
-      question: "What does the Jiji importer need?",
+      question: "What does the CSV importer need?",
       options: [
-        "One product link from the shop (a shop link or seller id works too)",
-        "The seller's Jiji password",
-        "A CAC certificate",
+        "A CSV file with a name and a price in every row",
+        "A screenshot of the seller's price list",
         "The seller's bank details",
+        "A CAC certificate",
       ],
       correctIndex: 0,
       explanation:
-        "Colly reads Jiji's public listings itself — no password, no key. One product link is enough to find the seller; profile and search links are refused.",
+        "Name and price are the only required columns; description and stock are optional, and a row without a name or price is reported as an error instead of imported.",
     },
     {
-      question: "What should you check right after a Jiji import?",
+      question: "What should you check right after a CSV import?",
       options: [
-        "Prices, missing descriptions, duplicates and stock-0 items",
+        "Prices, missing descriptions, duplicates and stock numbers",
         "Only the total number of products",
         "The owner's email address",
         "The plan tier",
       ],
       correctIndex: 0,
       explanation:
-        "An import copies what Jiji has, including the gaps. Fix the top sellers first.",
+        "An import copies the sheet, gaps included, and imported rows have no pictures — fix the top sellers first.",
     },
     {
       question: "What does Web Chat require to go live?",
@@ -2343,7 +2349,7 @@ const AUTHORED_FINAL_EXAM_QUESTIONS = [
       "A name, a price and a description",
       "Only a photo",
       "A barcode",
-      "A Jiji listing",
+      "A printed flyer",
     ],
     correctIndex: 0,
     explanation:
@@ -2362,16 +2368,16 @@ const AUTHORED_FINAL_EXAM_QUESTIONS = [
       "The AI negotiates down to the floor price and never below it; without a floor it holds the listed price.",
   },
   {
-    question: "What does the Jiji import do?",
+    question: "What does the CSV import do?",
     options: [
-      "Imports the seller's Jiji listings into the catalogue and keeps them in sync",
-      "Only posts Colly products to Jiji",
-      "Deletes the existing catalogue first",
-      "Replaces the AI with Jiji's support team",
+      "Adds every valid row to the catalogue and skips names that already exist",
+      "Replaces the whole catalogue with the file",
+      "Only updates the prices of existing products",
+      "Deletes the products that are missing from the file",
     ],
     correctIndex: 0,
     explanation:
-      "Owners importing from Jiji get their listings in Colly, and the sync follows price and stock changes from Jiji.",
+      "Each valid row becomes a product; a name that already exists is counted as a duplicate and skipped, and an import never deletes anything.",
   },
   {
     question: "What does Web Chat need to go live?",
@@ -2546,7 +2552,7 @@ const AUTHORED_FINAL_EXAM_QUESTIONS = [
     question: "Why must the catalogue stay up to date?",
     options: [
       "The AI can only answer from what is in the catalogue",
-      "Jiji refuses stale listings",
+      "The dashboard stops loading",
       "Paystack suspends unpaid accounts",
       "The QR code stops working",
     ],

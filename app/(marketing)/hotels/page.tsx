@@ -149,7 +149,7 @@ const HOTEL_FEATURES: FeaturesContent = {
 const HOTEL_NOTES = [
   {
     title: "Your room list is the catalogue.",
-    body: "Import rooms the same way you import products — CSV or Jiji — or add them by hand. Colly quotes only what is in that list.",
+    body: "Import rooms from a CSV file or add them by hand. Colly quotes only what is in that list.",
   },
   {
     title: "WhatsApp is a waitlist.",

@@ -402,7 +402,7 @@ export function ProductFormModal({
                 className="relative h-20 w-20 overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
               >
                 {/* Product images may point at our Supabase bucket (uploads) or
-                    at a third-party CDN (Jiji import), so `next/image` has no
+                    at another host an owner pasted in, so `next/image` has no
                     host allow-list to work with. Sized + lazy by hand. The alt
                     stays empty because the remove button below is the labelled
                     control for this thumbnail. */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -17,7 +17,6 @@ import { formatNaira } from "@/lib/format";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card } from "@/components/ui/card";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
-import { JijiSyncCard } from "@/components/dashboard/jiji-sync-card";
 
 type Stat = {
   label: string;
@@ -48,34 +47,21 @@ export type DashboardStatus = {
   paymentFailedAt: string | null;
 };
 
-/** Same shape `/api/products/sync-jiji` GET returns, seeded on the server. */
-export type JijiSyncStatus = {
-  lastJijiSyncAt: string | null;
-  hasJijiProducts: boolean;
-};
-
 /**
  * The interactive half of the Overview route.
  *
  * `app/(dashboard)/dashboard/page.tsx` is a Server Component because it reads
- * the setup-checklist flags, the banner status and the Jiji status straight
- * from Prisma; everything below this line needs client state (fetches for
- * today's sales, invoices and live Jiji refreshes), so it lives here and is
- * rendered as that page's child. The page owns the `max-w-6xl` container and
- * the "Overview" heading.
+ * the setup-checklist flags and the banner status straight from Prisma;
+ * everything below this line needs client state (fetches for today's sales and
+ * invoices), so it lives here and is rendered as that page's child. The page
+ * owns the `max-w-6xl` container and the "Overview" heading.
  *
- * Both `status` and `initialJijiSync` arrive pre-filled from the server, so
- * the alert banners and the store card are laid out in the first paint. They
- * used to be fetched after hydration, which dropped ~100–200px of content in
- * above the stat grid and pushed every card down — the page's main CLS source.
+ * `status` arrives pre-filled from the server, so the alert banners are laid
+ * out in the first paint. They used to be fetched after hydration, which
+ * dropped ~100–200px of content in above the stat grid and pushed every card
+ * down — the page's main CLS source.
  */
-export function DashboardOverview({
-  status,
-  initialJijiSync,
-}: {
-  status: DashboardStatus;
-  initialJijiSync: JijiSyncStatus;
-}) {
+export function DashboardOverview({ status }: { status: DashboardStatus }) {
   const [today, setToday] = useState<{ total: number; count: number } | null>(
     null,
   );
@@ -94,10 +80,6 @@ export function DashboardOverview({
   );
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [joiningWaitlist, setJoiningWaitlist] = useState(false);
-  // Seeded from the server with the same values the status endpoint returns, so
-  // the store card is already in the first paint. The fetch below stays as a
-  // refresher for after the card's own auto-sync.
-  const [jijiSync, setJijiSync] = useState<JijiSyncStatus>(initialJijiSync);
 
   async function handleJoinWaitlist(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -126,48 +108,6 @@ export function DashboardOverview({
       setJoiningWaitlist(false);
     }
   }
-
-  /**
-   * Jiji sync status for the store card.
-   *
-   * Fetched (rather than server-rendered) so the card can re-read it after a sync
-   * without a page reload: `jijiSyncKey` is bumped by the card's `onSynced`.
-   */
-  const [jijiSyncKey, setJijiSyncKey] = useState(0);
-
-  const handleJijiSynced = useCallback(
-    () => setJijiSyncKey((key) => key + 1),
-    [],
-  );
-
-  useEffect(() => {
-    let active = true;
-
-    fetch("/api/products/sync-jiji")
-      .then((res) => (res.ok ? res.json() : null))
-      .then(
-        (
-          data: {
-            lastJijiSyncAt?: string | null;
-            hasJijiProducts?: boolean;
-          } | null,
-        ) => {
-          if (!active || !data) return;
-          setJijiSync({
-            lastJijiSyncAt: data.lastJijiSyncAt ?? null,
-            hasJijiProducts: Boolean(data.hasJijiProducts),
-          });
-        },
-      )
-      .catch(() => {
-        // The card is optional: keep the server-seeded values rather than block
-        // the overview.
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [jijiSyncKey]);
 
   useEffect(() => {
     let active = true;
@@ -367,18 +307,6 @@ export function DashboardOverview({
             />
           );
         })}
-
-        {/* Rendered unconditionally: the status comes from the server, so this
-            row — and everything below it — is positioned once. */}
-        <div className="col-span-2 md:col-span-4">
-          <JijiSyncCard
-            lastSyncedAt={
-              jijiSync.lastJijiSyncAt ? new Date(jijiSync.lastJijiSyncAt) : null
-            }
-            hasJijiProducts={jijiSync.hasJijiProducts}
-            onSynced={handleJijiSynced}
-          />
-        </div>
       </section>
 
       <Card className="mt-6 border-[color:var(--outline-subtle)]!">

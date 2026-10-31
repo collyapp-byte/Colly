@@ -14,7 +14,7 @@ channel on.
 | Area | Highlights |
 | --- | --- |
 | AI replies | DeepSeek first, then Groq, then OpenRouter (all OpenAI-compatible); tool-calling forced for every product/price/stock question so answers come from the catalogue, never from memory. Plain-text replies, no stock quantities disclosed, automatic human takeover. |
-| Catalogue | Products with price, floor price (negotiation limit), negotiable flag, stock, images and descriptions; CSV upload; Jiji import + two-way price/stock sync; semantic search (Jina embeddings) with a `pg_trgm` fallback. |
+| Catalogue | Products with price, floor price (negotiation limit), negotiable flag, stock, images and descriptions; CSV upload; semantic search (Jina embeddings) with a `pg_trgm` fallback. |
 | Inbox | Conversation list ordered by last activity, message history, AI pause/resume (takeover), manual replies that cost no credits. |
 | CRM | Customer records ranked by activity, tags, and a four-stage deal pipeline (inquiry → negotiating → paid → delivered). |
 | Billing | Free tier + Green/Blue/Black plans, split wallet (monthly plan credits + permanent top-ups), credit packs, Paystack checkout, cancellation, invoices/sales, usage dashboard. |
@@ -64,7 +64,7 @@ app/
   api/                 ~60 route handlers (chat, channels, billing, products, agents, cron)
 components/            UI grouped by surface (dashboard, conversations, agents, products, ui)
 lib/                   domain logic: chat-engine, ai (DeepSeek→Groq→OpenRouter), plans,
-                       credits, tools, logger, negotiation, invoices, jiji, badges,
+                       credits, tools, logger, negotiation, invoices, badges,
                        certification, agent-auth, pagination
 prisma/                schema, migrations, seed.cjs, academy-content.cjs
 scripts/               academy sync, embedding backfill

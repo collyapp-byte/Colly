@@ -215,7 +215,7 @@ test("new product areas are taught", () => {
   );
 
   for (const required of [
-    "importing-from-jiji",
+    "importing-a-catalogue",
     "web-chat-embed-and-qr",
     "credits-plans-and-top-ups",
     "weekly-report-and-owner-alerts",

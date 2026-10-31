@@ -159,14 +159,6 @@ model Business {
   /// "CONNECTED" (Telegram bot or Discord bot verified).
   connectionStatus String  @default("DISCONNECTED")
 
-  /// Jiji storefront the catalogue was imported from (for example
-  /// "https://jiji.ng/my-shop"). The two-way sync re-reads this shop's live
-  /// listings; null until the owner imports their shop once.
-  jijiShopUrl String?
-  /// Last successful Jiji sync. Drives the dashboard card's "last synced"
-  /// label and the once-a-day lazy auto-sync.
-  lastJijiSyncAt DateTime?
-
   /// Automated dunning. `subscriptionStatus` tracks the Paystack subscription
   /// lifecycle: "active" | "past_due" | "canceled". When a subscription charge
   /// fails the webhook marks the business "past_due" and sets
@@ -348,14 +340,6 @@ model Product {
   /// Public URLs of the product's images in Supabase Storage.
   images      String[] @default([])
   createdAt   DateTime @default(now())
-
-  /// Provenance for rows Colly did not create by hand. `externalSource` is
-  /// "JIJI" for listings imported from a Jiji shop and null for products the
-  /// owner added (manually or by CSV). `externalId` is that listing's id on
-  /// Jiji, and is how /api/products/sync-jiji matches a live listing back to
-  /// this row; it is null when the scraper returned no id.
-  externalSource String?
-  externalId     String?
 
   /// pgvector embedding of name + description + category, used for semantic
   /// search. 1024 dimensions from jina-embeddings-v3. Unsupported by

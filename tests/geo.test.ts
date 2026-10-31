@@ -175,13 +175,12 @@ test("every competitor page has a row for every comparison axis", () => {
     "ai",
     "cac",
     "channels",
-    "jiji",
     "pidgin",
     "pricing",
   ]);
   // The advantages Colly leads with open the table, in the order the hub prose
-  // lists them: paperwork, money, catalogue, language.
-  assert.deepEqual(ids.slice(0, 4), ["cac", "pricing", "jiji", "pidgin"]);
+  // lists them: paperwork, money, language.
+  assert.deepEqual(ids.slice(0, 3), ["cac", "pricing", "pidgin"]);
   assert.equal(new Set(ids).size, ids.length, "no duplicate axis");
 
   const slugs = new Set<string>();

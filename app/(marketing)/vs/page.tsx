@@ -67,11 +67,11 @@ export default function ComparisonsHubPage() {
           </h1>
           <p className="mt-4 text-base leading-relaxed text-gray-600">
             The tools Nigerian shops shortlist most often — from WhatsApp
-            specialists to custom-trained agents — compared on the six things
+            specialists to custom-trained agents — compared on the five things
             that decide the sale: the paperwork needed to start, whether you pay
-            in Naira or dollars, Jiji catalogue sync, Pidgin and voice notes, the
-            channels your customers already use, and how much of the reply is
-            really AI. One page per comparison, last reviewed in{" "}
+            in Naira or dollars, Pidgin and voice notes, the channels your
+            customers already use, and how much of the reply is really AI. One
+            page per comparison, last reviewed in{" "}
             {COMPETITOR_REVIEWED}.
           </p>
         </div>

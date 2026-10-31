@@ -19,7 +19,7 @@ import { comparisonJsonLd, pageMetadata } from "@/lib/seo";
  *
  * One URL per entry in `lib/competitors.ts`, prerendered from
  * `generateStaticParams`. The page answers "Colly AI vs <competitor>" in the
- * first paragraph, then puts the same six axes in one large table, then
+ * first paragraph, then puts the same five axes in one large table, then
  * publishes `comparisonJsonLd()` — a WebPage wrapping an ItemList of two
  * SoftwareApplications, each with one `PropertyValue` per row. That node is what
  * an AI Overview reads when it has to summarise the comparison, and it is built
@@ -215,8 +215,8 @@ function Versus({ competitor }: { competitor: Competitor }) {
               <strong className="font-semibold text-gray-900">
                 Catalogue, not memory.
               </strong>{" "}
-              Every product question hits your catalogue, and a Jiji shop can be
-              imported and re-synced instead of retyped.
+              Every product question hits your catalogue, and a price change is
+              one product edit away — no retyping and no retraining step.
             </li>
           </ul>
 

@@ -25,7 +25,7 @@ export default function PrivacyPage() {
       <p className="text-gray-600 mb-4 whitespace-pre-wrap">
         {`Business account data: business name, contact name, email address, phone number, WhatsApp number, and anything you add to your profile (description, opening hours, address, payment instructions, tone).
 
-Catalogue data: products (names, prices, floor prices, stock, descriptions, images) and FAQs that you upload or import from Jiji.
+Catalogue data: products (names, prices, floor prices, stock, descriptions, images) that you add by hand or import from a CSV file, and FAQs you write yourself.
 
 Customer conversations: messages, voice notes and images that customers send to your connected channels, plus the replies our AI or your team send back. A customer record may include a name, a channel identifier (for example a Telegram chat id or a website session id) and tags you apply.
 

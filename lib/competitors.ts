@@ -24,9 +24,9 @@ import { PLANS, REPLY_CREDIT_COSTS } from "@/lib/plans";
 
 /**
  * The axes a buyer (or an answer engine) actually compares. Declared in table
- * order: the four advantages Colly leads on — no CAC paperwork, Naira credits,
- * Jiji catalogue sync, Pidgin and voice notes — come first, because they are the
- * reasons a Nigerian shop switches, then the channel list and the AI-depth row.
+ * order: the three advantages Colly leads on — no CAC paperwork, Naira credits,
+ * Pidgin and voice notes — come first, because they are the reasons a Nigerian
+ * shop switches, then the channel list and the AI-depth row.
  *
  * A new id is a breaking change on purpose: `Competitor.values` is keyed by this
  * union, so TypeScript refuses the build until every vendor answers the new row.
@@ -34,7 +34,6 @@ import { PLANS, REPLY_CREDIT_COSTS } from "@/lib/plans";
 export type ComparisonFeatureId =
   | "cac"
   | "pricing"
-  | "jiji"
   | "pidgin"
   | "channels"
   | "ai";
@@ -67,12 +66,6 @@ export const COMPARISON_FEATURES: readonly ComparisonFeature[] = [
     } credits per AI reply and plans from ${formatNaira(
       PLANS.green.monthly,
     )}/month, billed through Paystack. No USD card and no exchange-rate surprises.`,
-  },
-  {
-    id: "jiji",
-    label: "Jiji marketplace sync",
-    colly:
-      "Imports a Jiji shop from the seller URL or username, then re-syncs prices and stock whenever you run a sync.",
   },
   {
     id: "pidgin",
@@ -133,7 +126,6 @@ export const COMPETITORS: readonly Competitor[] = [
       cac: "No CAC certificate to start, but a foreign card and USD billing usually are.",
       pricing:
         "Billed in USD, so the Naira cost moves with the exchange rate whenever you pay.",
-      jiji: "No Jiji catalogue sync advertised.",
       pidgin:
         "Replies are scripted inside the social inbox; Pidgin tone and voice-note handling are not advertised.",
       channels:
@@ -156,7 +148,6 @@ export const COMPETITORS: readonly Competitor[] = [
       cac: "Nothing Nigeria-specific advertised; a foreign card is typically required.",
       pricing:
         "USD subscription billing, so the Naira cost follows the exchange rate.",
-      jiji: "No Jiji catalogue sync advertised.",
       pidgin:
         "Drafting follows the language of the thread; Pidgin tone and voice-note transcription are not advertised as settings.",
       channels:
@@ -180,7 +171,6 @@ export const COMPETITORS: readonly Competitor[] = [
       cac: "Yes on WhatsApp: the official API needs a Meta business account and, in Nigeria, a CAC certificate and review.",
       pricing:
         "USD subscription plus Meta's per-conversation WhatsApp charges.",
-      jiji: "No Jiji catalogue sync advertised.",
       pidgin:
         "Template and flow replies, with language handling depending on the plan; Pidgin and voice-note transcription are not advertised.",
       channels:
@@ -191,7 +181,7 @@ export const COMPETITORS: readonly Competitor[] = [
       "Colly lets a shop start selling today with no CAC certificate and no Meta review, and adds WhatsApp only once the numbers justify the paperwork.",
   },
   // The Nigerian tools that own the "AI chatbot / WhatsApp bot for Nigerian
-  // business" answer boxes. They are compared on the same six axes as the
+  // business" answer boxes. They are compared on the same five axes as the
   // international vendors above (see `COMPARISON_FEATURES`), so a buyer who
   // arrived from an AI Overview can compare them with Colly and with each other
   // on one table — and every cell stays at the category level described in this
@@ -211,7 +201,6 @@ export const COMPETITORS: readonly Competitor[] = [
       cac: "Yes on WhatsApp: Meta's business channel needs verification, and in Nigeria that means a CAC certificate before the number goes live.",
       pricing:
         "Advertised as a Naira monthly subscription priced by volume rather than per reply, so a busy week costs more than a quiet one.",
-      jiji: "No Jiji catalogue import advertised; products are entered inside the tool.",
       pidgin:
         "Replies follow the automations you set up; Pidgin tone and voice-note transcription are not advertised as features.",
       channels:
@@ -236,7 +225,6 @@ export const COMPETITORS: readonly Competitor[] = [
       cac: "WhatsApp deployments need a verified Meta business account — a CAC certificate in Nigeria — on top of the vendor's onboarding.",
       pricing:
         "Quoted per business after a sales conversation, so the entry cost is a contract rather than a self-serve plan.",
-      jiji: "No Jiji catalogue import advertised.",
       pidgin:
         "Language handling is not advertised; Pidgin and voice notes are not listed as features.",
       channels:
@@ -261,7 +249,6 @@ export const COMPETITORS: readonly Competitor[] = [
       cac: "Yes on WhatsApp, and the Monnify business account behind the checkout needs business documentation — usually a CAC certificate — before either goes live.",
       pricing:
         "Advertised as a Naira subscription; payment fees are collected by the provider you connect, so the real cost is the plan plus those fees.",
-      jiji: "No Jiji catalogue import advertised; the catalogue lives in the WhatsApp store.",
       pidgin:
         "Replies follow the store's flows; Pidgin tone and voice-note handling are not advertised.",
       channels:
@@ -286,7 +273,6 @@ export const COMPETITORS: readonly Competitor[] = [
       cac: "Nothing about CAC certificates is advertised; the gate is the setup work rather than the paperwork.",
       pricing:
         "Quoted per project after a scoping call, so the cost is negotiated rather than posted per reply.",
-      jiji: "No Jiji catalogue import advertised; the training material is supplied by the business.",
       pidgin:
         "Tone is tuned during the build rather than switched from settings; Pidgin and voice notes are not advertised.",
       channels:
@@ -310,7 +296,6 @@ export const COMPETITORS: readonly Competitor[] = [
       cac: "Yes: Meta's official WhatsApp channel needs business verification, which in Nigeria means a CAC certificate and a reviewed Meta business account.",
       pricing:
         "A subscription on top of Meta's per-conversation charges, which are quoted in dollars.",
-      jiji: "No Jiji catalogue import advertised.",
       pidgin:
         "Conversations follow scripted menus; Pidgin tone and voice-note handling are not advertised.",
       channels: "WhatsApp-only, on Meta's official channel.",
