@@ -194,6 +194,7 @@ model Business {
   faqs          Faq[]
   invoices      Invoice[]
   transactions  Transaction[]
+  bookings      Booking[]
 
   referredByAgent Agent? @relation(fields: [referredByAgentId], references: [id])
 }
@@ -276,9 +277,43 @@ model Customer {
   sales         Sale[]
   conversations Conversation[]
   invoices      Invoice[]
+  bookings      Booking[]
 
   @@unique([businessId, phone])
   @@index([businessId])
+}
+
+/// Booking System: an appointment a business sells (a haircut, a repair, a
+/// consultation), owned by the tenant and attached to one of its customers.
+///
+/// Timezone contract: `startTime`/`endTime` are absolute instants stored in
+/// `TIMESTAMPTZ` columns, so no reader has to guess which wall clock they mean —
+/// the database keeps the instant (and compares it correctly whatever the
+/// session's `TimeZone` is), while every value the app shows is rendered in
+/// Africa/Lagos (`lib/timezone.ts#formatInLagosTimezone`, applied by
+/// `lib/bookings.ts#serializeBooking`).
+///
+/// `status` is "PENDING" | "CONFIRMED" | "CANCELLED" and starts at PENDING. It is
+/// a string column like `Invoice.status` and `Customer.dealStatus`, narrowed by
+/// `lib/bookings.ts#isBookingStatus`.
+model Booking {
+  id          String   @id @default(uuid())
+  businessId  String
+  customerId  String
+  serviceName String
+  startTime   DateTime @db.Timestamptz(3)
+  endTime     DateTime @db.Timestamptz(3)
+  status      String   @default("PENDING")
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  /// A tenant's schedule reads its bookings ordered by start time.
+  @@index([businessId, startTime])
+  /// A customer's appointments (and the cascade path from Customer).
+  @@index([customerId])
 }
 
 model Product {
