@@ -21,8 +21,9 @@ import { LOCATIONS_HUB_PATH, getLocation } from "@/lib/locations";
  * Session-free routes that are deliberately *not* in the sitemap: the Supabase
  * auth callback, the embeddable web-chat widget (opened on customer sites, often
  * inside an iframe), agent certificate verification, the email-confirmation
- * landing page, the password recovery screens and the agent discovery
- * directory.
+ * landing page, the password recovery screens, the agent discovery directory
+ * and the team-invitation landing page (`/join/<id>`, opened from the invite
+ * email by someone who has no account yet).
  *
  * `/locations`, `/countries` and `/vs` are the programmatic GEO prefixes.
  * `/locations` and `/vs` are also real pages now — the two hubs that index the
@@ -41,6 +42,9 @@ const SESSION_FREE_PATHS: readonly string[] = [
   "/verify-email",
   "/forgot-password",
   "/reset-password",
+  // The invite email links here (`lib/team-invite.ts`); the invitee has no
+  // account yet, so the login redirect must not swallow it.
+  "/join",
   "/find-an-agent",
   LOCATIONS_HUB_PATH,
   "/countries",

@@ -10,6 +10,7 @@ import {
   readPageSize,
 } from "@/lib/pagination";
 import { isTeamRole, TEAM_MEMBER_NAME_MAX } from "@/lib/team";
+import { sendTeamInviteEmail, teamInviteLink } from "@/lib/team-invite";
 
 function badRequest(error: string) {
   return Response.json({ error }, { status: 400 });
@@ -133,9 +134,16 @@ export async function GET(request: Request) {
 
 // POST /api/team
 // Body: { email, name? }
-// Invites a staff member. The row only pre-authorises the address: there is no
-// invite email to send, so the person signs up (or signs in) with that exact
-// address and `lib/auth.ts#loadTenant` resolves them to this business as STAFF.
+// Invites a staff member and emails them the invite link.
+//
+// The `TeamMember` row is the source of truth: it pre-authorises the address,
+// and `lib/auth.ts#loadTenant` resolves a session with that email to this
+// business as STAFF. The email (`lib/team-invite.ts`) is only the notification
+// that carries the link to `/join/<id>`, where the invitee sets a password —
+// so a missing RESEND_API_KEY or a provider outage still leaves a valid invite
+// (the response tells the owner whether the mail went out, and always includes
+// the link so it can be forwarded by hand).
+//
 // Access starts when they sign in and ends the moment the row is deleted here.
 export async function POST(request: Request) {
   try {
@@ -207,7 +215,29 @@ export async function POST(request: Request) {
       select: TEAM_MEMBER_SELECT,
     });
 
-    return Response.json({ member }, { status: 201 });
+    // Written first, emailed second: a provider failure must not lose a valid
+    // invite. `sendTeamInviteEmail()` returns `{ sent: false }` instead of
+    // throwing, and the link comes back either way.
+    const link = teamInviteLink(member.id);
+    const delivery = await sendTeamInviteEmail({
+      businessName: auth.user.businessName,
+      inviterName: auth.user.name,
+      inviteeName: member.name,
+      email: member.email,
+      link,
+    });
+
+    if (!delivery.sent) {
+      // PII-free: no address, no body — only the reason code.
+      console.warn(
+        `[POST /api/team] invite email was not sent (${delivery.error ?? "unknown"})`,
+      );
+    }
+
+    return Response.json(
+      { member, invite: { emailed: delivery.sent, link } },
+      { status: 201 },
+    );
   } catch (error) {
     // The unique index on TeamMember.email is the real authority: two owners
     // inviting the same address at the same moment both pass the check above.

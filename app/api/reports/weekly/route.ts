@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { escapeHtml, sendEmail } from "@/lib/email";
 
 type WeeklyMetrics = {
   businessName: string;
@@ -7,14 +8,6 @@ type WeeklyMetrics = {
   escalations: number;
   salesAmount: number;
 };
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
 
 function buildReportHtml(metrics: WeeklyMetrics): string {
   return `<!doctype html>
@@ -52,47 +45,23 @@ function buildReportHtml(metrics: WeeklyMetrics): string {
 </html>`;
 }
 
+/**
+ * Email one report. The provider call lives in `lib/email.ts`; a report is a
+ * notification, so a failure only skips this business and is counted in the
+ * response instead of failing the run.
+ */
 async function sendReportEmail(
   to: string,
   metrics: WeeklyMetrics,
 ): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.warn("[weekly-report] RESEND_API_KEY is not set; skipping email");
-    return false;
-  }
+  const result = await sendEmail({
+    to,
+    subject: "Your Colly Weekly Business Report",
+    html: buildReportHtml(metrics),
+    text: `Your Colly Weekly Business Report — ${metrics.businessName}\n\nAI replies sent: ${metrics.aiReplies}\nManual replies sent: ${metrics.manualReplies}\nEscalations: ${metrics.escalations}\nTotal sales: NGN ${metrics.salesAmount.toLocaleString("en-NG")}\n\nKeep it up. Colly is working for you 24/7.`,
+  });
 
-  const from =
-    process.env.RESEND_FROM_EMAIL ?? "Colly <reports@colly.com.ng>";
-
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject: "Your Colly Weekly Business Report",
-        html: buildReportHtml(metrics),
-      }),
-    });
-
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      console.error(
-        `[weekly-report] Resend failed (${response.status}): ${detail}`,
-      );
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error("[weekly-report] Resend request threw:", error);
-    return false;
-  }
+  return result.sent;
 }
 
 // GET /api/reports/weekly

@@ -71,6 +71,34 @@ function readNextCursor(payload: unknown): string | null {
   return typeof cursor === "string" && cursor ? cursor : null;
 }
 
+/** What `POST /api/team` reports about the invitation email. */
+type InviteDelivery = {
+  /** True when the provider accepted the message. */
+  emailed: boolean;
+  /** The `/join/<id>` link — the manual fallback when mail fails. */
+  link: string;
+};
+
+/**
+ * Reads the `invite` block of a `POST /api/team` response.
+ *
+ * The row is saved whether or not the mail went out, so this is only used to
+ * word the confirmation and to offer the "copy the link yourself" fallback. A
+ * malformed block is dropped rather than trusted.
+ */
+function readInviteDelivery(payload: unknown): InviteDelivery | null {
+  if (!payload || typeof payload !== "object") return null;
+  const invite = (payload as { invite?: unknown }).invite;
+  if (!invite || typeof invite !== "object") return null;
+
+  const value = invite as Record<string, unknown>;
+  if (typeof value.link !== "string" || !/^https?:\/\//i.test(value.link)) {
+    return null;
+  }
+
+  return { emailed: value.emailed === true, link: value.link };
+}
+
 /** Two-letter avatar label: "Ada Obi" -> "AO", "ada@shop.ng" -> "AD". */
 function initials(name: string, email: string): string {
   const source = (name || email).trim();
@@ -133,6 +161,8 @@ export function TeamManager({
   const [name, setName] = useState("");
   const [inviting, setInviting] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  /** Result of the last invite, shown under the form (and its link copied). */
+  const [lastInvite, setLastInvite] = useState<InviteDelivery | null>(null);
 
   const [pendingRemoval, setPendingRemoval] =
     useState<TeamMemberView | null>(null);
@@ -173,7 +203,21 @@ export function TeamManager({
         throw new Error(errorMessage(payload) ?? "Could not save that invite");
       }
 
-      toast.success(`Invite saved for ${trimmedEmail}`);
+      // The row is saved either way; `invite.emailed` only says whether the
+      // notification left the building.
+      const delivery = readInviteDelivery(payload);
+      setLastInvite(delivery);
+
+      if (delivery?.emailed) {
+        toast.success(`Invite emailed to ${trimmedEmail}`);
+      } else {
+        toast.warning(
+          delivery
+            ? `Invite saved for ${trimmedEmail}, but the email did not go out. Copy the link below and send it yourself.`
+            : `Invite saved for ${trimmedEmail}`,
+        );
+      }
+
       setEmail("");
       setName("");
       await refresh();
@@ -181,6 +225,18 @@ export function TeamManager({
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setInviting(false);
+    }
+  }
+
+  /** Copies the `/join/<id>` link when the email could not be delivered. */
+  async function copyInviteLink() {
+    if (!lastInvite) return;
+
+    try {
+      await navigator.clipboard.writeText(lastInvite.link);
+      toast.success("Invite link copied");
+    } catch {
+      toast.error("Could not copy the link. Select it and copy by hand.");
     }
   }
 
@@ -297,11 +353,43 @@ export function TeamManager({
               Send invite
             </Button>
             <p className="text-xs text-gray-500">
-              We do not email anyone yet — share the address with your teammate
-              and they join the moment they sign up with it.
+              We email them an invite link. They open it, set a password and land
+              in your dashboard as staff — they must sign up with the address you
+              type here.
             </p>
           </div>
         </form>
+
+        {lastInvite && (
+          <div
+            role="status"
+            className={`mt-4 rounded-lg border p-4 text-sm ${
+              lastInvite.emailed
+                ? "border-success/30 bg-success/5 text-gray-700"
+                : "border-amber-300 bg-amber-50 text-amber-900"
+            }`}
+          >
+            <p>
+              {lastInvite.emailed
+                ? "Invitation emailed. They open the link, choose a password and they are in."
+                : "The invitation was saved, but we could not send the email. Copy this link and send it to them yourself."}
+            </p>
+            <p className="mt-2 break-all text-xs text-gray-600">
+              {lastInvite.link}
+            </p>
+            {!lastInvite.emailed && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="mt-3"
+                onClick={copyInviteLink}
+              >
+                Copy invite link
+              </Button>
+            )}
+          </div>
+        )}
       </Card>
 
       <Card>
