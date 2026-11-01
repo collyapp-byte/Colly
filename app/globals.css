@@ -43,6 +43,29 @@ body {
   color: #111827;
 }
 
+/* ---------------------------------------------------------------------------
+   Native scrolling contract.
+
+   Colly hijacks no scroll input. There is no `scroll-behavior: smooth` (a
+   smooth anchor jump is fine, a smoothed page is not) and no smooth-scroll
+   library: Lenis used to tween every marketing wheel event over 1.2s, which a
+   trackpad — a hundred small wheel events per gesture — reads as lag followed
+   by acceleration. Momentum, rubber-banding and precision now come from the
+   operating system, which is the only thing that knows whether the finger is
+   on a wheel or a glass panel.
+
+   The one exception is deliberate and scoped: the inbox thread follows a new
+   message with `scrollIntoView()` (app/(dashboard)/conversations/[id]).
+
+   A global `touch-action: pan-y` is NOT set here on purpose — it would also
+   disable pinch-zoom for every visitor. Any container that needs it sets it
+   itself.
+--------------------------------------------------------------------------- */
+html,
+body {
+  scroll-behavior: auto;
+}
+
 /* Mobile bottom navigation respects the device safe area. */
 .pb-safe {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));

@@ -23,7 +23,7 @@ import { industrySlug, type Industry } from "@/lib/business";
  *
  * `place` localizes the section heading for the programmatic place pages
  * (`/locations/[city]` and `/countries/[country]`). Prices do not change per
- * city or country â€” Colly sells one Naira price list everywhere â€” so the prop
+ * city or country — Colly sells one Naira price list everywhere — so the prop
  * only ever touches the copy around the cards.
  */
 type CardTone = "neutral" | "emerald" | "blue";
@@ -74,7 +74,7 @@ export function Pricing({
   place?: string;
   /**
    * Vertical landing pages (`/hotels`) pass their industry so the plan buttons
-   * keep it through signup â€” the signup form posts it as a hidden field and the
+   * keep it through signup — the signup form posts it as a hidden field and the
    * new Business row starts in that vertical (hotel = receptionist persona).
    */
   industry?: Industry;
@@ -84,7 +84,7 @@ export function Pricing({
   const plans: PlanCard[] = [
     {
       name: "Free",
-      price: "â‚¦0",
+      price: formatNaira(0),
       desc: "Free forever. No card required.",
       credits: FREE_PLAN_LIMITS.credits,
       bonusCredits: 0,

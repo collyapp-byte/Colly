@@ -43,7 +43,8 @@ jobs:
       - name: Unit tests
         run: npm test
 
-# `npm run build` is deliberately not run here: the Next.js build evaluates
-# server modules that need real Supabase/Paystack/DeepSeek configuration, which
-# is not available to pull requests from forks. Run it locally (or in the
+# `npm run build` is deliberately not run here: it applies pending migrations
+# (`prisma migrate deploy`) against a real database and then evaluates server
+# modules that need real Supabase/Paystack/DeepSeek configuration, neither of
+# which is available to pull requests from forks. Run it locally (or in the
 # deploy pipeline, where the secrets exist) before shipping.

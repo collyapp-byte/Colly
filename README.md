@@ -46,7 +46,8 @@ a fresh account — new accounts start on the permanent Free plan (80 credits / 
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Dev server |
-| `npm run build` / `npm run start` | Production build and serve |
+| `npm run build` / `npm run start` | Apply pending migrations, build, then serve |
+| `npm run db:deploy` | Apply pending Prisma migrations only (the build runs this first) |
 | `npm run lint` | ESLint (must be clean) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Node test runner via `tsx` (`tests/*.test.ts`) |
@@ -110,8 +111,8 @@ is derived from it and asserted by `tests/plans.test.ts`.
 - `tests/seo.test.ts` — sitemap/robots/canonicals and the homepage structured data.
 
 `.github/workflows/ci.yml` runs lint → typecheck → test on every push and pull request.
-`npm run build` is not part of CI because it needs real provider credentials; run it
-before deploying.
+`npm run build` is not part of CI because it applies migrations against a real database
+and then needs real provider credentials; run it before deploying.
 
 ## Operations
 

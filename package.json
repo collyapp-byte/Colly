@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx prisma generate && next build",
+    "build": "npx prisma migrate deploy && npx prisma generate && next build",
     "start": "next start",
+    "db:deploy": "npx prisma migrate deploy",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
@@ -16,7 +17,6 @@
     "@hello-pangea/dnd": "^18.0.1",
     "@prisma/client": "^6.19.3",
     "@react-pdf/renderer": "^4.9.0",
-    "@studio-freight/lenis": "^1.0.42",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "lucide-react": "^1.52.0",

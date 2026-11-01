@@ -66,6 +66,16 @@ export function formatMessageTime(input: Date | string | number): string {
 }
 
 /**
+ * The Naira sign, written as an escape on purpose. A literal "₦" survives only
+ * as long as every editor that touches this file writes UTF-8 — a cp1252 save
+ * reads the three UTF-8 bytes E2 82 A6 back as `U+00E2 U+201A U+00A6`, which is
+ * exactly how the marketing pricing card once shipped a broken price for the
+ * Free plan. Money is formatted through this one constant, so a mis-encoded
+ * save breaks a test (`tests/encoding.test.ts`) instead of a price on the page.
+ */
+const NAIRA_SIGN = "\u20A6";
+
+/**
  * Formats an amount as Nigerian Naira, e.g. 145000 -> "₦145,000". Kobo (the two
  * decimal places) are only shown when the amount actually has them.
  */
@@ -73,7 +83,7 @@ export function formatNaira(amount: number): string {
   const value = Number.isFinite(amount) ? amount : 0;
   const hasKobo = Math.round(value * 100) % 100 !== 0;
 
-  return `₦${value.toLocaleString("en-NG", {
+  return `${NAIRA_SIGN}${value.toLocaleString("en-NG", {
     minimumFractionDigits: hasKobo ? 2 : 0,
     maximumFractionDigits: hasKobo ? 2 : 0,
   })}`;
