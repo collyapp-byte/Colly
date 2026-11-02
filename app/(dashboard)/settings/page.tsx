@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
 import { CheckCircle2, CircleAlert, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,13 +23,15 @@ const TONE_OPTIONS = [
     label: "Strict Professional English",
     description: "Formal, no slang, complete sentences",
   },
-];
+] as const;
+
+type ToneValue = (typeof TONE_OPTIONS)[number]["value"];
 
 type FormState = {
   businessName: string;
   phone: string;
   operatingHours: string;
-  tone: "friendlyPidgin" | "strictProfessional";
+  tone: ToneValue;
 };
 
 function toFormState(business: any): FormState {
@@ -37,7 +39,7 @@ function toFormState(business: any): FormState {
     businessName: business.name,
     phone: business.phone,
     operatingHours: business.businessHours ?? "",
-    tone: business.tone || "strictProfessional",
+    tone: (business.tone as ToneValue) || "strictProfessional",
   };
 }
 
@@ -48,7 +50,7 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("business");
+  const [activeTab, setActiveTab] = useState<"business" | "ai" | "billing">("business");
 
   const isOwner = role !== "STAFF";
 
@@ -201,7 +203,7 @@ export default function SettingsPage() {
       </div>
 
       {activeTab === "business" && (
-        <div className="mt-6 space-y-6">
+        <form id="settings-form" onSubmit={handleSubmit} className="mt-6 space-y-6">
           {/* BUSINESS PROFILE */}
           <section className={SECTION_CLASS}>
             <h2 className={HEADING_CLASS}>BUSINESS PROFILE</h2>
@@ -301,7 +303,7 @@ export default function SettingsPage() {
               Save Changes
             </Button>
           </div>
-        </div>
+        </form>
       )}
 
       {activeTab === "ai" && (

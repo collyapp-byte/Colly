@@ -259,14 +259,14 @@ export function OnboardingWizard({ onClose, onComplete }: { onClose: () => void;
               <div className="mt-6 flex gap-3">
                 <Button
                   variant="primary"
-                  size="lg"
+                  size="md"
                   className="flex-1"
                   onClick={saveProduct}
                   loading={state.isLoading}
                 >
                   Save & Continue
                 </Button>
-                <Button variant="secondary" size="lg" onClick={onClose}>
+                <Button variant="secondary" size="md" onClick={onClose}>
                   Skip for now
                 </Button>
               </div>
@@ -299,7 +299,7 @@ export function OnboardingWizard({ onClose, onComplete }: { onClose: () => void;
                     </p>
                     <Button
                       variant="primary"
-                      size="lg"
+                      size="md"
                       className="w-full"
                       onClick={connectTelegram}
                       loading={state.isLoading}
@@ -329,7 +329,7 @@ export function OnboardingWizard({ onClose, onComplete }: { onClose: () => void;
                   <p className="text-sm text-green-600 mt-1">@YourBusinessBot is now linked to Colly.</p>
                   <Button
                     variant="primary"
-                    size="lg"
+                    size="md"
                     className="mt-4 w-full sm:w-auto"
                     onClick={() => setState((s) => ({ ...s, currentStep: "test-chat" }))}
                   >
@@ -391,7 +391,7 @@ export function OnboardingWizard({ onClose, onComplete }: { onClose: () => void;
                   />
                   <Button
                     variant="primary"
-                    size="lg"
+                    size="md"
                     onClick={sendTestMessage}
                     loading={state.isLoading}
                     disabled={!state.testMessage.trim()}
@@ -403,7 +403,7 @@ export function OnboardingWizard({ onClose, onComplete }: { onClose: () => void;
                 <div className="text-center">
                   <Button
                     variant="primary"
-                    size="lg"
+                    size="md"
                     className="w-full sm:w-auto"
                     onClick={completeOnboarding}
                     loading={state.isLoading}
@@ -433,10 +433,10 @@ export function OnboardingWizard({ onClose, onComplete }: { onClose: () => void;
                 Your AI assistant is now live and ready to sell <strong>{state.product.name}</strong> for <strong>₦{state.product.price.toLocaleString()}</strong> on Telegram.
               </p>
               <div className="mt-6 flex gap-3 justify-center">
-                <Button variant="primary" size="lg" onClick={completeOnboarding} loading={state.isLoading}>
+                <Button variant="primary" size="md" onClick={completeOnboarding} loading={state.isLoading}>
                   Go to Dashboard
                 </Button>
-                <Button variant="secondary" size="lg" onClick={onClose}>
+                <Button variant="secondary" size="md" onClick={onClose}>
                   Maybe later
                 </Button>
               </div>
