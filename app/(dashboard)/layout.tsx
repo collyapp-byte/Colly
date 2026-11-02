@@ -1,9 +1,9 @@
-import { connection } from "../../lib/db";
+import { connection } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
-import { requireSiteAccess } from "../../lib/site-access";
+import { requireSiteAccess } from "@/lib/site-access";
 import { prisma } from "@/lib/prisma";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { Footer } from "../../components/footer";
+import { Footer } from "@/components/footer";
 import { OnboardingWizard } from "@/components/onboarding";
 
 interface LayoutProps {
