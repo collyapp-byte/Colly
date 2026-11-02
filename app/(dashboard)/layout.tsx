@@ -1,9 +1,9 @@
-import { connection } from "@/lib/db";
+﻿import { connection } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { requireSiteAccess } from "@/lib/site-access";
+import { requireSiteAccess } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { Footer } from "@/components/footer";
+import { Footer } from "@/components/ui/footer";
 import { OnboardingWizard } from "@/components/onboarding";
 
 interface LayoutProps {
@@ -16,22 +16,11 @@ export default async function DashboardLayout({ children }: LayoutProps) {
   const user = await requireAuth();
   await requireSiteAccess(user.businessId);
 
-  const business = await prisma.business.findUnique({
-    where: { id: user.businessId },
-    select: {
-      telegramBotToken: true,
-      onboardingCompleted: true,
-      products: { take: 1, select: { id: true } },
-    },
-  });
-
-  const needsOnboarding = business && (!business.onboardingCompleted || !business.products.length);
-
   return (
     <DashboardShell>
       {children}
       <Footer />
-      {needsOnboarding && <OnboardingWizard onClose={() => {}} onComplete={() => {}} />}
+      <OnboardingWizard onClose={() => {}} onComplete={() => {}} />
     </DashboardShell>
   );
 }
