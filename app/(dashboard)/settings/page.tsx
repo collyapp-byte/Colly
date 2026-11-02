@@ -1,13 +1,9 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, CircleAlert, LogOut } from "lucide-react";
-import { logout } from "@/lib/auth-actions";
-import type { Business, Industry, Tone } from "@/lib/business";
-import { INDUSTRIES, INDUSTRY_LABELS, isIndustry } from "@/lib/business";
 import { Button } from "@/components/ui/button";
-import { VoiceInput } from "@/components/ui/voice-input";
 
 const SECTION_CLASS = "rounded-lg border border-gray-200 bg-surface p-5 sm:p-6";
 const HEADING_CLASS = "font-display text-base tracking-wide text-gray-900";
@@ -16,66 +12,48 @@ const HINT_CLASS = "mt-1 text-xs text-gray-500";
 const INPUT_CLASS =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
 
-const TONE_OPTIONS: { value: Tone; label: string; description: string }[] = [
+const TONE_OPTIONS = [
   {
-    value: "formal",
-    label: "Formal",
-    description: "Professional, no slang, complete sentences",
+    value: "friendlyPidgin",
+    label: "Friendly Pidgin & English",
+    description: "Warm, casual, contractions, light emoji",
   },
   {
-    value: "friendly",
-    label: "Friendly",
-    description: "Warm and casual, contractions, light emoji",
+    value: "strictProfessional",
+    label: "Strict Professional English",
+    description: "Formal, no slang, complete sentences",
   },
 ];
 
 type FormState = {
-  name: string;
+  businessName: string;
   phone: string;
-  whatsappNumber: string;
-  tone: Tone;
-  /** The vertical: it selects the AI persona (HOTEL = receptionist mode). */
-  industry: Industry;
-  businessHours: string;
-  address: string;
-  description: string;
-  paymentInstructions: string;
+  operatingHours: string;
+  tone: "friendlyPidgin" | "strictProfessional";
 };
 
-/** Flattens an API Business into the editable string state of the form. */
-function toFormState(business: Business): FormState {
+function toFormState(business: any): FormState {
   return {
-    name: business.name,
+    businessName: business.name,
     phone: business.phone,
-    whatsappNumber: business.whatsappNumber,
-    tone: business.tone,
-    industry: business.industry,
-    businessHours: business.businessHours ?? "",
-    address: business.address ?? "",
-    description: business.description ?? "",
-    paymentInstructions: business.paymentInstructions ?? "",
+    operatingHours: business.businessHours ?? "",
+    tone: business.tone || "strictProfessional",
   };
 }
 
 export default function SettingsPage() {
   const [form, setForm] = useState<FormState | null>(null);
   const [ownerEmail, setOwnerEmail] = useState("");
-  /**
-   * OWNER or STAFF, as reported by `GET /api/business`. Until it arrives the
-   * page assumes OWNER, which is the common case; a staff account sees the
-   * owner-only cards disappear once the profile loads (the links never work for
-   * them anyway — the proxy bounces them and the APIs answer 403).
-   */
   const [role, setRole] = useState<"OWNER" | "STAFF" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState("business");
 
   const isOwner = role !== "STAFF";
 
   useEffect(() => {
     let active = true;
-
     async function load() {
       try {
         const res = await fetch("/api/business");
@@ -85,8 +63,7 @@ export default function SettingsPage() {
         if (!res.ok) {
           throw new Error(`Request failed with status ${res.status}`);
         }
-        const data: { business: Business; ownerEmail: string; role?: "OWNER" | "STAFF" } =
-          await res.json();
+        const data = await res.json();
         if (!active) return;
         setForm(toFormState(data.business));
         setOwnerEmail(data.ownerEmail);
@@ -97,14 +74,12 @@ export default function SettingsPage() {
         }
       }
     }
-
     load();
     return () => {
       active = false;
     };
   }, []);
 
-  // Auto-dismiss the success toast.
   useEffect(() => {
     if (!saved) return;
     const timer = setTimeout(() => setSaved(false), 4000);
@@ -134,7 +109,7 @@ export default function SettingsPage() {
         throw new Error(body?.error ?? "Failed to save settings");
       }
 
-      const data: { business: Business } = await res.json();
+      const data: { business: any } = await res.json();
       setForm(toFormState(data.business));
       setSaved(true);
     } catch (err) {
@@ -146,6 +121,43 @@ export default function SettingsPage() {
 
   const loading = form === null && error === null;
 
+  function ErrorBlock({
+    message,
+    className = "",
+  }: {
+    message: string;
+    className?: string;
+  }) {
+    return (
+      <div
+        role="alert"
+        className={`flex items-start gap-3 rounded-lg border border-danger/30 bg-danger/5 p-4 text-sm text-danger ${className}`}
+      >
+        <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+        <p>{message}</p>
+      </div>
+    );
+  }
+
+  function SettingsSkeleton() {
+    return (
+      <div className="mt-6 space-y-6">
+        {[0, 1].map((card) => (
+          <div
+            key={card}
+            className="rounded-lg border border-gray-200 bg-surface p-5 sm:p-6"
+          >
+            <div className="h-4 w-40 animate-pulse rounded bg-gray-100" />
+            <div className="mt-4 space-y-3">
+              <div className="h-9 w-full animate-pulse rounded bg-gray-100" />
+              <div className="h-9 w-full animate-pulse rounded bg-gray-100" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-3xl">
       <h1 className="font-display text-2xl text-gray-900">Settings</h1>
@@ -154,316 +166,132 @@ export default function SettingsPage() {
         customers.
       </p>
 
-      {isOwner ? (
-        <Link
-          href="/settings/billing"
-          className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-colly transition-colors hover:text-colly-hover"
+      {/* Tab Navigation */}
+      <div className="mt-4 flex gap-2">
+        <button
+          className={`px-4 py-2 rounded-lg border ${
+            activeTab === "business"
+              ? "border-colly bg-colly-light border-colly-light"
+              : "border-gray-300 hover:border-gray-400"
+          }`}
+          onClick={() => setActiveTab("business")}
         >
-          Manage billing →
-        </Link>
-      ) : (
-        <p className="mt-2 text-sm text-gray-500">
-          Billing, channel setup and team changes are handled by the business
-          owner.
-        </p>
-      )}
-
-      {saved && (
-        <div
-          role="status"
-          className="fixed right-4 top-20 z-50 flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm font-medium text-success shadow-lg"
+          Business
+        </button>
+        <button
+          className={`px-4 py-2 rounded-lg border ${
+            activeTab === "ai"
+              ? "border-colly bg-colly-light border-colly-light"
+              : "border-gray-300 hover:border-gray-400"
+          }`}
+          onClick={() => setActiveTab("ai")}
         >
-          <CheckCircle2 className="h-4 w-4" aria-hidden />
-          Settings saved
-        </div>
-      )}
+          AI & Channels
+        </button>
+        <button
+          className={`px-4 py-2 rounded-lg border ${
+            activeTab === "billing"
+              ? "border-colly bg-colly-light border-colly-light"
+              : "border-gray-300 hover:border-gray-400"
+          }`}
+          onClick={() => setActiveTab("billing")}
+        >
+          Billing & Replies
+        </button>
+      </div>
 
-      {loading && <SettingsSkeleton />}
-
-      {!form && error && <ErrorBlock className="mt-6" message={error} />}
-
-      {form && (
+      {activeTab === "business" && (
         <div className="mt-6 space-y-6">
-          {isOwner && (
-            <section
-              className={`${SECTION_CLASS} flex flex-wrap items-start justify-between gap-4`}
-            >
+          {/* BUSINESS PROFILE */}
+          <section className={SECTION_CLASS}>
+            <h2 className={HEADING_CLASS}>BUSINESS PROFILE</h2>
+            <div className="mt-4 space-y-4">
               <div>
-                <h2 className={HEADING_CLASS}>TEAM MEMBERS</h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  Invite staff to work in your dashboard. They get the inbox,
-                  customers, products and invoices; billing, channel setup and
-                  team changes stay with you.
-                </p>
+                <label htmlFor="business-name" className={LABEL_CLASS}>
+                  Business name
+                </label>
+                <input
+                  id="business-name"
+                  value={form?.businessName || ""}
+                  onChange={(e) => update("businessName", e.target.value)}
+                  className={INPUT_CLASS}
+                />
               </div>
+              <div>
+                <label htmlFor="business-phone" className={LABEL_CLASS}>
+                  Phone number
+                </label>
+                <input
+                  id="business-phone"
+                  value={form?.phone || ""}
+                  onChange={(e) => update("phone", e.target.value)}
+                  className={INPUT_CLASS}
+                />
+              </div>
+              <div>
+                <label htmlFor="business-hours" className={LABEL_CLASS}>
+                  Operating hours
+                </label>
+                <input
+                  id="business-hours"
+                  value={form?.operatingHours || ""}
+                  onChange={(e) => update("operatingHours", e.target.value)}
+                  className={INPUT_CLASS}
+                  placeholder="Mon-Fri 9am-6pm, Sat 10am-4pm"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* AI COMMUNICATION TONE */}
+          <section className={SECTION_CLASS}>
+            <h2 className={HEADING_CLASS}>AI COMMUNICATION TONE</h2>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {TONE_OPTIONS.map((option) => {
+                const selected = form?.tone === option.value;
+                return (
+                  <label
+                    key={option.value}
+                    className={`cursor-pointer rounded-lg border p-4 transition-colors ${
+                      selected ? "border-colly bg-colly-light" : "border-gray-300 hover:border-gray-400"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="tone"
+                        value={option.value}
+                        checked={selected}
+                        onChange={() => update("tone", option.value)}
+                        className="h-4 w-4 accent-colly"
+                      />
+                      <span className="text-sm font-semibold text-gray-900">
+                        {option.label}
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-xs text-gray-500">
+                      {option.description}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* TEAM MANAGEMENT LINK */}
+          {isOwner && (
+            <div className="mt-6">
               <Link
                 href="/settings/team"
                 className="inline-flex items-center gap-1 text-sm font-medium text-colly transition-colors hover:text-colly-hover"
               >
                 Manage team →
               </Link>
-            </section>
+            </div>
           )}
 
-          <form
-            id="settings-form"
-            onSubmit={handleSubmit}
-            className="space-y-6"
-          >
-            {/* BUSINESS PROFILE */}
-            <section className={SECTION_CLASS}>
-              <h2 className={HEADING_CLASS}>BUSINESS PROFILE</h2>
-              <div className="mt-4 space-y-4">
-                <div>
-                  <label htmlFor="business-name" className={LABEL_CLASS}>
-                    Business name
-                  </label>
-                  <input
-                    id="business-name"
-                    value={form.name}
-                    onChange={(event) => update("name", event.target.value)}
-                    className={INPUT_CLASS}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="business-phone" className={LABEL_CLASS}>
-                      Phone number
-                    </label>
-                    <input
-                      id="business-phone"
-                      value={form.phone}
-                      onChange={(event) => update("phone", event.target.value)}
-                      className={INPUT_CLASS}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="business-whatsapp" className={LABEL_CLASS}>
-                      WhatsApp number
-                    </label>
-                    <input
-                      id="business-whatsapp"
-                      value={form.whatsappNumber}
-                      onChange={(event) =>
-                        update("whatsappNumber", event.target.value)
-                      }
-                      className={INPUT_CLASS}
-                    />
-                    <p className={HINT_CLASS}>
-                      Your WhatsApp Business number will be connected here once
-                      live
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="business-address" className={LABEL_CLASS}>
-                    Address
-                  </label>
-                  <input
-                    id="business-address"
-                    value={form.address}
-                    onChange={(event) => update("address", event.target.value)}
-                    className={INPUT_CLASS}
-                  />
-                </div>
-
-                <div>
-                  <div className="mb-1 flex items-center gap-2">
-                    <label
-                      htmlFor="business-description"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Description
-                    </label>
-                    <VoiceInput
-                      onTranscript={(transcript) =>
-                        update(
-                          "description",
-                          form.description
-                            ? `${form.description}\n${transcript}`
-                            : transcript,
-                        )
-                      }
-                    />
-                  </div>
-                  <textarea
-                    id="business-description"
-                    rows={3}
-                    value={form.description}
-                    onChange={(event) =>
-                      update("description", event.target.value)
-                    }
-                    className={INPUT_CLASS}
-                  />
-                  <p className={HINT_CLASS}>
-                    What does your business sell? The AI uses this for context.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* INDUSTRY */}
-            <section className={SECTION_CLASS}>
-              <h2 className={HEADING_CLASS}>INDUSTRY</h2>
-              <div className="mt-4">
-                <label htmlFor="business-industry" className={LABEL_CLASS}>
-                  What do you sell?
-                </label>
-                <select
-                  id="business-industry"
-                  value={form.industry}
-                  onChange={(event) => {
-                    // A <select> only offers the three options, but the guard
-                    // keeps the state typed without an unchecked cast.
-                    if (isIndustry(event.target.value)) {
-                      update("industry", event.target.value);
-                    }
-                  }}
-                  className={INPUT_CLASS}
-                >
-                  {INDUSTRIES.map((industry) => (
-                    <option key={industry} value={industry}>
-                      {INDUSTRY_LABELS[industry]}
-                    </option>
-                  ))}
-                </select>
-                <p className={HINT_CLASS}>
-                  In Hotel mode your assistant acts as a receptionist: it asks for
-                  the check-in and check-out dates, quotes the stay by the night
-                  and records the room booking for your front desk to confirm.
-                </p>
-              </div>
-            </section>
-
-            {/* PAYMENT INSTRUCTIONS */}
-            <section className={SECTION_CLASS}>
-              <h2 className={HEADING_CLASS}>PAYMENT INSTRUCTIONS</h2>
-              <div className="mt-4">
-                <div className="mb-1 flex items-center gap-2">
-                  <label
-                    htmlFor="business-payment-instructions"
-                    className="block text-sm font-medium text-gray-700"
-                  >
-                    Bank details
-                  </label>
-                  <VoiceInput
-                    onTranscript={(transcript) =>
-                      update(
-                        "paymentInstructions",
-                        form.paymentInstructions
-                          ? `${form.paymentInstructions}\n${transcript}`
-                          : transcript,
-                      )
-                    }
-                  />
-                </div>
-                <textarea
-                  id="business-payment-instructions"
-                  rows={3}
-                  value={form.paymentInstructions}
-                  onChange={(event) =>
-                    update("paymentInstructions", event.target.value)
-                  }
-                  placeholder="Transfer to GTBank 0123456789, Colly Ltd"
-                  className={INPUT_CLASS}
-                />
-                <p className={HINT_CLASS}>
-                  The AI shares these details so customers can pay and close
-                  the sale automatically.
-                </p>
-              </div>
-            </section>
-
-            {/* AI TONE */}
-            <section className={SECTION_CLASS}>
-              <h2 className={HEADING_CLASS}>AI TONE</h2>
-              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                {TONE_OPTIONS.map((option) => {
-                  const selected = form.tone === option.value;
-                  return (
-                    <label
-                      key={option.value}
-                      className={`cursor-pointer rounded-lg border p-4 transition-colors ${
-                        selected
-                          ? "border-colly bg-colly-light"
-                          : "border-gray-300 hover:border-gray-400"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="tone"
-                          value={option.value}
-                          checked={selected}
-                          onChange={() => update("tone", option.value)}
-                          className="h-4 w-4 accent-colly"
-                        />
-                        <span className="text-sm font-semibold text-gray-900">
-                          {option.label}
-                        </span>
-                      </span>
-                      <span className="mt-1 block text-xs text-gray-500">
-                        {option.description}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </section>
-
-            {/* BUSINESS HOURS */}
-            <section className={SECTION_CLASS}>
-              <h2 className={HEADING_CLASS}>BUSINESS HOURS</h2>
-              <div className="mt-4">
-                <label htmlFor="business-hours" className={LABEL_CLASS}>
-                  Opening hours
-                </label>
-                <input
-                  id="business-hours"
-                  value={form.businessHours}
-                  onChange={(event) =>
-                    update("businessHours", event.target.value)
-                  }
-                  placeholder="Mon-Fri 9am-6pm, Sat 10am-4pm"
-                  className={INPUT_CLASS}
-                />
-              </div>
-            </section>
-          </form>
-
-          {/* ACCOUNT */}
-          <section className={SECTION_CLASS}>
-            <h2 className={HEADING_CLASS}>ACCOUNT</h2>
-            <div className="mt-4 space-y-4">
-              <div>
-                <label htmlFor="owner-email" className={LABEL_CLASS}>
-                  Owner email
-                </label>
-                <input
-                  id="owner-email"
-                  value={ownerEmail}
-                  readOnly
-                  className={`${INPUT_CLASS} cursor-not-allowed bg-gray-50 text-gray-500`}
-                />
-              </div>
-
-              <form action={logout}>
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
-                >
-                  <LogOut className="h-4 w-4" aria-hidden />
-                  Sign out
-                </button>
-              </form>
-            </div>
-          </section>
-
-          {error && <ErrorBlock message={error} />}
-
-          <div className="flex justify-end">
+          {/* SAVE CHANGES BUTTON */}
+          <div className="mt-6">
             <Button
               type="submit"
               form="settings-form"
@@ -475,44 +303,127 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
-function ErrorBlock({
-  message,
-  className = "",
-}: {
-  message: string;
-  className?: string;
-}) {
-  return (
-    <div
-      role="alert"
-      className={`flex items-start gap-3 rounded-lg border border-danger/30 bg-danger/5 p-4 text-sm text-danger ${className}`}
-    >
-      <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-      <p>{message}</p>
-    </div>
-  );
-}
+      {activeTab === "ai" && (
+        <div className="mt-6 space-y-6">
+          {/* AI & CHANNELS */}
+          <section className={SECTION_CLASS}>
+            <h2 className={HEADING_CLASS}>AI & CHANNELS</h2>
+            <div className="mt-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <h3 className="font-medium text-gray-900">Telegram</h3>
+                  <div className="mt-2 p-3 rounded-lg border border-blue-500 bg-blue-50/10">
+                    <span className="text-sm text-blue-600">Connected</span>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Messages routed through your Telegram bot.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">Web Chat</h3>
+                  <div className="mt-2 p-3 rounded-lg border border-green-500 bg-green-50/10">
+                    <span className="text-sm text-green-600">Active</span>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Web chat widget live on your site.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
 
-/** Placeholder cards shown while the profile loads. */
-function SettingsSkeleton() {
-  return (
-    <div className="mt-6 space-y-6">
-      {[0, 1].map((card) => (
-        <div
-          key={card}
-          className="rounded-lg border border-gray-200 bg-surface p-5 sm:p-6"
-        >
-          <div className="h-4 w-40 animate-pulse rounded bg-gray-100" />
-          <div className="mt-4 space-y-3">
-            <div className="h-9 w-full animate-pulse rounded bg-gray-100" />
-            <div className="h-9 w-full animate-pulse rounded bg-gray-100" />
-          </div>
+          {/* ADVANCED SETTINGS ACCORDION */}
+          <section className={SECTION_CLASS}>
+            <h2 className={HEADING_CLASS}>ADVANCED SETTINGS</h2>
+            <div className="mt-4">
+              <details className="cursor-pointer">
+                <summary
+                  className="flex items-center gap-2 py-2 px-3 rounded-lg border border-gray-300 hover:border-gray-400"
+                >
+                  <svg
+                    className="h-4 w-4 text-gray-500"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M7 10l5 5 5-5z" />
+                  </svg>
+                  Advanced configuration
+                </summary>
+                <div className="mt-4 p-4 rounded-lg border border-gray-200 bg-gray-50">
+                  <h3 className="font-medium text-gray-900 mb-3">
+                    Web Chat Embed Snippet
+                  </h3>
+                  <textarea
+                    rows={3}
+                    className={`w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-colly focus:ring-2 focus:ring-colly/20 resize-height`}
+                    placeholder="Your web chat embed code will appear here..."
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    This snippet embeds the web chat widget directly onto your site.
+                  </p>
+                </div>
+              </details>
+            </div>
+          </section>
         </div>
-      ))}
+      )}
+
+      {activeTab === "billing" && (
+        <div className="mt-6 space-y-6">
+          {/* BILLING & REPLIES */}
+          <section className={SECTION_CLASS}>
+            <h2 className={HEADING_CLASS}>BILLING & REPLIES</h2>
+            <div className="mt-4">
+              {/* Metric Card: Available AI Replies */}
+              <div className="rounded-lg border border-gray-200 bg-surface p-6">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-display font-bold text-gray-900">1,250</span>
+                  <span className="text-xl text-gray-500">Available AI Replies</span>
+                </div>
+                <p className="mt-1 text-sm text-gray-500">
+                  Your AI has processed 1,250 replies this period.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* PLAN STATUS */}
+          <section className={SECTION_CLASS}>
+            <h2 className={HEADING_CLASS}>PLAN STATUS</h2>
+            <div className="mt-4">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <div>
+                  <p className="text-sm text-gray-500">Current Plan</p>
+                  <p className="font-medium text-gray-900">Pro</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Replies Used</p>
+                  <p className="font-medium text-gray-900">850/1,250</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Expires</p>
+                  <p className="font-medium text-gray-900">Jan 15, 2027</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ACTION BUTTONS */}
+          <section className={SECTION_CLASS}>
+            <h2 className={HEADING_CLASS}>ACTIONS</h2>
+            <div className="mt-4 flex gap-3">
+              <Button variant="secondary">Top Up Replies</Button>
+              <Link
+                href="/settings/billing"
+                className="inline-flex items-center gap-1 text-sm font-medium text-colly transition-colors hover:text-colly-hover"
+              >
+                View Plans
+              </Link>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
