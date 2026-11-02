@@ -226,6 +226,11 @@ export function totalAvailableCredits(wallet: CreditWallet): number {
   return wallet.planCredits + wallet.topUpCredits;
 }
 
+export function totalAvailableReplies(wallet: CreditWallet): number {
+  const totalCredits = totalAvailableCredits(wallet);
+  return Math.floor(totalCredits / REPLY_CREDIT_COSTS.standard);
+}
+
 /**
  * Splits one reply's cost across the wallet: the monthly allowance is spent
  * first and top-ups only cover the remainder. `chargeAiReply` debits the two

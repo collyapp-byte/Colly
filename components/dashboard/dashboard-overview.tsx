@@ -176,17 +176,17 @@ export function DashboardOverview({ status }: { status: DashboardStatus }) {
 
   const stats: Stat[] = [
     {
+      label: "Available AI Replies", 
+      value: "—",
+      icon: MessageSquare,
+      href: "/credits",
+      title: "Coming soon",
+    },
+    {
       label: "Today's Sales",
       value: formatNaira(today?.total ?? 0),
       icon: Wallet,
       href: "/sales",
-    },
-    {
-      label: "Messages Handled",
-      value: "—",
-      icon: MessageSquare,
-      href: "/conversations",
-      title: "Coming soon",
     },
     {
       label: "Active Conversations",
