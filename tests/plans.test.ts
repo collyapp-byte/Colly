@@ -16,6 +16,7 @@ import {
   isPlanTierName,
   splitCreditCost,
   totalAvailableCredits,
+  totalAvailableReplies,
 } from "../lib/plans";
 
 const naira = (amount: number) => amount.toLocaleString("en-US");
