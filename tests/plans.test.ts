@@ -8,6 +8,7 @@ import {
   bonusCreditsBadge,
   creditReplyCalculator,
   getAiReplyCreditCost,
+  getAvailableAiReplies,
   getCreditPrice,
   getMonthlyCredits,
   getPlanLimits,
@@ -135,6 +136,29 @@ test("plan credits are spent before top-ups, never the other way round", () => {
   });
 
   assert.equal(totalAvailableCredits({ planCredits: 23_000, topUpCredits: 3_000 }), 26_000);
+});
+
+test("the unified 'Available AI Replies' metric combines both buckets", () => {
+  // Standard channel (Telegram/Discord/Web Chat, 5 credits per reply)
+  assert.equal(
+    getAvailableAiReplies({ planCredits: 23_000, topUpCredits: 3_000 }, "telegram"),
+    Math.floor(26_000 / 5),
+  );
+  // WhatsApp channel (80 credits per reply)
+  assert.equal(
+    getAvailableAiReplies({ planCredits: 23_000, topUpCredits: 3_000 }, "whatsapp"),
+    Math.floor(26_000 / 80),
+  );
+  // Null channel defaults to standard cost
+  assert.equal(
+    getAvailableAiReplies({ planCredits: 80, topUpCredits: 0 }, null),
+    Math.floor(80 / 5),
+  );
+  // Manual replies are always free, so the metric is Infinity
+  assert.equal(
+    getAvailableAiReplies({ planCredits: 100, topUpCredits: 0 }, "manual"),
+    Infinity,
+  );
 });
 
 test("prices, limits and fallbacks resolve without throwing", () => {
