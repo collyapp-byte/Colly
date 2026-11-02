@@ -1,6 +1,6 @@
-﻿import { connection } from "next/server";
+import { connection } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
-import { requireSiteAccess } from "@/lib/auth-guards";
+import { requireSiteAccess } from "@/lib/site-access";
 import { prisma } from "@/lib/prisma";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { Footer } from "@/components/ui/footer";
