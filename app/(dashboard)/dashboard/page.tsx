@@ -1,4 +1,3 @@
-export const instant = false;
 import { connection } from "next/server";
 
 import { requireAuth } from "@/lib/auth";

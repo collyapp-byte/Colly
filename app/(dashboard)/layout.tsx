@@ -1,3 +1,4 @@
+export const instant = false;
 import { connection } from "next/server";
 import { requireAuth } from "@/lib/auth";
 // import { requireSiteAccess } from "@/lib/site-access"; // Commented out - file not found
