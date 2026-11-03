@@ -24,8 +24,6 @@ export function Hero({
   ctaLabel?: string;
   secondaryHref?: string;
   secondaryLabel?: string;
-  imageSrc?: string;
-  imageAlt?: string;
   footnote?: string;
 } = {}) {
   
