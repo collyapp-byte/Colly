@@ -13,8 +13,6 @@ export function Hero({
   ctaLabel = "Start Free",
   secondaryHref,
   secondaryLabel,
-  imageSrc,
-  imageAlt,
   footnote = "No credit card required · 80 free credits",
 }: {
   place?: string;
