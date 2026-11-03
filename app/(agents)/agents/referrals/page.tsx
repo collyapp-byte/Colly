@@ -1,5 +1,4 @@
 "use client";
-export const instant = false;
 
 import { useState, useSyncExternalStore } from "react";
 import { Check, Copy, TriangleAlert, Users } from "lucide-react";

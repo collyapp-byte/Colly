@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-export const instant = false;
 
 import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";

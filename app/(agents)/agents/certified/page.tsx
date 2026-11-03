@@ -1,5 +1,4 @@
 "use client";
-export const instant = false;
 
 import Link from "next/link";
 import { Award, CheckCircle2, Gift, Wallet } from "lucide-react";

@@ -1,5 +1,4 @@
 "use client";
-export const instant = false;
 
 import {
   useEffect,
