@@ -1,5 +1,5 @@
-export const instant = false;
 "use client";
+export const instant = false;
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";

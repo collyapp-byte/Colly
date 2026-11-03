@@ -1,5 +1,5 @@
-export const instant = false;
 "use client";
+export const instant = false;
 
 import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";

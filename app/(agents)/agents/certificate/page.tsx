@@ -1,5 +1,5 @@
-export const instant = false;
 "use client";
+export const instant = false;
 
 import { useState } from "react";
 import Link from "next/link";
