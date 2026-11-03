@@ -221,8 +221,8 @@ export async function POST(request: Request) {
     // throwing, and the link comes back either way.
     const link = teamInviteLink(member.id);
     const delivery = await sendTeamInviteEmail({
-      businessName: auth.user.businessName,
-      inviterName: auth.user.name,
+      businessName: auth.user.businessName || "Your Business",
+      inviterName: auth.user.name || "The Owner",
       inviteeName: member.name,
       email: member.email,
       link,

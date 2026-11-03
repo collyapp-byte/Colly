@@ -1,4 +1,6 @@
 "use client";
+import faqAnimation from "@/public/faq.json";
+import { EmptyState } from "@/components/ui/empty-state";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { CircleAlert, LoaderCircle, Pencil, Plus, Trash } from "lucide-react";
@@ -7,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/ui/back-button";
 import { VoiceInput } from "@/components/ui/voice-input";
 import { toast } from "sonner";
+
 
 type Faq = {
   id: string;
@@ -301,7 +304,15 @@ export default function FaqsPage() {
       )}
 
       {faqs && faqs.length === 0 && (
-        <p className="mb-6 text-sm text-gray-500">{EMPTY_STATE_TEXT}</p>
+        <div className="mb-8">
+          <EmptyState
+            animationData={faqAnimation}
+            title="Teach your AI common answers."
+            description="You haven't added any FAQs yet. Pick a quick start below, or write your own."
+            actionLabel="Add Custom FAQ"
+            onAction={() => setModal({ kind: "create" })}
+          />
+        </div>
       )}
 
       {faqs && faqs.length > 0 && (

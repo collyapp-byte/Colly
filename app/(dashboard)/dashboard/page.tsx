@@ -68,19 +68,22 @@ export default async function OverviewPage({
   })) > 0;
 
 
-  return (
-    <div className="mx-auto w-full max-w-6xl">
+    return (
+    <div className="mx-auto w-full max-w-6xl space-y-8">
       {denied && <StaffDeniedToast />}
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl">
-          Overview
-        </h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Hello {user.name ? user.name.split(" ")[0] : "there"} 👋
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">Here is what is happening with your business today.</p>
+        </div>
       </div>
 
       <SetupChecklist 
-          hasProducts={productCount > 0} 
-          hasAiReply={hasAiReply} 
-        />
+        hasProducts={productCount > 0} 
+        hasAiReply={hasAiReply} 
+      />
 
       <DashboardOverview
         status={{

@@ -1,174 +1,148 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { ReactNode } from "react";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { PLANS } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
-
-/**
- * Answer-first (BLUF) hero copy.
- *
- * The first screen states what Colly is, who it is for, the live channels and
- * the entry price in one self-contained paragraph, so an AI search engine
- * (ChatGPT, Perplexity, Google AI Overviews) can quote it verbatim without
- * needing the rest of the page. Price and credit figures are read from
- * `lib/plans.ts`, the single source of truth, so this answer can never
- * advertise a price the billing code does not charge.
- *
- * `place` switches the block into its localized form for the programmatic GEO
- * pages — `/locations/[city]` and `/countries/[country]`: the H1 names the place,
- * and the subhead becomes the one-sentence local answer ("Colly AI helps Lagos
- * businesses …" / "Colly AI helps businesses across Nigeria …") so the page is
- * quotable as the answer to "AI sales assistant in <place>". `across` picks the
- * country phrasing; the default (no prop) is the homepage copy.
- */
-const HERO_ANSWER =
-  // Entity type first: "Nigerian software company" is what separates Colly from
-  // the footballer and the industrial equipment company that share the name.
-  "Colly AI is a Nigerian software company that builds an AI sales assistant for businesses. " +
-  "It replies to customers 24/7 on Telegram, Discord, and Web Chat. " +
-  `It costs ${formatNaira(PLANS.green.monthly)}/month for ${PLANS.green.credits.toLocaleString()} credits, with a free tier available. ` +
-  "It handles Pidgin, voice notes, and price negotiations so you never lose a sale.";
+import { CheckCircle2, MessageSquare, Send } from "lucide-react";
 
 export function Hero({
   place,
   across = false,
-  badge = "Colly AI 2.0 is live",
+  badge,
   heading,
   subhead,
   ctaHref = "/signup?role=business",
   ctaLabel = "Start Free",
   secondaryHref,
   secondaryLabel,
-  imageSrc = "/man chatting daytime v.jpg",
-  imageAlt = "Business owner chatting with a customer through Colly AI",
-  footnote = "No SIM card required to start · Cancel anytime",
+  imageSrc,
+  imageAlt,
+  footnote = "No credit card required · 80 free credits",
 }: {
-  /** Place name for a localized page: a city (`Lagos`) or a country (`Nigeria`). */
   place?: string;
-  /**
-   * Say "businesses across <place>" instead of "<place> businesses". A city takes
-   * the possessive form ("Lagos businesses"); a country reads better with
-   * "across", which is how the country pages phrase it.
-   */
   across?: boolean;
-  /** Small pill above the H1. */
   badge?: string;
-  /**
-   * Replaces the whole H1. Used by the industry landing pages (`/hotels`),
-   * whose answer is "AI receptionist", not "AI sales assistant" — a vertical
-   * with its own vocabulary gets its own words, not a keyword-swapped copy of
-   * the homepage.
-   */
   heading?: ReactNode;
-  /** Replaces the answer paragraph under the H1. */
   subhead?: string;
-  /** Primary call to action. Industry pages carry `&industry=…` so signup keeps it. */
   ctaHref?: string;
   ctaLabel?: string;
-  /** Secondary (ghost) button; defaults to the in-page anchor of the variant. */
   secondaryHref?: string;
   secondaryLabel?: string;
-  /** Hero photo. */
   imageSrc?: string;
   imageAlt?: string;
-  /** Fine print under the buttons. */
   footnote?: string;
 } = {}) {
+  
+  const defaultHeading = place ? (
+    <>AI Sales Assistant for Businesses in <span className="text-[#FF6600]">{place}</span></>
+  ) : (
+    <>AI Sales Assistant for <span className="text-[#FF6600]">Nigerian Businesses</span></>
+  );
+
+  const defaultSubhead = place
+    ? `Colly AI helps ${across ? `businesses across ${place}` : `${place} businesses`} reply to customers 24/7 on Telegram and Web Chat without missing a sale.`
+    : "Reply to customers 24/7 on Telegram, Discord, and Web Chat. Never lose a sale again.";
+
   return (
-    <section className="relative overflow-hidden bg-[#f5f5f5] pt-8 pb-16 sm:pt-32 sm:pb-24">
-      {/* Soft warm glow behind the visual, kept subtle so the copy stays crisp. */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute -top-24 right-0 h-[28rem] w-[28rem] rounded-full bg-[#FF6600]/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-amber-200/40 blur-3xl" />
-      </div>
+    <section className="relative overflow-hidden bg-white pt-28 pb-16 sm:pt-36 sm:pb-24">
+      {/* Subtle background gradient */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#FFF4EC]/60 to-white" aria-hidden />
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 lg:grid-cols-2">
-        {/* Left column — above the fold: `immediate` keeps the h1 in the server
-            HTML as visible text so the LCP element does not wait for hydration. */}
-        <ScrollReveal immediate>
-          <span className="inline-flex items-center rounded-full border border-[#FF6600]/30 bg-white px-4 py-1.5 text-[13px] font-semibold text-[#FF6600]">
-            {badge}
-          </span>
+      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 lg:grid-cols-2">
+        
+        {/* Left Column: Stripe-style typography */}
+        <div>
+          {badge && (
+            <span className="inline-flex items-center rounded-full border border-[#FF6600]/30 bg-white px-4 py-1.5 text-[13px] font-semibold text-[#FF6600] mb-6">
+              {badge}
+            </span>
+          )}
 
-          <h1 className="mt-6 text-5xl font-bold tracking-tight text-gray-900 lg:text-7xl">
-            {heading ??
-              (place ? (
-                <>
-                  AI Sales Assistant for Businesses in{" "}
-                  <span className="text-[#FF6600]">{place}</span>
-                </>
-              ) : (
-                <>
-                  AI Sales Assistant for{" "}
-                  <span className="text-[#FF6600]">Nigerian Businesses</span>
-                </>
-              ))}
+          <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-6xl leading-[1.1]">
+            {heading ?? defaultHeading}
           </h1>
 
-          {/* Bottom line first: what it is, where it replies, what it costs. */}
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-gray-600">
-            {subhead ??
-              (place
-                ? `Colly AI helps ${
-                    across ? `businesses across ${place}` : `${place} businesses`
-                  } reply to customers 24/7 on Telegram and Web Chat without missing a sale.`
-                : HERO_ANSWER)}
+          <p className="mt-6 max-w-lg text-lg leading-relaxed text-gray-600">
+            {subhead ?? defaultSubhead}
           </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
               href={ctaHref}
-              className="inline-flex items-center justify-center rounded-xl bg-[#FF6600] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/25 transition-all hover:-translate-y-0.5 hover:bg-[#E65C00]"
+              className="inline-flex h-12 items-center justify-center rounded-lg bg-[#FF6600] px-8 text-sm font-semibold text-white transition-colors hover:bg-[#E65C00]"
             >
               {ctaLabel}
             </Link>
             <Link
-              /* The homepage has a "how it works" section further down; the
-                 GEO and industry landing pages do not, so they point at the
-                 pricing block they do render instead of scrolling to a missing
-                 anchor. */
-              href={secondaryHref ?? (place ? "#pricing" : "#how-it-works")}
-              className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-7 py-3.5 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50"
+              href={secondaryHref ?? "#how-it-works"}
+              className="inline-flex h-12 items-center justify-center rounded-lg border border-gray-300 bg-white px-8 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
             >
-              {secondaryLabel ?? (place ? "See pricing" : "See how it works")}
+              {secondaryLabel ?? "See how it works"}
             </Link>
           </div>
 
-          <p className="mt-4 text-[13px] text-gray-500">{footnote}</p>
-        </ScrollReveal>
-
-        {/* Right column: customer conversation image. Also `immediate`: this is
-            the largest element on the page, so a hidden initial state would
-            postpone LCP even with the <link rel="preload"> in the head. */}
-        <ScrollReveal immediate className="relative mt-8 w-full lg:mt-0">
-          {/* The aspect box (4:5 on phones, a fixed 500px band from `lg`) is
-              declared on the wrapper, so the space the hero image occupies is
-              known from the first style resolution. The image itself keeps its
-              intrinsic `width`/`height` for the ratio hint, then fills that box
-              — nothing below the hero can move while the photo decodes. */}
-          <div className="aspect-[4/5] w-full overflow-hidden rounded-3xl border border-gray-100 shadow-2xl lg:aspect-auto lg:h-[500px]">
-            <Image
-              src={imageSrc}
-              alt={imageAlt}
-              width={900}
-              height={700}
-              /* LCP element. `preload` inserts <link rel="preload"> in <head> so the
-                 hero asset starts downloading before the parser reaches the tag.
-                 Next.js 16 deprecated `priority` (same behaviour, ambiguous name),
-                 so this is the v16 spelling — do not add `priority` back. */
-              preload
-              /* Full-bleed until the wrapper switches to `lg:grid-cols-2` (Tailwind
-                 lg = 1024px), then half of the grid. The breakpoint matches the
-                 layout so tablets (769–1023px) still request a full-width
-                 candidate instead of a blurry 50vw one. `sizes` also switches
-                 Next's srcset to a full responsive set; without it the browser
-                 assumes 100vw and requests an oversized candidate on desktop. */
-              sizes="(max-width: 1023px) 100vw, 50vw"
-              className="h-full w-full object-cover object-center"
-            />
+          <div className="mt-8 flex items-center gap-2 text-sm text-gray-500">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            {footnote}
           </div>
-        </ScrollReveal>
+        </div>
+
+        {/* Right Column: Product UI Mockup instead of Stock Photo */}
+        <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+          <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-orange-100 to-purple-50 opacity-50 blur-2xl" aria-hidden />
+          
+          {/* Phone Frame */}
+          <div className="relative rounded-[2.5rem] border-[8px] border-gray-900 bg-gray-900 shadow-2xl overflow-hidden">
+            {/* Telegram Header */}
+            <div className="flex items-center gap-3 bg-[#2AABEE] px-4 py-3 text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+                <MessageSquare className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">ABC Electronics</p>
+                <p className="text-xs text-white/80">bot</p>
+              </div>
+            </div>
+
+            {/* Chat Area */}
+            <div className="h-[400px] bg-[#E7EBF0] p-4 flex flex-col gap-3 overflow-hidden">
+              
+              {/* Customer Message */}
+              <div className="self-end max-w-[80%] rounded-2xl rounded-tr-sm bg-[#E1FFC7] px-3 py-2 text-sm text-gray-900 shadow-sm">
+                Wagwan, how much be this iPhone 12?
+                <span className="block text-right text-[10px] text-gray-500 mt-1">10:42 AM</span>
+              </div>
+
+              {/* AI Message */}
+              <div className="self-start max-w-[85%] rounded-2xl rounded-tl-sm bg-white px-3 py-2 text-sm text-gray-900 shadow-sm">
+                <p>The iPhone 12 is <strong>{formatNaira(350000)}</strong>. We get am in stock. You want make I send you picture?</p>
+                <span className="block text-right text-[10px] text-gray-500 mt-1">10:42 AM</span>
+              </div>
+
+              {/* Customer Message */}
+              <div className="self-end max-w-[80%] rounded-2xl rounded-tr-sm bg-[#E1FFC7] px-3 py-2 text-sm text-gray-900 shadow-sm">
+                Yes, send pic.
+                <span className="block text-right text-[10px] text-gray-500 mt-1">10:43 AM</span>
+              </div>
+
+              {/* AI Image Message */}
+              <div className="self-start max-w-[85%] rounded-2xl rounded-tl-sm bg-white p-1 shadow-sm">
+                <div className="h-32 w-48 rounded-xl bg-gray-200 flex items-center justify-center overflow-hidden">
+                   <span className="text-xs text-gray-400">Product Image</span>
+                </div>
+                <p className="px-2 pt-2 text-sm text-gray-900">iPhone 12 · {formatNaira(350000)}</p>
+              </div>
+            </div>
+
+            {/* Input Area */}
+            <div className="bg-white px-3 py-2 flex items-center gap-2 border-t border-gray-200">
+              <div className="flex-1 rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-400">Message...</div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2AABEE] text-white">
+                <Send className="h-4 w-4 -ml-0.5" />
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
   );

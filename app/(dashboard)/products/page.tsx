@@ -1,4 +1,6 @@
 "use client";
+import productAnimation from "@/public/product.json";
+import { EmptyState } from "@/components/ui/empty-state";
 
 import {
   useCallback,
@@ -25,6 +27,7 @@ import { StockBadge } from "@/components/products/stock-badge";
 import { formatNaira } from "@/lib/format";
 import type { Product, ProductInput } from "@/lib/products";
 
+
 type ModalState =
   | { kind: "closed" }
   | { kind: "create" }
@@ -46,6 +49,7 @@ export default function ProductsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [importing, setImporting] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -113,10 +117,12 @@ export default function ProductsPage() {
       const formData = new FormData();
       formData.append("file", file);
 
+
       const res = await fetch("/api/products/import", {
         method: "POST",
         body: formData,
       });
+
       const data = (await res.json().catch(() => null)) as {
         imported?: number;
         duplicates?: number;
@@ -250,57 +256,14 @@ export default function ProductsPage() {
       )}
 
       {products && products.length === 0 && (
-        <div className="rounded-xl border border-gray-200 bg-surface p-6 sm:p-8">
-          <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-center">
-            <div>
-              <h2 className="font-display text-xl text-gray-900 sm:text-2xl">
-                Your AI needs a catalogue to sell.
-              </h2>
-              <p className="mt-2 max-w-xl text-sm text-gray-500">
-                Add your products here so Colly can quote prices, describe
-                features, and send pictures to customers automatically.
-              </p>
-
-              <ol className="mt-5 space-y-3">
-                {QUICK_START_STEPS.map((step, index) => (
-                  <li
-                    key={step}
-                    className="flex items-start gap-3 text-sm text-gray-700"
-                  >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FFF4EC] text-xs font-semibold text-[#FF6600]">
-                      {index + 1}
-                    </span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
-
-              <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => setModal({ kind: "create" })}
-                  className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
-                >
-                  <Plus className="h-4 w-4" aria-hidden />
-                  Add Product
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 p-4">
-              <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-                <div className="flex aspect-square items-center justify-center rounded-lg bg-gray-100 text-gray-300">
-                  <Camera className="h-10 w-10" aria-hidden />
-                </div>
-                <div className="mt-3 h-3 w-3/4 rounded bg-gray-200" />
-                <div className="mt-2 h-3 w-1/3 rounded bg-gray-200" />
-                <div className="mt-3 h-2 w-full rounded bg-gray-100" />
-                <div className="mt-1.5 h-2 w-5/6 rounded bg-gray-100" />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+  <EmptyState
+    animationData={productAnimation}
+    title="Your AI needs a catalogue to sell."
+    description="Add your products here so Colly can quote prices, describe features, and send pictures to customers automatically."
+    actionLabel="Add Product"
+    onAction={() => setModal({ kind: "create" })}
+  />
+)}
 
       {products && products.length > 0 && (
         <>
@@ -473,6 +436,7 @@ type ActionButtonsProps = {
   onEdit: () => void;
   onDelete: () => void;
 };
+
 
 function ActionButtons({ name, onEdit, onDelete }: ActionButtonsProps) {
   return (
