@@ -7,12 +7,6 @@ import { CalendarClock, Check, X } from "lucide-react";
 import { updateBookingStatus } from "@/app/(dashboard)/bookings/actions";
 import type { BookingStatus } from "@/lib/bookings";
 
-/**
- * One appointment as the page hands it over. Every string is already rendered
- * in Africa/Lagos by the Server Component (`formatInLagosTimezone`), so the
- * browser never formats a stored instant with its own zone â€” a Lagos 10:00 slot
- * would otherwise read 09:00 on a UTC machine.
- */
 export type BookingRow = {
   id: string;
   customerName: string;
@@ -45,14 +39,6 @@ function StatusBadge({ status }: { status: BookingStatus }) {
   );
 }
 
-/**
- * The appointment schedule: customer, service, Lagos slot, status, and the
- * Confirm / Cancel controls for a pending slot.
- *
- * Uses `useOptimistic` so the UI updates in 0ms (Doherty Threshold) before the
- * server action finishes. If the server action fails, the optimistic state
- * automatically reverts and the error is shown.
- */
 export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -76,18 +62,14 @@ export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
     setError(null);
 
     startTransition(async () => {
-      // 1. Instantly update the UI
       addOptimisticUpdate({ id: bookingId, status });
 
-      // 2. Do the actual work in the background
       try {
         const result = await updateBookingStatus(bookingId, status);
         if (!result.ok) {
           setError(result.error);
-          // Note: useOptimistic reverts the UI automatically when the transition ends
           return;
         }
-        // Sync the server component tree with the actual DB state
         router.refresh();
       } catch {
         setError("Could not update the appointment. Please try again.");
