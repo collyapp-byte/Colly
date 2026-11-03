@@ -1,3 +1,4 @@
+export const instant = false;
 import { prisma } from "@/lib/prisma";
 import { escapeHtml, sendEmail } from "@/lib/email";
 
