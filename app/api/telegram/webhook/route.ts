@@ -1,3 +1,4 @@
+export const instant = false;
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
 import { processImageMessage } from "@/lib/image-pipeline";

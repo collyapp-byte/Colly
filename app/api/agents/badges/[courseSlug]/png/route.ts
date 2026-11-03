@@ -1,3 +1,4 @@
+export const instant = false;
 import { readFile } from "node:fs/promises";
 import { prisma } from "@/lib/prisma";
 import { getCurrentAgent } from "@/lib/agent-auth";

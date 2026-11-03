@@ -1,3 +1,4 @@
+export const instant = false;
 import { prisma } from "@/lib/prisma";
 import { getCurrentAgent } from "@/lib/agent-auth";
 import { createTransferRecipient, listBanks } from "@/lib/paystack";

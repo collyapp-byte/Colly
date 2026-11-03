@@ -1,3 +1,4 @@
+export const instant = false;
 import { prisma } from "@/lib/prisma";
 import { downgradeExpiredPlan, ensureFreeGrant } from "@/lib/credits";
 import { sendOwnerAlert } from "@/lib/owner-alerts";

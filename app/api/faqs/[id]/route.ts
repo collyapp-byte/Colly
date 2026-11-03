@@ -1,3 +1,4 @@
+export const instant = false;
 import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";
 import { reembedFAQ } from "@/lib/embedding-pipeline";

@@ -1,3 +1,4 @@
+export const instant = false;
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getMonthlyCredits, totalAvailableCredits } from "@/lib/plans";

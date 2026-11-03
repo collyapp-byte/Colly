@@ -1,3 +1,4 @@
+export const instant = false;
 import { getCurrentAgent } from "@/lib/agent-auth";
 import { renderAgentCertificationBadgeSvg } from "@/lib/agent-certification-badge";
 import {

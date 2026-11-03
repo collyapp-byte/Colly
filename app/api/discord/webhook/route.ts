@@ -1,3 +1,4 @@
+export const instant = false;
 import nacl from "tweetnacl";
 import { after, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";

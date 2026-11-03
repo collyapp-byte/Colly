@@ -1,3 +1,4 @@
+export const instant = false;
 import { getCurrentBusinessId } from "@/lib/auth";
 import { getAppUrl } from "@/lib/app-url";
 import { initializeTransaction } from "@/lib/paystack";

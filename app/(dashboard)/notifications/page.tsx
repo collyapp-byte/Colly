@@ -1,3 +1,4 @@
+export const instant = false;
 import Link from "next/link";
 import { connection } from "next/server";
 import { BellRing, MessageSquare } from "lucide-react";

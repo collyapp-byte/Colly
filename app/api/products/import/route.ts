@@ -1,3 +1,4 @@
+export const instant = false;
 import Papa from "papaparse";
 import { prisma } from "@/lib/prisma";
 import { getCurrentBusinessId } from "@/lib/auth";

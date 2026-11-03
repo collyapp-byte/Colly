@@ -1,3 +1,4 @@
+export const instant = false;
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";

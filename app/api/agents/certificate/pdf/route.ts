@@ -1,3 +1,4 @@
+export const instant = false;
 import { createElement } from "react";
 import QRCode from "qrcode";
 import { renderToBuffer } from "@react-pdf/renderer";

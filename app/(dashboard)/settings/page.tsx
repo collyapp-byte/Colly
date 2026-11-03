@@ -1,3 +1,4 @@
+export const instant = false;
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 

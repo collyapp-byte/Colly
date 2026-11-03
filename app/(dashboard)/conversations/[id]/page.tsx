@@ -1,3 +1,4 @@
+export const instant = false;
 "use client";
 
 import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";

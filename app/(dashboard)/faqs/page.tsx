@@ -1,3 +1,4 @@
+export const instant = false;
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";

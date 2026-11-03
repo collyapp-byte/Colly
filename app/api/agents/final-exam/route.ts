@@ -1,4 +1,5 @@
-﻿import { prisma } from "@/lib/prisma";
+export const instant = false;
+import { prisma } from "@/lib/prisma";
 import { getCurrentAgent } from "@/lib/agent-auth";
 import { hasAllBadges } from "@/lib/badges";
 import { issueCertificateIfEligible } from "@/lib/certification";

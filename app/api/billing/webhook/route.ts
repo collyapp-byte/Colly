@@ -1,3 +1,4 @@
+export const instant = false;
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sendAlert } from "@/lib/alerts";

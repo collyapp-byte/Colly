@@ -1,3 +1,4 @@
+export const instant = false;
 "use client";
 
 import { useEffect, useState } from "react";

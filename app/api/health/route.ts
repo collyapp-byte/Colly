@@ -1,3 +1,4 @@
+export const instant = false;
 import { NextResponse } from "next/server";
 
 export async function GET() {

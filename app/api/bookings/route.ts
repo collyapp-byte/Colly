@@ -1,3 +1,4 @@
+export const instant = false;
 import { getCurrentBusinessId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bookingEndTime, serializeBooking } from "@/lib/bookings";

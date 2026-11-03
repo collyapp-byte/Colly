@@ -1,4 +1,5 @@
-﻿"use client";
+export const instant = false;
+"use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";

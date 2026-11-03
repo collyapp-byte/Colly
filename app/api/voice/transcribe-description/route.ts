@@ -1,3 +1,4 @@
+export const instant = false;
 import { getCurrentBusinessId } from "@/lib/auth";
 import { transcribeAudioFromBuffer } from "@/lib/stt";
 

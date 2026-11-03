@@ -1,3 +1,4 @@
+export const instant = false;
 import { prisma } from "@/lib/prisma";
 import { requireOwnerApi } from "@/lib/auth";
 import { getAppUrl } from "@/lib/app-url";
