@@ -72,11 +72,10 @@ export default async function OverviewPage({
         </h1>
       </div>
 
-      <SetupChecklist
-        hasTelegram={hasTelegram}
-        hasProducts={productCount > 0}
-        hasMessages={messageCount > 0}
-      />
+      <SetupChecklist 
+          hasProducts={productCount > 0} 
+          hasAiReply={false} 
+        />
 
       <DashboardOverview
         status={{

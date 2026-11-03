@@ -1,170 +1,176 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2, Sparkles } from "lucide-react";
 
-/**
- * Activation checklist for a business that has not finished setting up.
- *
- * The three flags are computed on the server (`app/(dashboard)/dashboard/page.tsx`
- * reads `Business.telegramBotToken` plus the product and customer-message
- * counts), so this component never queries: it only decides what to show, and
- * its box is therefore already in the first paint — no skeleton needed here.
- * The route's streaming placeholder lives in
- * `app/(dashboard)/dashboard/loading.tsx` and reserves this card's height.
- * Once all three steps are true it renders nothing, so the card leaves the
- * overview for good instead of nagging an activated owner.
- */
-type SetupChecklistProps = {
-  /** A Telegram bot token is stored on the business. */
-  hasTelegram: boolean;
-  /** The catalogue has at least one product. */
+interface SetupChecklistProps {
   hasProducts: boolean;
-  /** At least one message arrived from a customer, i.e. the bot was reached. */
-  hasMessages: boolean;
-};
+  hasAiReply: boolean;
+}
 
-type SetupStep = {
-  title: string;
-  description: string;
-  /** Where the owner completes the step; the last step is instructions only. */
-  href?: string;
-  /** Label of the link that completes the step. */
-  action?: string;
-  done: boolean;
-};
+export function SetupChecklist({ hasProducts, hasAiReply }: SetupChecklistProps) {
+  const router = useRouter();
 
-export function SetupChecklist({
-  hasTelegram,
-  hasProducts,
-  hasMessages,
-}: SetupChecklistProps) {
-  const steps: SetupStep[] = [
-    {
-      title: "Connect your Telegram Bot",
-      description:
-        "Paste your BotFather token so Colly can answer your customers on Telegram.",
-      href: "/settings/ai-line",
-      action: "Connect bot",
-      done: hasTelegram,
-    },
-    {
-      title: "Add your first Product",
-      description:
-        "Your AI only sells what is in your catalogue, so add a product with its price and stock.",
-      href: "/products",
-      action: "Add product",
-      done: hasProducts,
-    },
-    {
-      title: "Send a test message to your bot",
-      description:
-        'Open Telegram and message your bot anything, for example "How much is this?". The first customer message you receive ticks this step.',
-      done: hasMessages,
-    },
-  ];
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [description, setDescription] = useState("");
+  const [isSubmittingProduct, setIsSubmittingProduct] = useState(false);
 
-  // Fully activated: the checklist has done its job and disappears.
-  if (hasTelegram && hasProducts && hasMessages) {
-    return null;
+  const [message, setMessage] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [aiReply, setAiReply] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  if (hasProducts && hasAiReply) return null;
+
+  if (!hasProducts) {
+    const handleAddProduct = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsSubmittingProduct(true);
+      setError(null);
+
+      try {
+        const res = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, price: Number(price), description }),
+        });
+
+        if (!res.ok) throw new Error("Failed to add product");
+        
+        router.refresh(); 
+      } catch (err) {
+        setError("Could not save product. Please try again.");
+      } finally {
+        setIsSubmittingProduct(false);
+      }
+    };
+
+    return (
+      <div className="mb-8 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <h2 className="text-xl font-semibold mb-2">Step 1: Add your first product</h2>
+        <p className="text-muted-foreground mb-4 text-sm">
+          Your AI needs at least one product to sell. Let&apos;s add one to get started.
+        </p>
+        <form onSubmit={handleAddProduct} className="flex flex-col gap-3 max-w-md">
+          <input
+            required
+            placeholder="Product name (e.g., Samsung TV 42')"
+            className="border p-2 rounded-md bg-background"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <input
+            required
+            type="number"
+            placeholder="Price in Naira (e.g., 150000)"
+            className="border p-2 rounded-md bg-background"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          />
+          <textarea
+            required
+            placeholder="Short description"
+            className="border p-2 rounded-md bg-background"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <button
+            type="submit"
+            disabled={isSubmittingProduct}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2"
+          >
+            {isSubmittingProduct && <Loader2 className="w-4 h-4 animate-spin" />}
+            Save product
+          </button>
+        </form>
+      </div>
+    );
   }
 
-  const completed = steps.filter((step) => step.done).length;
-  const remaining = steps.length - completed;
-  const percent = Math.round((completed / steps.length) * 100);
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    setIsSendingMessage(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/onboarding/test-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 402) {
+          setError("You don't have enough credits to test the AI. Please top up.");
+        } else {
+          setError(data.error || "Failed to get a reply");
+        }
+        return;
+      }
+
+      setAiReply(data.reply);
+      setMessage("");
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
 
   return (
-    <section
-      aria-labelledby="setup-checklist-heading"
-      className="mb-6 rounded-xl border border-[#FF6600]/30 bg-[#FFF4EC] p-5"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2
-            id="setup-checklist-heading"
-            className="text-sm font-semibold text-gray-900"
-          >
-            Finish setting up
-          </h2>
-          <p className="mt-1 text-sm text-gray-600">
-            {remaining} step{remaining === 1 ? "" : "s"} left before your AI can
-            sell on its own.
-          </p>
-        </div>
-        <span className="shrink-0 text-sm font-semibold text-[#FF6600]">
-          {completed}/{steps.length}
-        </span>
-      </div>
+    <div className="mb-8 rounded-xl border border-border bg-card p-6 shadow-sm">
+      <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
+        <Sparkles className="w-5 h-5 text-primary" />
+        Step 2: Hear your shop bot
+      </h2>
+      <p className="text-muted-foreground mb-4 text-sm">
+        Ask the AI a question about the product you just added.
+      </p>
 
-      <div
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={steps.length}
-        aria-valuenow={completed}
-        aria-label="Setup progress"
-        className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#FF6600]/15"
-      >
-        <div
-          className="h-full rounded-full bg-[#FF6600] transition-[width] duration-300"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-
-      <ol className="mt-4 space-y-2">
-        {steps.map((step, index) => (
-          <li
-            key={step.title}
-            /* `min-h` holds the row at the height it has while the step is
-               pending: completing one drops the action link, and without a floor
-               the card (and the whole page below it) would shrink each time a
-               step is ticked. */
-            className="flex min-h-[104px] items-start gap-3 rounded-lg border border-gray-200 bg-white p-4"
-          >
-            <span
-              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                step.done
-                  ? "bg-green-100 text-green-600"
-                  : "bg-[#FF6600] text-white"
-              }`}
+      {!aiReply ? (
+        <form onSubmit={handleSendMessage} className="flex flex-col gap-3 max-w-md">
+          <div className="flex gap-2">
+            <input
+              required
+              placeholder="e.g., How much is the Samsung TV?"
+              className="border p-2 rounded-md bg-background flex-1"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              disabled={isSendingMessage}
+            />
+            <button
+              type="submit"
+              disabled={isSendingMessage || !message.trim()}
+              className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2"
             >
-              {step.done ? (
-                <Check className="h-4 w-4 stroke-[3]" aria-hidden />
-              ) : (
-                index + 1
-              )}
-            </span>
-
-            <div className="min-w-0 flex-1">
-              <p
-                className={`text-sm font-medium ${
-                  step.done ? "text-gray-500" : "text-gray-900"
-                }`}
-              >
-                {step.title}
-                {step.done && (
-                  <span className="ml-2 text-xs font-semibold text-green-600">
-                    Done
-                  </span>
-                )}
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-gray-500">
-                {step.description}
-              </p>
-              {/* Pending steps that live elsewhere get a link; the last step is
-                  done inside Telegram, so it stays instructions only. */}
-              {step.href && !step.done && (
-                <Link
-                  href={step.href}
-                  className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#FF6600] transition-colors hover:text-[#E65C00]"
-                >
-                  {step.action}
-                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-                </Link>
-              )}
-            </div>
-          </li>
-        ))}
-      </ol>
-    </section>
+              {isSendingMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send"}
+            </button>
+          </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+        </form>
+      ) : (
+        <div className="flex flex-col gap-4 max-w-md">
+          <div className="bg-muted p-4 rounded-md">
+            <p className="text-sm text-muted-foreground mb-1">Customer:</p>
+            <p className="mb-3">{message || "How much is the Samsung TV?"}</p>
+            <p className="text-sm text-muted-foreground mb-1">Colly AI:</p>
+            <p className="font-medium">{aiReply}</p>
+          </div>
+          <button
+            onClick={() => router.refresh()}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium"
+          >
+            Looks good, take me to my dashboard
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

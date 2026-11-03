@@ -1,36 +1,49 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
+import { handleIncomingMessage } from "@/lib/chat-engine";
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
     const user = await getCurrentUser();
-    if (!user) {
+    if (!user || !user.businessId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { message, product } = body;
+    const body = await req.json();
+    const { message } = body;
 
     if (!message || typeof message !== "string") {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
-    let response = "";
+    const customerPhone = "onboarding:" + user.businessId;
 
-    if (message.toLowerCase().includes("price") || message.toLowerCase().includes("cost") || message.toLowerCase().includes("how much")) {
-      response = `The ${product?.name || "product"} costs ₦${product?.price?.toLocaleString() || "0"}. Would you like to place an order?`;
-    } else if (message.toLowerCase().includes("hello") || message.toLowerCase().includes("hi") || message.toLowerCase().includes("hey")) {
-      response = `Hello! I can tell you about our ${product?.name || "products"}. What would you like to know?`;
-    } else if (message.toLowerCase().includes("order") || message.toLowerCase().includes("buy")) {
-      response = `Great! To order the ${product?.name || "product"} (₦${product?.price?.toLocaleString() || "0"}), please share your name and delivery address.`;
-    } else {
-      response = `Thanks for asking! Our ${product?.name || "product"} is ₦${product?.price?.toLocaleString() || "0"}. How can I help you further?`;
-    }
+    await prisma.customer.upsert({
+      where: {
+        businessId_phone: {
+          businessId: user.businessId,
+          phone: customerPhone,
+        },
+      },
+      create: {
+        businessId: user.businessId,
+        phone: customerPhone,
+        name: "Test Customer (Onboarding)",
+        tags: ["onboarding-test"],
+      },
+      update: {},
+    });
 
-    return NextResponse.json({ response });
+    const response = await handleIncomingMessage({
+      businessId: user.businessId,
+      customerPhone,
+      message,
+    });
+
+    return NextResponse.json({ reply: response.reply });
   } catch (error) {
-    console.error("[onboarding/test-chat] error:", error);
-    return NextResponse.json({ error: "Failed to get AI response" }, { status: 500 });
+    console.error("[ONBOARDING_TEST_CHAT]", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

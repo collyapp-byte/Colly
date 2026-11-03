@@ -1,0 +1,45 @@
+---
+description: Colly project invariants — always apply
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---
+
+# Colly invariants (do not violate without explicit instruction)
+
+## Stack
+- Next.js 16 App Router, `cacheComponents: true`, Prisma 6, Supabase Auth/Storage.
+- Forbidden: `export const dynamic = "force-dynamic"`. Layouts use `await connection()` and `export const instant = false`.
+- Error boundaries use `retry()`, not `reset()`. Hero images use `preload`, not `priority`.
+- Splash screen is scoped to the dashboard only — never let overlays or celebrations render above the LCP element.
+
+## Tenancy & auth
+- Every Prisma model except `Business` is scoped by `businessId` with `onDelete: Cascade`.
+- `businessId` always comes from the session, never from a request body.
+- Supabase Auth is the only credential store. `User.password` is a legacy NOT NULL column holding `""`.
+- `requireAuth()` / `requireOwner()` / `requireOwnerApi()` guard pages and APIs.
+- The proxy excludes `/api`, so **every owner-only mutation must call `requireOwnerApi()`**.
+- Staff (`TeamMember`, role `STAFF`) must never see owner-only settings. Preserve the `?denied=staff_restricted` flow.
+
+## AI brain (treat as read-only unless told otherwise)
+- `lib/chat-engine.ts` is the single reply pipeline. Do not modify it for UI work.
+- `HISTORY_LIMIT = 10`, `MAX_TOOL_ROUNDS = 2`.
+- `TONES = ["formal", "friendly"]`. Pidgin is detected by `lib/language-detect.ts` — there is no `pidgin_friendly` tone. Do not add one.
+- Credits are reserved before any model call; refunds on fallback/`[SILENCE]`/failed insert. Do not reorder.
+
+## Money
+- `lib/plans.ts` is the single source of truth. Prices: Free 80 credits/30d; Green ₦15k/23k; Blue ₦25k/41k; Black ₦50k/90k; yearly = 10 months.
+- 1 credit = ₦1. AI reply = 5 credits (standard), 80 (WhatsApp), 0 (manual). Top-up 3,000 = ₦3,000.
+- Split wallet: `planCredits` is overwritten on plan charge, `topUpCredits` never resets. All money on invoice paths is integer kobo (`nairaToKobo`/`koboToNaira`).
+- VAT 7.5% on manual/sale invoices, 0 on receipt drafts.
+
+## SEO / routes
+- `lib/site.ts` (`PUBLIC_PAGES`, `PRIVATE_PATHS`), `lib/seo.ts`, `lib/public-routes.ts` are the single sources of truth.
+- Sitemap priorities are non-increasing and asserted by `tests/seo.test.ts`.
+- Dashboard, agent area, auth screens, web chat, `/chat/success` are `noindex`.
+
+## Removed
+- The Jiji feature is fully removed. Never reintroduce Jiji imports, routes, fields, copy, tests, or lessons.
+
+## Verification
+- Before reporting done: `npm run lint`, `npm run typecheck`, `npm test`.
+- Tests run with `tsx --test`, 13 suites under `tests/`.
