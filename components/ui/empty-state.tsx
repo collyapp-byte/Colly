@@ -4,6 +4,7 @@ import { Player } from "@lottiefiles/react-lottie-player";
 import { ReactNode } from "react";
 
 interface EmptyStateProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   animationData: any;
   title: string;
   description: string;

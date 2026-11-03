@@ -11,6 +11,7 @@ test("an invite link is an absolute /join/<id> URL", () => {
 test("the Brevo email payload is built correctly", async () => {
   // Mock the global fetch to intercept the Brevo API call
   const originalFetch = global.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let capturedPayload: any = null;
 
   global.fetch = async (url: string | URL | Request, options?: RequestInit) => {

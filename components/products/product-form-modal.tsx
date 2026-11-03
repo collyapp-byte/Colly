@@ -53,7 +53,7 @@ export function ProductFormModal({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+  const [, setHasAttemptedSave] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderIdRef = useRef<string | null>(null);

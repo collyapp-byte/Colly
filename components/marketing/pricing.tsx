@@ -19,7 +19,6 @@ type PlanCard = {
 };
 
 export function Pricing({
-  place,
   industry,
 }: {
   place?: string;

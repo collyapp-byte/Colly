@@ -10,7 +10,6 @@ import {
   type ChangeEvent,
 } from "react";
 import {
-  Camera,
   CircleAlert,
   ImageIcon,
   LoaderCircle,
@@ -34,12 +33,6 @@ type ModalState =
   | { kind: "edit"; product: Product }
   | { kind: "delete"; product: Product };
 
-const QUICK_START_STEPS = [
-  'Click "Add Product".',
-  'Enter the Name and Price (e.g. "iPhone 15", "₦1,200,000").',
-  "Write a short description of the features.",
-  "Upload a clear picture of the product.",
-];
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[] | null>(null);

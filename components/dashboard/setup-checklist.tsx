@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, ArrowRight, Package, HelpCircle, MessageSquare } from "lucide-react";
+import { CheckCircle2, ArrowRight } from "lucide-react";
 
 interface SetupChecklistProps {
   hasProducts: boolean;

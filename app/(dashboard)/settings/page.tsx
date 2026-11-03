@@ -46,7 +46,7 @@ function toFormState(business: any): FormState {
 
 export default function SettingsPage() {
   const [form, setForm] = useState<FormState | null>(null);
-  const [ownerEmail, setOwnerEmail] = useState("");
+  const [, setOwnerEmail] = useState("");
   const [role, setRole] = useState<"OWNER" | "STAFF" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);

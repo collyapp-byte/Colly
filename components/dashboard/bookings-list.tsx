@@ -2,7 +2,7 @@
 
 import { useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, Check, LoaderCircle, X } from "lucide-react";
+import { CalendarClock, Check, X } from "lucide-react";
 
 import { updateBookingStatus } from "@/app/(dashboard)/bookings/actions";
 import type { BookingStatus } from "@/lib/bookings";
@@ -56,7 +56,7 @@ function StatusBadge({ status }: { status: BookingStatus }) {
 export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const [optimisticBookings, addOptimisticUpdate] = useOptimistic(
     bookings,

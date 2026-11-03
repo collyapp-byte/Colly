@@ -31,8 +31,6 @@ type ModalState =
   | { kind: "edit"; faq: Faq }
   | { kind: "delete"; faq: Faq };
 
-const EMPTY_STATE_TEXT =
-  "No FAQs yet. Add answers to common customer questions so your AI can reply automatically.";
 
 const DISMISSED_PRESETS_KEY = "colly.dismissedFaqPresets";
 

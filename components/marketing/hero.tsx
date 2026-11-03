@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { PLANS } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
 import { CheckCircle2, MessageSquare, Send } from "lucide-react";
 
@@ -14,8 +13,6 @@ export function Hero({
   ctaLabel = "Start Free",
   secondaryHref,
   secondaryLabel,
-  imageSrc,
-  imageAlt,
   footnote = "No credit card required · 80 free credits",
 }: {
   place?: string;
@@ -27,8 +24,6 @@ export function Hero({
   ctaLabel?: string;
   secondaryHref?: string;
   secondaryLabel?: string;
-  imageSrc?: string;
-  imageAlt?: string;
   footnote?: string;
 } = {}) {
   

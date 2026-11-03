@@ -38,7 +38,7 @@ export default async function OverviewPage({
   const denied =
     (await searchParams)[STAFF_DENIED_PARAM] === STAFF_DENIED_VALUE;
 
-  const [business, productCount, messageCount] = await Promise.all([
+  const [business, productCount] = await Promise.all([
     prisma.business.findUnique({
       where: { id: user.businessId },
       // Everything the overview needs for its first paint: the checklist's
@@ -61,8 +61,7 @@ export default async function OverviewPage({
     }),
   ]);
 
-  const hasTelegram = Boolean(business?.telegramBotToken);
-
+  
     const hasAiReply = (await prisma.message.count({
     where: { businessId: user.businessId, sender: "ai" }
   })) > 0;

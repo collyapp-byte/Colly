@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
-import { ArrowRight, CheckCircle2, Loader2, Package, Sparkles, UserCheck, HelpCircle } from "lucide-react";
+import { ArrowRight, Loader2, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const FAQ_SUGGESTIONS = [
@@ -148,7 +148,7 @@ export function Wizard({ ownerName }: { ownerName: string }) {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Add your first product</h2>
-            <p className="text-gray-500 text-sm">Your AI needs something to sell. Let's add one quickly.</p>
+            <p className="text-gray-500 text-sm">Your AI needs something to sell. Let&apos;s add one quickly.</p>
           </div>
           <form onSubmit={handleAddProduct} className="space-y-4 max-w-md">
             <div>
@@ -171,7 +171,7 @@ export function Wizard({ ownerName }: { ownerName: string }) {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Teach your AI common answers</h2>
-            <p className="text-gray-500 text-sm">Click the questions that apply to your business. We'll write the answers for you.</p>
+            <p className="text-gray-500 text-sm">Click the questions that apply to your business. We&apos;ll write the answers for you.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {FAQ_SUGGESTIONS.map((faq, i) => {
