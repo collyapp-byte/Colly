@@ -63,6 +63,11 @@ export default async function OverviewPage({
 
   const hasTelegram = Boolean(business?.telegramBotToken);
 
+    const hasAiReply = (await prisma.message.count({
+    where: { businessId: user.businessId, sender: "ai" }
+  })) > 0;
+
+
   return (
     <div className="mx-auto w-full max-w-6xl">
       {denied && <StaffDeniedToast />}
@@ -74,7 +79,7 @@ export default async function OverviewPage({
 
       <SetupChecklist 
           hasProducts={productCount > 0} 
-          hasAiReply={false} 
+          hasAiReply={hasAiReply} 
         />
 
       <DashboardOverview

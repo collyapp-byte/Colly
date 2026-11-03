@@ -23,20 +23,25 @@ type SubmitState =
   | { kind: "idle" }
   | { kind: "submitting" }
   | { kind: "error"; message: string }
-  | { kind: "done"; notice: string; email: string };
+  | { kind: "done"; email: string };
 
 function AgentSignupForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [state, setState] = useState<SubmitState>({ kind: "idle" });
 
+  // AUTO-REDIRECT MAGIC: As soon as the account is created, go to the OTP screen
+  useEffect(() => {
+    if (state.kind === "done" && state.email) {
+      router.replace(`/verify-email?email=${encodeURIComponent(state.email)}`);
+    }
+  }, [state, router]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
 
-    // Client-side password strength check. The API re-checks the same rule, so
-    // this is a convenience rather than the security boundary.
     const password = data.get("password");
     if (typeof password !== "string" || !isStrongPassword(password)) {
       toast.error(WEAK_PASSWORD_MESSAGE);
@@ -71,16 +76,11 @@ function AgentSignupForm() {
         return;
       }
 
-      // Umami: the agent account now exists, whether or not the address still
-      // has to be confirmed, so this is a successful signup.
       trackEvent("signup", { role: "agent" });
 
       if (payload.needsConfirmation) {
-        setState({
-          kind: "done",
-          notice: "Check your email for your 6-digit verification code.",
-          email: email,
-        });
+        // This triggers the useEffect above to redirect
+        setState({ kind: "done", email: email });
         return;
       }
 
@@ -93,21 +93,11 @@ function AgentSignupForm() {
     }
   }
 
+  // Show a brief loading state while the redirect happens
   if (state.kind === "done") {
     return (
-      <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
-        <h1 className="font-display text-2xl text-gray-900">You are almost in</h1>
-        <div className="mt-6">
-          <AuthAlert tone="success">{state.notice}</AuthAlert>
-        </div>
-        <p className="mt-6 text-sm text-gray-500">
-          <Link
-            href={`/verify-email?email=${encodeURIComponent(state.email)}`}
-            className="font-medium text-colly transition-colors hover:text-colly-hover"
-          >
-            Enter your 6-digit code here
-          </Link>
-        </p>
+      <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
+        <p className="text-gray-500 text-sm">Redirecting to verification...</p>
       </div>
     );
   }
@@ -239,19 +229,13 @@ function SignupContent({ industry }: { industry: Industry | null }) {
   const isAgentSignup = searchParams.get("role") === "agent";
   const isFresh = searchParams.get("fresh") === "true";
 
-  // "Create an account" from login carries ?fresh=true. Clear any ghost
-  // Supabase session so the signup form cannot inherit a previous Google user.
   useEffect(() => {
     if (!isFresh) return;
     const supabase = createClient();
     void supabase.auth.signOut();
   }, [isFresh]);
 
-  // `?ref=AG-0001` from an agent's referral link; blank on a normal signup.
   const referredBy = (searchParams.get("ref") ?? "").trim();
-  // `?plan=green` from the pricing page: the tier the customer picked before
-  // signing up. It is carried through signup so the billing page can
-  // pre-select that plan. An unknown tier is ignored.
   const planParam = (searchParams.get("plan") ?? "").trim();
   const selectedPlan = isPlanTierName(planParam) ? planParam : "";
 
@@ -270,10 +254,6 @@ function SignupContent({ industry }: { industry: Industry | null }) {
   );
 }
 
-/**
- * `industry` is the vertical from `/signup?industry=hotel`, normalised by the
- * page (`app/(auth)/signup/page.tsx`) before it reaches the form.
- */
 export default function SignupClient({
   industry = null,
 }: {

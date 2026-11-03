@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Sparkles } from "lucide-react";
+import confetti from "canvas-confetti";
 
 interface SetupChecklistProps {
   hasProducts: boolean;
@@ -124,6 +125,21 @@ export function SetupChecklist({ hasProducts, hasAiReply }: SetupChecklistProps)
     }
   };
 
+  const handleFinish = () => {
+    // 🎉 CELEBRATION TIME
+    confetti({
+      particleCount: 150,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#FF6600', '#FFB380', '#ffffff']
+    });
+    
+    // Wait for the confetti to fall a bit before refreshing
+    setTimeout(() => {
+      router.refresh();
+    }, 800);
+  };
+
   return (
     <div className="mb-8 rounded-xl border border-border bg-card p-6 shadow-sm">
       <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
@@ -164,7 +180,7 @@ export function SetupChecklist({ hasProducts, hasAiReply }: SetupChecklistProps)
             <p className="font-medium">{aiReply}</p>
           </div>
           <button
-            onClick={() => router.refresh()}
+            onClick={handleFinish}
             className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium"
           >
             Looks good, take me to my dashboard

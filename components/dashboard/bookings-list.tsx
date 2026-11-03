@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarClock, Check, LoaderCircle, X } from "lucide-react";
 
@@ -10,7 +10,7 @@ import type { BookingStatus } from "@/lib/bookings";
 /**
  * One appointment as the page hands it over. Every string is already rendered
  * in Africa/Lagos by the Server Component (`formatInLagosTimezone`), so the
- * browser never formats a stored instant with its own zone — a Lagos 10:00 slot
+ * browser never formats a stored instant with its own zone â€” a Lagos 10:00 slot
  * would otherwise read 09:00 on a UTC machine.
  */
 export type BookingRow = {
@@ -49,35 +49,50 @@ function StatusBadge({ status }: { status: BookingStatus }) {
  * The appointment schedule: customer, service, Lagos slot, status, and the
  * Confirm / Cancel controls for a pending slot.
  *
- * The buttons call the `updateBookingStatus` Server Action (which re-checks the
- * tenant) and then `router.refresh()`, so the cards re-render from the database
- * instead of from optimistic local state — the page stays the server's copy of
- * the schedule.
+ * Uses `useOptimistic` so the UI updates in 0ms (Doherty Threshold) before the
+ * server action finishes. If the server action fails, the optimistic state
+ * automatically reverts and the error is shown.
  */
 export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
   const router = useRouter();
-  const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const [optimisticBookings, addOptimisticUpdate] = useOptimistic(
+    bookings,
+    (state, updatedBooking: { id: string; status: BookingStatus }) => {
+      return state.map((booking) =>
+        booking.id === updatedBooking.id
+          ? { ...booking, status: updatedBooking.status }
+          : booking
+      );
+    }
+  );
 
   async function changeStatus(
     bookingId: string,
     status: "CONFIRMED" | "CANCELLED",
   ) {
-    setBusy(`${bookingId}:${status}`);
     setError(null);
 
-    try {
-      const result = await updateBookingStatus(bookingId, status);
-      if (!result.ok) {
-        setError(result.error);
-        return;
+    startTransition(async () => {
+      // 1. Instantly update the UI
+      addOptimisticUpdate({ id: bookingId, status });
+
+      // 2. Do the actual work in the background
+      try {
+        const result = await updateBookingStatus(bookingId, status);
+        if (!result.ok) {
+          setError(result.error);
+          // Note: useOptimistic reverts the UI automatically when the transition ends
+          return;
+        }
+        // Sync the server component tree with the actual DB state
+        router.refresh();
+      } catch {
+        setError("Could not update the appointment. Please try again.");
       }
-      router.refresh();
-    } catch {
-      setError("Could not update the appointment. Please try again.");
-    } finally {
-      setBusy(null);
-    }
+    });
   }
 
   if (bookings.length === 0) {
@@ -104,11 +119,7 @@ export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
       )}
 
       <ul className="space-y-3">
-        {bookings.map((booking) => {
-          const confirming = busy === `${booking.id}:CONFIRMED`;
-          const cancelling = busy === `${booking.id}:CANCELLED`;
-          const isBusy = confirming || cancelling;
-
+        {optimisticBookings.map((booking) => {
           return (
             <li
               key={booking.id}
@@ -150,35 +161,19 @@ export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
                       <button
                         type="button"
                         onClick={() => void changeStatus(booking.id, "CONFIRMED")}
-                        disabled={isBusy}
                         aria-label={`Confirm appointment for ${booking.customerName}`}
-                        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-colly px-3 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-colly px-3 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
                       >
-                        {confirming ? (
-                          <LoaderCircle
-                            className="h-4 w-4 animate-spin"
-                            aria-hidden
-                          />
-                        ) : (
-                          <Check className="h-4 w-4" aria-hidden />
-                        )}
+                        <Check className="h-4 w-4" aria-hidden />
                         Confirm
                       </button>
                       <button
                         type="button"
                         onClick={() => void changeStatus(booking.id, "CANCELLED")}
-                        disabled={isBusy}
                         aria-label={`Cancel appointment for ${booking.customerName}`}
-                        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
+                        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                       >
-                        {cancelling ? (
-                          <LoaderCircle
-                            className="h-4 w-4 animate-spin"
-                            aria-hidden
-                          />
-                        ) : (
-                          <X className="h-4 w-4" aria-hidden />
-                        )}
+                        <X className="h-4 w-4" aria-hidden />
                         Cancel
                       </button>
                     </div>
@@ -192,4 +187,3 @@ export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
     </div>
   );
 }
-

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ClipboardEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -33,10 +34,15 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const emailParam = searchParams.get("email") ?? "";
+  
   const [state, setState] = useState<VerifyState>({ kind: "checking" });
   const [email, setEmail] = useState(emailParam);
-  const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  
+  // 6-digit state
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const started = useRef(false);
 
   // Keep support for older link-based confirmation emails.
@@ -64,9 +70,7 @@ function VerifyEmailContent() {
         const supabase = createClient();
 
         if (linkCode) {
-          const { error } = await supabase.auth.exchangeCodeForSession(
-            linkCode,
-          );
+          const { error } = await supabase.auth.exchangeCodeForSession(linkCode);
           if (error) {
             setState({ kind: "error", message: GENERIC_ERROR });
             return;
@@ -95,10 +99,58 @@ function VerifyEmailContent() {
     void verifyLink();
   }, [searchParams]);
 
+  // Auto-focus first box when screen loads
+  useEffect(() => {
+    if (state.kind === "otp") {
+      inputRefs.current[0]?.focus();
+    }
+  }, [state.kind]);
+
+  const handleChange = (index: number, value: string) => {
+    if (value && !/^\d+$/.test(value)) return;
+
+    const newOtp = [...otp];
+    if (value.length > 1) {
+      const pasted = value.slice(0, 6).split("");
+      pasted.forEach((char, i) => {
+        if (index + i < 6) newOtp[index + i] = char;
+      });
+      setOtp(newOtp);
+      inputRefs.current[Math.min(index + pasted.length, 5)]?.focus();
+      return;
+    }
+
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pasted) {
+      const newOtp = [...otp];
+      for (let i = 0; i < pasted.length; i++) {
+        newOtp[i] = pasted[i];
+      }
+      setOtp(newOtp);
+      inputRefs.current[Math.min(pasted.length, 5)]?.focus();
+    }
+  };
+
   async function handleVerify(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmedEmail = email.trim();
-    const token = code.trim();
+    const token = otp.join("");
 
     if (!trimmedEmail || token.length !== 6) {
       toast.error("Enter your email and the 6-digit code.");
@@ -106,6 +158,8 @@ function VerifyEmailContent() {
     }
 
     setSubmitting(true);
+    setErrorMsg("");
+    
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.verifyOtp({
@@ -115,14 +169,14 @@ function VerifyEmailContent() {
       });
 
       if (error) {
-        toast.error(error.message || "Invalid or expired code");
+        setErrorMsg(error.message || "Invalid or expired code");
         return;
       }
 
       toast.success("Email verified!");
       router.push("/dashboard");
     } catch {
-      toast.error("Could not verify the code. Please try again.");
+      setErrorMsg("Could not verify the code. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -130,7 +184,7 @@ function VerifyEmailContent() {
 
   if (state.kind === "checking") {
     return (
-      <div className="rounded-lg border border-gray-200 bg-surface p-6 text-center text-sm text-gray-500 sm:p-8">
+      <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-surface text-sm text-gray-500">
         Verifying your email…
       </div>
     );
@@ -154,11 +208,20 @@ function VerifyEmailContent() {
     );
   }
 
+  // THE BEAUTIFUL OTP SCREEN
   return (
-    <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
-      <h1 className="font-display text-2xl text-gray-900">Verify your email</h1>
-      <p className="mt-1 text-sm text-gray-500">
-        Enter the 6-digit code we sent to your email.
+    <div className="rounded-lg border border-gray-200 bg-surface p-8 sm:p-12 max-w-md mx-auto w-full shadow-sm">
+      
+      {/* Mail Icon */}
+      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-colly/10 mb-6">
+        <Mail className="h-10 w-10 text-colly" />
+      </div>
+
+      <h1 className="font-display text-2xl text-gray-900 text-center">
+        Check verification code
+      </h1>
+      <p className="mt-2 text-sm text-gray-500 text-center">
+        We&apos;ve sent a special code to your email,<br /> type it here to sign in.
       </p>
 
       {state.kind === "error" && (
@@ -166,60 +229,57 @@ function VerifyEmailContent() {
           <AuthAlert tone="error">{state.message}</AuthAlert>
         </div>
       )}
-
-      <form onSubmit={handleVerify} className="mt-6 flex flex-col gap-4">
-        <div>
-          <label
-            htmlFor="email"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@business.com"
-            autoComplete="email"
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
-          />
+      {errorMsg && (
+        <div className="mt-6">
+          <AuthAlert tone="error">{errorMsg}</AuthAlert>
         </div>
-        <div>
-          <label
-            htmlFor="otp-code"
-            className="mb-1 block text-sm font-medium text-gray-700"
-          >
-            6-digit code
-          </label>
-          <input
-            id="otp-code"
-            value={code}
-            onChange={(event) =>
-              setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
-            }
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            placeholder="Enter 6-digit code"
-            required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-center text-lg tracking-[0.4em] text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
-          />
+      )}
+
+      <form onSubmit={handleVerify} className="mt-8">
+        
+        {/* Email input if not in URL */}
+        {!emailParam && (
+          <div className="mb-6">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-center text-sm text-gray-900 outline-none focus:border-colly focus:ring-2 focus:ring-colly/20"
+            />
+          </div>
+        )}
+
+        {/* 6 Digit Pill Boxes */}
+        <div className="flex justify-center gap-2 sm:gap-3 mb-8">
+          {otp.map((digit, index) => (
+            <input
+              key={index}
+              ref={(el) => { inputRefs.current[index] = el; }}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              onPaste={handlePaste}
+              className="h-12 w-10 sm:h-14 sm:w-12 rounded-full border border-gray-300 text-center text-xl font-medium text-gray-900 outline-none transition-all focus:border-colly focus:ring-2 focus:ring-colly/20"
+            />
+          ))}
         </div>
 
         <Button
           type="submit"
           variant="primary"
-          loading={submitting}
-          className="w-full"
+          disabled={submitting || otp.some(d => !d)}
+          className="w-full rounded-full h-12 text-base font-semibold"
         >
-          Verify email
+          {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verify email"}
         </Button>
       </form>
 
-      <p className="mt-6 text-sm text-gray-500">
+      <p className="mt-8 text-center text-sm text-gray-500">
         <Link
           href="/login?role=business"
           className="font-medium text-colly transition-colors hover:text-colly-hover"
@@ -235,7 +295,7 @@ export default function VerifyEmailPage() {
   return (
     <Suspense
       fallback={
-        <div className="rounded-lg border border-gray-200 bg-surface p-6 text-center text-sm text-gray-500 sm:p-8">
+        <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-surface text-sm text-gray-500">
           Verifying your email…
         </div>
       }

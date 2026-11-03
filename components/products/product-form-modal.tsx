@@ -7,7 +7,7 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { LoaderCircle, Minus, Plus, Upload, X } from "lucide-react";
+import { LoaderCircle, Minus, Plus, Upload, X, ChevronDown } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { VoiceInput } from "@/components/ui/voice-input";
@@ -19,7 +19,6 @@ type ProductFormModalProps = {
   mode: "create" | "edit";
   product?: Product;
   onClose: () => void;
-  /** Should throw with a message when the save fails. */
   onSubmit: (values: ProductInput) => Promise<void>;
 };
 
@@ -27,10 +26,6 @@ const LABEL_CLASS = "mb-1 block text-sm font-medium text-gray-700";
 const INPUT_CLASS =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
 
-/**
- * Formats a raw digit string as thousands-with-commas for display in the price
- * field. Non-digits are stripped, and "" stays "".
- */
 function formatNairaInput(value: string): string {
   return value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
@@ -42,9 +37,7 @@ export function ProductFormModal({
   onSubmit,
 }: ProductFormModalProps) {
   const [name, setName] = useState(product?.name ?? "");
-  const [price, setPrice] = useState(
-    product ? String(product.price) : "",
-  );
+  const [price, setPrice] = useState(product ? String(product.price) : "");
   const [priceFocused, setPriceFocused] = useState(false);
   const [floorPrice, setFloorPrice] = useState(
     product?.floorPrice != null ? String(product.floorPrice) : "",
@@ -63,11 +56,7 @@ export function ProductFormModal({
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // A new product has no id yet, so uploads go under a generated folder. The
-  // URLs are stored as-is, so the folder name never has to match the product.
   const folderIdRef = useRef<string | null>(null);
-  // Uploads made in this session that are not saved yet; removing one of these
-  // also removes it from storage so cancelled forms leave nothing behind.
   const sessionUploadsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -80,9 +69,7 @@ export function ProductFormModal({
           setBusinessId(data?.business?.id ?? null);
         }
       })
-      .catch(() => {
-        // Leave businessId null; the upload button explains what to do.
-      });
+      .catch(() => {});
 
     return () => {
       active = false;
@@ -98,17 +85,13 @@ export function ProductFormModal({
 
   async function handleFiles(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? []);
-    if (files.length === 0) {
-      return;
-    }
+    if (files.length === 0) return;
 
     setUploadError(null);
 
     if (!businessId) {
       setUploadError("Still loading your business. Try again in a moment.");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
@@ -129,20 +112,15 @@ export function ProductFormModal({
       setUploadError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
   function removeImage(url: string) {
     setImages((prev) => prev.filter((item) => item !== url));
-
     if (sessionUploadsRef.current.has(url)) {
       sessionUploadsRef.current.delete(url);
-      deleteProductImage(url).catch(() => {
-        // Best-effort cleanup; the image is already out of the form.
-      });
+      deleteProductImage(url).catch(() => {});
     }
   }
 
@@ -160,7 +138,6 @@ export function ProductFormModal({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setHasAttemptedSave(true);
 
     const trimmedName = name.trim();
@@ -179,8 +156,7 @@ export function ProductFormModal({
       return;
     }
 
-    // Floor price is optional: blank means "AI never goes below the list
-    // price" (saved as null).
+    // ADVANCED FIELDS (Optional)
     let floorPriceValue: number | null = null;
     if (floorPrice.trim() !== "") {
       const parsedFloor = Number(floorPrice);
@@ -195,12 +171,6 @@ export function ProductFormModal({
       floorPriceValue = parsedFloor;
     }
 
-    if (description.trim() === "") {
-      setError("Description is required.");
-      return;
-    }
-
-    // Stock is optional: blank means "not tracked" and is saved as null.
     let stockValue: number | null = null;
     if (stock.trim() !== "") {
       const parsedStock = Number(stock);
@@ -221,12 +191,10 @@ export function ProductFormModal({
         floorPrice: floorPriceValue,
         negotiable,
         stock: stockValue,
-        description: description.trim(),
+        description: description.trim(), // Optional now, no blocking error
         images,
       });
-      toast.success(
-        mode === "create" ? "Product added!" : "Product updated!",
-      );
+      toast.success(mode === "create" ? "Product added!" : "Product updated!");
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -249,16 +217,18 @@ export function ProductFormModal({
           >
             Cancel
           </button>
-            <Button form="product-form" type="submit" variant="primary" isLoading={saving} className="flex-1 sm:flex-none">
+          <Button form="product-form" type="submit" variant="primary" isLoading={saving} className="flex-1 sm:flex-none">
             {mode === "create" ? "Save Product" : "Save Changes"}
           </Button>
         </div>
       }
     >
-      <form id="product-form" onSubmit={handleSubmit} className="space-y-4">
+      <form id="product-form" onSubmit={handleSubmit} className="space-y-5">
+        
+        {/* CORE FIELDS */}
         <div>
           <label htmlFor="product-name" className={LABEL_CLASS}>
-            Name
+            Name <span className="text-red-500">*</span>
           </label>
           <input
             id="product-name"
@@ -269,158 +239,69 @@ export function ProductFormModal({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="product-price" className={LABEL_CLASS}>
-              Price (₦)
-            </label>
-            <div className="flex items-stretch gap-1">
-              <button
-                type="button"
-                onClick={() => bumpPrice(-1000)}
-                aria-label="Decrease price by 1000"
-                title="Decrease by 1000"
-                className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
-              >
-                <Minus className="h-4 w-4" aria-hidden />
-              </button>
-              <input
-                id="product-price"
-                type="text"
-                inputMode="numeric"
-                value={priceFocused ? price : formatNairaInput(price)}
-                onChange={handlePriceChange}
-                onFocus={() => setPriceFocused(true)}
-                onBlur={() => setPriceFocused(false)}
-                placeholder="e.g. 145000"
-                className={INPUT_CLASS}
-              />
-              <button
-                type="button"
-                onClick={() => bumpPrice(1000)}
-                aria-label="Increase price by 1000"
-                title="Increase by 1000"
-                className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
-              >
-                <Plus className="h-4 w-4" aria-hidden />
-              </button>
-            </div>
-          </div>
-          <div>
-            <label htmlFor="product-stock" className={LABEL_CLASS}>
-              Stock
-            </label>
+        <div>
+          <label htmlFor="product-price" className={LABEL_CLASS}>
+            Price (₦) <span className="text-red-500">*</span>
+          </label>
+          <div className="flex items-stretch gap-1">
+            <button
+              type="button"
+              onClick={() => bumpPrice(-1000)}
+              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100"
+            >
+              <Minus className="h-4 w-4" aria-hidden />
+            </button>
             <input
-              id="product-stock"
-              type="number"
-              min="0"
-              step="1"
+              id="product-price"
+              type="text"
               inputMode="numeric"
-              value={stock}
-              onChange={(event) => setStock(event.target.value)}
-              placeholder="Optional"
+              value={priceFocused ? price : formatNairaInput(price)}
+              onChange={handlePriceChange}
+              onFocus={() => setPriceFocused(true)}
+              onBlur={() => setPriceFocused(false)}
+              placeholder="e.g. 145000"
               className={INPUT_CLASS}
             />
+            <button
+              type="button"
+              onClick={() => bumpPrice(1000)}
+              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100"
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+            </button>
           </div>
         </div>
 
         <div>
-          <label htmlFor="product-floor-price" className={LABEL_CLASS}>
-            Floor Price (₦)
-          </label>
-          <input
-            id="product-floor-price"
-            type="number"
-            min="0"
-            step="1"
-            inputMode="numeric"
-            value={floorPrice}
-            onChange={(event) => setFloorPrice(event.target.value)}
-            placeholder="Optional"
-            className={INPUT_CLASS}
-          />
-          <p className="mt-1 text-[13px] text-gray-500">
-            Lowest you&apos;ll accept. AI will not negotiate below this.
-          </p>
-          <label
-            htmlFor="product-negotiable"
-            className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-gray-700"
-          >
-            <input
-              id="product-negotiable"
-              type="checkbox"
-              checked={negotiable}
-              onChange={(event) => setNegotiable(event.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-colly accent-[#FF6600] focus:ring-colly/20"
-            />
-            Allow AI to negotiate this price
-          </label>
-        </div>
-
-        <div>
-          <div className="mb-1 flex items-center gap-2">
-            <label
-              htmlFor="product-description"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Description
+          <div className="mb-1 flex items-center justify-between">
+            <label htmlFor="product-description" className="block text-sm font-medium text-gray-700">
+              Description <span className="text-gray-400 font-normal">(Optional)</span>
             </label>
             <VoiceInput
               onTranscript={(transcript) =>
-                setDescription((prev) =>
-                  prev ? `${prev}\n${transcript}` : transcript,
-                )
+                setDescription((prev) => prev ? `${prev}\n${transcript}` : transcript)
               }
             />
           </div>
           <textarea
             id="product-description"
             value={description}
-            onChange={(event) => {
-              setDescription(event.target.value);
-              if (hasAttemptedSave && error === "Description is required.") {
-                setError(null);
-              }
-            }}
-            placeholder="Describe this product. Include condition, specs, and what's in the box."
-            className={`${INPUT_CLASS} min-h-[180px] resize-none overflow-y-auto`}
-            style={{ minHeight: "180px", resize: "none", overflowY: "auto" }}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Describe this product. The AI uses this to answer customer questions."
+            className={`${INPUT_CLASS} min-h-[100px] resize-none overflow-y-auto`}
           />
-          {hasAttemptedSave && description.trim() === "" && (
-            <p className="mt-1.5 text-[13px] text-danger">
-              Description is required.
-            </p>
-          )}
         </div>
 
         <div>
           <span className={LABEL_CLASS}>Images</span>
           <div className="flex flex-wrap gap-2">
             {images.map((url) => (
-              <div
-                key={url}
-                className="relative h-20 w-20 overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
-              >
-                {/* Product images may point at our Supabase bucket (uploads) or
-                    at another host an owner pasted in, so `next/image` has no
-                    host allow-list to work with. Sized + lazy by hand. The alt
-                    stays empty because the remove button below is the labelled
-                    control for this thumbnail. */}
+              <div key={url} className="relative h-20 w-20 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={url}
-                  alt=""
-                  width={80}
-                  height={80}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-full w-full object-cover"
-                />
+                <img src={url} alt="" width={80} height={80} loading="lazy" className="h-full w-full object-cover" />
                 <button
                   type="button"
                   onClick={() => removeImage(url)}
-                  aria-label="Remove image"
-                  title="Remove"
                   className="absolute right-0 top-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-white"
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-900/70">
@@ -429,37 +310,74 @@ export function ProductFormModal({
                 </button>
               </div>
             ))}
-
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 text-gray-400 transition-colors hover:border-colly hover:text-colly disabled:opacity-50"
             >
-              {uploading ? (
-                <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden />
-              ) : (
-                <Upload className="h-5 w-5" aria-hidden />
-              )}
-              <span className="text-[11px] font-medium">
-                {uploading ? "Uploading" : "Upload"}
-              </span>
+              {uploading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
+              <span className="text-[11px] font-medium">{uploading ? "Uploading" : "Upload"}</span>
             </button>
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleFiles}
-            className="hidden"
-          />
-          {uploadError && (
-            <p className="mt-1 text-sm text-danger">{uploadError}</p>
-          )}
+          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFiles} className="hidden" />
+          {uploadError && <p className="mt-1 text-sm text-danger">{uploadError}</p>}
         </div>
 
-        {error && <p className="text-sm text-danger">{error}</p>}
+        {/* PROGRESSIVE DISCLOSURE: ADVANCED SETTINGS */}
+        <details className="group border-t border-gray-200 pt-4">
+          <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-gray-700 hover:text-colly">
+            Advanced Settings (Stock & Negotiation)
+            <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+          </summary>
+          
+          <div className="mt-4 space-y-4 rounded-lg bg-gray-50 p-4 border border-gray-100">
+            <div>
+              <label htmlFor="product-stock" className={LABEL_CLASS}>
+                Stock Quantity
+              </label>
+              <input
+                id="product-stock"
+                type="number"
+                min="0"
+                step="1"
+                value={stock}
+                onChange={(event) => setStock(event.target.value)}
+                placeholder="Leave blank to track manually"
+                className={INPUT_CLASS}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="product-floor-price" className={LABEL_CLASS}>
+                Floor Price (₦)
+              </label>
+              <input
+                id="product-floor-price"
+                type="number"
+                min="0"
+                step="1"
+                value={floorPrice}
+                onChange={(event) => setFloorPrice(event.target.value)}
+                placeholder="Lowest price the AI can negotiate"
+                className={INPUT_CLASS}
+              />
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+              <input
+                id="product-negotiable"
+                type="checkbox"
+                checked={negotiable}
+                onChange={(event) => setNegotiable(event.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-colly accent-[#FF6600] focus:ring-colly/20"
+              />
+              Allow AI to negotiate this price
+            </label>
+          </div>
+        </details>
+
+        {error && <p className="text-sm font-medium text-danger">{error}</p>}
       </form>
     </Modal>
   );

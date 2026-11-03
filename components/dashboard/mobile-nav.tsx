@@ -6,7 +6,8 @@ import {
   Home,
   MessageSquare,
   Settings,
-  Sparkles,
+  ShoppingCart,
+  Package,
   type LucideIcon,
 } from "lucide-react";
 
@@ -17,13 +18,17 @@ type MobileTab = {
 };
 
 const TABS: MobileTab[] = [
-  { label: "Overview", href: "/dashboard", icon: Home },
-  { label: "Chats", href: "/conversations", icon: MessageSquare },
-  { label: "AI Hub", href: "/ai", icon: Sparkles },
+  { label: "Home", href: "/dashboard", icon: Home },
+  { label: "Inbox", href: "/conversations", icon: MessageSquare },
+  { label: "Sell", href: "/sales", icon: ShoppingCart },
+  { label: "Catalogue", href: "/products", icon: Package },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 function isActive(pathname: string, href: string): boolean {
+  if (href === "/settings") {
+    return pathname === "/settings";
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
