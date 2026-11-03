@@ -188,7 +188,6 @@ export default function HotelsPage() {
         ctaLabel="Start Free"
         secondaryHref="#benefits"
         secondaryLabel="See what it handles"
-        imageAlt="Hotel owner chatting with a guest through Colly AI"
         footnote="Telegram, Discord and Web Chat · No card required to start"
       />
 
