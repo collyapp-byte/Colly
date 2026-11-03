@@ -129,6 +129,10 @@ export function BusinessSignupForm({
   // Email confirmation required: replace the form with a "check your email"
   // screen instead of sending the user to the dashboard.
   if (state.requiresEmailVerification || state.notice) {
+    const verifyUrl = state.email 
+      ? `/verify-email?email=${encodeURIComponent(state.email)}` 
+      : "/verify-email";
+
     return (
       <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
         <h1 className="font-display text-2xl text-gray-900">Check your email</h1>
@@ -141,10 +145,10 @@ export function BusinessSignupForm({
         </div>
         <p className="mt-6 text-sm text-gray-500">
           <Link
-            href="/login?role=business"
+            href={verifyUrl}
             className="font-medium text-colly transition-colors hover:text-colly-hover"
           >
-            Go to sign in
+            Enter your 6-digit code here
           </Link>
         </p>
       </div>

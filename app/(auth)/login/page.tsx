@@ -44,6 +44,8 @@ function BusinessLoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
+  const isConfirmError = state.error?.toLowerCase().includes("confirm");
+
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
       <h1 className="font-display text-2xl text-gray-900">Welcome back</h1>
@@ -113,7 +115,18 @@ function BusinessLoginForm() {
           </Link>
         </div>
 
-        {state.error && <AuthAlert tone="error">{state.error}</AuthAlert>}
+        {state.error && (
+          <AuthAlert tone="error">
+            <div>{state.error}</div>
+            {isConfirmError && (
+              <div className="mt-2">
+                <Link href="/verify-email" className="font-semibold underline text-colly">
+                  Click here to enter your 6-digit code
+                </Link>
+              </div>
+            )}
+          </AuthAlert>
+        )}
 
         <Button type="submit" variant="primary" loading={pending} className="w-full">
           Sign in
@@ -150,6 +163,8 @@ function AgentLoginForm() {
   );
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+
+  const isConfirmError = state.error?.toLowerCase().includes("confirm");
 
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
@@ -208,7 +223,18 @@ function AgentLoginForm() {
           </Link>
         </div>
 
-        {state.error && <AuthAlert tone="error">{state.error}</AuthAlert>}
+        {state.error && (
+          <AuthAlert tone="error">
+            <div>{state.error}</div>
+            {isConfirmError && (
+              <div className="mt-2">
+                <Link href="/verify-email" className="font-semibold underline text-colly">
+                  Click here to enter your 6-digit code
+                </Link>
+              </div>
+            )}
+          </AuthAlert>
+        )}
 
         <Button type="submit" variant="primary" loading={pending} className="w-full">
           Sign in

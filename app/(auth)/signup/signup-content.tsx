@@ -23,7 +23,7 @@ type SubmitState =
   | { kind: "idle" }
   | { kind: "submitting" }
   | { kind: "error"; message: string }
-  | { kind: "done"; notice: string };
+  | { kind: "done"; notice: string; email: string };
 
 function AgentSignupForm() {
   const router = useRouter();
@@ -43,6 +43,7 @@ function AgentSignupForm() {
       return;
     }
 
+    const email = data.get("email") as string;
     setState({ kind: "submitting" });
 
     try {
@@ -51,7 +52,7 @@ function AgentSignupForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName: data.get("fullName"),
-          email: data.get("email"),
+          email: email,
           phone: data.get("phone"),
           state: data.get("state"),
           password: data.get("password"),
@@ -77,8 +78,8 @@ function AgentSignupForm() {
       if (payload.needsConfirmation) {
         setState({
           kind: "done",
-          notice:
-            "Check your email to confirm your account, then sign in to start your training.",
+          notice: "Check your email for your 6-digit verification code.",
+          email: email,
         });
         return;
       }
@@ -101,10 +102,10 @@ function AgentSignupForm() {
         </div>
         <p className="mt-6 text-sm text-gray-500">
           <Link
-            href="/login?role=agent"
+            href={`/verify-email?email=${encodeURIComponent(state.email)}`}
             className="font-medium text-colly transition-colors hover:text-colly-hover"
           >
-            Go to sign in
+            Enter your 6-digit code here
           </Link>
         </p>
       </div>
