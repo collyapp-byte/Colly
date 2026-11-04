@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Lottie } from "@/components/ui/lottie";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { AuthAlert } from "@/components/auth/auth-form";
@@ -19,12 +20,10 @@ function VerifyEmailContent() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   
-  // OTP State
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const started = useRef(false);
 
-  // Resend State
   const [resending, setResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -67,7 +66,6 @@ function VerifyEmailContent() {
     void verifyLink();
   }, [searchParams]);
 
-  // Cooldown timer for resend button
   useEffect(() => {
     if (resendCooldown > 0) {
       const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
@@ -173,7 +171,7 @@ function VerifyEmailContent() {
       }
 
       toast.success("A new 6-digit code has been sent to your email!");
-      setResendCooldown(60); // Start 60 second cooldown
+      setResendCooldown(60);
     } catch {
       toast.error("Failed to resend code. Please try again.");
     } finally {
@@ -198,9 +196,8 @@ function VerifyEmailContent() {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-8 sm:p-12 max-w-md mx-auto w-full shadow-sm">
-      {/* Replaced broken Lottie with a static SVG icon */}
-      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-colly/10 mb-6">
-        <Mail className="h-10 w-10 text-colly" />
+      <div className="mx-auto h-24 w-24 mb-4">
+        <Lottie src="/email-sent.json" />
       </div>
 
       <h1 className="font-display text-2xl text-gray-900 text-center">Check verification code</h1>

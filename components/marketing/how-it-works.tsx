@@ -45,8 +45,8 @@ export function HowItWorks() {
                 {step.number}
               </div>
               
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#FFF4EC] mb-6 shadow-sm border border-[#FF6600]/10">
-                <div className="h-12 w-12">
+              <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-[#FFF4EC] mb-6 shadow-sm border border-[#FF6600]/10">
+                <div className="h-16 w-16">
                   <Lottie src={step.lottie} />
                 </div>
               </div>

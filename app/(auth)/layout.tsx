@@ -1,5 +1,7 @@
 export const instant = false;
+
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import Image from "next/image";
 import type { ReactNode } from "react";
@@ -24,6 +26,7 @@ export const metadata: Metadata = {
  * touches cookies(), which blocks prerendering otherwise.
  */
 async function SessionSignOut() {
+  await connection();
   const user = await getCurrentUser();
   if (!user) return null;
 

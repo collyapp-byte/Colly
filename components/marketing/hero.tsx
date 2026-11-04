@@ -39,12 +39,10 @@ export function Hero({
 
   return (
     <section className="relative overflow-hidden bg-white pt-16 pb-12 sm:pt-24 sm:pb-16">
-      {/* Subtle background gradient */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#FFF4EC]/60 to-white" aria-hidden />
 
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 lg:grid-cols-2">
         
-        {/* Left Column: Stripe-style typography */}
         <div>
           {badge && (
             <span className="inline-flex items-center rounded-full border border-[#FF6600]/30 bg-white px-4 py-1.5 text-[13px] font-semibold text-[#FF6600] mb-6">
@@ -81,7 +79,6 @@ export function Hero({
           </div>
         </div>
 
-        {/* Right Column: Product UI Mockup Lottie */}
         <div className="relative mx-auto w-full max-w-md lg:max-w-lg">
           <div className="absolute -inset-4 rounded-[3rem] bg-gradient-to-tr from-orange-100 to-purple-50 opacity-50 blur-2xl" aria-hidden />
           <div className="relative">
