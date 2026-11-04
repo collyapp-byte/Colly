@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
-import { ArrowRight, Loader2, UserCheck } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Lottie } from "@/components/ui/lottie";
 
@@ -43,8 +43,7 @@ export function Wizard({ ownerName }: { ownerName: string }) {
       await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: productName, price: Number(productPrice) }),
-      });
+        body: JSON.stringify({ name: productName, price: Number(productPrice) })});
       setStep(3);
     } catch (err) {
       console.error(err);
@@ -61,8 +60,7 @@ export function Wizard({ ownerName }: { ownerName: string }) {
         return fetch("/api/faqs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: faq.q, answer: faq.a }),
-        });
+          body: JSON.stringify({ question: faq.q, answer: faq.a })});
       });
       await Promise.all(promises);
       setStep(4);
@@ -81,8 +79,7 @@ export function Wizard({ ownerName }: { ownerName: string }) {
       const res = await fetch("/api/onboarding/test-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
-      });
+        body: JSON.stringify({ message })});
       const data = await res.json();
       if (res.ok) {
         setAiReply(data.reply);

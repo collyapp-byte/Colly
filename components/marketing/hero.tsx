@@ -2,8 +2,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { Lottie } from "@/components/ui/lottie";
-import { PLANS } from "@/lib/plans";
-import { formatNaira } from "@/lib/format";
 
 export function Hero({
   place,

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Lottie } from "@/components/ui/lottie";
 import Link from "next/link";
 import {
   DragDropContext,

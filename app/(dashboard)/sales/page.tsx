@@ -10,7 +10,6 @@ import {
   CircleAlert,
   ImageIcon,
   Plus,
-  ShoppingCart,
   X,
 } from "lucide-react";
 import { formatNaira } from "@/lib/format";
@@ -419,15 +418,10 @@ export default function SalesPage() {
             )}
 
             {sales !== null && recentSales.length === 0 && !salesError && (
-              <div className="px-5 py-10 text-center">
-                <ShoppingCart
-                  className="mx-auto h-8 w-8 text-gray-300"
-                  aria-hidden
-                />
-                <p className="mt-2 text-sm text-gray-500">
-                  No sales yet. Add products and complete a sale.
-                </p>
-              </div>
+              <div className="flex flex-col items-center justify-center py-12">
+        <div className="h-48 w-48 mb-4"><Lottie src="/empty-sales.json" /></div>
+        <p className="text-sm text-gray-500">No sales yet. Add products and complete a sale.</p>
+      </div>
             )}
 
             {recentSales.length > 0 && (

@@ -47,7 +47,7 @@ export function SetupChecklist({ hasProducts, hasFaqs, hasAiReply }: SetupCheckl
           <h2 className="text-lg font-semibold text-gray-900">Get started with Colly</h2>
           <p className="text-sm text-gray-500 mt-1">Complete these steps to get the most out of your AI.</p>
         </div>
-        <div className="hidden sm:block h-32 w-32 shrink-0">
+        <div className="hidden sm:block h-48 w-48 shrink-0 -my-6 -mr-4">
           <Lottie src="/dashboard-rocket.json" />
         </div>
       </div>

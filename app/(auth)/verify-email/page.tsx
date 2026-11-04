@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Lottie } from "@/components/ui/lottie";
 import { toast } from "sonner";
-import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { AuthAlert } from "@/components/auth/auth-form";
 import { Button } from "@/components/ui/button";
