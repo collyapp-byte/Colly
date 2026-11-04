@@ -1,5 +1,4 @@
 "use client";
-import productAnimation from "@/public/product.json";
 import { EmptyState } from "@/components/ui/empty-state";
 
 import {
@@ -250,7 +249,7 @@ export default function ProductsPage() {
 
       {products && products.length === 0 && (
   <EmptyState
-    animationData={productAnimation}
+    src="/product.json"
     title="Your AI needs a catalogue to sell."
     description="Add your products here so Colly can quote prices, describe features, and send pictures to customers automatically."
     actionLabel="Add Product"

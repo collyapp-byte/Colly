@@ -4,8 +4,7 @@ import { Player } from "@lottiefiles/react-lottie-player";
 import { ReactNode } from "react";
 
 interface EmptyStateProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  animationData: any;
+  src: string; // Changed to accept a URL string
   title: string;
   description: string;
   actionLabel?: string;
@@ -14,7 +13,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({
-  animationData,
+  src,
   title,
   description,
   actionLabel,
@@ -27,7 +26,7 @@ export function EmptyState({
         <Player
           autoplay
           loop
-          src={animationData}
+          src={src}
           style={{ height: '100%', width: '100%' }}
         />
       </div>

@@ -1,5 +1,4 @@
 "use client";
-import faqAnimation from "@/public/faq.json";
 import { EmptyState } from "@/components/ui/empty-state";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
@@ -304,7 +303,7 @@ export default function FaqsPage() {
       {faqs && faqs.length === 0 && (
         <div className="mb-8">
           <EmptyState
-            animationData={faqAnimation}
+            src="/faq.json"
             title="Teach your AI common answers."
             description="You haven't added any FAQs yet. Pick a quick start below, or write your own."
             actionLabel="Add Custom FAQ"

@@ -67,6 +67,12 @@ export default async function OverviewPage({
   })) > 0;
 
 
+      const hasFaqs = (await prisma.faq.count({
+    where: { businessId: user.businessId }
+  })) > 0;
+
+
+
     return (
     <div className="mx-auto w-full max-w-6xl space-y-8">
       {denied && <StaffDeniedToast />}
@@ -80,8 +86,7 @@ export default async function OverviewPage({
       </div>
 
       <SetupChecklist 
-        hasProducts={productCount > 0} 
-        hasAiReply={hasAiReply} 
+        hasProducts={productCount > 0} hasFaqs={hasFaqs} hasAiReply={hasAiReply} 
       />
 
       <DashboardOverview

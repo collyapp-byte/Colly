@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import { ArrowRight, Loader2, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Lottie } from "@/components/ui/lottie";
 
 const FAQ_SUGGESTIONS = [
   { q: "Where are you located?", a: "We are located in Lagos, Nigeria." },
@@ -124,8 +125,8 @@ export function Wizard({ ownerName }: { ownerName: string }) {
       {step === 1 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="text-center">
-            <div className="mx-auto w-16 h-16 bg-[#FFF4EC] rounded-full flex items-center justify-center mb-4">
-              <UserCheck className="w-8 h-8 text-colly" />
+            <div className="mx-auto w-32 h-32 mb-2">
+              <Lottie src="/agent-handshake.json" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Need help setting up?</h2>
             <p className="text-gray-500 text-sm max-w-md mx-auto">
@@ -201,8 +202,11 @@ export function Wizard({ ownerName }: { ownerName: string }) {
       {step === 4 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Test your shop bot</h2>
-            <p className="text-gray-500 text-sm">Ask a question about the product you just added.</p>
+            <div className="mx-auto w-32 h-32 mb-4">
+              <Lottie src="/test-ai-bot.json" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2 text-center">Test your shop bot</h2>
+            <p className="text-gray-500 text-sm text-center mb-6">Ask a question about the product you just added.</p>
           </div>
           
           {!aiReply ? (
