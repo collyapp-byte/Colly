@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Lottie } from "@/components/ui/lottie";
 import { useRouter } from "next/navigation";
 import { ArrowDownCircle, CreditCard, Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -148,6 +149,9 @@ export default function AgentWalletPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
+      <div className="mx-auto mb-6 flex justify-center">
+        <div className="h-40 w-40"><Lottie src="/wallet-coins.json" /></div>
+      </div>
         <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
       </div>
     );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Lottie } from "@/components/ui/lottie";
 import Link from "next/link";
 import {
   Award,
@@ -109,6 +110,9 @@ export default function AgentDashboardPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      <div className="mx-auto mb-6 flex justify-center">
+        <div className="h-48 w-48"><Lottie src="/trophy-leaderboard.json" /></div>
+      </div>
       <div>
         <h1 className="font-display text-2xl text-gray-900">
           Welcome, {agent.fullName.split(" ")[0]}

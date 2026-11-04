@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Lottie } from "@/components/ui/lottie";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,

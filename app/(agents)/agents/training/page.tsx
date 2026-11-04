@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Lottie } from "@/components/ui/lottie";
 import { ArrowRight, TriangleAlert } from "lucide-react";
 import { useAgentData } from "@/components/agents/use-agent-data";
 import { CourseBadge } from "@/components/agents/course-badge";
@@ -43,7 +44,10 @@ export default function AgentTrainingPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="font-display text-2xl text-gray-900">Training</h1>
+        <div className="flex items-center gap-4">
+          <div className="h-16 w-16 shrink-0"><Lottie src="/book-loading.json" /></div>
+          <h1 className="font-display text-2xl text-gray-900">Training</h1>
+        </div>
         <p className="mt-1 text-sm text-gray-500">
           Work through each course and pass its quiz to become a certified Colly
           agent.
@@ -51,9 +55,10 @@ export default function AgentTrainingPage() {
       </div>
 
       {data.courses.length === 0 ? (
-        <p className="rounded-xl border border-panel-border bg-white p-5 text-sm text-gray-500">
-          No courses are available yet. Check back soon.
-        </p>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-panel-border bg-white py-12 px-4 text-center">
+          <div className="h-40 w-40 mb-2"><Lottie src="/book-loading.json" /></div>
+          <p className="text-sm text-gray-500">No courses available yet. Check back soon.</p>
+        </div>
       ) : (
         <div className="flex flex-col gap-4">
           {data.courses.map((course) => {

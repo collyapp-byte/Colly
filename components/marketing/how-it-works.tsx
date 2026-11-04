@@ -1,4 +1,5 @@
 import { Bot, QrCode, Zap } from "lucide-react";
+import { Lottie } from "@/components/ui/lottie";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 const STEPS = [

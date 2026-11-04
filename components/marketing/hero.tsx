@@ -40,7 +40,7 @@ export function Hero({
     : "Reply to customers 24/7 on Telegram, Discord, and Web Chat. Never lose a sale again.";
 
   return (
-    <section className="relative overflow-hidden bg-white pt-28 pb-16 sm:pt-36 sm:pb-24">
+    <section className="relative overflow-hidden bg-white pt-16 pb-12 sm:pt-24 sm:pb-16">
       {/* Subtle background gradient */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#FFF4EC]/60 to-white" aria-hidden />
 

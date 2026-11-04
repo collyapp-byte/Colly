@@ -8,6 +8,7 @@ import {
   type TouchEvent,
 } from "react";
 import Link from "next/link";
+import { Lottie } from "@/components/ui/lottie";
 import { CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/conversations/status-badge";

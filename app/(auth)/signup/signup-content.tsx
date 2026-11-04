@@ -69,6 +69,11 @@ function AgentSignupForm() {
         | null;
 
       if (!response.ok || !payload?.ok) {
+        // If the error indicates the email is already registered, push them to the verify screen
+        if (payload?.error?.toLowerCase().includes("already registered") || payload?.error?.toLowerCase().includes("already exists")) {
+           router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+           return;
+        }
         setState({
           kind: "error",
           message: payload?.error ?? "Could not create your account. Please try again.",

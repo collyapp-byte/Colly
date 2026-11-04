@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ClipboardEvent } from "react";
+import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Lottie } from "@/components/ui/lottie";
@@ -11,42 +11,25 @@ import { createClient } from "@/lib/supabase/client";
 import { AuthAlert } from "@/components/auth/auth-form";
 import { Button } from "@/components/ui/button";
 
-type VerifyState =
-  | { kind: "checking" }
-  | { kind: "otp" }
-  | { kind: "verified" }
-  | { kind: "error"; message: string };
-
-const GENERIC_ERROR =
-  "This verification link is invalid or has expired. Enter the 6-digit code from your email below.";
-
-function messageFromParams(params: URLSearchParams): string | null {
-  const description = params.get("error_description");
-  const code = params.get("error_code");
-  const error = params.get("error");
-
-  if (description) return `${GENERIC_ERROR} (${description})`;
-  if (code) return `${GENERIC_ERROR} (${code})`;
-  if (error) return `${GENERIC_ERROR} (${error})`;
-  return null;
-}
-
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const emailParam = searchParams.get("email") ?? "";
   
-  const [state, setState] = useState<VerifyState>({ kind: "checking" });
+  const [state, setState] = useState<"checking" | "otp" | "verified" | "error">("checking");
   const [email, setEmail] = useState(emailParam);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   
-  // 6-digit state
+  // OTP State
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const started = useRef(false);
 
-  // Keep support for older link-based confirmation emails.
+  // Resend State
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
   useEffect(() => {
     if (started.current) return;
     started.current = true;
@@ -54,62 +37,54 @@ function VerifyEmailContent() {
     async function verifyLink() {
       const linkCode = searchParams.get("code");
       const tokenHash = searchParams.get("token_hash");
-      const type = searchParams.get("type");
-      const paramError = messageFromParams(searchParams);
-
-      if (paramError) {
-        setState({ kind: "error", message: paramError });
+      
+      if (searchParams.get("error")) {
+        setState("error");
+        setErrorMsg("This verification link is invalid or has expired.");
         return;
       }
 
       if (!linkCode && !tokenHash) {
-        setState({ kind: "otp" });
+        setState("otp");
         return;
       }
 
       try {
         const supabase = createClient();
-
         if (linkCode) {
           const { error } = await supabase.auth.exchangeCodeForSession(linkCode);
-          if (error) {
-            setState({ kind: "error", message: GENERIC_ERROR });
-            return;
-          }
-          setState({ kind: "verified" });
+          if (error) { setState("error"); setErrorMsg("Link expired."); return; }
+          setState("verified");
           return;
         }
-
         if (tokenHash) {
-          const { error } = await supabase.auth.verifyOtp({
-            type: (type as EmailOtpType | null) ?? "signup",
-            token_hash: tokenHash,
-          });
-          if (error) {
-            setState({ kind: "error", message: GENERIC_ERROR });
-            return;
-          }
-          setState({ kind: "verified" });
+          const { error } = await supabase.auth.verifyOtp({ type: "signup", token_hash: tokenHash });
+          if (error) { setState("error"); setErrorMsg("Link expired."); return; }
+          setState("verified");
         }
-      } catch (error) {
-        console.error("[verify-email]", error);
-        setState({ kind: "error", message: GENERIC_ERROR });
+      } catch {
+        setState("error"); setErrorMsg("Something went wrong.");
       }
     }
-
     void verifyLink();
   }, [searchParams]);
 
-  // Auto-focus first box when screen loads
+  // Cooldown timer for resend button
   useEffect(() => {
-    if (state.kind === "otp") {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  useEffect(() => {
+    if (state === "otp") {
       inputRefs.current[0]?.focus();
     }
-  }, [state.kind]);
+  }, [state]);
 
   const handleChange = (index: number, value: string) => {
     if (value && !/^\d+$/.test(value)) return;
-
     const newOtp = [...otp];
     if (value.length > 1) {
       const pasted = value.slice(0, 6).split("");
@@ -120,29 +95,23 @@ function VerifyEmailContent() {
       inputRefs.current[Math.min(index + pasted.length, 5)]?.focus();
       return;
     }
-
     newOtp[index] = value;
     setOtp(newOtp);
-
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
+    if (value && index < 5) inputRefs.current[index + 1]?.focus();
   };
 
-  const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
-  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     if (pasted) {
       const newOtp = [...otp];
-      for (let i = 0; i < pasted.length; i++) {
-        newOtp[i] = pasted[i];
-      }
+      for (let i = 0; i < pasted.length; i++) newOtp[i] = pasted[i];
       setOtp(newOtp);
       inputRefs.current[Math.min(pasted.length, 5)]?.focus();
     }
@@ -183,62 +152,71 @@ function VerifyEmailContent() {
     }
   }
 
-  if (state.kind === "checking") {
-    return (
-      <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-surface text-sm text-gray-500">
-        Verifying your email…
-      </div>
-    );
+  async function handleResend() {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      toast.error("Please enter your email address first.");
+      return;
+    }
+
+    setResending(true);
+    setErrorMsg("");
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: trimmedEmail,
+      });
+
+      if (error) {
+        toast.error(error.message || "Failed to resend code.");
+        return;
+      }
+
+      toast.success("A new 6-digit code has been sent to your email!");
+      setResendCooldown(60); // Start 60 second cooldown
+    } catch {
+      toast.error("Failed to resend code. Please try again.");
+    } finally {
+      setResending(false);
+    }
   }
 
-  if (state.kind === "verified") {
+  if (state === "checking") {
+    return <div className="flex h-64 items-center justify-center text-sm text-gray-500">Verifying...</div>;
+  }
+
+  if (state === "verified") {
     return (
-      <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
-        <h1 className="font-display text-2xl text-gray-900">Email Verified!</h1>
-        <div className="mt-6">
-          <AuthAlert tone="success">
-            Your email address has been confirmed. You&apos;re all set.
-          </AuthAlert>
-        </div>
-        <Link href="/dashboard" className="mt-6 block">
-          <Button variant="primary" className="w-full">
-            Go to Dashboard
-          </Button>
+      <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8 text-center">
+        <h1 className="font-display text-2xl text-gray-900 mb-4">Email Verified!</h1>
+        <Link href="/dashboard">
+          <Button variant="primary" className="w-full">Go to Dashboard</Button>
         </Link>
       </div>
     );
   }
 
-  // THE BEAUTIFUL OTP SCREEN
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-8 sm:p-12 max-w-md mx-auto w-full shadow-sm">
-      
-      {/* Mail Icon */}
       <div className="mx-auto h-24 w-24 mb-4">
         <Lottie src="/email-sent.json" />
       </div>
 
-      <h1 className="font-display text-2xl text-gray-900 text-center">
-        Check verification code
-      </h1>
+      <h1 className="font-display text-2xl text-gray-900 text-center">Check verification code</h1>
       <p className="mt-2 text-sm text-gray-500 text-center">
-        We&apos;ve sent a special code to your email,<br /> type it here to sign in.
+        We&apos;ve sent a special code to your email.<br />Type it here to sign in.
       </p>
 
-      {state.kind === "error" && (
-        <div className="mt-6">
-          <AuthAlert tone="error">{state.message}</AuthAlert>
-        </div>
+      {state === "error" && (
+        <div className="mt-6"><AuthAlert tone="error">{errorMsg}</AuthAlert></div>
       )}
-      {errorMsg && (
-        <div className="mt-6">
-          <AuthAlert tone="error">{errorMsg}</AuthAlert>
-        </div>
+      {errorMsg && state !== "error" && (
+        <div className="mt-6"><AuthAlert tone="error">{errorMsg}</AuthAlert></div>
       )}
 
       <form onSubmit={handleVerify} className="mt-8">
-        
-        {/* Email input if not in URL */}
         {!emailParam && (
           <div className="mb-6">
             <input
@@ -252,8 +230,7 @@ function VerifyEmailContent() {
           </div>
         )}
 
-        {/* 6 Digit Pill Boxes */}
-        <div className="flex justify-center gap-2 sm:gap-3 mb-8">
+        <div className="flex justify-center gap-2 sm:gap-3 mb-6">
           {otp.map((digit, index) => (
             <input
               key={index}
@@ -270,21 +247,25 @@ function VerifyEmailContent() {
           ))}
         </div>
 
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={submitting || otp.some(d => !d)}
-          className="w-full rounded-full h-12 text-base font-semibold"
-        >
+        <Button type="submit" variant="primary" disabled={submitting || otp.some(d => !d)} className="w-full rounded-full h-12 text-base font-semibold">
           {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verify email"}
         </Button>
       </form>
 
-      <p className="mt-8 text-center text-sm text-gray-500">
-        <Link
-          href="/login?role=business"
-          className="font-medium text-colly transition-colors hover:text-colly-hover"
+      <div className="mt-6 text-center text-sm text-gray-500">
+        Didn&apos;t receive a code?{" "}
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={resending || resendCooldown > 0}
+          className="font-semibold text-colly hover:underline disabled:opacity-50 disabled:no-underline"
         >
+          {resending ? "Sending..." : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
+        </button>
+      </div>
+
+      <p className="mt-8 text-center text-sm text-gray-500">
+        <Link href="/login?role=business" className="font-medium text-colly hover:underline">
           Back to sign in
         </Link>
       </p>
@@ -294,13 +275,7 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-surface text-sm text-gray-500">
-          Verifying your email…
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-colly" /></div>}>
       <VerifyEmailContent />
     </Suspense>
   );

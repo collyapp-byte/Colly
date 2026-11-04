@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Lottie } from "@/components/ui/lottie";
 import { Suspense, useActionState, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
@@ -48,7 +49,7 @@ function BusinessLoginForm() {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
-      <h1 className="font-display text-2xl text-gray-900">Welcome back</h1>
+      <div className="mx-auto h-20 w-20 mb-2"><Lottie src="/secure-login.json" /></div><h1 className="font-display text-2xl text-gray-900">Welcome back</h1>
       <p className="mt-1 text-sm text-gray-500">
         Sign in to your Colly dashboard.
       </p>
