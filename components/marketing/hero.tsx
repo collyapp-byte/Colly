@@ -82,62 +82,68 @@ export function Hero({
         </div>
 
         {/* Right Column: Product UI Mockup instead of Stock Photo */}
-        <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-          <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-orange-100 to-purple-50 opacity-50 blur-2xl" aria-hidden />
+                {/* Right Column: Product UI Mockup instead of Stock Photo */}
+        <div className="relative mx-auto w-full max-w-[340px] lg:max-w-[360px]">
+          <div className="absolute -inset-4 rounded-[3rem] bg-gradient-to-tr from-orange-100 to-purple-50 opacity-50 blur-2xl" aria-hidden />
           
           {/* Phone Frame */}
-          <div className="relative rounded-[2.5rem] border-[8px] border-gray-900 bg-gray-900 shadow-2xl overflow-hidden">
+          <div className="relative aspect-[9/19] w-full rounded-[2.5rem] border-[10px] border-gray-900 bg-gray-900 shadow-2xl overflow-hidden flex flex-col">
+            
+            {/* Notch / Dynamic Island */}
+            <div className="absolute top-0 inset-x-0 h-6 flex justify-center z-30">
+              <div className="w-24 h-5 bg-gray-900 rounded-b-2xl"></div>
+            </div>
+
             {/* Telegram Header */}
-            <div className="flex items-center gap-3 bg-[#2AABEE] px-4 py-3 text-white">
+            <div className="flex items-center gap-3 bg-[#2AABEE] px-4 pt-8 pb-3 text-white shrink-0">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
                 <MessageSquare className="h-4 w-4" />
               </div>
               <div>
                 <p className="text-sm font-semibold">ABC Electronics</p>
-                <p className="text-xs text-white/80">bot</p>
+                <p className="text-[11px] text-white/80">bot</p>
               </div>
             </div>
 
             {/* Chat Area */}
-            <div className="h-[400px] bg-[#E7EBF0] p-4 flex flex-col gap-3 overflow-hidden">
+            <div className="flex-1 bg-[#E7EBF0] p-4 flex flex-col gap-3 overflow-y-auto">
               
               {/* Customer Message */}
-              <div className="self-end max-w-[80%] rounded-2xl rounded-tr-sm bg-[#E1FFC7] px-3 py-2 text-sm text-gray-900 shadow-sm">
+              <div className="self-end max-w-[85%] rounded-2xl rounded-tr-sm bg-[#E1FFC7] px-3 py-2 text-[13px] text-gray-900 shadow-sm">
                 Wagwan, how much be this iPhone 12?
-                <span className="block text-right text-[10px] text-gray-500 mt-1">10:42 AM</span>
+                <span className="block text-right text-[9px] text-gray-500 mt-1">10:42 AM</span>
               </div>
 
               {/* AI Message */}
-              <div className="self-start max-w-[85%] rounded-2xl rounded-tl-sm bg-white px-3 py-2 text-sm text-gray-900 shadow-sm">
+              <div className="self-start max-w-[90%] rounded-2xl rounded-tl-sm bg-white px-3 py-2 text-[13px] text-gray-900 shadow-sm">
                 <p>The iPhone 12 is <strong>{formatNaira(350000)}</strong>. We get am in stock. You want make I send you picture?</p>
-                <span className="block text-right text-[10px] text-gray-500 mt-1">10:42 AM</span>
+                <span className="block text-right text-[9px] text-gray-500 mt-1">10:42 AM</span>
               </div>
 
               {/* Customer Message */}
-              <div className="self-end max-w-[80%] rounded-2xl rounded-tr-sm bg-[#E1FFC7] px-3 py-2 text-sm text-gray-900 shadow-sm">
+              <div className="self-end max-w-[85%] rounded-2xl rounded-tr-sm bg-[#E1FFC7] px-3 py-2 text-[13px] text-gray-900 shadow-sm">
                 Yes, send pic.
-                <span className="block text-right text-[10px] text-gray-500 mt-1">10:43 AM</span>
+                <span className="block text-right text-[9px] text-gray-500 mt-1">10:43 AM</span>
               </div>
 
               {/* AI Image Message */}
               <div className="self-start max-w-[85%] rounded-2xl rounded-tl-sm bg-white p-1 shadow-sm">
-                <div className="h-32 w-48 rounded-xl bg-gray-200 flex items-center justify-center overflow-hidden">
-                   <span className="text-xs text-gray-400">Product Image</span>
+                <div className="h-28 w-40 rounded-xl bg-gray-200 flex items-center justify-center overflow-hidden">
+                   <span className="text-[10px] text-gray-400">Product Image</span>
                 </div>
-                <p className="px-2 pt-2 text-sm text-gray-900">iPhone 12 · {formatNaira(350000)}</p>
+                <p className="px-2 py-1.5 text-[13px] text-gray-900">iPhone 12 · {formatNaira(350000)}</p>
               </div>
             </div>
 
             {/* Input Area */}
-            <div className="bg-white px-3 py-2 flex items-center gap-2 border-t border-gray-200">
-              <div className="flex-1 rounded-full bg-gray-100 px-4 py-2 text-sm text-gray-400">Message...</div>
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2AABEE] text-white">
+            <div className="bg-white px-3 py-3 flex items-center gap-2 border-t border-gray-200 shrink-0">
+              <div className="flex-1 rounded-full bg-gray-100 px-4 py-2 text-[13px] text-gray-400">Message...</div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2AABEE] text-white shrink-0">
                 <Send className="h-4 w-4 -ml-0.5" />
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </section>
   );
