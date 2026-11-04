@@ -73,10 +73,17 @@ export function MarketingHeader() {
       {menuOpen && (
         <div className="absolute top-full left-0 w-full bg-white shadow-lg border-b border-gray-100 p-6 flex flex-col gap-5 z-50 md:hidden">
           <Link href="/pricing" onClick={() => setMenuOpen(false)} className="text-base font-semibold text-gray-900">Pricing</Link>
-          <Link href="/find-an-agent" onClick={() => setMenuOpen(false)} className="text-base font-semibold text-gray-900">Find an Agent</Link>
+          
           <Link href="/academy" onClick={() => setMenuOpen(false)} className="text-base font-semibold text-[#FF6600]">Agent Program</Link>
           <hr className="border-gray-100" />
           <Link href="/login" onClick={() => setMenuOpen(false)} className="text-base font-medium text-gray-600">Sign In</Link>
+          <Link
+            href="/signup"
+            onClick={() => setMenuOpen(false)}
+            className="text-base font-medium text-gray-600 transition-colors hover:text-gray-900"
+          >
+            Get Started
+          </Link>
         </div>
       )}
     </header>
