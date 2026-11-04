@@ -33,8 +33,6 @@ type QrBusiness = {
 /** Loads the brand mark so it can be drawn onto the downloaded card. */
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    // `document.createElement` rather than `new Image()`: this module already
-    // imports Next's `<Image />`, and the bare constructor would shadow it.
     const image = document.createElement("img");
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error(`Could not load ${src}`));
@@ -48,8 +46,6 @@ export default function QrCodePage() {
   const [saving, setSaving] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // The id comes from the session's business rather than the URL, so the page
-  // cannot be used to print a code that points at someone else's shop.
   useEffect(() => {
     let active = true;
 
@@ -83,20 +79,9 @@ export default function QrCodePage() {
 
   const chatLink = business ? `${WEB_CHAT_ORIGIN}/chat/${business.id}` : "";
 
-  // Printing is the point of this page, so it flags the document while it is
-  // mounted: `app/globals.css` unwinds the dashboard shell and sizes the card
-  // for a single sheet under `body[data-print-qr]`, and no other page wants that
-  // when someone prints an invoice or an inbox thread. The cleanup keeps a
-  // client-side navigation away from leaving the marker behind.
   useEffect(() => {
     document.body.dataset.printQr = "true";
 
-    // The browser prints its own date / page-title / URL header inside the page
-    // margin, and no CSS selector can reach it - it is why a sheet used to come
-    // out with "Dashboard | Colly Nigeria" and the URL on it. A zero page margin
-    // leaves no margin box to print that header in. The tag is injected here
-    // rather than added to globals.css so it only applies while this page is
-    // open: invoice and inbox prints keep their normal margins.
     const pageStyle = document.createElement("style");
     pageStyle.id = "qr-print-page";
     pageStyle.textContent = "@page { size: auto; margin: 0; }";
@@ -108,19 +93,12 @@ export default function QrCodePage() {
     };
   }, []);
 
-  /**
-   * Saves the whole card - lockup, business name, QR code and the two lines -
-   * as colly-qr-<businessId>.png. The QR is copied from the live canvas at its
-   * 1024px intrinsic size, so the file is sharp when printed.
-   */
   async function handleDownload() {
     const qrCanvas = canvasRef.current;
     if (!qrCanvas || !business) return;
 
     setSaving(true);
     try {
-      // A missing logo must not block the download: the card still works
-      // without the mark, so the failure is swallowed here only.
       const logo = await loadImage(LOGO_SRC).catch(() => null);
       const canvas = drawQrCard({
         businessName: business.name,
@@ -136,8 +114,6 @@ export default function QrCodePage() {
       document.body.removeChild(link);
       toast.success("QR card downloaded");
     } catch {
-      // A tainted canvas or a blocked document.createElement("a") download is
-      // the only realistic failure; printing still works.
       toast.error("Could not save the image. Use Print instead.");
     } finally {
       setSaving(false);
@@ -175,11 +151,6 @@ export default function QrCodePage() {
 
       {business ? (
         <>
-          {/* The printable card. `data-print-card` keeps its colours, sizes it
-              for one sheet and drops the screen shadow (see app/globals.css).
-              Contents, in order: the Colly lockup small, the business's own name
-              big, the QR code, and the two lines a customer reads. Nothing else
-              belongs on a counter card - no site navigation, no footer. */}
           <div data-print-flush className="mt-6 flex justify-center">
             <div
               data-print-card
@@ -202,7 +173,8 @@ export default function QrCodePage() {
                 {business.name}
               </h2>
 
-              <div className="mt-6 flex justify-center">
+              {/* The wrapper forces the canvas to be exactly 208x208px (h-52 w-52) */}
+              <div className="mx-auto mt-6 h-52 w-52">
                 <QRCodeCanvas
                   ref={canvasRef}
                   value={chatLink}
@@ -211,7 +183,7 @@ export default function QrCodePage() {
                   marginSize={2}
                   title={`Chat with ${business.name}`}
                   aria-label={`QR code that opens the Colly chat for ${business.name}`}
-                  className="block h-52 w-52"
+                  style={{ width: "100%", height: "100%", display: "block" }}
                 />
               </div>
 

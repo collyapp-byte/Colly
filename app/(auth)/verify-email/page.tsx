@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { Lottie } from "@/components/ui/lottie";
+import { Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { AuthAlert } from "@/components/auth/auth-form";
@@ -199,8 +198,9 @@ function VerifyEmailContent() {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-8 sm:p-12 max-w-md mx-auto w-full shadow-sm">
-      <div className="mx-auto h-24 w-24 mb-4">
-        <Lottie src="/email-sent.json" />
+      {/* Replaced broken Lottie with a static SVG icon */}
+      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-colly/10 mb-6">
+        <Mail className="h-10 w-10 text-colly" />
       </div>
 
       <h1 className="font-display text-2xl text-gray-900 text-center">Check verification code</h1>
