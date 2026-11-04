@@ -38,11 +38,13 @@ export function Hero({
     : "Reply to customers 24/7 on Telegram, Discord, and Web Chat. Never lose a sale again.";
 
   return (
-    <section className="relative overflow-hidden bg-white pt-16 pb-12 sm:pt-24 sm:pb-16">
+    <section className="relative overflow-hidden bg-white pt-24 pb-12 sm:pt-32 sm:pb-16">
+      {/* Subtle background gradient */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#FFF4EC]/60 to-white" aria-hidden />
 
       <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 lg:grid-cols-2">
         
+        {/* Left Column: Typography */}
         <div>
           {badge && (
             <span className="inline-flex items-center rounded-full border border-[#FF6600]/30 bg-white px-4 py-1.5 text-[13px] font-semibold text-[#FF6600] mb-6">
@@ -79,9 +81,10 @@ export function Hero({
           </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-md lg:max-w-lg">
+        {/* Right Column: Lottie Constrained to 500px */}
+        <div className="relative mx-auto w-full max-w-md lg:max-w-lg h-[350px] sm:h-[500px]">
           <div className="absolute -inset-4 rounded-[3rem] bg-gradient-to-tr from-orange-100 to-purple-50 opacity-50 blur-2xl" aria-hidden />
-          <div className="relative">
+          <div className="relative w-full h-full flex justify-center items-center">
             <Lottie src="/hero-chat-typing.json" />
           </div>
         </div>
