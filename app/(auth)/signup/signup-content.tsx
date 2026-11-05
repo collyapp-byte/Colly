@@ -13,24 +13,39 @@ import { isStrongPassword, WEAK_PASSWORD_MESSAGE } from "@/lib/validators";
 import { createClient } from "@/lib/supabase/client";
 import { AuthAlert } from "@/components/auth/auth-form";
 import { BusinessSignupForm } from "@/components/auth/business-signup-form";
+import { GoogleButton } from "@/components/auth/google-button";
 import { Button } from "@/components/ui/button";
 
 const LABEL_CLASS = "mb-1 block text-sm font-medium text-gray-700";
-const INPUT_CLASS =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+const INPUT_CLASS = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
 
-type SubmitState =
-  | { kind: "idle" }
-  | { kind: "submitting" }
-  | { kind: "error"; message: string }
-  | { kind: "done"; email: string };
+type SubmitState = { kind: "idle" } | { kind: "submitting" } | { kind: "error"; message: string } | { kind: "done"; email: string };
 
 function AgentSignupForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [state, setState] = useState<SubmitState>({ kind: "idle" });
+  const [isOAuth, setIsOAuth] = useState(false);
+  const [oauthEmail, setOauthEmail] = useState("");
+  const [oauthName, setOauthName] = useState("");
 
-  // AUTO-REDIRECT MAGIC: As soon as the account is created, go to the OTP screen
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!active || !session?.user) return;
+        const metadata = session.user.user_metadata ?? {};
+        const fullName = typeof metadata.full_name === "string" ? metadata.full_name : typeof metadata.name === "string" ? metadata.name : "";
+        setIsOAuth(true);
+        setOauthEmail(session.user.email ?? "");
+        setOauthName(fullName);
+      } catch {}
+    })();
+    return () => { active = false; };
+  }, []);
+
   useEffect(() => {
     if (state.kind === "done" && state.email) {
       router.replace(`/verify-email?email=${encodeURIComponent(state.email)}`);
@@ -42,13 +57,15 @@ function AgentSignupForm() {
     const form = event.currentTarget;
     const data = new FormData(form);
 
-    const password = data.get("password");
-    if (typeof password !== "string" || !isStrongPassword(password)) {
-      toast.error(WEAK_PASSWORD_MESSAGE);
-      return;
+    if (!isOAuth) {
+      const password = data.get("password");
+      if (typeof password !== "string" || !isStrongPassword(password)) {
+        toast.error(WEAK_PASSWORD_MESSAGE);
+        return;
+      }
     }
 
-    const email = data.get("email") as string;
+    const email = isOAuth ? oauthEmail : (data.get("email") as string);
     setState({ kind: "submitting" });
 
     try {
@@ -60,171 +77,73 @@ function AgentSignupForm() {
           email: email,
           phone: data.get("phone"),
           state: data.get("state"),
-          password: data.get("password"),
+          password: isOAuth ? undefined : data.get("password"),
+          isOAuth,
         }),
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | { ok?: boolean; error?: string; needsConfirmation?: boolean; agentNumber?: string }
-        | null;
+      const payload = (await response.json().catch(() => null)) as { ok?: boolean; error?: string; needsConfirmation?: boolean } | null;
 
       if (!response.ok || !payload?.ok) {
-        // If the error indicates the email is already registered, push them to the verify screen
-        if (payload?.error?.toLowerCase().includes("already registered") || payload?.error?.toLowerCase().includes("already exists")) {
+        if (payload?.error?.toLowerCase().includes("already registered")) {
            router.push(`/verify-email?email=${encodeURIComponent(email)}`);
            return;
         }
-        setState({
-          kind: "error",
-          message: payload?.error ?? "Could not create your account. Please try again.",
-        });
+        setState({ kind: "error", message: payload?.error ?? "Could not create your account." });
         return;
       }
 
       trackEvent("signup", { role: "agent" });
 
       if (payload.needsConfirmation) {
-        // This triggers the useEffect above to redirect
         setState({ kind: "done", email: email });
         return;
       }
-
       router.push("/agents/dashboard");
     } catch {
-      setState({
-        kind: "error",
-        message: "Could not reach the server. Check your connection and try again.",
-      });
+      setState({ kind: "error", message: "Could not reach the server." });
     }
   }
 
-  // Show a brief loading state while the redirect happens
   if (state.kind === "done") {
-    return (
-      <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
-        <p className="text-gray-500 text-sm">Redirecting to verification...</p>
-      </div>
-    );
+    return <div className="flex h-64 items-center justify-center rounded-lg border border-gray-200 bg-surface p-6 sm:p-8"><p className="text-gray-500 text-sm">Redirecting to verification...</p></div>;
   }
 
   const pending = state.kind === "submitting";
 
   return (
     <div className="rounded-lg border border-gray-200 bg-surface p-6 sm:p-8">
-      <h1 className="font-display text-2xl text-gray-900">
-        Become a Colly agent
-      </h1>
-      <p className="mt-1 text-sm text-gray-500">
-        Learn how to set Colly up for businesses, get certified, and grow your
-        referrals.
-      </p>
+      <h1 className="font-display text-2xl text-gray-900">{isOAuth ? "Finish your agent profile" : "Become a Colly agent"}</h1>
+      <p className="mt-1 text-sm text-gray-500">{isOAuth ? `You're signed in as ${oauthEmail}. Just tell us where you are based.` : "Learn how to set Colly up for businesses, get certified, and grow your referrals."}</p>
+
+      {!isOAuth && (
+        <>
+          <div className="mt-6"><GoogleButton label="Sign up with Google" redirectTo="/auth/callback?next=/signup?role=agent" /></div>
+          <div className="my-5 flex items-center gap-3"><span className="h-px flex-1 bg-gray-200" /><span className="text-xs font-medium uppercase tracking-wide text-gray-400">Or continue with</span><span className="h-px flex-1 bg-gray-200" /></div>
+        </>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-        <div>
-          <label htmlFor="fullName" className={LABEL_CLASS}>
-            Full name
-          </label>
-          <input
-            id="fullName"
-            name="fullName"
-            placeholder="Ada Obi"
-            autoComplete="name"
-            required
-            className={INPUT_CLASS}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="email" className={LABEL_CLASS}>
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="you@example.com"
-            autoComplete="email"
-            required
-            className={INPUT_CLASS}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="phone" className={LABEL_CLASS}>
-            Phone <span className="font-normal text-gray-400">(optional)</span>
-          </label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            placeholder="+2348012345678"
-            autoComplete="tel"
-            className={INPUT_CLASS}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="state" className={LABEL_CLASS}>
-            State <span className="font-normal text-gray-400">(optional)</span>
-          </label>
-          <select id="state" name="state" defaultValue="" className={INPUT_CLASS}>
-            <option value="">Select your state</option>
-            {NIGERIAN_STATES.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="password" className={LABEL_CLASS}>
-            Password
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="At least 8 characters"
-              autoComplete="new-password"
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((visible) => !visible)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              title={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 transition-colors hover:text-gray-600"
-            >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" aria-hidden />
-              ) : (
-                <Eye className="h-4 w-4" aria-hidden />
-              )}
-            </button>
+        <div><label htmlFor="fullName" className={LABEL_CLASS}>Full name</label><input id="fullName" name="fullName" placeholder="Ada Obi" defaultValue={oauthName} key={oauthName} required className={INPUT_CLASS} /></div>
+        {!isOAuth && (<div><label htmlFor="email" className={LABEL_CLASS}>Email</label><input id="email" name="email" type="email" placeholder="you@example.com" required className={INPUT_CLASS} /></div>)}
+        <div><label htmlFor="phone" className={LABEL_CLASS}>Phone <span className="font-normal text-gray-400">(optional)</span></label><input id="phone" name="phone" type="tel" placeholder="+2348012345678" className={INPUT_CLASS} /></div>
+        <div><label htmlFor="state" className={LABEL_CLASS}>State <span className="font-normal text-gray-400">(optional)</span></label><select id="state" name="state" defaultValue="" className={INPUT_CLASS}><option value="">Select your state</option>{NIGERIAN_STATES.map((name) => (<option key={name} value={name}>{name}</option>))}</select></div>
+        
+        {!isOAuth && (
+          <div>
+            <label htmlFor="password" className={LABEL_CLASS}>Password</label>
+            <div className="relative">
+              <input id="password" name="password" type={showPassword ? "text" : "password"} placeholder="At least 8 characters" required className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20" />
+              <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600">{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+            </div>
           </div>
-        </div>
-
-        {state.kind === "error" && (
-          <AuthAlert tone="error">{state.message}</AuthAlert>
         )}
 
-        <Button type="submit" variant="primary" loading={pending} className="w-full">
-          Create agent account
-        </Button>
+        {state.kind === "error" && <AuthAlert tone="error">{state.message}</AuthAlert>}
+        <Button type="submit" variant="primary" loading={pending} className="w-full">{isOAuth ? "Complete Agent Profile" : "Create agent account"}</Button>
       </form>
 
-      <p className="mt-6 text-sm text-gray-500">
-        Already an agent?{" "}
-        <Link
-          href="/login?role=agent"
-          className="font-medium text-colly transition-colors hover:text-colly-hover"
-        >
-          Sign in
-        </Link>
-      </p>
+      <p className="mt-6 text-sm text-gray-500">Already an agent? <Link href="/login?role=agent" className="font-medium text-colly hover:underline">Sign in</Link></p>
     </div>
   );
 }
@@ -246,24 +165,12 @@ function SignupContent({ industry }: { industry: Industry | null }) {
 
   return (
     <div>
-      {isAgentSignup ? (
-        <AgentSignupForm />
-      ) : (
-        <BusinessSignupForm
-          referredBy={referredBy}
-          selectedPlan={selectedPlan}
-          industry={industry}
-        />
-      )}
+      {isAgentSignup ? <AgentSignupForm /> : <BusinessSignupForm referredBy={referredBy} selectedPlan={selectedPlan} industry={industry} />}
     </div>
   );
 }
 
-export default function SignupClient({
-  industry = null,
-}: {
-  industry?: Industry | null;
-}) {
+export default function SignupClient({ industry = null }: { industry?: Industry | null }) {
   return (
     <Suspense fallback={<div className="h-64" aria-hidden />}>
       <SignupContent industry={industry} />
