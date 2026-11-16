@@ -1,10 +1,4 @@
-import { SITE_URL } from "@/lib/site";
-
-export function teamInviteLink(id: string): string {
-  return `${SITE_URL}/join/${id}`;
-}
-
-type InviteEmailParams = {
+export type SendTeamInviteParams = {
   businessName: string;
   inviterName: string;
   inviteeName: string;
@@ -12,64 +6,61 @@ type InviteEmailParams = {
   link: string;
 };
 
+export function teamInviteLink(memberId: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "https://colly.com.ng";
+  return `${baseUrl.replace(/\/$/, "")}/join/${memberId}`;
+}
+
 export async function sendTeamInviteEmail({
   businessName,
   inviterName,
   inviteeName,
   email,
   link,
-}: InviteEmailParams): Promise<{ sent: boolean; error?: string }> {
+}: SendTeamInviteParams): Promise<{ sent: boolean; error?: string }> {
   const apiKey = process.env.BREVO_API_KEY;
-  // Fallback to a generic email if not set
-  const fromEmail = process.env.BREVO_FROM_EMAIL || "team@colly.com.ng";
-
   if (!apiKey) {
-    return { sent: false, error: "BREVO_API_KEY is not configured in .env" };
+    return { sent: false, error: "BREVO_API_KEY not configured" };
   }
 
   try {
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
-        accept: "application/json",
+        "Content-Type": "application/json",
         "api-key": apiKey,
-        "content-type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify({
-        sender: {
-          name: "Colly",
-          email: fromEmail,
-        },
+        sender: { email: "getcolly@gmail.com", name: "Colly" },
         to: [{ email, name: inviteeName }],
         subject: `Join ${businessName} on Colly`,
         htmlContent: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>You've been invited!</h2>
+          <div style="font-family: sans-serif; padding: 20px; color: #111;">
+            <h2>Hi ${inviteeName},</h2>
             <p><strong>${inviterName}</strong> has invited you to join <strong>${businessName}</strong> on Colly.</p>
-            <p>Click the button below to accept the invitation and set up your account:</p>
-            <a href="${link}" style="display: inline-block; padding: 12px 24px; background-color: #FF6600; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 16px 0;">Join Workspace</a>
-            <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
-            <p style="color: #666; font-size: 14px;"><a href="${link}">${link}</a></p>
+            <p style="margin: 24px 0;">
+              <a href="${link}" style="background-color: #f97316; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Accept Invitation</a>
+            </p>
+            <p style="font-size: 14px; color: #555;">Or copy and paste this link: <a href="${link}">${link}</a></p>
           </div>
         `,
+        textContent: `Hi ${inviteeName}, ${inviterName} invited you to join ${businessName} on Colly. Accept here: ${link}`,
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      console.error("[BREVO ERROR]", errorData);
-      return { 
-        sent: false, 
-        error: errorData?.message || "Failed to send email via Brevo" 
-      };
+      const errText = await response.text();
+      console.error("[Brevo] Email sending failed:", response.status, errText);
+      return { sent: false, error: `Brevo error ${response.status}` };
     }
 
     return { sent: true };
   } catch (error) {
-    console.error("[BREVO ERROR]", error);
-    return { 
-      sent: false, 
-      error: error instanceof Error ? error.message : "Unknown error" 
+    console.error("[Brevo] Network/fetch error:", error);
+    return {
+      sent: false,
+      error: error instanceof Error ? error.message : "Failed to send email",
     };
   }
 }
