@@ -33,6 +33,7 @@ test("the owner-only areas are the money and channel settings", () => {
     "/settings/billing",
     "/settings/ai-line",
     "/settings/team",
+    "/settings/whatsapp",
   ]);
 
   for (const path of OWNER_ONLY_PATHS) {

@@ -20,6 +20,7 @@ datasource db {
 // ---------------------------------------------------------------------------
 
 model Business {
+  whatsappSession WhatsAppSession?
   id             String   @id @default(cuid())
   name           String
   phone          String
@@ -736,4 +737,31 @@ model WhatsappWaitlist {
   businessId     String?
   whatsappNumber String
   createdAt      DateTime @default(now())
+}
+
+
+model WhatsAppSession {
+  id String @id @default(cuid())
+  businessId String @unique
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  status SessionStatus @default(DISCONNECTED)
+  phoneNumber String? @unique
+  qrCode String? @db.Text
+  /// Baileys auth state: `{ creds, keys }`, encoded with BufferJSON so the
+  /// Signal Buffers survive jsonb. Written only by
+  /// workers/whatsapp-auth-state.ts; null means "never paired".
+
+  creds Json?
+  /// Set by the dashboard's Disconnect button (DELETE /api/whatsapp/session).
+  /// The worker polls for it, logs the device out properly and clears the flag.
+  logoutRequestedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum SessionStatus {
+  CONNECTED
+  DISCONNECTED
+  QR_READY
+  CONNECTING
 }

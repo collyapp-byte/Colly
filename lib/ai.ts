@@ -136,6 +136,16 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+/** Per-request knobs that do not change which provider answers. */
+export type AIRequestOptions = {
+  /**
+   * Sampling temperature. Omitted from the request unless the caller sets it,
+   * so every existing call keeps the provider's own default (and the exact
+   * body it sent before). Customer-facing chat uses 0.7.
+   */
+  temperature?: number;
+};
+
 /**
  * Ask the AI for a reply, walking the fallback chain until one provider answers.
  *
@@ -147,6 +157,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 export async function askAI(
   messages: AIMessage[],
   tools?: ChatTool[],
+  options?: AIRequestOptions,
 ): Promise<AIResult> {
   const useTools = Array.isArray(tools) && tools.length > 0;
 
@@ -167,6 +178,12 @@ export async function askAI(
       const body: ChatCompletionCreateParamsNonStreaming = {
         model: config.model,
         messages: messages as ChatCompletionMessageParam[],
+        // Only sent when the caller asked for it: DeepSeek, Groq and OpenRouter
+        // all accept `temperature`, but leaving it out keeps the existing
+        // callers on each provider's documented default.
+        ...(typeof options?.temperature === "number"
+          ? { temperature: options.temperature }
+          : {}),
         ...(useTools
           ? { tools: tools as ChatTool[], tool_choice: "auto" as const }
           : {}),

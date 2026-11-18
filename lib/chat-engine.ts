@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { debugLog } from "@/lib/logger";
 import {
   askAI,
+  FALLBACK_REPLY,
   type AIResult,
   type ChatMessage,
   type ChatTool,
@@ -25,7 +26,13 @@ import {
   DEFAULT_MAX_ROUNDS,
   type NegotiationState,
 } from "@/lib/negotiation";
-import { isTone, type Tone } from "@/lib/business";
+import {
+  DEFAULT_INDUSTRY,
+  isIndustry,
+  isTone,
+  type Industry,
+  type Tone,
+} from "@/lib/business";
 import {
   detectLanguage,
   getLanguageInstruction,
@@ -322,6 +329,8 @@ export async function handleIncomingMessage({
   message,
   skipCustomerMessage = false,
   imageUrl = null,
+  typingJitter = false,
+  channel = null,
 }: {
   businessId: string;
   customerPhone: string;
@@ -338,6 +347,24 @@ export async function handleIncomingMessage({
    * `generate_invoice_from_receipt` stores as the receipt proof.
    */
   imageUrl?: string | null;
+  /**
+   * Pause for `getRandomDelay()` before the model is asked, so the answer lands
+   * after a human-looking 2-5 seconds instead of instantly.
+   *
+   * Opt-in per channel rather than always-on: WhatsApp needs it (an account
+   * that replies in 200ms looks automated to WhatsApp's spam heuristics), while
+   * a Telegram bot or the web widget has no such pressure and should not make
+   * every customer wait. `lib/whatsapp-session.ts` turns it on.
+   */
+  typingJitter?: boolean;
+  /**
+   * The channel this message arrived on, when it differs from the business's
+   * default (`Business.channel`). Replies are priced per channel — WhatsApp is
+   * 80 credits, Telegram/Discord/Web Chat are 5 — so the wallet gate and the
+   * debit must use the real channel. `lib/whatsapp-session.ts` passes
+   * "WHATSAPP" for every WhatsApp turn.
+   */
+  channel?: string | null;
 }): Promise<EngineResult> {
   const incoming = message.trim();
   if (!incoming) {
@@ -403,7 +430,7 @@ export async function handleIncomingMessage({
     return { reply: cannedReply, blocked: false, saved: true, replied: true };
   }
 
-  const aiCheck = await requireAiEnabled(businessId);
+  const aiCheck = await requireAiEnabled(businessId, channel);
   if (!aiCheck.ok) {
     // Message already saved — the AI just does not reply. Alert the owner's
     // personal Telegram so a paused AI is not silently ignored, then surface
@@ -482,6 +509,13 @@ export async function handleIncomingMessage({
     }
   }
 
+  // Human-looking pause before the model is asked (WhatsApp only, opt-in). It
+  // sits after every free gate above on purpose: a paused conversation or an
+  // out-of-credit wallet must return immediately, not after five seconds.
+  if (typingJitter) {
+    await getRandomDelay();
+  }
+
   // Credit Economy: RESERVE this reply's credits BEFORE the model is called.
   // Reading the wallet and charging after the reply let N messages that arrived
   // together all pass the same balance check and all get a free reply, because
@@ -490,7 +524,7 @@ export async function handleIncomingMessage({
   // provider; the reservation is refunded whenever the AI cannot answer. It is
   // taken after the cheap reads above so a database failure there cannot strand
   // a charge with no reply.
-  const debit = await chargeAiReply(businessId, business.channel);
+  const debit = await chargeAiReply(businessId, channel ?? business.channel);
   if (!debit) {
     await sendOwnerAlert(businessId, LOW_CREDIT_MESSAGE);
     return { reply: null, blocked: true, saved: true, replied: false, reason: "no_credits" };
@@ -1050,3 +1084,203 @@ async function loadNegotiation(
   };
   return stored as StoredNegotiation;
 }
+
+// ---------------------------------------------------------------------------
+// Channel-level helpers (WhatsApp)
+//
+// `handleIncomingMessage()` above is the metered path: it owns the conversation
+// row, reserves credits, runs the catalogue/booking tools and honours a human
+// takeover. The exports below are the smaller pieces a WhatsApp adapter needs —
+// a human-typing pause, a single-turn reply and the prompt behind it. They are
+// deliberately tool-free. Anything that must answer from the tenant's catalogue
+// belongs in `handleIncomingMessage`.
+// ---------------------------------------------------------------------------
+
+/**
+ * Wait a random, human-looking moment before replying.
+ *
+ * A WhatsApp number that answers in 200ms reads as a bot to customers and to
+ * WhatsApp's spam heuristics; a 2-5 second pause reads like someone typing.
+ * The bounds are clamped, so a caller can pass a reversed or negative range
+ * without producing an instant or an endless wait.
+ */
+export async function getRandomDelay(
+  minMs = 2000,
+  maxMs = 5000,
+): Promise<void> {
+  const low = Math.max(0, Math.min(minMs, maxMs));
+  const high = Math.max(0, Math.max(minMs, maxMs));
+  const ms = low + Math.floor(Math.random() * (high - low + 1));
+  await new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * The tones a WhatsApp-facing reply can use.
+ *
+ * `Business.tone` is documented in `prisma/schema.prisma` as "formal" |
+ * "friendly" | "pidgin_friendly", which is wider than `TONES` in
+ * lib/business.ts, so a stored `pidgin_friendly` row is honoured here instead
+ * of silently losing the setting.
+ */
+export const WHATSAPP_TONES = [
+  "formal",
+  "friendly",
+  "pidgin_friendly",
+] as const;
+
+export type WhatsAppTone = (typeof WHATSAPP_TONES)[number];
+
+/** Narrows a stored/typed tone to a WhatsApp tone; unknown values are friendly. */
+export function normalizeWhatsAppTone(value: unknown): WhatsAppTone {
+  if (typeof value !== "string") return "friendly";
+
+  const normalized = value.trim().toLowerCase().replace(/-/g, "_");
+
+  if (normalized === "formal" || normalized === "friendly") return normalized;
+  if (normalized === "pidgin_friendly" || normalized === "pidgin") {
+    return "pidgin_friendly";
+  }
+  return "friendly";
+}
+
+const WHATSAPP_TONE_INSTRUCTIONS: Record<WhatsAppTone, string> = {
+  formal:
+    "Write clear, professional Nigerian English. No slang and no emoji.",
+  friendly:
+    "Write warmly and casually, like a helpful shop assistant. One emoji is allowed but never required.",
+  pidgin_friendly:
+    "Reply in light Nigerian Pidgin when the customer writes Pidgin, and in plain English when they do not. Keep it easy to read and never mock how they write.",
+};
+
+/**
+ * The industry-specific stance. `HOTEL` reuses the same persona the metered
+ * engine appends, so a hotel is told to collect check-in and check-out dates on
+ * every channel instead of recording a stay as a one-hour slot.
+ */
+const INDUSTRY_PERSONAS: Record<Industry, string> = {
+  RETAIL:
+    "RETAIL MODE: You sell physical goods from the shop's catalogue. Quote only prices the business has given you. If a product, price or spec is not in the context, say you will confirm with my boss/oga instead of guessing.",
+  SERVICES:
+    "SERVICES MODE: You book services and appointments. Ask what they need and when they want it, one question at a time, and never confirm a slot yourself: my boss/oga confirms it.",
+  HOTEL: HOTEL_PERSONA,
+};
+
+
+
+/** The tenant fields `buildWhatsAppSystemPrompt()` reads. */
+export type WhatsAppBusinessProfile = {
+  name: string;
+  description: string | null;
+  businessHours: string | null;
+  paymentInstructions: string | null;
+  industry: string;
+  tone: string;
+};
+
+/**
+ * The system prompt for a single-turn WhatsApp reply.
+ *
+ * Pure and exported so the copy can be asserted in tests without a database or
+ * a provider call. Money is always Naira (`\u20A6`, escaped like
+ * `formatNaira()` so a cp1252 save cannot corrupt it), answers are capped for a
+ * phone screen, formatting symbols are banned, and the vertical + tone are
+ * appended last so they bias the voice.
+ */
+export function buildWhatsAppSystemPrompt(
+  business: WhatsAppBusinessProfile,
+  tone: WhatsAppTone = normalizeWhatsAppTone(business.tone),
+): string {
+  const industry: Industry = isIndustry(business.industry)
+    ? business.industry
+    : DEFAULT_INDUSTRY;
+  const naira = "\u20A6";
+
+  const sections = [
+    `You are Colly, the WhatsApp assistant for ${business.name}, a Nigerian small business. You answer customers on WhatsApp, in the customer's own language.`,
+    "",
+    `MONEY: every amount is in Naira, written with the naira sign and thousands separators, for example ${naira}15,000. Never quote dollars, never write "N15,000", and never invent a price, product or stock level.`,
+    "LENGTH: your message is read on a phone. Lead with the answer in at most 3 short sentences (about 400 characters). Ask at most one question. No greeting paragraph and no sign-off.",
+    "FORMAT: plain text only. No Markdown, asterisks, bold, headings, bullets or numbered lists. When you list several items, put each one on its own line as `Name Price`.",
+    'STOCK: say "in stock" or "sold out". Never reveal exact quantities.',
+    "TRUTH: never promise a delivery date, discount, refund or order confirmation the business has not approved. Only my boss/oga confirms a payment and dispatch.",
+    "LANGUAGE: write Nigerian English. If the customer writes Pidgin, reply in Pidgin and say 'my oga'; in English say 'my boss'. Never call the owner 'manager' or 'admin'.",
+  ];
+
+  if (business.description) {
+    sections.push("", "WHAT THE BUSINESS SELLS: " + business.description);
+  }
+  if (business.businessHours) {
+    sections.push("OPENING HOURS: " + business.businessHours);
+  }
+  if (business.paymentInstructions) {
+    sections.push(
+      "PAYMENT INSTRUCTIONS (quote them exactly when the customer asks how to pay): " +
+        business.paymentInstructions,
+    );
+  }
+
+  sections.push(
+    "",
+    INDUSTRY_PERSONAS[industry],
+    "",
+    "TONE: " + WHATSAPP_TONE_INSTRUCTIONS[tone],
+  );
+
+  return sections.join("\n");
+}
+
+/**
+ * One-shot reply for a single customer message: no conversation row, no credit
+ * reservation, no tools.
+ *
+ * This is the single-turn helper a channel preview (or a transport that has not
+ * been given a conversation yet) can call. Customer traffic must go through
+ * `handleIncomingMessage()`: that is what charges the wallet, respects a human
+ * takeover and lets the model read the tenant's catalogue. Swapping this in for
+ * it would make replies free and unable to answer a price question.
+ *
+ * Always resolves with sendable text: a missing tenant or a failed provider
+ * returns `FALLBACK_REPLY` instead of throwing at the caller.
+ */
+export async function generateAiReply(
+  businessId: string,
+  customerMessage: string,
+): Promise<string> {
+  try {
+    const business = await prisma.business.findUniqueOrThrow({
+      where: { id: businessId },
+      select: {
+        name: true,
+        industry: true,
+        tone: true,
+        description: true,
+        // "Are you open now?" is one of the most common WhatsApp questions, so
+        // the hours are part of the same prompt.
+        businessHours: true,
+        paymentInstructions: true,
+      },
+    });
+
+    const result = await askAI(
+      [
+        { role: "system", content: buildWhatsAppSystemPrompt(business) },
+        { role: "user", content: customerMessage.trim() },
+      ],
+      undefined,
+      // 0.7 keeps replies natural without inventing prices; the prompt still
+      // forbids guessing a figure.
+      { temperature: 0.7 },
+    );
+
+    return result.reply.trim() || FALLBACK_REPLY;
+  } catch (error) {
+    // Logged without the customer's text: a failure must not leak a message or
+    // an email address into hosting logs.
+    console.error(
+      `[chat-engine] generateAiReply failed for business ${businessId}`,
+      error,
+    );
+    return FALLBACK_REPLY;
+  }
+}
+

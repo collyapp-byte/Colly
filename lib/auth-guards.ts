@@ -49,7 +49,17 @@ export async function requireSiteAccess(businessId: string): Promise<void> {
  * `downgradeExpiredPlan()` (lib/credits.ts) first, so a cancelled subscription
  * falls back to the Free allowance instead of keeping paid-tier access forever.
  */
-export async function requireAiEnabled(businessId: string): Promise<AiEnabledResult> {
+export async function requireAiEnabled(
+  businessId: string,
+  /**
+   * The channel the reply will be delivered on, when it is not the business's
+   * default `Business.channel`. WhatsApp replies cost 80 credits against 5 for
+   * Telegram/Discord/Web Chat, so the wallet check must price the actual
+   * channel — a WhatsApp customer must not pass a 5-credit gate and then be
+   * charged 80.
+   */
+  channel?: string | null,
+): Promise<AiEnabledResult> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
     select: {
@@ -101,7 +111,7 @@ export async function requireAiEnabled(businessId: string): Promise<AiEnabledRes
 
   // One AI reply must be affordable out of the wallet: the monthly plan
   // allowance first, then the top-ups that never expire.
-  const replyCost = getAiReplyCreditCost(business.channel);
+  const replyCost = getAiReplyCreditCost(channel ?? business.channel);
   if (totalAvailableCredits(business) < replyCost) {
     return { ok: false, reason: "no_credits" };
   }

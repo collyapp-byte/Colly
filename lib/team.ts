@@ -65,6 +65,9 @@ export const OWNER_ONLY_PATHS: readonly string[] = [
   "/settings/billing",
   "/settings/ai-line",
   "/settings/team",
+  // Pairing or unlinking the WhatsApp line is the owner's decision, and the
+  // mutation API behind it is owner-only too.
+  "/settings/whatsapp",
 ];
 
 /** True when `pathname` is an owner-only area or lives beneath one. */
