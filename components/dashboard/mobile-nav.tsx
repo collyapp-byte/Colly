@@ -10,6 +10,7 @@ import {
   Package,
   type LucideIcon,
 } from "lucide-react";
+import { isActiveNavPath } from "@/lib/nav";
 
 type MobileTab = {
   label: string;
@@ -25,12 +26,12 @@ const TABS: MobileTab[] = [
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
-function isActive(pathname: string, href: string): boolean {
-  if (href === "/settings") {
-    return pathname === "/settings";
-  }
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
+/* One timing for the whole bar: the same 250ms clock the desktop rail and the
+   cards use, so a tap reads as a press rather than a jump. */
+const TAB_CLASS =
+  "flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl text-[10px] font-medium transition-all duration-250 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-colly/40";
+const ICON_WRAPPER_CLASS =
+  "flex h-7 w-12 items-center justify-center rounded-full transition-all duration-250";
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -38,10 +39,10 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 flex items-center justify-around pb-safe md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-card-border bg-card-surface/95 pb-safe shadow-[0_-8px_24px_-16px_rgba(16,24,40,0.35)] backdrop-blur-xl md:hidden"
     >
       {TABS.map((tab) => {
-        const active = isActive(pathname, tab.href);
+        const active = isActiveNavPath(pathname, tab.href);
         const Icon = tab.icon;
 
         return (
@@ -49,11 +50,22 @@ export function MobileNav() {
             key={tab.href}
             href={tab.href}
             aria-current={active ? "page" : undefined}
-            className={`flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
-              active ? "text-[#FF6600]" : "text-gray-500"
+            className={`${TAB_CLASS} ${
+              active ? "text-colly" : "text-muted hover:text-main"
             }`}
           >
-            <Icon className="h-5 w-5" aria-hidden />
+            {/* The tinted pill is the touch affordance; the card-border ring
+                keeps it visible on the dark surface where a solid cream chip
+                would glow (see --nav-tint). */}
+            <span
+              className={`${ICON_WRAPPER_CLASS} ${
+                active
+                  ? "nav-active-texture bg-colly-tint ring-1 ring-colly/20 ring-inset"
+                  : ""
+              }`}
+            >
+              <Icon className="h-5 w-5" aria-hidden />
+            </span>
             <span>{tab.label}</span>
           </Link>
         );
