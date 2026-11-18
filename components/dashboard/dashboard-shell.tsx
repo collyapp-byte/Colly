@@ -112,10 +112,17 @@ export function DashboardShell({
     };
   }, [mobileNavOpen]);
 
+  /*
+   * `overflow-x-clip`, never `overflow-x-hidden`: `hidden` turns these boxes
+   * into scroll containers (its `overflow-y` is forced to `auto`), so the page
+   * scrolls inside the shell and a two-finger pinch reads as the container
+   * growing. `clip` keeps the horizontal bounds without claiming the scroll
+   * gesture, so pinch-to-zoom stays optical.
+   */
   return (
     <div
       data-dashboard-shell
-      className="min-h-screen w-full max-w-full overflow-x-hidden bg-background bg-radial-[ellipse_at_top] from-orange-100/40 via-gray-50 to-blue-100/20 dark:from-orange-500/10 dark:via-background dark:to-blue-500/10"
+      className="min-h-screen w-full max-w-full overflow-x-clip bg-background bg-radial-[ellipse_at_top] from-orange-100/40 via-gray-50 to-blue-100/20 dark:from-orange-500/10 dark:via-background dark:to-blue-500/10"
     >
       {/* Mobile drawer */}
       {mobileNavOpen && (
@@ -150,7 +157,7 @@ export function DashboardShell({
         </div>
       )}
 
-      <div className="flex min-h-screen w-full max-w-full overflow-x-hidden md:h-screen md:overflow-hidden">
+      <div className="flex min-h-screen w-full max-w-full overflow-x-clip md:h-screen md:overflow-hidden">
         {/* Desktop sidebar */}
         <aside
           data-print-hide
@@ -168,7 +175,7 @@ export function DashboardShell({
         </aside>
 
         {/* Right column */}
-        <div className="flex w-full min-w-0 flex-1 flex-col overflow-x-hidden px-0 md:px-4 md:pt-4 md:pb-4 md:min-h-0">
+        <div className="flex w-full min-w-0 flex-1 flex-col overflow-x-clip px-0 md:px-4 md:pt-4 md:pb-4 md:min-h-0">
           {isOwner && (!telegramConnected || !ownerAlertsLinked) && (
             <div
               role="alert"
@@ -186,7 +193,7 @@ export function DashboardShell({
                 </span>
               </span>
               <Link
-                href="/settings/ai-line"
+                href="/channels"
                 className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-center text-xs font-semibold text-white shadow-sm transition-all duration-250 hover:-translate-y-px hover:bg-amber-700 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
               >
                 Complete setup

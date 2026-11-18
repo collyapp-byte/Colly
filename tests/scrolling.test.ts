@@ -49,8 +49,61 @@ test("the page keeps the browser's own scroll physics", () => {
   assert.ok(bodyRule, "app/globals.css lost its `html, body` rule");
   assert.match(bodyRule[1], /scroll-behavior:\s*auto/);
 
-  // A blanket touch-action would also disable pinch-zoom for every visitor.
-  assert.equal(/touch-action/.test(bodyRule[1]), false);
+  // Pinch-zoom is part of the same contract. The document names the whole
+  // native gesture set — both pan axes plus `pinch-zoom` — instead of leaving
+  // it to a shorthand that silently drops the two-finger gesture.
+  assert.match(
+    bodyRule[1],
+    /touch-action:\s*pan-x\s+pan-y\s+pinch-zoom/,
+    "the document must keep native pinch-zoom",
+  );
+  assert.doesNotMatch(sheet, /touch-action:\s*none/);
+  assert.doesNotMatch(
+    sheet,
+    /touch-action:\s*pan-y\s*;/,
+    "a bare `pan-y` switches pinch-zoom off",
+  );
+
+  // Horizontal overflow is clipped, never scrolled: `overflow-x: hidden`
+  // makes the box a scroll container (its `overflow-y` computes to `auto`).
+  assert.match(bodyRule[1], /overflow-x:\s*clip/);
+});
+
+test("two-finger pinch-zoom stays optical, not a layout reflow", () => {
+  const layout = source("app/layout.tsx");
+  const viewport = /export const viewport: Viewport = \{([\s\S]*?)\};/.exec(layout);
+  assert.ok(viewport, "app/layout.tsx lost its viewport export");
+
+  // Stated, not inherited: the mobile viewport is explicit and scalable.
+  assert.match(viewport[1], /width:\s*"device-width"/);
+  assert.match(viewport[1], /initialScale:\s*1/);
+  assert.match(viewport[1], /userScalable:\s*true/);
+
+  // No cap. `maximumScale` (and `maximumScale: 1` above all) turns a pinch
+  // into a no-op or a layout reflow instead of a visual zoom.
+  assert.equal(
+    /maximumScale/.test(viewport[1]),
+    false,
+    "a maximum scale locks two-finger zoom",
+  );
+
+  // The shell clips with `clip`, never `hidden`: `hidden` makes each wrapper a
+  // scroll container, which is the "pinch inflates the page" symptom.
+  const shell = source("components/dashboard/dashboard-shell.tsx");
+  assert.doesNotMatch(shell, /className="[^"]*overflow-x-hidden/);
+  assert.match(shell, /className="[^"]*overflow-x-clip/);
+
+  // The inbox swipe row used to set a bare `touch-pan-y`, switching pinch-zoom
+  // off across a list that fills the phone screen.
+  const inbox = source("app/(dashboard)/conversations/page.tsx");
+  assert.doesNotMatch(inbox, /className="[^"]*touch-pan-y(?!-)/);
+  assert.match(inbox, /touch-pan-y-pinch-zoom/);
+
+  // …and that class is the full gesture set, not a rename of `pan-y`.
+  assert.match(
+    css("app/globals.css"),
+    /\.touch-pan-y-pinch-zoom\s*\{\s*touch-action:\s*pan-y\s+pinch-zoom\s*;/,
+  );
 });
 
 test("no scroll-hijacking library is installed or mounted", () => {

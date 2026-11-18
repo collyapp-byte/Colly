@@ -130,7 +130,7 @@ export default async function CollyAIPage() {
 
       {!ownerAlertsActive && (
         <Link
-          href="/settings/ai-line"
+          href="/channels"
           className="mb-5 flex items-start gap-3 rounded-xl border border-colly/30 bg-colly-tint p-4 shadow-sm transition-all duration-250 hover:-translate-y-px hover:shadow-md active:translate-y-0 active:scale-[0.995]"
         >
           <span className="mt-0.5 text-lg" aria-hidden>
@@ -179,7 +179,7 @@ export default async function CollyAIPage() {
         <section className="surface-card surface-card-interactive relative group p-5">
           {/* Stretched link: the whole card opens the AI Line settings. Each
               per-channel button below is z-10 so it keeps its own destination. */}
-          <Link href="/settings/ai-line" className="absolute inset-0 z-0">
+          <Link href="/channels" className="absolute inset-0 z-0">
             <span className="sr-only">View</span>
           </Link>
           <h2 className="font-display text-base text-main">
@@ -202,7 +202,7 @@ export default async function CollyAIPage() {
                   </span>
                 )}
                 <Link
-                  href="/settings/ai-line"
+                  href="/channels"
                   className="relative z-10 inline-flex items-center rounded-xl border border-card-ring bg-card-surface px-3 py-1.5 text-sm font-medium text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
                 >
                   Manage
@@ -231,7 +231,7 @@ export default async function CollyAIPage() {
                   </span>
                 )}
                 <Link
-                  href="/settings/ai-line"
+                  href="/channels"
                   className="relative z-10 inline-flex items-center rounded-xl border border-card-ring bg-card-surface px-3 py-1.5 text-sm font-medium text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
                 >
                   {discordConnected ? "Manage" : "Connect Discord"}

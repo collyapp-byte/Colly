@@ -306,7 +306,7 @@ function SwipeableRow({
           transform: `translateX(${offset}px)`,
           transition: dragging ? "none" : "transform 150ms",
         }}
-        className="relative z-10 flex touch-pan-y items-start gap-3 bg-card-surface px-4 py-4 transition-all duration-250 hover:bg-surface-muted sm:px-6"
+        className="touch-pan-y-pinch-zoom relative z-10 flex items-start gap-3 bg-card-surface px-4 py-4 transition-all duration-250 hover:bg-surface-muted sm:px-6"
       >
         <span
           aria-hidden

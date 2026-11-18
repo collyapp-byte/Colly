@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Home,
+  LayoutGrid,
   MessageSquare,
   Settings,
   ShoppingCart,
   Package,
+  Cable,
   type LucideIcon,
 } from "lucide-react";
 import { isActiveNavPath } from "@/lib/nav";
@@ -19,10 +20,11 @@ type MobileTab = {
 };
 
 const TABS: MobileTab[] = [
-  { label: "Home", href: "/dashboard", icon: Home },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
   { label: "Inbox", href: "/conversations", icon: MessageSquare },
-  { label: "Sell", href: "/sales", icon: ShoppingCart },
-  { label: "Catalogue", href: "/products", icon: Package },
+  { label: "Sales & Invoices", href: "/sales", icon: ShoppingCart },
+  { label: "Business", href: "/business", icon: Package },
+  { label: "Channels", href: "/channels", icon: Cable },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 

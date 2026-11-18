@@ -32,6 +32,7 @@
 import { prisma } from "@/lib/prisma";
 import { handleIncomingMessage } from "@/lib/chat-engine";
 import { debugLog } from "@/lib/logger";
+import { isPairingStalled } from "@/lib/whatsapp-pairing";
 
 /** The slice of a Baileys `WAMessage` this adapter reads. */
 export type WhatsAppInboundMessage = {
@@ -117,6 +118,19 @@ export type WhatsAppSessionView = {
 };
 
 /**
+ * The polling payload: the view plus the pairing clock.
+ *
+ * `stalled` is computed server-side because the browser's clock is not the
+ * database's; the page only decides how to render it.
+ */
+export type WhatsAppSessionSnapshot = WhatsAppSessionView & {
+  /** ISO stamp of the worker's last write; null when no row exists. */
+  updatedAt: string | null;
+  /** A CONNECTING row with no QR whose worker has been silent too long. */
+  stalled: boolean;
+};
+
+/**
  * The API payload for one session row.
  *
  * A missing row (a tenant that never pressed Connect) reads as DISCONNECTED
@@ -136,6 +150,33 @@ export function serializeWhatsAppSession(
       row && isWhatsAppSessionState(row.status) ? row.status : "DISCONNECTED",
     qrCode: row?.qrCode ?? null,
     phoneNumber: row?.phoneNumber ?? null,
+  };
+}
+
+/**
+ * The row plus its pairing clock, as `GET /api/whatsapp/session` answers it.
+ *
+ * `updatedAt` is the worker's last write. It is what lets the dashboard tell a
+ * pairing that is still starting from one whose worker never arrived: a
+ * CONNECTING row that has not been touched for `PAIRING_TIMEOUT_MS` is
+ * `stalled`, and the page offers Retry instead of an endless spinner.
+ */
+export function serializeWhatsAppSessionSnapshot(
+  row: {
+    status: string;
+    qrCode: string | null;
+    phoneNumber: string | null;
+    updatedAt: Date | null;
+  } | null,
+  now: number = Date.now(),
+): WhatsAppSessionSnapshot {
+  const view = serializeWhatsAppSession(row);
+  const updatedAt = row?.updatedAt ? row.updatedAt.toISOString() : null;
+
+  return {
+    ...view,
+    updatedAt,
+    stalled: isPairingStalled({ ...view, updatedAt }, now),
   };
 }
 

@@ -714,13 +714,13 @@ Since Telegram requires no Meta approval, the moment you paste the Bot Token int
 
 > "Every message your customers send goes to this dashboard. The AI answers automatically. You can see every conversation, every customer, every sale. Let me show you where everything is."
 
-**Section 1 — Overview (2 minutes)**
+**Section 1 — Dashboard (2 minutes)**
 
 Point at the top of the page.
 
 > "This is your home screen. Today's sales show here. Messages handled. Active conversations. Pending invoices. Every morning when you open Colly, this is the first thing you see."
 
-Have them click **Overview** in the sidebar. Then let them read the numbers themselves.
+Have them click **Dashboard** in the sidebar. Then let them read the numbers themselves.
 
 **Section 2 — Conversations (2 minutes)**
 
@@ -852,7 +852,7 @@ That is it. Sale recorded. Stock updated. Customer recorded (as "Walk-in Custome
 **What happens automatically:**
 
 - Stock decreases by the quantity sold
-- Today's Sales updates on the Overview page
+- Today's Sales updates on the Dashboard page
 - The sale appears in the Sales history
 
 **When to use Custom Amount instead:**
@@ -882,7 +882,7 @@ Simulate a walk-in sale. Pick one product. Add it to the cart. Choose Cash. Comp
 
 **The morning check (2 minutes):**
 
-Open Colly. Click **Overview**.
+Open Colly. Click **Dashboard**.
 
 Look at these numbers:
 

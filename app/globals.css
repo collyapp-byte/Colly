@@ -340,13 +340,40 @@ body {
    The one exception is deliberate and scoped: the inbox thread follows a new
    message with `scrollIntoView()` (app/(dashboard)/conversations/[id]).
 
-   A global `touch-action: pan-y` is NOT set here on purpose — it would also
-   disable pinch-zoom for every visitor. Any container that needs it sets it
-   itself.
+   Pinch-to-zoom is part of the same contract. The gesture set below is the
+   full "everything native" one — both pan axes plus `pinch-zoom` — so a
+   two-finger pinch scales the visual viewport (optical zoom) instead of the
+   browser widening the layout box. It is deliberately not `touch-action: none`
+   and not a bare `pan-y`: either one switches pinch-zoom off for the whole
+   document. A component that needs to own one axis now names the rest, e.g.
+   `.touch-pan-y-pinch-zoom` below (the inbox swipe row).
 --------------------------------------------------------------------------- */
 html,
 body {
   scroll-behavior: auto;
+  touch-action: pan-x pan-y pinch-zoom;
+  /*
+   * `clip`, not `hidden`. `overflow-x: hidden` makes the box a scroll
+   * container and forces `overflow-y` to compute to `auto`, so the shell
+   * scrolls itself instead of the viewport — which is exactly what makes a
+   * pinch feel like the page container is being stretched. `clip` cuts
+   * horizontal overflow without becoming scrollable, and without trapping
+   * `position: sticky` headers.
+   */
+  overflow-x: clip;
+}
+
+/*
+ * A swipe row that keeps the browser's pinch-zoom.
+ *
+ * Tailwind's `touch-pan-y` is `touch-action: pan-y`, which also switches the
+ * two-finger gesture off for anything that starts on the element. The inbox
+ * list fills a phone screen, so that one class was a page-wide zoom lock.
+ * Naming the whole set keeps vertical panning native (the swipe handler owns
+ * the horizontal axis) and leaves pinch-zoom alive.
+ */
+.touch-pan-y-pinch-zoom {
+  touch-action: pan-y pinch-zoom;
 }
 
 /* Mobile bottom navigation respects the device safe area. */
@@ -699,6 +726,9 @@ button:active:not(:disabled) {
     background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
+    /* Paper is paged media, not a scrollport: the screen's horizontal clip
+       would cut a wide sheet instead of letting the printer paginate it. */
+    overflow-x: visible !important;
   }
 
   /* The browser's own date / title / URL header lives in the page margin, and

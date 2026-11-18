@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
+  ArrowRight,
   BadgeCheck,
   BellRing,
+  Cable,
   Clock,
   Copy,
   Globe,
@@ -439,6 +441,26 @@ export default function AiLinePage() {
         Connect Telegram or Discord and the AI answers customers on every
         message.
       </p>
+
+      {/* The hub is the everyday surface now; this page keeps the long-form
+          guides (the video walkthrough, the WhatsApp waitlist). */}
+      <Link
+        href="/channels"
+        className="surface-panel surface-card-interactive mt-4 flex items-center gap-3 p-3"
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-colly-tint text-colly ring-1 ring-colly/15">
+          <Cable className="h-4 w-4" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium text-main">
+            Channels hub
+          </span>
+          <span className="block text-xs text-muted">
+            WhatsApp, Telegram, Discord and web chat at a glance
+          </span>
+        </span>
+        <ArrowRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
+      </Link>
 
       {/* HOW IT WORKS - compact orientation box right under the header. */}
       <section className="surface-panel mt-5 p-4 text-sm">

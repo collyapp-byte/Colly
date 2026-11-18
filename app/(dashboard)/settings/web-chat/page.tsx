@@ -21,8 +21,7 @@ import {
   deleteBusinessAvatar,
   uploadBusinessAvatar,
 } from "@/lib/supabase/storage";
-
-const WEB_CHAT_ORIGIN = "https://colly.com.ng";
+import { webChatEmbedCode, webChatLink } from "@/lib/web-chat";
 
 const SECTION_CLASS = "surface-card p-5 sm:p-6";
 const HEADING_CLASS = "font-display text-base tracking-wide text-main";
@@ -88,10 +87,8 @@ export default function WebChatSettingsPage() {
     };
   }, []);
 
-  const chatLink = business ? `${WEB_CHAT_ORIGIN}/chat/${business.id}` : "";
-  const embedCode = business
-    ? `<iframe src="${chatLink}" width="100%" height="600px" style="border:none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></iframe>`
-    : "";
+  const chatLink = business ? webChatLink(business.id) : "";
+  const embedCode = business ? webChatEmbedCode(business.id) : "";
 
   async function handleCopy(value: string, label: string) {
     if (!value) return;

@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { isActiveNavPath } from "../lib/nav";
+import { activeSectionId, isActiveNavPath } from "../lib/nav";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 
@@ -45,6 +45,83 @@ test("/settings is exact-only, because its children own rows of their own", () =
   // The children still highlight themselves.
   assert.equal(isActiveNavPath("/settings/team", "/settings/team"), true);
   assert.equal(isActiveNavPath("/settings/team/abc", "/settings/team"), true);
+});
+
+test("the rail, the tab bar and the eyebrow say Dashboard and Business", () => {
+  const sidebar = source("components/dashboard/sidebar.tsx");
+  const mobile = source("components/dashboard/mobile-nav.tsx");
+  const page = source("app/(dashboard)/dashboard/page.tsx");
+
+  // The home row names the page it opens, and Business is a top-level section.
+  assert.match(sidebar, /\{ label: "Dashboard", href: "\/dashboard"/);
+  assert.match(sidebar, /title: "Business"/);
+  assert.doesNotMatch(sidebar, /label: "Overview"/);
+  assert.doesNotMatch(sidebar, /title: "Sell"/);
+
+  assert.match(mobile, /label: "Dashboard"/);
+  assert.doesNotMatch(mobile, /label: "Sell"/);
+
+  // The eyebrow above the greeting matches the rail row; `uppercase` renders
+  // it as DASHBOARD.
+  assert.match(page, />\s*Dashboard\s*</);
+  assert.doesNotMatch(page, />\s*Overview\s*</);
+});
+
+test("activeSectionId names the group that owns the current page", () => {
+  const sections = [
+    { id: "home", items: [{ href: "/dashboard" }, { href: "/business" }] },
+    { id: "inbox", items: [{ href: "/conversations" }] },
+    { id: "sell", items: [{ href: "/sales" }, { href: "/invoices" }] },
+    { id: "manage", items: [{ href: "/settings" }, { href: "/channels" }] },
+    { id: "agents", items: [{ href: "/find-an-agent" }] },
+  ];
+
+  assert.equal(activeSectionId("/dashboard", sections), "home");
+  assert.equal(activeSectionId("/business", sections), "home");
+  assert.equal(activeSectionId("/invoices", sections), "sell");
+  // A child page belongs to the group that lists its parent row.
+  assert.equal(activeSectionId("/invoices/abc", sections), "sell");
+  assert.equal(activeSectionId("/settings/team", sections), "manage");
+  assert.equal(activeSectionId("/find-an-agent", sections), "agents");
+
+  // `/settings` is exact-only, so its siblings stay in the group without
+  // claiming the parent row.
+  assert.equal(activeSectionId("/settings", sections), "manage");
+
+  // A page no group lists expands nothing rather than guessing.
+  assert.equal(activeSectionId("/settings/billing", sections), null);
+  assert.equal(activeSectionId("/", sections), null);
+});
+
+test("the sidebar accordion is exclusive and starts on the active group", () => {
+  const text = source("components/dashboard/sidebar.tsx");
+
+  // Seeded from the route, and re-seeded when the route changes: landing on a
+  // page always unfolds the group that owns it.
+  assert.match(text, /activeSectionId\(pathname, sections\)/);
+  assert.match(text, /key=\{pathname\}/);
+  assert.match(
+    text,
+    /const open = !collapsible \|\| openSectionId === section\.id/,
+    "every group except the open one must be folded",
+  );
+
+  // One open id, never a set: opening a group is what closes the previous one.
+  assert.match(
+    text,
+    /const \[openSectionId, setOpenSectionId\] = useState<string \| null>/,
+  );
+  assert.match(text, /current === section\.id \? null : section\.id/);
+
+  // Nothing is remembered across visits, so a reload cannot restore a stale
+  // group while the current page's group stays folded.
+  assert.doesNotMatch(text, /localStorage/);
+
+  // The fold animates its height instead of jumping.
+  assert.match(text, /grid-rows-\[0fr\]/);
+  assert.match(text, /grid-rows-\[1fr\]/);
+  assert.match(text, /transition-\[grid-template-rows,opacity\]/);
+  assert.match(text, /duration-300/);
 });
 
 test("every navigation surface asks the same helper", () => {

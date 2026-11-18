@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:all": "node scripts/dev-with-worker.cjs",
     "build": "npx prisma migrate deploy && npx prisma generate && next build",
     "start": "node node_modules/next/dist/bin/next start",
     "db:deploy": "npx prisma migrate deploy",
@@ -12,6 +13,7 @@
     "test": "tsx --test tests/*.test.ts",
     "seed": "node prisma/seed.cjs",
     "worker:whatsapp": "tsx workers/whatsapp-worker.ts",
+    "worker:whatsapp:once": "tsx workers/whatsapp-worker.ts --once",
     "academy:sync": "node scripts/sync-academy-content.cjs"
   },
   "dependencies": {

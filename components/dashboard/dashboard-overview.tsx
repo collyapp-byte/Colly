@@ -48,13 +48,13 @@ export type DashboardStatus = {
 };
 
 /**
- * The interactive half of the Overview route.
+ * The interactive half of the Dashboard route.
  *
  * `app/(dashboard)/dashboard/page.tsx` is a Server Component because it reads
  * the setup-checklist flags and the banner status straight from Prisma;
  * everything below this line needs client state (fetches for today's sales and
  * invoices), so it lives here and is rendered as that page's child. The page
- * owns the `max-w-6xl` container and the "Overview" heading.
+ * owns the `max-w-6xl` container and the "Dashboard" eyebrow.
  *
  * `status` arrives pre-filled from the server, so the alert banners are laid
  * out in the first paint. They used to be fetched after hydration, which

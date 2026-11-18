@@ -4,7 +4,7 @@ import { requireOwnerApi } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   resolveWhatsAppBusinessId,
-  serializeWhatsAppSession,
+  serializeWhatsAppSessionSnapshot,
 } from "@/lib/whatsapp-session";
 
 /**
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   );
   if (!businessId) return forbidden();
 
-  await prisma.whatsAppSession.upsert({
+  const row = await prisma.whatsAppSession.upsert({
     where: { businessId },
     update: {
       status: "CONNECTING",
@@ -62,9 +62,21 @@ export async function POST(request: Request) {
       logoutRequestedAt: null,
     },
     create: { businessId, status: "CONNECTING" },
+    // Only what the connect screen reads: the payload must never carry `creds`.
+    select: {
+      status: true,
+      qrCode: true,
+      phoneNumber: true,
+      updatedAt: true,
+    },
   });
 
-  return Response.json({ success: true });
+  // Returning the row (not just `success`) restarts the page's pairing clock:
+  // `updatedAt` is fresh, so a retry cannot render as "stalled" straight away.
+  return Response.json({
+    success: true,
+    session: serializeWhatsAppSessionSnapshot(row),
+  });
 }
 
 /** The dashboard's polling read. */
@@ -81,12 +93,14 @@ export async function GET(request: Request) {
 
   const row = await prisma.whatsAppSession.findUnique({
     where: { businessId },
-    select: { status: true, qrCode: true, phoneNumber: true },
+    // `updatedAt` is the worker's last write, so this read can also answer
+    // "is the pairing service even alive?" — see `isPairingStalled()`.
+    select: { status: true, qrCode: true, phoneNumber: true, updatedAt: true },
   });
 
   // A tenant that never pressed Connect has no row; the client reads that as
   // DISCONNECTED instead of handling a 404.
-  return Response.json(serializeWhatsAppSession(row));
+  return Response.json(serializeWhatsAppSessionSnapshot(row));
 }
 
 /** Unlinks the device and asks the worker to close the socket. */

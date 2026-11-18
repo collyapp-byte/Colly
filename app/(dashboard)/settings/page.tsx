@@ -4,10 +4,10 @@
 import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
 import {
+  Cable,
   CheckCircle2,
   CircleAlert,
   QrCode,
-  Smartphone,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -198,15 +198,17 @@ export default function SettingsPage() {
               </div>
             </Link>
           )}
-          {isOwner && (
-            <Link href="/settings/whatsapp" className="surface-panel surface-card-interactive flex items-center gap-3 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-colly/10 text-colly ring-1 ring-colly/15"><Smartphone className="h-5 w-5" /></div>
-              <div>
-                <p className="font-medium text-main">WhatsApp Line</p>
-                <p className="text-xs text-muted">Pair the number your AI answers on</p>
-              </div>
-            </Link>
-          )}
+          {/* Channels live in one hub for owner and staff alike. Connecting a
+              channel stays owner-only inside it, but there is no reason to hide
+              the status page from staff (settings/whatsapp is still the old
+              bookmark target and now links here). */}
+          <Link href="/channels" className="surface-panel surface-card-interactive flex items-center gap-3 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-colly/10 text-colly ring-1 ring-colly/15"><Cable className="h-5 w-5" /></div>
+            <div>
+              <p className="font-medium text-main">Channels</p>
+              <p className="text-xs text-muted">WhatsApp, Telegram, Discord and web chat</p>
+            </div>
+          </Link>
           <Link href="/settings/qr-code" className="surface-panel surface-card-interactive flex items-center gap-3 p-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-colly/10 text-colly ring-1 ring-colly/15"><QrCode className="h-5 w-5" /></div>
             <div>

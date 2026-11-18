@@ -18,13 +18,14 @@ export async function sendTeamInviteEmail({
   email,
   link,
 }: SendTeamInviteParams): Promise<{ sent: boolean; error?: string }> {
-  const apiKey = process.env.BREVO_API_KEY;
+  const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    return { sent: false, error: "BREVO_API_KEY not configured" };
+    return { sent: false, error: "RESEND_API_KEY not configured" };
   }
 
   try {
-    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    const from = process.env.RESEND_FROM_EMAIL?.trim() || "Colly <reports@colly.com.ng>";
+    const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -32,10 +33,10 @@ export async function sendTeamInviteEmail({
         Accept: "application/json",
       },
       body: JSON.stringify({
-        sender: { email: "getcolly@gmail.com", name: "Colly" },
+        from: from,
         to: [{ email, name: inviteeName }],
         subject: `Join ${businessName} on Colly`,
-        htmlContent: `
+        html: `
           <div style="font-family: sans-serif; padding: 20px; color: #111;">
             <h2>Hi ${inviteeName},</h2>
             <p><strong>${inviterName}</strong> has invited you to join <strong>${businessName}</strong> on Colly.</p>
@@ -45,19 +46,19 @@ export async function sendTeamInviteEmail({
             <p style="font-size: 14px; color: #555;">Or copy and paste this link: <a href="${link}">${link}</a></p>
           </div>
         `,
-        textContent: `Hi ${inviteeName}, ${inviterName} invited you to join ${businessName} on Colly. Accept here: ${link}`,
+        text: `Hi ${inviteeName}, ${inviterName} invited you to join ${businessName} on Colly. Accept here: ${link}`,
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("[Brevo] Email sending failed:", response.status, errText);
-      return { sent: false, error: `Brevo error ${response.status}` };
+      console.error("[Resend] Email sending failed:", response.status, errText);
+      return { sent: false, error: `Resend error ${response.status}` };
     }
 
     return { sent: true };
   } catch (error) {
-    console.error("[Brevo] Network/fetch error:", error);
+    console.error("[Resend] Network/fetch error:", error);
     return {
       sent: false,
       error: error instanceof Error ? error.message : "Failed to send email",

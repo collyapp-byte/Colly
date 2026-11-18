@@ -133,16 +133,28 @@ export const metadata: Metadata = {
 };
 
 /**
- * Browser chrome colour, kept in the `viewport` export rather than `metadata`
- * (Next moved `themeColor` there in 14). It paints the Android address bar and
- * the status bar of an installed app, and matches the manifest's
- * `theme_color` — the brand orange from `app/globals.css` (`--color-colly`).
- * `colorScheme` mirrors `color-scheme: light dark` in `app/globals.css`: the
- * dashboard tokens flip under a dark-mode OS, so the browser must paint native
- * controls (date pickers, selects, scrollbars) to match instead of forcing the
- * light palette onto them.
+ * Browser chrome colour and the zoom contract, kept in the `viewport` export
+ * rather than `metadata` (Next moved `themeColor` there in 14). It paints the
+ * Android address bar and the status bar of an installed app, and matches the
+ * manifest's `theme_color` — the brand orange from `app/globals.css`
+ * (`--color-colly`). `colorScheme` mirrors `color-scheme: light dark` in
+ * `app/globals.css`: the dashboard tokens flip under a dark-mode OS, so the
+ * browser must paint native controls (date pickers, selects, scrollbars) to
+ * match instead of forcing the light palette onto them.
+ *
+ * Zoom is stated, not inherited. Next's defaults (`width=device-width`,
+ * `initial-scale=1`) are repeated here on purpose and `userScalable` is
+ * switched on, but there is deliberately NO `maximumScale` — and never a
+ * `maximumScale: 1` lock. A cap turns a two-finger pinch into a no-op on
+ * Android and makes the browser grow the layout box instead of scaling the
+ * visual viewport, which reads as the page inflating; it also fails WCAG
+ * 1.4.4 (200% text zoom). `touch-action` in `app/globals.css` makes the same
+ * promise for the gesture layer.
  */
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  userScalable: true,
   themeColor: "#ff6600",
   colorScheme: "light dark",
 };

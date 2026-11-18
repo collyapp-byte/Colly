@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * Streaming placeholder for the Overview route only.
+ * Streaming placeholder for the Dashboard route only.
  *
  * The page awaits `requireAuth()` and four Prisma reads behind
  * `connection()`, so on a client-side navigation Next streams this file first.
@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  * it here meant the incoming content pushed everything below it down; matching
  * heights keeps the swap close to invisible.
  */
-export default function DashboardOverviewLoading() {
+export default function DashboardLoading() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5 md:space-y-6">
       {/* Greeting card: eyebrow, name, one-line description. */}

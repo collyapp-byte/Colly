@@ -10,7 +10,7 @@ import { SetupChecklist } from "@/components/dashboard/setup-checklist";
 import { StaffDeniedToast } from "@/components/dashboard/staff-denied-toast";
 
 /**
- * Overview route.
+ * Dashboard route.
  *
  * A Server Component so the activation flags for the setup checklist can be
  * read straight from Prisma. The interactive half of the page (today's sales,
@@ -31,7 +31,7 @@ import { StaffDeniedToast } from "@/components/dashboard/staff-denied-toast";
  * sends an invited STAFF account here as `/dashboard?denied=staff_restricted`
  * and this page raises the "owner only" toast.
  */
-export default async function OverviewPage({
+export default async function DashboardPage({
   searchParams,
 }: PageProps<"/dashboard">) {
   await connection(); // prerendering stops here
@@ -82,8 +82,10 @@ export default async function OverviewPage({
           dashboard's own surface. */}
       <header className="surface-card flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center md:p-6">
         <div className="min-w-0">
+          {/* The rail row for this page is "Dashboard"; the eyebrow matches it
+              and renders as DASHBOARD through `uppercase`. */}
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-colly">
-            Overview
+            Dashboard
           </p>
           <h1 className="mt-1.5 font-display text-2xl font-bold tracking-tight text-main sm:text-3xl">
             Hello {user.name ? user.name.split(" ")[0] : "there"} 👋
