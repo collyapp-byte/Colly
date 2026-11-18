@@ -95,12 +95,12 @@ export default function QuickSalePage() {
         <div>
           <Link
             href="/sales"
-            className="mb-2 inline-flex items-center gap-1.5 text-sm font-semibold text-colly transition-colors hover:text-colly-hover"
+            className="mb-2 inline-flex items-center gap-1.5 text-sm font-semibold text-colly transition-all duration-250 hover:text-colly-hover"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden />
             Sales
           </Link>
-          <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
+          <h1 className="font-display text-2xl text-main sm:text-3xl">
             Quick Sale
           </h1>
         </div>
@@ -114,7 +114,7 @@ export default function QuickSalePage() {
       {/* Search */}
       <div className="relative mt-4">
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
           aria-hidden
         />
         <input
@@ -123,14 +123,14 @@ export default function QuickSalePage() {
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search products"
           aria-label="Search products"
-          className="w-full rounded-lg border border-gray-300 py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
+          className="w-full rounded-lg border border-card-border py-2.5 pl-9 pr-3 text-sm text-main outline-none transition-all duration-250 focus:border-colly focus:ring-2 focus:ring-colly/20"
         />
       </div>
 
       {/* Selection summary */}
       {totalItems > 0 && (
-        <p className="mt-3 text-sm text-gray-500">
-          <span className="font-semibold text-gray-900">{totalItems}</span>{" "}
+        <p className="mt-3 text-sm text-muted">
+          <span className="font-semibold text-main">{totalItems}</span>{" "}
           item{totalItems === 1 ? "" : "s"} in cart
         </p>
       )}
@@ -148,8 +148,8 @@ export default function QuickSalePage() {
       )}
 
       {products && filteredProducts.length === 0 && (
-        <div className="mt-4 rounded-lg border border-dashed border-gray-200 bg-surface p-10 text-center">
-          <p className="text-sm text-gray-500">
+        <div className="mt-4 rounded-lg border border-dashed border-card-border bg-surface p-10 text-center">
+          <p className="text-sm text-muted">
             {searchTerm ? (
               "No products match your search."
             ) : (
@@ -157,7 +157,7 @@ export default function QuickSalePage() {
                 No products yet.{" "}
                 <Link
                   href="/products"
-                  className="font-semibold text-colly transition-colors hover:text-colly-hover"
+                  className="font-semibold text-colly transition-all duration-250 hover:text-colly-hover"
                 >
                   Add products from the Products page.
                 </Link>
@@ -181,7 +181,7 @@ export default function QuickSalePage() {
       )}
 
       {/* Mobile: proceed sticks to the bottom */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-card-border bg-card-surface p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)] lg:hidden">
         <ProceedButton
           count={totalItems}
           onProceed={handleProceed}
@@ -230,8 +230,8 @@ function SelectableProductCard({
   const outOfStock = product.stock === 0;
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-surface transition-all hover:border-colly hover:ring-1 hover:ring-colly/30">
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-50">
+    <div className="surface-card surface-card-interactive flex flex-col overflow-hidden">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-muted">
         {product.images[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -240,7 +240,7 @@ function SelectableProductCard({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-gray-300">
+          <div className="flex h-full w-full items-center justify-center text-muted">
             <ImageIcon className="h-7 w-7" aria-hidden />
           </div>
         )}
@@ -253,7 +253,7 @@ function SelectableProductCard({
       </div>
 
       <div className="flex flex-1 flex-col p-2 md:p-2.5">
-        <p className="line-clamp-2 text-[12.5px] font-medium text-gray-900">
+        <p className="line-clamp-2 text-[12.5px] font-medium text-main">
           {product.name}
         </p>
         <p className="mt-0.5 text-[12.5px] font-semibold text-[#FF6600]">
@@ -272,7 +272,7 @@ function SelectableProductCard({
               type="button"
               disabled={outOfStock}
               onClick={() => onSetQuantity(1)}
-              className="w-full rounded-md border border-dashed border-gray-300 py-1 text-[12px] font-medium text-gray-600 transition-colors hover:border-colly hover:text-colly disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-md border border-dashed border-card-border py-1 text-[12px] font-medium text-muted transition-all duration-250 hover:border-colly hover:text-colly disabled:cursor-not-allowed disabled:opacity-50"
             >
               + Add
             </button>
@@ -289,12 +289,12 @@ function ProductGridSkeleton() {
       {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((card) => (
         <div
           key={card}
-          className="overflow-hidden rounded-lg border border-gray-200 bg-surface"
+          className="surface-card overflow-hidden"
         >
-          <div className="aspect-[4/3] w-full animate-pulse bg-gray-100" />
+          <div className="aspect-[4/3] w-full animate-pulse bg-surface-muted" />
           <div className="space-y-2 p-2 md:p-2.5">
-            <div className="h-3.5 w-3/4 animate-pulse rounded bg-gray-100" />
-            <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+            <div className="h-3.5 w-3/4 animate-pulse rounded bg-surface-muted" />
+            <div className="h-3 w-1/2 animate-pulse rounded bg-surface-muted" />
           </div>
         </div>
       ))}

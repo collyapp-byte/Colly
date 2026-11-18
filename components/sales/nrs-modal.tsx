@@ -13,9 +13,9 @@ type NrsModalProps = {
   onSaved: () => void;
 };
 
-const LABEL_CLASS = "mb-1 block text-sm font-medium text-gray-700";
+const LABEL_CLASS = "mb-1 block text-sm font-medium text-main";
 const INPUT_CLASS =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+  "w-full rounded-lg border border-card-border bg-card-surface px-3 py-2 text-sm text-main outline-none transition-all duration-250 placeholder:text-muted focus:border-colly focus:ring-2 focus:ring-colly/20";
 
 export function NrsModal({ onClose, onSaved }: NrsModalProps) {
   const [taxId, setTaxId] = useState("");
@@ -103,7 +103,7 @@ export function NrsModal({ onClose, onSaved }: NrsModalProps) {
   return (
     <Modal title="Get NRS-Compliant" onClose={onClose}>
       <div className="space-y-4">
-        <div className="space-y-2 text-sm text-gray-600">
+        <div className="space-y-2 text-sm text-muted">
           <p>
             From January 2028, every Nigerian business must send every sale to
             the NRS in real time.
@@ -136,7 +136,7 @@ export function NrsModal({ onClose, onSaved }: NrsModalProps) {
           <button
             type="submit"
             disabled={busy}
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-all duration-250 hover:bg-colly-hover disabled:opacity-60"
           >
             {saving === "taxId" && (
               <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -152,7 +152,7 @@ export function NrsModal({ onClose, onSaved }: NrsModalProps) {
               window.open(REGISTRATION_URL, "_blank", "noopener,noreferrer")
             }
             disabled={busy}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-card-border px-4 py-2 text-sm font-medium text-main transition-all duration-250 hover:bg-surface-muted disabled:opacity-60"
           >
             <ExternalLink className="h-4 w-4" aria-hidden />
             Open Registration Portal
@@ -161,7 +161,7 @@ export function NrsModal({ onClose, onSaved }: NrsModalProps) {
             type="button"
             onClick={handleAccountant}
             disabled={busy}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-card-border px-4 py-2 text-sm font-medium text-main transition-all duration-250 hover:bg-surface-muted disabled:opacity-60"
           >
             {saving === "accountant" && (
               <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -176,7 +176,7 @@ export function NrsModal({ onClose, onSaved }: NrsModalProps) {
           type="button"
           onClick={handleRemindLater}
           disabled={busy}
-          className="block text-center text-sm text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-60"
+          className="block text-center text-sm text-muted transition-all duration-250 hover:text-main disabled:opacity-60"
         >
           Remind me later
         </button>

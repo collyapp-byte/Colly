@@ -99,9 +99,9 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
     <div data-print-hide className="fixed bottom-6 right-6 z-50 hidden md:flex">
       {/* Panel */}
       {open && (
-        <div className="absolute bottom-16 right-0 z-50 flex h-[500px] w-96 max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/5">
+        <div className="surface-card absolute bottom-16 right-0 z-50 flex h-[500px] w-96 max-w-[calc(100vw-3rem)] flex-col overflow-hidden shadow-card-hover">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-gray-100 bg-[#FF6600] px-4 py-3 text-white">
+          <div className="flex items-center justify-between border-b border-colly/30 bg-[#FF6600] px-4 py-3 text-white">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" aria-hidden />
               <span className="font-display text-sm font-semibold">Colly AI</span>
@@ -110,7 +110,7 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close Colly AI"
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md transition-colors hover:bg-white/20"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl transition-all duration-250 hover:bg-card-surface/20 active:scale-[0.94]"
             >
               <X className="h-4 w-4" aria-hidden />
             </button>
@@ -129,7 +129,7 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
                   className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm ${
                     message.role === "user"
                       ? "bg-[#FF6600] text-white"
-                      : "bg-gray-100 text-gray-800"
+                      : "bg-surface-muted text-main"
                   }`}
                 >
                   {message.content}
@@ -139,10 +139,10 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
 
             {sending && (
               <div className="flex justify-start">
-                <div className="flex items-center gap-1 rounded-2xl bg-gray-100 px-3 py-2">
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.3s]" />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.15s]" />
-                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400" />
+                <div className="flex items-center gap-1 rounded-2xl bg-surface-muted px-3 py-2">
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.3s]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.15s]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted" />
                 </div>
               </div>
             )}
@@ -151,7 +151,7 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
           {/* Input */}
           <form
             onSubmit={handleSend}
-            className="flex items-center gap-2 border-t border-gray-100 px-3 py-3"
+            className="flex items-center gap-2 border-t border-card-ring px-3 py-3"
           >
             <input
               type="text"
@@ -159,13 +159,13 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
               onChange={(event) => setInput(event.target.value)}
               placeholder="Ask Colly AI anything…"
               aria-label="Message Colly AI"
-              className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
+              className="min-w-0 flex-1 rounded-xl border border-card-ring px-3 py-2 text-sm text-main outline-none transition-all duration-250 focus:border-colly focus:ring-2 focus:ring-colly/20"
             />
             <button
               type="submit"
               disabled={sending || input.trim().length === 0}
               aria-label="Send message"
-              className="flex h-9 w-9 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg bg-[#FF6600] text-white transition-colors hover:bg-[#E65C00] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-9 w-9 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-xl bg-[#FF6600] text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-[#E65C00] hover:shadow-brand-hover active:translate-y-0 active:scale-[0.94] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
             >
               <Send className="h-4 w-4" aria-hidden />
             </button>
@@ -178,7 +178,7 @@ export function CollyAiWidget({ ownerName }: CollyAiWidgetProps) {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label={open ? "Close Colly AI" : "Open Colly AI"}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FF6600] text-white shadow-lg transition-colors hover:bg-[#E65C00]"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FF6600] text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-[#E65C00] hover:shadow-brand-hover active:translate-y-0 active:scale-[0.94]"
       >
         {open ? (
           <X className="h-6 w-6" aria-hidden />

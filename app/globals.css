@@ -5,28 +5,131 @@
    Anything declared here becomes a utility, e.g. --color-colly => bg-colly,
    text-colly, border-colly; --font-display => font-display.
 --------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+   System-synced colour scheme.
+
+   Light is the default and the same variables are re-declared inside
+   `prefers-color-scheme: dark`, so a visitor whose operating system is in dark
+   mode gets dark surfaces with no toggle, cookie or client-side class. The
+   `color-scheme` declaration lets the browser paint native controls (date
+   pickers, selects, scrollbars) to match.
+
+   `--background`, `--card-surface`, `--card-border` and `--text-main` are the
+   four tokens the dashboard shell, its cards and its inputs are built from;
+   `--text-muted` and `--surface-muted` cover secondary copy, table headers and
+   hover fills so no page has to fall back to a raw gray. Their Tailwind
+   utilities are declared in the `@theme inline` block below.
+--------------------------------------------------------------------------- */
+:root {
+  color-scheme: light dark;
+
+  --background: #f9fafb;
+  --card-surface: #ffffff;
+  --card-border: #e5e7eb;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --surface-muted: #f3f4f6;
+  /*
+   * Form fields get their own fill instead of a transparent background: a
+   * `<select>` would otherwise show the muted panel behind it, and an input on
+   * a tinted banner would change colour with its parent.
+   */
+  --input-surface: #ffffff;
+  /* #FFF4EC, the active-nav / brand tint. */
+  --nav-tint: #fff4ec;
+  /* The warm card outline used by the overview and academy cards. */
+  --outline-subtle: #f5d5b8;
+  /*
+   * Elevation ladder.
+   *
+   * A card is never lifted by one hard drop shadow: a contact shadow (1px), a
+   * mid shadow (~10px) and an ambient shadow (~30px) stack so the surface reads
+   * as a physical object at rest, not a rectangle with a border. `-hover` is the
+   * same stack pushed further, `-active` is the pressed state (the card sits
+   * back down and gains a faint inner shadow).
+   */
+  --card-shadow:
+    0 1px 1px rgba(16, 24, 40, 0.025),
+    0 2px 4px -1px rgba(16, 24, 40, 0.035),
+    0 10px 20px -10px rgba(16, 24, 40, 0.07),
+    0 24px 40px -28px rgba(16, 24, 40, 0.12);
+  --card-shadow-hover:
+    0 1px 1px rgba(16, 24, 40, 0.03),
+    0 4px 8px -2px rgba(16, 24, 40, 0.05),
+    0 16px 28px -12px rgba(16, 24, 40, 0.11),
+    0 32px 56px -30px rgba(16, 24, 40, 0.16);
+  --card-shadow-active:
+    0 1px 1px rgba(16, 24, 40, 0.05),
+    inset 0 1px 2px rgba(16, 24, 40, 0.06);
+  /*
+   * The hairline is a translucent ring rather than a solid 1px border: it picks
+   * up the surface behind it, so a card on the tinted page background does not
+   * read as a sticker. `-strong` is the brand-tinted version used on hover.
+   */
+  --card-ring: rgba(17, 24, 39, 0.08);
+  --card-ring-strong: rgba(255, 102, 0, 0.32);
+  /* The sheen along the top edge of a lit surface. */
+  --card-highlight: rgba(255, 255, 255, 0.9);
+  --card-sheen-top: rgba(255, 255, 255, 0.75);
+  --card-sheen-bottom: rgba(243, 244, 246, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b0b0f;
+    --card-surface: #15151a;
+    --card-border: #2a2a31;
+    --text-main: #f4f4f5;
+    --text-muted: #a1a1aa;
+    --surface-muted: #1e1e24;
+    /* Slightly lifted from the card so a field still reads as an input. */
+    --input-surface: #1b1b22;
+    /* A solid cream chip would glow on a dark rail; tint the orange instead. */
+    --nav-tint: rgba(255, 102, 0, 0.16);
+    --outline-subtle: #3a2a1e;
+    /* Dark surfaces need a deeper shadow to read as elevation at all. */
+    --card-shadow:
+      0 1px 1px rgba(0, 0, 0, 0.45),
+      0 4px 10px -4px rgba(0, 0, 0, 0.5),
+      0 18px 32px -18px rgba(0, 0, 0, 0.65);
+    --card-shadow-hover:
+      0 1px 1px rgba(0, 0, 0, 0.5),
+      0 8px 18px -6px rgba(0, 0, 0, 0.55),
+      0 28px 48px -24px rgba(0, 0, 0, 0.75);
+    --card-shadow-active:
+      0 1px 1px rgba(0, 0, 0, 0.5),
+      inset 0 1px 2px rgba(0, 0, 0, 0.45);
+    /* A light ring on a near-black surface: the border has to be lighter. */
+    --card-ring: rgba(255, 255, 255, 0.09);
+    --card-ring-strong: rgba(255, 102, 0, 0.5);
+    --card-highlight: rgba(255, 255, 255, 0.05);
+    --card-sheen-top: rgba(255, 255, 255, 0.035);
+    --card-sheen-bottom: rgba(0, 0, 0, 0.22);
+  }
+}
+
+
 @theme {
   /* Brand */
   --color-colly: #ff6600;
   --color-colly-hover: #e65c00;
   --color-colly-light: #fff0e6;
 
-  /* Neutral surfaces */
-  --color-background: #f9fafb;
-  --color-surface: #ffffff;
-  --color-border: #e5e7eb;
-  --color-border-subtle: #f3f4f6;
+  /* Static surfaces that deliberately do not flip (agent + marketing panes). */
   --color-sidebar-active: #2563eb;
   --color-panel: #FAF7F2;
   --color-panel-border: #F0EBE3;
 
   /* Layout tokens (Paystack-style floating cards) */
   --background-page: #f5f5f5;
-  --card-surface: #ffffff;
   --card-radius: 14px;
-  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
   --card-gap: 16px;
-  --outline-subtle: #f5d5b8;
+
+  /* Brand elevation: the orange glow under a primary button. */
+  --shadow-brand:
+    0 1px 2px rgba(120, 53, 15, 0.18), 0 8px 20px -8px rgba(255, 102, 0, 0.55);
+  --shadow-brand-hover:
+    0 2px 4px rgba(120, 53, 15, 0.22), 0 14px 30px -10px rgba(255, 102, 0, 0.65);
 
   /* Semantic states */
   --color-success: #10b981;
@@ -38,9 +141,189 @@
   --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
+/*
+ * Runtime colour utilities. `inline` is required here: without it Tailwind
+ * resolves the value when it generates the class, so `bg-background` would
+ * freeze at the light colour. Inline keeps the utility pointing at the variable
+ * above, which is what lets the `prefers-color-scheme` block flip every
+ * `bg-*` / `text-*` that uses it. `--color-surface` and `--color-border` are
+ * aliases so the existing `bg-surface` / `border-border` call sites follow the
+ * same tokens instead of staying light.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-card-surface: var(--card-surface);
+  --color-surface: var(--card-surface);
+  --color-card-border: var(--card-border);
+  --color-border: var(--card-border);
+  --color-border-subtle: var(--card-border);
+  --color-main: var(--text-main);
+  --color-muted: var(--text-muted);
+  --color-surface-muted: var(--surface-muted);
+  --color-input: var(--input-surface);
+  --color-colly-tint: var(--nav-tint);
+  /* The translucent card hairline, so `border-card-ring` is a real utility. */
+  --color-card-ring: var(--card-ring);
+
+  /*
+   * Elevation utilities. `inline` keeps `shadow-card` pointed at the runtime
+   * variables, which is what lets the dark block swap the whole ladder.
+   */
+  --shadow-card: var(--card-shadow);
+  --shadow-card-hover: var(--card-shadow-hover);
+  --shadow-card-active: var(--card-shadow-active);
+}
+
 body {
-  background-color: var(--color-background);
-  color: #111827;
+  background-color: var(--background);
+  color: var(--text-main);
+}
+
+/* ---------------------------------------------------------------------------
+   Dashboard form controls.
+
+   Scoped to `[data-dashboard-shell]` (the dashboard's outer div) instead of
+   every field on the site: the marketing and auth pages keep their own fixed
+   palette, and a global rule would paint a dark field onto their white cards.
+   Living in `@layer base` keeps utilities in charge, so `focus:border-colly`
+   and any explicit `bg-*` on a field behave exactly as before.
+--------------------------------------------------------------------------- */
+@layer base {
+  [data-dashboard-shell]
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="range"]),
+  [data-dashboard-shell] select,
+  [data-dashboard-shell] textarea {
+    background-color: var(--input-surface);
+    color: var(--text-main);
+    border-color: var(--card-border);
+  }
+
+  [data-dashboard-shell] input::placeholder,
+  [data-dashboard-shell] textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+  }
+
+  [data-dashboard-shell] option {
+    background-color: var(--card-surface);
+    color: var(--text-main);
+  }
+
+  [data-dashboard-shell] input[type="checkbox"],
+  [data-dashboard-shell] input[type="radio"],
+  [data-dashboard-shell] input[type="range"] {
+    accent-color: var(--color-colly);
+  }
+
+  /*
+   * Baseline tactile feedback for every dashboard button.
+   *
+   * A page can (and usually does) spell out `hover:-translate-y-0.5` /
+   * `active:scale-[0.98]`, and those utilities win over this rule because they
+   * live in the utilities layer. This block is the floor, not the ceiling: even
+   * a bare `<button className="rounded-lg">` in a list row rises a hair under the
+   * pointer and eases back at 250ms instead of snapping. `scale` on press is the
+   * unlayered `button:active` rule further down.
+   */
+  [data-dashboard-shell] button:not(:disabled) {
+    transition:
+      translate 250ms cubic-bezier(0.21, 0.47, 0.32, 0.98),
+      scale 250ms cubic-bezier(0.21, 0.47, 0.32, 0.98),
+      background-color 250ms ease,
+      border-color 250ms ease,
+      color 250ms ease,
+      box-shadow 250ms ease,
+      opacity 250ms ease;
+  }
+
+  [data-dashboard-shell] button:not(:disabled):hover {
+    translate: 0 -1px;
+  }
+
+  [data-dashboard-shell] button:not(:disabled):active {
+    translate: 0 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Surface system (dashboard + settings cards).
+
+   Cards used to be a flat `1px border` + `shadow-sm`, which reads as a
+   rectangle drawn on the page rather than an object resting on it. Three
+   classes replace that treatment:
+
+     .surface-card              the resting state: a translucent 1px ring, a
+                                top-edge sheen, a soft vertical gradient and the
+                                layered shadow ladder declared in :root.
+     .surface-card-interactive  the pointer affordance: the card lifts 2px, its
+                                ring warms to the brand tint and the shadow
+                                deepens; pressing settles it back down (0.985)
+                                with a contact shadow. 250ms each way, so the
+                                feedback never snaps.
+     .surface-panel             a quieter nested surface (channel rows, inner
+                                stat cells) that steps back from its parent.
+
+   Every value comes from the runtime tokens above, so the same classes flip
+   under `prefers-color-scheme` without a second set of dark: utilities.
+--------------------------------------------------------------------------- */
+@layer components {
+  .surface-card {
+    border-radius: var(--card-radius);
+    border: 1px solid var(--card-ring);
+    background-color: var(--card-surface);
+    background-image:
+      linear-gradient(180deg, var(--card-sheen-top) 0%, transparent 42%),
+      linear-gradient(180deg, transparent 55%, var(--card-sheen-bottom) 100%);
+    box-shadow:
+      inset 0 1px 0 0 var(--card-highlight),
+      var(--card-shadow);
+    transition:
+      transform 250ms cubic-bezier(0.21, 0.47, 0.32, 0.98),
+      box-shadow 250ms cubic-bezier(0.21, 0.47, 0.32, 0.98),
+      border-color 250ms ease,
+      background-color 250ms ease;
+  }
+
+  .surface-card-interactive {
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .surface-card-interactive:hover {
+    /* The lift lives in `transform`; zeroing `translate` stops the shell's
+       baseline button rule from stacking a second 1px on top of it. */
+    translate: 0 0;
+    transform: translateY(-2px);
+    border-color: var(--card-ring-strong);
+    box-shadow:
+      inset 0 1px 0 0 var(--card-highlight),
+      var(--card-shadow-hover);
+  }
+
+  .surface-card-interactive:active {
+    translate: 0 0;
+    transform: translateY(0) scale(0.985);
+    border-color: var(--card-ring);
+    box-shadow:
+      inset 0 1px 0 0 var(--card-highlight),
+      var(--card-shadow-active);
+  }
+
+  .surface-card-interactive:focus-visible {
+    outline: 2px solid var(--color-colly);
+    outline-offset: 2px;
+  }
+
+  .surface-panel {
+    border-radius: calc(var(--card-radius) - 4px);
+    border: 1px solid var(--card-ring);
+    background-color: color-mix(
+      in oklab,
+      var(--card-surface) 92%,
+      var(--surface-muted) 8%
+    );
+    box-shadow: inset 0 1px 0 0 var(--card-highlight);
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -285,9 +568,13 @@ a[role="button"]:active {
   transition: outline 0ms;
 }
 
-/* Subtle press-scale for buttons */
+/* Subtle press-scale for buttons.
+   Uses the individual `scale` property rather than `transform`, so it composes
+   with the `hover:-translate-y-*` / `active:scale-*` utilities on the buttons
+   instead of replacing them (a `transform: scale()` here would multiply with
+   the utility's `scale` and press twice as hard). */
 button:active:not(:disabled) {
-  transform: scale(0.98);
+  scale: 0.98;
 }
 
 /* Hides the scrollbar on horizontally scrollable strips (e.g. the dashboard
@@ -371,6 +658,17 @@ button:active:not(:disabled) {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+  }
+
+  /* The cards keep their depth, but nothing moves under the pointer. */
+  .surface-card,
+  .surface-card-interactive {
+    transition: none !important;
+  }
+
+  .surface-card-interactive:hover,
+  .surface-card-interactive:active {
+    transform: none !important;
   }
 }
 

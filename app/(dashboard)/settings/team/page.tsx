@@ -61,8 +61,8 @@ export default async function TeamSettingsPage() {
   return (
     <div className="mx-auto w-full max-w-3xl">
       <BackButton />
-      <h1 className="font-display text-2xl text-gray-900">Team</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="font-display text-2xl text-main">Team</h1>
+      <p className="mt-1 text-sm text-muted">
         Invite the people who work with you. Staff can use the inbox, customers,
         products and invoices — billing and channel settings stay with you.
       </p>

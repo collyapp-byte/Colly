@@ -65,7 +65,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_BADGE: Record<string, string> = {
   active: "bg-green-100 text-green-700",
   past_due: "bg-amber-100 text-amber-700",
-  cancelled: "bg-gray-100 text-gray-600",
+  cancelled: "bg-surface-muted text-muted",
   expired: "bg-red-100 text-red-700",
 };
 
@@ -205,7 +205,7 @@ export default function BillingPage() {
     <div className="mx-auto w-full max-w-3xl">
       <BackButton />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-2xl text-gray-900">Billing</h1>
+        <h1 className="font-display text-2xl text-main">Billing</h1>
       </div>
 
       {loading && <BillingSkeleton />}
@@ -228,32 +228,32 @@ export default function BillingPage() {
           )}
 
           {/* CURRENT PLAN */}
-          <section className="rounded-lg border border-gray-200 bg-surface p-5 sm:p-6">
+          <section className="surface-card p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
                   Current plan
                 </h2>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <h3 className="font-display text-xl text-gray-900">
+                  <h3 className="font-display text-xl text-main">
                     {planName}
                   </h3>
                   <span
                     className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${
-                      STATUS_BADGE[planStatus] ?? "bg-gray-100 text-gray-600"
+                      STATUS_BADGE[planStatus] ?? "bg-surface-muted text-muted"
                     }`}
                   >
                     {STATUS_LABELS[planStatus] ?? capitalize(planStatus)}
                   </span>
                   {!isFree && (
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-muted">
                       {usage.planInterval}
                     </span>
                   )}
                 </div>
 
                 {!isFree && (
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-muted">
                     {planStatus === "active"
                       ? `Renews on ${formatDate(usage.planExpiresAt)}`
                       : `Expires on ${formatDate(usage.planExpiresAt)}`}
@@ -264,7 +264,7 @@ export default function BillingPage() {
               <div className="flex flex-col items-end gap-2">
                 <Link
                   href="/settings/billing/plans"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-colly px-4 py-2 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
                 >
                   {isFree ? "Upgrade plan" : "Manage subscription"}
                   <ArrowRight className="h-4 w-4" aria-hidden />
@@ -284,46 +284,46 @@ export default function BillingPage() {
             </div>
 
             {/* CREDITS — split wallet: plans reset monthly, top-ups persist */}
-            <div className="mt-4 rounded-lg border border-gray-100 bg-background p-4">
+            <div className="surface-panel mt-4 p-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-main">
                   Credits available
                 </span>
-                <span className="font-display text-xl text-gray-900">
+                <span className="font-display text-xl text-main">
                   {usage.creditBalance.toLocaleString()} credits
                 </span>
               </div>
 
               <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <div className="rounded-lg border border-gray-200 bg-surface p-3">
-                  <p className="text-xs text-gray-400">Plan Credits</p>
-                  <p className="mt-0.5 text-sm font-semibold text-gray-900">
+                <div className="surface-panel p-3">
+                  <p className="text-xs text-muted">Plan Credits</p>
+                  <p className="mt-0.5 text-sm font-semibold text-main">
                     {usage.planCredits.toLocaleString()}
                   </p>
-                  <p className="mt-1 text-[11px] text-gray-500">
+                  <p className="mt-1 text-[11px] text-muted">
                     Resets every month
                   </p>
                 </div>
-                <div className="rounded-lg border border-gray-200 bg-surface p-3">
-                  <p className="text-xs text-gray-400">Top-Up Credits</p>
-                  <p className="mt-0.5 text-sm font-semibold text-gray-900">
+                <div className="surface-panel p-3">
+                  <p className="text-xs text-muted">Top-Up Credits</p>
+                  <p className="mt-0.5 text-sm font-semibold text-main">
                     {usage.topUpCredits.toLocaleString()}
                   </p>
-                  <p className="mt-1 text-[11px] text-gray-500">Never expire</p>
+                  <p className="mt-1 text-[11px] text-muted">Never expire</p>
                 </div>
               </div>
 
-              <p className="mt-2 text-[11px] text-gray-500">
+              <p className="mt-2 text-[11px] text-muted">
                 {CREDITS_RESET_DISCLAIMER}
               </p>
 
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-xs text-muted">
                 {usage.planMonthlyCredits > 0
                   ? `${usage.planMonthlyCredits.toLocaleString()} plan credits are included with your plan each billing month.`
                   : "Your current plan does not add credits — top up to keep the AI replying."}{" "}
                 AI replies spend plan credits first, then top-ups.
               </p>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-muted">
                 {aiCreditCost} credits per AI reply on {channelLabel} · manual
                 replies are free
               </p>
@@ -335,27 +335,27 @@ export default function BillingPage() {
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-lg border border-gray-100 p-3">
-                <p className="text-xs text-gray-400">AI replies this month</p>
-                <p className="mt-1 text-sm font-semibold text-gray-900">
+              <div className="surface-panel p-3">
+                <p className="text-xs text-muted">AI replies this month</p>
+                <p className="mt-1 text-sm font-semibold text-main">
                   {usage.aiRepliesUsed.toLocaleString()}
                 </p>
               </div>
-              <div className="rounded-lg border border-gray-100 p-3">
-                <p className="text-xs text-gray-400">Manual replies this month</p>
-                <p className="mt-1 text-sm font-semibold text-gray-900">
+              <div className="surface-panel p-3">
+                <p className="text-xs text-muted">Manual replies this month</p>
+                <p className="mt-1 text-sm font-semibold text-main">
                   {usage.manualMessagesUsed.toLocaleString()}
                 </p>
               </div>
             </div>
 
             {/* TOP UP */}
-            <div className="mt-5 flex items-center justify-between gap-3 border-t border-gray-100 pt-4">
+            <div className="mt-5 flex items-center justify-between gap-3 border-t border-card-border pt-4">
               <div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-main">
                   {usage.creditBalance.toLocaleString()} credits available
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted">
                   {usage.planCredits.toLocaleString()} plan +{" "}
                   {usage.topUpCredits.toLocaleString()} top-up · 1 Credit = 1
                   Naira
@@ -363,7 +363,7 @@ export default function BillingPage() {
               </div>
               <Link
                 href="/settings/billing/credits"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3.5 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-card-ring bg-card-surface px-3.5 py-2 text-sm font-medium text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
               >
                 Top up credits
                 <ArrowRight className="h-4 w-4" aria-hidden />
@@ -371,10 +371,10 @@ export default function BillingPage() {
             </div>
 
             {isFree && (
-              <div className="mt-5 flex items-start gap-3 rounded-lg border border-gray-200 bg-background p-4">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden />
-                <div className="text-sm text-gray-600">
-                  <p className="font-medium text-gray-900">
+              <div className="mt-5 flex items-start gap-3 surface-panel p-4">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted" aria-hidden />
+                <div className="text-sm text-muted">
+                  <p className="font-medium text-main">
                     Site access is always available
                   </p>
                   <p className="mt-1">
@@ -403,18 +403,18 @@ export default function BillingPage() {
           )}
 
           {/* BILLING HISTORY */}
-          <section className="rounded-lg border border-gray-200 bg-surface p-5 sm:p-6">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <section className="surface-card p-5 sm:p-6">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
               Billing history
             </h2>
 
             {transactions && transactions.length === 0 ? (
-              <p className="mt-4 text-sm text-gray-500">No transactions yet.</p>
+              <p className="mt-4 text-sm text-muted">No transactions yet.</p>
             ) : (
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[480px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200 text-xs uppercase tracking-wide text-gray-400">
+                    <tr className="border-b border-card-border text-xs uppercase tracking-wide text-muted">
                       <th className="py-2 pr-4 font-medium">Date</th>
                       <th className="py-2 pr-4 font-medium">Type</th>
                       <th className="py-2 pr-4 font-medium">Amount</th>
@@ -425,21 +425,21 @@ export default function BillingPage() {
                     {transactions?.map((tx) => (
                       <tr
                         key={tx.id}
-                        className="border-b border-gray-100 last:border-0"
+                        className="border-b border-card-border last:border-0"
                       >
-                        <td className="py-2.5 pr-4 whitespace-nowrap text-gray-600">
+                        <td className="py-2.5 pr-4 whitespace-nowrap text-muted">
                           {formatDate(tx.createdAt)}
                         </td>
-                        <td className="py-2.5 pr-4 text-gray-900">
+                        <td className="py-2.5 pr-4 text-main">
                           {tx.type === "subscription" ? "Subscription" : "Credits"}
                         </td>
-                        <td className="py-2.5 pr-4 whitespace-nowrap text-gray-900">
+                        <td className="py-2.5 pr-4 whitespace-nowrap text-main">
                           {formatNaira(Number(tx.amount))}
                         </td>
                         <td className="py-2.5">
                           <span
                             className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${
-                              PAYMENT_BADGE[tx.status] ?? "bg-gray-100 text-gray-600"
+                              PAYMENT_BADGE[tx.status] ?? "bg-surface-muted text-muted"
                             }`}
                           >
                             {capitalize(tx.status)}
@@ -501,15 +501,15 @@ function DunningBanner({
 function BillingSkeleton() {
   return (
     <div className="mt-6 space-y-6">
-      <div className="rounded-lg border border-gray-200 bg-surface p-5 sm:p-6">
-        <div className="h-4 w-24 animate-pulse rounded bg-gray-100" />
-        <div className="mt-3 h-6 w-32 animate-pulse rounded bg-gray-100" />
-        <div className="mt-4 h-2 w-full animate-pulse rounded bg-gray-100" />
-        <div className="mt-5 h-9 w-24 animate-pulse rounded bg-gray-100" />
+      <div className="surface-card p-5 sm:p-6">
+        <div className="h-4 w-24 animate-pulse rounded bg-surface-muted" />
+        <div className="mt-3 h-6 w-32 animate-pulse rounded bg-surface-muted" />
+        <div className="mt-4 h-2 w-full animate-pulse rounded bg-surface-muted" />
+        <div className="mt-5 h-9 w-24 animate-pulse rounded bg-surface-muted" />
       </div>
-      <div className="rounded-lg border border-gray-200 bg-surface p-5 sm:p-6">
-        <div className="h-4 w-28 animate-pulse rounded bg-gray-100" />
-        <div className="mt-4 h-8 w-full animate-pulse rounded bg-gray-100" />
+      <div className="surface-card p-5 sm:p-6">
+        <div className="h-4 w-28 animate-pulse rounded bg-surface-muted" />
+        <div className="mt-4 h-8 w-full animate-pulse rounded bg-surface-muted" />
       </div>
     </div>
   );

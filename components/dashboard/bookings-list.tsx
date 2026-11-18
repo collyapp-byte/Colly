@@ -26,7 +26,7 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
 const STATUS_BADGE: Record<BookingStatus, string> = {
   PENDING: "bg-amber-100 text-amber-700",
   CONFIRMED: "bg-green-100 text-green-700",
-  CANCELLED: "bg-gray-100 text-gray-600",
+  CANCELLED: "bg-surface-muted text-muted",
 };
 
 function StatusBadge({ status }: { status: BookingStatus }) {
@@ -79,9 +79,9 @@ export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
 
   if (bookings.length === 0) {
     return (
-      <div className="mt-6 rounded-lg border border-dashed border-gray-200 bg-surface p-10 text-center">
-        <CalendarClock className="mx-auto h-6 w-6 text-gray-400" aria-hidden />
-        <p className="mt-3 text-sm text-gray-500">
+      <div className="mt-6 rounded-lg border border-dashed border-card-border bg-surface p-10 text-center">
+        <CalendarClock className="mx-auto h-6 w-6 text-muted" aria-hidden />
+        <p className="mt-3 text-sm text-muted">
           No appointments yet. When a customer books one in chat, it appears here
           for you to confirm.
         </p>
@@ -94,7 +94,7 @@ export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
       {error && (
         <p
           role="alert"
-          className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-danger"
+          className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-danger dark:border-red-900/60 dark:bg-red-950/40"
         >
           {error}
         </p>
@@ -105,22 +105,22 @@ export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
           return (
             <li
               key={booking.id}
-              className="rounded-lg border border-gray-200 bg-surface p-4"
+              className="surface-card p-4"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-display font-semibold text-gray-900">
+                  <p className="font-display font-semibold text-main">
                     {booking.customerName}
                   </p>
-                  <p className="text-xs text-gray-500">{booking.customerPhone}</p>
+                  <p className="text-xs text-muted">{booking.customerPhone}</p>
 
-                  <p className="mt-2 text-sm font-medium text-gray-800">
+                  <p className="mt-2 text-sm font-medium text-main">
                     {booking.serviceName}
                   </p>
 
-                  <p className="mt-1 flex items-start gap-2 text-sm text-gray-700">
+                  <p className="mt-1 flex items-start gap-2 text-sm text-main">
                     <CalendarClock
-                      className="mt-0.5 h-4 w-4 shrink-0 text-gray-400"
+                      className="mt-0.5 h-4 w-4 shrink-0 text-muted"
                       aria-hidden
                     />
                     <span>
@@ -129,7 +129,7 @@ export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
                   </p>
 
                   {booking.notes && (
-                    <p className="mt-2 text-sm text-gray-600">{booking.notes}</p>
+                    <p className="mt-2 text-sm text-muted">{booking.notes}</p>
                   )}
                 </div>
 
@@ -144,7 +144,7 @@ export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
                         type="button"
                         onClick={() => void changeStatus(booking.id, "CONFIRMED")}
                         aria-label={`Confirm appointment for ${booking.customerName}`}
-                        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-colly px-3 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+                        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl bg-colly px-3 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
                       >
                         <Check className="h-4 w-4" aria-hidden />
                         Confirm
@@ -153,7 +153,7 @@ export function BookingsList({ bookings }: { bookings: BookingRow[] }) {
                         type="button"
                         onClick={() => void changeStatus(booking.id, "CANCELLED")}
                         aria-label={`Cancel appointment for ${booking.customerName}`}
-                        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                        className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl border border-card-ring bg-card-surface px-3 text-sm font-medium text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
                       >
                         <X className="h-4 w-4" aria-hidden />
                         Cancel

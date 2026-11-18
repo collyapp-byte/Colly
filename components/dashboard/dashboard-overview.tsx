@@ -203,17 +203,17 @@ export function DashboardOverview({ status }: { status: DashboardStatus }) {
       {paymentFailedAt && planStatus === "past_due" && (
         <div
           role="alert"
-          className="mb-6 flex flex-col gap-4 rounded-lg border border-red-300 bg-red-50 p-5 sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-4 rounded-xl border border-red-300/80 bg-red-50 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5 dark:border-red-900/60 dark:bg-red-950/40"
         >
           <div className="flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
               <AlertTriangle className="h-[18px] w-[18px]" aria-hidden />
             </span>
             <div>
-              <p className="text-sm font-semibold text-red-900">
+              <p className="text-sm font-semibold text-red-900 dark:text-red-200">
                 Your last payment failed. Click here to update your card.
               </p>
-              <p className="mt-1 text-sm text-red-800">
+              <p className="mt-1 text-sm text-red-800 dark:text-red-300">
                 Update your payment method to avoid losing access to your AI
                 assistant.
               </p>
@@ -221,7 +221,7 @@ export function DashboardOverview({ status }: { status: DashboardStatus }) {
           </div>
           <Link
             href="/settings/billing"
-            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
           >
             Update card
           </Link>
@@ -232,17 +232,17 @@ export function DashboardOverview({ status }: { status: DashboardStatus }) {
           supplies them), so these banners are part of the page's first paint
           instead of being appended above the stat grid after hydration. */}
       {!paymentInstructions?.trim() && (
-        <div className="mb-6 flex flex-col gap-4 rounded-lg border border-amber-300 bg-amber-50 p-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-4 rounded-xl border border-amber-300/80 bg-amber-50 p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:p-5 dark:border-amber-900/60 dark:bg-amber-950/40">
           <div className="flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
               <AlertTriangle className="h-[18px] w-[18px]" aria-hidden />
             </span>
             <div>
-              <p className="text-sm font-semibold text-amber-900">
+              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
                 ⚠️ Add your payment details so your AI can close sales
                 automatically.
               </p>
-              <p className="mt-1 text-sm text-amber-800">
+              <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
                 Customers need to know where to send payment before the AI can
                 complete an order.
               </p>
@@ -250,7 +250,7 @@ export function DashboardOverview({ status }: { status: DashboardStatus }) {
           </div>
           <Link
             href="/settings"
-            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-amber-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:bg-amber-700 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
           >
             Add payment details
           </Link>
@@ -258,16 +258,16 @@ export function DashboardOverview({ status }: { status: DashboardStatus }) {
       )}
 
       {isConnected === false && (
-        <div className="mb-6 flex flex-col gap-4 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] p-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-4 rounded-xl border border-colly/25 bg-colly-tint p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:p-5">
           <div className="flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FF6600]/10 text-[#FF6600]">
               <PhoneCall className="h-[18px] w-[18px]" aria-hidden />
             </span>
             <div>
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-main">
                 Your AI line is not connected yet.
               </p>
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="mt-1 text-sm text-muted">
                 You keep your current WhatsApp on your phone. We are setting up
                 your new dedicated AI line. Once connected, you can post this
                 new number on your WhatsApp Status and Instagram bio so
@@ -277,7 +277,7 @@ export function DashboardOverview({ status }: { status: DashboardStatus }) {
           </div>
           <Link
             href="/settings/ai-line"
-            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl bg-colly px-4 py-2 text-sm font-medium text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
           >
             View Setup Instructions
           </Link>
@@ -309,59 +309,92 @@ export function DashboardOverview({ status }: { status: DashboardStatus }) {
         })}
       </section>
 
-      <Card className="mt-6 border-[color:var(--outline-subtle)]!">
-        <h2 className="text-sm font-semibold text-gray-900">Sales Over Time</h2>
-        <div className="py-12 text-center">
-          <BarChart3 className="mx-auto h-12 w-12 text-gray-300" aria-hidden />
-          <p className="mt-4 text-base font-semibold text-gray-900">No sales yet</p>
-          <p className="mt-1 text-sm text-gray-500 text-center">
-            When you record your first sale, your trend will appear here.
+      {/* Two-up on desktop so the page does not end in a tall single column of
+          half-empty cards; the trend panel keeps the wider share. */}
+      <div className="grid gap-5 lg:grid-cols-5">
+        <Card className="lg:col-span-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-main">Sales Over Time</h2>
+              <p className="mt-1 text-xs text-muted">Your last seven days</p>
+            </div>
+          </div>
+
+          {/* Two quick numbers turn the panel into a dashboard tile instead of an
+              empty box waiting for its first chart. */}
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="surface-panel px-3 py-2.5">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                Today
+              </p>
+              <p className="mt-0.5 text-sm font-semibold text-main">
+                {formatNaira(today?.total ?? 0)}
+              </p>
+            </div>
+            <div className="surface-panel px-3 py-2.5">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted">
+                Orders
+              </p>
+              <p className="mt-0.5 text-sm font-semibold text-main">
+                {today?.count ?? 0}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-col items-center justify-center rounded-xl border border-dashed border-card-ring bg-surface-muted/40 px-4 py-7 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-card-surface text-colly shadow-card">
+              <BarChart3 className="h-6 w-6" aria-hidden />
+            </span>
+            <p className="mt-4 text-base font-semibold text-main">No sales yet</p>
+            <p className="mt-1 max-w-xs text-sm text-muted">
+              When you record your first sale, your trend will appear here.
+            </p>
+            <Link
+              href="/sales"
+              className="mt-5 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-colly px-4 py-2 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
+            >
+              Record a sale
+            </Link>
+          </div>
+        </Card>
+
+        <Card className="flex flex-col lg:col-span-2">
+          <h2 className="text-sm font-semibold text-main">
+            Want to use WhatsApp?
+          </h2>
+          <p className="mt-2 flex-1 text-sm text-muted">
+            Meta requires a CAC for official API access. We are onboarding
+            businesses manually. Join the waitlist.
           </p>
-          <Link
-            href="/sales"
-            className="mt-6 inline-block rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"
+          <form
+            onSubmit={handleJoinWaitlist}
+            className="mt-4 flex flex-col gap-2 sm:flex-row"
           >
-            Record a sale
-          </Link>
-        </div>
-      </Card>
+            <input
+              type="tel"
+              value={whatsappNumber}
+              onChange={(event) => setWhatsappNumber(event.target.value)}
+              placeholder="+2348012345678"
+              aria-label="WhatsApp number"
+              required
+              className="min-h-[44px] w-full rounded-xl border border-card-ring px-3 py-2 text-sm text-main outline-none transition-all duration-250 focus:border-colly focus:ring-2 focus:ring-colly/20 sm:max-w-xs"
+            />
+            <button
+              type="submit"
+              disabled={joiningWaitlist}
+              className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-colly px-4 py-2 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98] disabled:opacity-60 disabled:hover:translate-y-0"
+            >
+              {joiningWaitlist ? "Joining…" : "Join Waitlist"}
+            </button>
+          </form>
+        </Card>
+      </div>
 
-      <Card className="mt-6 border-[color:var(--outline-subtle)]!">
-        <h2 className="text-sm font-semibold text-gray-900">
-          Want to use WhatsApp?
-        </h2>
-        <p className="mt-2 text-sm text-gray-500">
-          Meta requires a CAC for official API access. We are onboarding
-          businesses manually. Join the waitlist.
-        </p>
-        <form
-          onSubmit={handleJoinWaitlist}
-          className="mt-4 flex flex-col gap-2 sm:flex-row"
-        >
-          <input
-            type="tel"
-            value={whatsappNumber}
-            onChange={(event) => setWhatsappNumber(event.target.value)}
-            placeholder="+2348012345678"
-            aria-label="WhatsApp number"
-            required
-            className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20 sm:max-w-xs"
-          />
-          <button
-            type="submit"
-            disabled={joiningWaitlist}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#E65C00] disabled:opacity-60"
-          >
-            {joiningWaitlist ? "Joining…" : "Join Waitlist"}
-          </button>
-        </form>
-      </Card>
-
-      <p className="mt-4 text-center text-xs text-gray-400">
+      <p className="text-center text-xs text-muted">
         Want a weekly email report?{" "}
         <Link
           href="/settings"
-          className="font-medium text-colly transition-colors hover:text-colly-hover"
+          className="font-medium text-colly transition-all duration-250 hover:text-colly-hover"
         >
           Ensure your email is verified in settings.
         </Link>

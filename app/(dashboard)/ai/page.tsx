@@ -108,11 +108,11 @@ export default async function CollyAIPage() {
   const discordConnected = Boolean(business?.discordBotToken);
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="mx-auto w-full max-w-5xl">
+      <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl text-gray-900">Colly AI</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="font-display text-2xl text-main">Colly AI</h1>
+          <p className="mt-1 text-sm text-muted">
             Your AI control center for tone, channels, usage, and knowledge.
           </p>
         </div>
@@ -131,13 +131,13 @@ export default async function CollyAIPage() {
       {!ownerAlertsActive && (
         <Link
           href="/settings/ai-line"
-          className="mb-6 flex items-start gap-3 rounded-xl border border-[#FF6600]/40 bg-[#FFF4EC] p-4 transition-colors hover:bg-[#FFEADB]"
+          className="mb-5 flex items-start gap-3 rounded-xl border border-colly/30 bg-colly-tint p-4 shadow-sm transition-all duration-250 hover:-translate-y-px hover:shadow-md active:translate-y-0 active:scale-[0.995]"
         >
           <span className="mt-0.5 text-lg" aria-hidden>
             ⚠️
           </span>
           <span>
-            <span className="block font-semibold text-[#C2410C]">
+            <span className="block font-semibold text-colly">
               Action Required: Setup Owner Notifications
             </span>
             <span className="mt-0.5 block text-sm text-[#9A3412]">
@@ -150,25 +150,25 @@ export default async function CollyAIPage() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* AI Persona */}
-        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm relative group cursor-pointer hover:border-[#FF6600]/50 transition-colors">
+        <section className="surface-card surface-card-interactive relative group p-5">
           {/* Stretched link: the whole card opens the tone settings. It sits at
               z-0 so the real buttons below (z-10) stay clickable on top of it. */}
           <Link href="/settings" className="absolute inset-0 z-0">
             <span className="sr-only">View</span>
           </Link>
-          <h2 className="font-display text-base text-gray-900">AI Persona</h2>
+          <h2 className="font-display text-base text-main">AI Persona</h2>
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700">
+            <span className="inline-flex items-center rounded-full border border-card-border bg-surface-muted px-3 py-1 text-xs font-medium text-main">
               Tone: {tone}
             </span>
-            <span className="inline-flex items-center rounded-full border border-[#FF6600]/20 bg-[#FFF4EC] px-3 py-1 text-xs font-medium text-[#FF6600]">
+            <span className="inline-flex items-center rounded-full border border-[#FF6600]/20 bg-colly-tint px-3 py-1 text-xs font-medium text-[#FF6600]">
               Adaptive Language: Auto-detects English & Pidgin
             </span>
           </div>
           <div className="mt-4">
             <Link
               href="/settings"
-              className="relative z-10 inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="relative z-10 inline-flex items-center justify-center rounded-xl border border-card-ring bg-card-surface px-4 py-2 text-sm font-medium text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
             >
               Edit Tone
             </Link>
@@ -176,20 +176,20 @@ export default async function CollyAIPage() {
         </section>
 
         {/* Connected Apps */}
-        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm relative group cursor-pointer hover:border-[#FF6600]/50 transition-colors">
+        <section className="surface-card surface-card-interactive relative group p-5">
           {/* Stretched link: the whole card opens the AI Line settings. Each
               per-channel button below is z-10 so it keeps its own destination. */}
           <Link href="/settings/ai-line" className="absolute inset-0 z-0">
             <span className="sr-only">View</span>
           </Link>
-          <h2 className="font-display text-base text-gray-900">
+          <h2 className="font-display text-base text-main">
             Connected Apps
           </h2>
           <div className="mt-4 flex flex-col gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3">
+            <div className="surface-panel flex flex-wrap items-center justify-between gap-3 p-3">
               <div>
-                <p className="text-sm font-medium text-gray-900">Telegram</p>
-                <p className="text-xs text-gray-500">Customer-facing bot</p>
+                <p className="text-sm font-medium text-main">Telegram</p>
+                <p className="text-xs text-muted">Customer-facing bot</p>
               </div>
               <div className="flex items-center gap-2">
                 {telegramConnected ? (
@@ -197,28 +197,28 @@ export default async function CollyAIPage() {
                     Connected
                   </span>
                 ) : (
-                  <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600 whitespace-nowrap">
+                  <span className="inline-flex items-center rounded-full border border-card-border bg-surface-muted px-2.5 py-0.5 text-[11px] font-medium text-muted whitespace-nowrap">
                     Disconnected
                   </span>
                 )}
                 <Link
                   href="/settings/ai-line"
-                  className="relative z-10 inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  className="relative z-10 inline-flex items-center rounded-xl border border-card-ring bg-card-surface px-3 py-1.5 text-sm font-medium text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
                 >
                   Manage
                 </Link>
               </div>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3">
+            <div className="surface-panel flex flex-wrap items-center justify-between gap-3 p-3">
               <div>
-                <p className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                <p className="flex items-center gap-2 text-sm font-medium text-main">
                   <MessageSquare
-                    className="h-4 w-4 shrink-0 text-gray-500"
+                    className="h-4 w-4 shrink-0 text-muted"
                     aria-hidden
                   />
                   Discord
                 </p>
-                <p className="text-xs text-gray-500">Customer-facing bot</p>
+                <p className="text-xs text-muted">Customer-facing bot</p>
               </div>
               <div className="flex items-center gap-2">
                 {discordConnected ? (
@@ -226,22 +226,22 @@ export default async function CollyAIPage() {
                     Connected
                   </span>
                 ) : (
-                  <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-600 whitespace-nowrap">
+                  <span className="inline-flex items-center rounded-full border border-card-border bg-surface-muted px-2.5 py-0.5 text-[11px] font-medium text-muted whitespace-nowrap">
                     Disconnected
                   </span>
                 )}
                 <Link
                   href="/settings/ai-line"
-                  className="relative z-10 inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  className="relative z-10 inline-flex items-center rounded-xl border border-card-ring bg-card-surface px-3 py-1.5 text-sm font-medium text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
                 >
                   {discordConnected ? "Manage" : "Connect Discord"}
                 </Link>
               </div>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 p-3">
+            <div className="surface-panel flex flex-wrap items-center justify-between gap-3 p-3">
               <div>
-                <p className="text-sm font-medium text-gray-900">Web Chat</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm font-medium text-main">Web Chat</p>
+                <p className="text-xs text-muted">
                   AI replies to website visitors.
                 </p>
               </div>
@@ -251,7 +251,7 @@ export default async function CollyAIPage() {
                 </span>
                 <Link
                   href="/settings/web-chat"
-                  className="relative z-10 inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  className="relative z-10 inline-flex items-center rounded-xl border border-card-ring bg-card-surface px-3 py-1.5 text-sm font-medium text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
                 >
                   Get Embed Code
                 </Link>
@@ -265,40 +265,40 @@ export default async function CollyAIPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Credits & Usage */}
-        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm relative group cursor-pointer hover:border-[#FF6600]/50 transition-colors">
+        <section className="surface-card surface-card-interactive relative group p-5">
           {/* Stretched link: the whole card opens the credits page. "Top Up" and
               "Upgrade" below are z-10 so they keep their own destinations. */}
           <Link href="/settings/billing/credits" className="absolute inset-0 z-0">
             <span className="sr-only">View</span>
           </Link>
-          <h2 className="font-display text-base text-gray-900">
+          <h2 className="font-display text-base text-main">
             Credits & Usage
           </h2>
           <div className="mt-4 space-y-4">
-            <div className="rounded-lg border border-gray-100 p-3">
+            <div className="surface-panel p-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Credit balance</span>
-                <span className="font-semibold text-gray-900">
+                <span className="text-sm text-muted">Credit balance</span>
+                <span className="font-semibold text-main">
                   {creditBalance.toLocaleString()} credits
                 </span>
               </div>
               {/* Split wallet: the two buckets that make up the total. */}
-              <div className="mt-2 space-y-1 border-t border-gray-100 pt-2 text-xs text-gray-500">
+              <div className="mt-2 space-y-1 border-t border-card-border pt-2 text-xs text-muted">
                 <div className="flex items-center justify-between">
                   <span>Plan credits (monthly)</span>
-                  <span className="font-medium text-gray-700">
+                  <span className="font-medium text-main">
                     {planCredits.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Top-up credits (never expire)</span>
-                  <span className="font-medium text-gray-700">
+                  <span className="font-medium text-main">
                     {topUpCredits.toLocaleString()}
                   </span>
                 </div>
               </div>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               {limits.credits > 0
                 ? `${limits.credits.toLocaleString()} credits are included with your plan each billing month.`
                 : "Your plan does not add credits — top up to keep the AI replying."}{" "}
@@ -306,24 +306,24 @@ export default async function CollyAIPage() {
               channel; manual replies are free.
             </p>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">AI replies this month</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-muted">AI replies this month</span>
+              <span className="font-medium text-main">
                 {aiUsed.toLocaleString()}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Manual replies this month</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-muted">Manual replies this month</span>
+              <span className="font-medium text-main">
                 {manualUsed.toLocaleString()}
               </span>
             </div>
             {creditBalance < aiReplyCost && (
-              <p className="rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm text-[#C2410C]">
+              <p className="rounded-lg border border-[#FF6600]/30 bg-colly-tint px-3 py-2 text-sm text-colly">
                 {LOW_CREDIT_MESSAGE}
               </p>
             )}
             {isFreePlan && (
-              <p className="rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm text-[#C2410C]">
+              <p className="rounded-lg border border-[#FF6600]/30 bg-colly-tint px-3 py-2 text-sm text-colly">
                 You are on the Free plan.{" "}
                 <Link
                   href="/settings/billing/plans"
@@ -336,7 +336,7 @@ export default async function CollyAIPage() {
             )}
             <Link
               href="/settings/billing"
-              className="relative z-10 inline-flex items-center justify-center rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"
+              className="relative z-10 inline-flex items-center justify-center rounded-xl bg-colly px-4 py-2 text-sm font-medium text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
             >
               Top Up
             </Link>
@@ -344,18 +344,18 @@ export default async function CollyAIPage() {
         </section>
 
         {/* Past Transactions */}
-        <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm relative group cursor-pointer hover:border-[#FF6600]/50 transition-colors">
+        <section className="surface-card surface-card-interactive relative group p-5">
           {/* Stretched link: the whole card opens the billing history. The
               "View All Transactions" button below is z-10 so it stays clickable. */}
           <Link href="/settings/billing" className="absolute inset-0 z-0">
             <span className="sr-only">View</span>
           </Link>
-          <h2 className="font-display text-base text-gray-900">
+          <h2 className="font-display text-base text-main">
             Past Transactions
           </h2>
           <div className="mt-4 space-y-2">
             {transactions.length === 0 ? (
-              <p className="text-sm text-gray-500">No transactions yet.</p>
+              <p className="text-sm text-muted">No transactions yet.</p>
             ) : (
               transactions.map((t) => (
                 <TransactionRow
@@ -370,7 +370,7 @@ export default async function CollyAIPage() {
           <div className="mt-4">
             <Link
               href="/settings/billing"
-              className="relative z-10 inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="relative z-10 inline-flex items-center justify-center rounded-xl border border-card-ring bg-card-surface px-4 py-2 text-sm font-medium text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
             >
               View All Transactions
             </Link>
@@ -379,32 +379,32 @@ export default async function CollyAIPage() {
       </div>
 
       {/* Knowledge Base */}
-      <section className="mt-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <h2 className="font-display text-base text-gray-900">Knowledge Base</h2>
+      <section className="surface-card mt-5 p-5">
+        <h2 className="font-display text-base text-main">Knowledge Base</h2>
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
           <Link
             href="/products"
-            className="flex items-center justify-between rounded-lg border border-gray-100 p-4 transition-colors hover:bg-gray-50"
+            className="surface-panel surface-card-interactive flex items-center justify-between p-4"
           >
             <div>
-              <p className="text-sm font-medium text-gray-900">Products</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-medium text-main">Products</p>
+              <p className="text-xs text-muted">
                 {productsCount} item{productsCount === 1 ? "" : "s"}
               </p>
             </div>
-            <span className="text-sm text-gray-500">&rarr;</span>
+            <span className="text-sm text-muted">&rarr;</span>
           </Link>
           <Link
             href="/faqs"
-            className="flex items-center justify-between rounded-lg border border-gray-100 p-4 transition-colors hover:bg-gray-50"
+            className="surface-panel surface-card-interactive flex items-center justify-between p-4"
           >
             <div>
-              <p className="text-sm font-medium text-gray-900">FAQs</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-medium text-main">FAQs</p>
+              <p className="text-xs text-muted">
                 {faqsCount} item{faqsCount === 1 ? "" : "s"}
               </p>
             </div>
-            <span className="text-sm text-gray-500">&rarr;</span>
+            <span className="text-sm text-muted">&rarr;</span>
           </Link>
         </div>
       </section>

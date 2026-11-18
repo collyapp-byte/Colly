@@ -148,10 +148,10 @@ export default function ConversationsPage() {
   return (
     <div className="mx-auto w-full max-w-3xl">
       <div className="mb-6">
-        <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
+        <h1 className="font-display text-2xl text-main sm:text-3xl">
           Conversations
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-muted">
           Every chat your assistant has handled. Jump in anytime.
         </p>
       </div>
@@ -173,16 +173,16 @@ export default function ConversationsPage() {
       )}
 
       {loading && (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-surface">
+        <div className="surface-card overflow-hidden">
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="flex items-start gap-3 border-b border-gray-100 px-4 py-4 last:border-b-0 sm:px-6"
+              className="flex items-start gap-3 border-b border-card-border px-4 py-4 last:border-b-0 sm:px-6"
             >
-              <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-gray-100" />
+              <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-surface-muted" />
               <div className="flex-1 space-y-2 py-1">
-                <div className="h-3.5 w-32 animate-pulse rounded bg-gray-100" />
-                <div className="h-3 w-full max-w-sm animate-pulse rounded bg-gray-100" />
+                <div className="h-3.5 w-32 animate-pulse rounded bg-surface-muted" />
+                <div className="h-3 w-full max-w-sm animate-pulse rounded bg-surface-muted" />
               </div>
             </div>
           ))}
@@ -200,15 +200,15 @@ export default function ConversationsPage() {
       )}
 
       {conversations && conversations.length === 0 && (
-        <div className="rounded-lg border border-dashed border-gray-200 bg-surface p-10 text-center">
-          <p className="mx-auto max-w-md text-sm text-gray-500">
+        <div className="rounded-xl border border-dashed border-card-ring bg-surface-muted/40 p-10 text-center">
+          <p className="mx-auto max-w-md text-sm text-muted">
             {EMPTY_STATE_TEXT}
           </p>
         </div>
       )}
 
       {conversations && conversations.length > 0 && (
-        <ul className="overflow-hidden rounded-lg border border-gray-200 bg-surface">
+        <ul className="surface-card overflow-hidden">
           {conversations.map((conversation) => (
             <SwipeableRow
               key={conversation.id}
@@ -284,13 +284,13 @@ function SwipeableRow({
   }
 
   return (
-    <li className="relative overflow-hidden border-b border-gray-100 last:border-b-0">
+    <li className="relative overflow-hidden border-b border-card-border last:border-b-0">
       <button
         type="button"
         onClick={() => onDelete(conversation.id)}
         disabled={deleting}
         aria-label={`Delete conversation with ${conversation.customer.name}`}
-        className="absolute inset-y-0 right-0 flex w-[88px] items-center justify-center bg-red-600 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+        className="absolute inset-y-0 right-0 flex w-[88px] items-center justify-center bg-red-600 text-sm font-semibold text-white transition-all duration-250 hover:bg-red-700 disabled:opacity-60"
       >
         {deleting ? "..." : "Delete"}
       </button>
@@ -306,31 +306,31 @@ function SwipeableRow({
           transform: `translateX(${offset}px)`,
           transition: dragging ? "none" : "transform 150ms",
         }}
-        className="relative z-10 flex touch-pan-y items-start gap-3 bg-surface px-4 py-4 transition-colors hover:bg-gray-50 sm:px-6"
+        className="relative z-10 flex touch-pan-y items-start gap-3 bg-card-surface px-4 py-4 transition-all duration-250 hover:bg-surface-muted sm:px-6"
       >
         <span
           aria-hidden
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-600"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-sm font-semibold text-muted"
         >
           {initials(conversation.customer.name)}
         </span>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
-            <p className="truncate font-semibold text-gray-900">
+            <p className="truncate font-semibold text-main">
               {conversation.customer.name}
             </p>
-            <span className="shrink-0 text-xs text-gray-400">
+            <span className="shrink-0 text-xs text-muted">
               {formatRelativeTime(
                 conversation.lastMessage?.createdAt ??
                   conversation.createdAt,
               )}
             </span>
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted">
             {conversation.customer.phone}
           </p>
-          <p className="mt-1 truncate text-sm text-gray-500">
+          <p className="mt-1 truncate text-sm text-muted">
             {conversation.lastMessage?.content ?? "No messages yet"}
           </p>
         </div>

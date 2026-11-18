@@ -193,10 +193,10 @@ export default function ProductsPage() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <BackButton />
-          <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
+          <h1 className="font-display text-2xl text-main sm:text-3xl">
             Products
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted">
             Your catalogue. Colly uses these details to answer customer questions.
           </p>
         </div>
@@ -212,7 +212,7 @@ export default function ProductsPage() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={importing}
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-card-ring bg-card-surface px-4 py-2.5 text-sm font-semibold text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
           >
             {importing ? (
               <LoaderCircle
@@ -227,7 +227,7 @@ export default function ProductsPage() {
           <button
             type="button"
             onClick={() => setModal({ kind: "create" })}
-            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-colly px-4 py-2.5 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Add Product
@@ -260,10 +260,10 @@ export default function ProductsPage() {
       {products && products.length > 0 && (
         <>
           {/* Desktop table */}
-          <div className="hidden overflow-hidden rounded-lg border border-gray-200 bg-surface md:block">
+          <div className="hidden surface-card overflow-hidden md:block">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr className="border-b border-card-border bg-surface-muted text-xs uppercase tracking-wide text-muted">
                   <th scope="col" className="px-6 py-3 font-medium">
                     Name
                   </th>
@@ -278,11 +278,11 @@ export default function ProductsPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-card-border">
                 {products.map((product) => (
                   <tr
                     key={product.id}
-                    className="transition-colors hover:bg-gray-50"
+                    className="transition-all duration-250 hover:bg-surface-muted"
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -291,18 +291,18 @@ export default function ProductsPage() {
                           name={product.name}
                         />
                         <div className="min-w-0">
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-main">
                             {product.name}
                           </p>
                           {product.description && (
-                            <p className="mt-0.5 max-w-md truncate text-xs text-gray-500">
+                            <p className="mt-0.5 max-w-md truncate text-xs text-muted">
                               {product.description}
                             </p>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 font-medium text-gray-900">
+                    <td className="whitespace-nowrap px-6 py-4 font-medium text-main">
                       {formatNaira(product.price)}
                     </td>
                     <td className="px-6 py-4">
@@ -328,7 +328,7 @@ export default function ProductsPage() {
             {products.map((product) => (
               <li
                 key={product.id}
-                className="rounded-lg border border-gray-200 bg-surface p-4"
+                className="surface-card p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
@@ -337,11 +337,11 @@ export default function ProductsPage() {
                       name={product.name}
                     />
                     <div className="min-w-0">
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-main">
                         {product.name}
                       </p>
                       {product.description && (
-                        <p className="mt-0.5 text-xs text-gray-500">
+                        <p className="mt-0.5 text-xs text-muted">
                           {product.description}
                         </p>
                       )}
@@ -350,7 +350,7 @@ export default function ProductsPage() {
                   <StockBadge stock={product.stock} />
                 </div>
                 <div className="mt-3 flex items-center justify-between">
-                  <p className="font-display text-lg text-gray-900">
+                  <p className="font-display text-lg text-main">
                     {formatNaira(product.price)}
                   </p>
                   <ActionButtons
@@ -384,9 +384,9 @@ export default function ProductsPage() {
 
       {modal.kind === "delete" && (
         <Modal title="Delete product" onClose={closeModal}>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             Are you sure you want to delete{" "}
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-main">
               {modal.product.name}
             </span>
             ? This cannot be undone.
@@ -401,7 +401,7 @@ export default function ProductsPage() {
               type="button"
               onClick={closeModal}
               disabled={deleting}
-              className="inline-flex min-h-[44px] items-center rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+              className="inline-flex min-h-[44px] items-center rounded-lg px-4 py-2 text-sm font-medium text-muted transition-all duration-250 hover:bg-surface-muted disabled:opacity-50"
             >
               Cancel
             </button>
@@ -409,7 +409,7 @@ export default function ProductsPage() {
               type="button"
               onClick={() => handleDelete(modal.product)}
               disabled={deleting}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-danger/90 disabled:opacity-60"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white transition-all duration-250 hover:bg-danger/90 disabled:opacity-60"
             >
               {deleting && (
                 <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -438,7 +438,7 @@ function ActionButtons({ name, onEdit, onDelete }: ActionButtonsProps) {
         onClick={onEdit}
         aria-label={`Edit ${name}`}
         title="Edit"
-        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-all duration-250 hover:bg-surface-muted hover:text-main"
       >
         <Pencil className="h-4 w-4" aria-hidden />
       </button>
@@ -447,7 +447,7 @@ function ActionButtons({ name, onEdit, onDelete }: ActionButtonsProps) {
         onClick={onDelete}
         aria-label={`Delete ${name}`}
         title="Delete"
-        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-all duration-250 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-danger"
       >
         <Trash className="h-4 w-4" aria-hidden />
       </button>
@@ -463,7 +463,7 @@ type ThumbProps = {
 function ProductThumb({ image, name }: ThumbProps) {
   if (!image) {
     return (
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-300">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-card-border bg-surface-muted text-muted">
         <ImageIcon className="h-4 w-4" aria-hidden />
       </div>
     );
@@ -485,25 +485,25 @@ function ProductThumb({ image, name }: ThumbProps) {
       height={40}
       loading="lazy"
       decoding="async"
-      className="h-10 w-10 shrink-0 rounded-lg border border-gray-200 object-cover"
+      className="h-10 w-10 shrink-0 rounded-lg border border-card-border object-cover"
     />
   );
 }
 
 function ProductSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-surface">
+    <div className="surface-card overflow-hidden">
       {[0, 1, 2, 3].map((row) => (
         <div
           key={row}
-          className="flex items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-b-0"
+          className="flex items-center gap-4 border-b border-card-border px-6 py-4 last:border-b-0"
         >
           <div className="flex-1 space-y-2">
-            <div className="h-3.5 w-40 animate-pulse rounded bg-gray-100" />
-            <div className="h-3 w-24 animate-pulse rounded bg-gray-100" />
+            <div className="h-3.5 w-40 animate-pulse rounded bg-surface-muted" />
+            <div className="h-3 w-24 animate-pulse rounded bg-surface-muted" />
           </div>
-          <div className="h-3.5 w-20 animate-pulse rounded bg-gray-100" />
-          <div className="h-5 w-16 animate-pulse rounded-full bg-gray-100" />
+          <div className="h-3.5 w-20 animate-pulse rounded bg-surface-muted" />
+          <div className="h-5 w-16 animate-pulse rounded-full bg-surface-muted" />
         </div>
       ))}
     </div>

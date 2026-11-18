@@ -4,10 +4,10 @@ const STATUS_STYLES: Record<string, string> = {
   ESCALATED: "bg-amber-100 text-amber-700",
   HUMAN_TAKEOVER: "bg-blue-100 text-blue-700",
   PENDING: "bg-amber-100 text-amber-700",
-  CLOSED: "bg-gray-100 text-gray-600",
+  CLOSED: "bg-surface-muted text-muted",
 };
 
-const FALLBACK_STYLE = "bg-gray-100 text-gray-600";
+const FALLBACK_STYLE = "bg-surface-muted text-muted";
 
 export function StatusBadge({ status }: { status: string }) {
   const key = status.toUpperCase();

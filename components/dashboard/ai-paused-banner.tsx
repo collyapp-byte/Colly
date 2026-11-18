@@ -32,13 +32,13 @@ export function AiPausedBanner({
 
   return (
     <div
-      className="relative mb-4 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] p-4"
+      className="relative mb-4 rounded-lg border border-[#FF6600]/30 bg-colly-tint p-4"
       role="alert"
     >
       <div className="flex items-start gap-3">
         <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#FF6600]" aria-hidden />
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-900">{getMessage()}</p>
+          <p className="text-sm font-medium text-main">{getMessage()}</p>
           <Link
             href="/settings/billing"
             className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#FF6600] hover:underline"
@@ -50,7 +50,7 @@ export function AiPausedBanner({
           <button
             type="button"
             onClick={onDismiss}
-            className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-400 hover:text-gray-600"
+            className="shrink-0 inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-muted hover:text-muted"
             aria-label="Dismiss"
           >
             <X className="h-5 w-5" />

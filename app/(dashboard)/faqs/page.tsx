@@ -273,15 +273,15 @@ export default function FaqsPage() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <BackButton />
-          <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">FAQs</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="font-display text-2xl text-main sm:text-3xl">FAQs</h1>
+          <p className="mt-1 text-sm text-muted">
             Answers to common questions. Colly uses these to reply automatically.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setModal({ kind: "create" })}
-          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-colly px-4 py-2.5 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
         >
           <Plus className="h-4 w-4" aria-hidden />
           Add FAQ
@@ -317,14 +317,14 @@ export default function FaqsPage() {
           {faqs.map((faq) => (
             <li
               key={faq.id}
-              className="rounded-lg border border-gray-200 bg-surface p-4"
+              className="surface-card p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-display font-semibold text-gray-900">
+                  <p className="font-display font-semibold text-main">
                     {faq.question}
                   </p>
-                  <p className="mt-1 text-sm text-gray-700">{faq.answer}</p>
+                  <p className="mt-1 text-sm text-main">{faq.answer}</p>
                 </div>
                 <ActionButtons
                   question={faq.question}
@@ -338,12 +338,12 @@ export default function FaqsPage() {
       )}
 
       {faqs && visiblePresets.length > 0 && (
-        <section className="mt-8 rounded-xl border border-gray-200 bg-surface p-5 sm:p-6">
+        <section className="surface-card mt-6 p-5 sm:p-6">
           <div className="mb-4">
-            <h2 className="font-display text-lg font-semibold text-gray-900">
+            <h2 className="font-display text-lg font-semibold text-main">
               Quick Start FAQ
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-muted">
               Add ready-made answers so your AI can start replying right away.
             </p>
           </div>
@@ -353,23 +353,23 @@ export default function FaqsPage() {
               return (
                 <article
                   key={preset.id}
-                  className="flex flex-col rounded-lg border border-gray-200 bg-white p-4"
+                  className="surface-panel flex flex-col p-4"
                 >
-                  <p className="font-display text-sm font-semibold text-gray-900">
+                  <p className="font-display text-sm font-semibold text-main">
                     {preset.question}
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => handleAddPreset(preset)}
-                      className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-colly px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-colly-hover"
+                      className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-colly px-3 py-1.5 text-xs font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
                     >
                       Add to my FAQs
                     </button>
                     <button
                       type="button"
                       onClick={() => dismissPreset(preset.id)}
-                      className="inline-flex min-h-[44px] items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                      className="inline-flex min-h-[44px] items-center rounded-xl border border-card-ring px-3 py-1.5 text-xs font-medium text-muted transition-all duration-250 hover:-translate-y-0.5 hover:bg-surface-muted hover:text-main active:translate-y-0 active:scale-[0.98]"
                     >
                       Not applicable
                     </button>
@@ -401,9 +401,9 @@ export default function FaqsPage() {
 
       {modal.kind === "delete" && (
         <Modal title="Delete FAQ" onClose={closeModal}>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             Are you sure you want to delete{" "}
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-main">
               {modal.faq.question}
             </span>
             ? This cannot be undone.
@@ -418,7 +418,7 @@ export default function FaqsPage() {
               type="button"
               onClick={closeModal}
               disabled={deleting}
-              className="inline-flex min-h-[44px] items-center rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+              className="inline-flex min-h-[44px] items-center rounded-lg px-4 py-2 text-sm font-medium text-muted transition-all duration-250 hover:bg-surface-muted disabled:opacity-50"
             >
               Cancel
             </button>
@@ -426,7 +426,7 @@ export default function FaqsPage() {
               type="button"
               onClick={() => handleDelete(modal.faq)}
               disabled={deleting}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-danger/90 disabled:opacity-60"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white transition-all duration-250 hover:bg-danger/90 disabled:opacity-60"
             >
               {deleting && (
                 <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -454,7 +454,7 @@ function ActionButtons({ question, onEdit, onDelete }: ActionButtonsProps) {
         onClick={onEdit}
         aria-label={`Edit ${question}`}
         title="Edit"
-        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-all duration-250 hover:bg-surface-muted hover:text-main"
       >
         <Pencil className="h-4 w-4" aria-hidden />
       </button>
@@ -463,7 +463,7 @@ function ActionButtons({ question, onEdit, onDelete }: ActionButtonsProps) {
         onClick={onDelete}
         aria-label={`Delete ${question}`}
         title="Delete"
-        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-all duration-250 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-danger"
       >
         <Trash className="h-4 w-4" aria-hidden />
       </button>
@@ -471,9 +471,9 @@ function ActionButtons({ question, onEdit, onDelete }: ActionButtonsProps) {
   );
 }
 
-const LABEL_CLASS = "mb-1 block text-sm font-medium text-gray-700";
+const LABEL_CLASS = "mb-1 block text-sm font-medium text-main";
 const INPUT_CLASS =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+  "w-full rounded-lg border border-card-border px-3 py-2 text-sm text-main outline-none transition-all duration-250 focus:border-colly focus:ring-2 focus:ring-colly/20";
 
 type FaqFormModalProps = {
   mode: "create" | "edit";
@@ -552,7 +552,7 @@ function FaqFormModal({
           <div className="mb-1 flex items-center gap-2">
             <label
               htmlFor="faq-answer"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-main"
             >
               Answer
             </label>
@@ -581,7 +581,7 @@ function FaqFormModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-muted transition-all duration-250 hover:bg-surface-muted disabled:opacity-50"
           >
             Cancel
           </button>
@@ -600,11 +600,11 @@ function FaqSkeleton() {
       {[0, 1, 2, 3].map((row) => (
         <div
           key={row}
-          className="space-y-3 rounded-lg border border-gray-200 bg-surface p-4"
+          className="space-y-3 surface-card p-4"
         >
-          <div className="h-3.5 w-48 animate-pulse rounded bg-gray-100" />
-          <div className="h-3 w-full max-w-md animate-pulse rounded bg-gray-100" />
-          <div className="h-5 w-20 animate-pulse rounded-full bg-gray-100" />
+          <div className="h-3.5 w-48 animate-pulse rounded bg-surface-muted" />
+          <div className="h-3 w-full max-w-md animate-pulse rounded bg-surface-muted" />
+          <div className="h-5 w-20 animate-pulse rounded-full bg-surface-muted" />
         </div>
       ))}
     </div>

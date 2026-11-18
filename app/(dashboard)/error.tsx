@@ -30,24 +30,24 @@ export default function DashboardError({
 
   return (
     <div className="mx-auto w-full max-w-2xl py-10">
-      <div className="rounded-lg border border-gray-200 bg-surface p-6 text-center sm:p-8">
+      <div className="surface-card p-6 text-center sm:p-8">
         <AlertTriangle
           className="mx-auto h-8 w-8 text-[#FF6600]"
           aria-hidden
         />
 
-        <h1 className="mt-4 font-display text-2xl text-gray-900">
+        <h1 className="mt-4 font-display text-2xl text-main">
           We could not load this page
         </h1>
 
-        <p role="alert" className="mx-auto mt-2 max-w-md text-sm text-gray-600">
+        <p role="alert" className="mx-auto mt-2 max-w-md text-sm text-muted">
           Your data is safe. This is a temporary problem on our side, so try
           again — if it keeps happening, contact support and quote the reference
           below.
         </p>
 
         {error.digest && (
-          <p className="mt-2 text-[13px] text-gray-500">
+          <p className="mt-2 text-[13px] text-muted">
             Reference: <span className="font-mono">{error.digest}</span>
           </p>
         )}
@@ -59,7 +59,7 @@ export default function DashboardError({
           </Button>
           <Link
             href="/dashboard"
-            className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-gray-200 bg-white px-6 py-3 text-center text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-card-ring bg-card-surface px-6 py-3 text-center text-sm font-semibold text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
           >
             Back to dashboard
           </Link>

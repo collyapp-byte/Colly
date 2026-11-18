@@ -3,14 +3,20 @@
 
 import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
-import { CheckCircle2, CircleAlert, QrCode, Users } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleAlert,
+  QrCode,
+  Smartphone,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const SECTION_CLASS = "rounded-lg border border-gray-200 bg-surface p-5 sm:p-6";
-const HEADING_CLASS = "font-display text-base tracking-wide text-gray-900";
-const LABEL_CLASS = "mb-1 block text-sm font-medium text-gray-700";
+const SECTION_CLASS = "surface-card p-5 sm:p-6";
+const HEADING_CLASS = "font-display text-base tracking-wide text-main";
+const LABEL_CLASS = "mb-1 block text-sm font-medium text-main";
 const INPUT_CLASS =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+  "w-full rounded-xl border border-card-ring px-3 py-2 text-sm text-main outline-none transition-all duration-250 focus:border-colly focus:ring-2 focus:ring-colly/20";
 
 // FIXED: Uses the actual tones from the database, not the deprecated pidgin options
 const TONE_OPTIONS = [
@@ -118,11 +124,11 @@ export default function SettingsPage() {
     return (
       <div className="space-y-6">
         {[0, 1].map((card) => (
-          <div key={card} className="rounded-lg border border-gray-200 bg-surface p-5 sm:p-6">
-            <div className="h-4 w-40 animate-pulse rounded bg-gray-100" />
+          <div key={card} className="surface-card p-5 sm:p-6">
+            <div className="h-4 w-40 animate-pulse rounded bg-surface-muted" />
             <div className="mt-4 space-y-3">
-              <div className="h-9 w-full animate-pulse rounded bg-gray-100" />
-              <div className="h-9 w-full animate-pulse rounded bg-gray-100" />
+              <div className="h-9 w-full animate-pulse rounded bg-surface-muted" />
+              <div className="h-9 w-full animate-pulse rounded bg-surface-muted" />
             </div>
           </div>
         ))}
@@ -167,12 +173,12 @@ export default function SettingsPage() {
           {TONE_OPTIONS.map((option) => {
             const selected = form?.tone === option.value;
             return (
-              <label key={option.value} className={`cursor-pointer rounded-lg border p-4 transition-colors ${selected ? "border-colly bg-[#FFF4EC]" : "border-gray-300 hover:border-gray-400"}`}>
+              <label key={option.value} className={`cursor-pointer rounded-xl border p-4 transition-all duration-250 active:scale-[0.99] ${selected ? "border-colly bg-colly-tint shadow-[0_2px_8px_-4px_rgba(255,102,0,0.45)]" : "border-card-ring hover:-translate-y-px hover:border-colly/40 hover:shadow-sm"}`}>
                 <span className="flex items-center gap-2">
                   <input type="radio" name="tone" value={option.value} checked={selected} onChange={() => update("tone", option.value)} className="h-4 w-4 accent-colly" />
-                  <span className="text-sm font-semibold text-gray-900">{option.label}</span>
+                  <span className="text-sm font-semibold text-main">{option.label}</span>
                 </span>
-                <span className="mt-1 block text-xs text-gray-500">{option.description}</span>
+                <span className="mt-1 block text-xs text-muted">{option.description}</span>
               </label>
             );
           })}
@@ -184,19 +190,28 @@ export default function SettingsPage() {
         <h2 className={HEADING_CLASS}>ADVANCED TOOLS</h2>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {isOwner && (
-            <Link href="/settings/team" className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:border-colly hover:bg-gray-50">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-colly/10 text-colly"><Users className="h-5 w-5" /></div>
+            <Link href="/settings/team" className="surface-panel surface-card-interactive flex items-center gap-3 p-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-colly/10 text-colly ring-1 ring-colly/15"><Users className="h-5 w-5" /></div>
               <div>
-                <p className="font-medium text-gray-900">Team Members</p>
-                <p className="text-xs text-gray-500">Invite staff and manage access</p>
+                <p className="font-medium text-main">Team Members</p>
+                <p className="text-xs text-muted">Invite staff and manage access</p>
               </div>
             </Link>
           )}
-          <Link href="/settings/qr-code" className="flex items-center gap-3 rounded-lg border border-gray-200 p-4 transition-colors hover:border-colly hover:bg-gray-50">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-colly/10 text-colly"><QrCode className="h-5 w-5" /></div>
+          {isOwner && (
+            <Link href="/settings/whatsapp" className="surface-panel surface-card-interactive flex items-center gap-3 p-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-colly/10 text-colly ring-1 ring-colly/15"><Smartphone className="h-5 w-5" /></div>
+              <div>
+                <p className="font-medium text-main">WhatsApp Line</p>
+                <p className="text-xs text-muted">Pair the number your AI answers on</p>
+              </div>
+            </Link>
+          )}
+          <Link href="/settings/qr-code" className="surface-panel surface-card-interactive flex items-center gap-3 p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-colly/10 text-colly ring-1 ring-colly/15"><QrCode className="h-5 w-5" /></div>
             <div>
-              <p className="font-medium text-gray-900">QR Code Generator</p>
-              <p className="text-xs text-gray-500">Print a counter card for your shop</p>
+              <p className="font-medium text-main">QR Code Generator</p>
+              <p className="text-xs text-muted">Print a counter card for your shop</p>
             </div>
           </Link>
         </div>

@@ -61,7 +61,7 @@ const LIGHT_CARD_STYLES: Record<
   { card: string; credit: string; check: string }
 > = {
   emerald: {
-    card: "border border-gray-200 bg-white",
+    card: "border border-card-ring bg-card-surface shadow-card",
     credit: "text-emerald-700",
     check: "text-emerald-600",
   },
@@ -175,28 +175,28 @@ function PlansContent() {
   return (
     <div className="mx-auto w-full max-w-4xl">
       <div className="flex flex-col items-center">
-        <h1 className="mt-4 text-center font-display text-2xl font-bold text-gray-900">
+        <h1 className="mt-4 text-center font-display text-2xl font-bold text-main">
           Choose a plan
         </h1>
-        <p className="mt-2 max-w-md text-center text-sm text-gray-500">
+        <p className="mt-2 max-w-md text-center text-sm text-muted">
           Choose the plan that matches your credit volume. Every plan includes
           the same AI features.
         </p>
-        <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-1 text-xs font-medium text-[#C2410C]">
+        <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#FF6600]/30 bg-colly-tint px-3 py-1 text-xs font-medium text-colly">
           {CREDIT_ECONOMY_DESCRIPTION}
         </p>
       </div>
 
       {/* BILLING TOGGLE */}
       <div className="mt-5 flex justify-center">
-        <div className="inline-flex rounded-full border bg-white p-1">
+        <div className="inline-flex rounded-full border bg-card-surface p-1">
           <button
             type="button"
             onClick={() => setInterval("monthly")}
             className={`rounded-full px-4 py-1.5 text-sm ${
               interval === "monthly"
-                ? "bg-gray-100 font-medium"
-                : "text-gray-600"
+                ? "bg-surface-muted font-medium"
+                : "text-muted"
             }`}
           >
             Monthly
@@ -206,12 +206,12 @@ function PlansContent() {
             onClick={() => setInterval("yearly")}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm ${
               interval === "yearly"
-                ? "bg-gray-100 font-medium"
-                : "text-gray-600"
+                ? "bg-surface-muted font-medium"
+                : "text-muted"
             }`}
           >
             Yearly
-            <span className="rounded-full bg-[#FFF4EC] px-2 py-0.5 text-[10px] font-semibold text-[#FF6600]">
+            <span className="rounded-full bg-colly-tint px-2 py-0.5 text-[10px] font-semibold text-[#FF6600]">
               Save 2 months
             </span>
           </button>
@@ -219,15 +219,15 @@ function PlansContent() {
       </div>
 
       {error && (
-        <div className="mt-4 mx-auto max-w-4xl rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="mt-4 mx-auto max-w-4xl rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 shadow-sm">
           {error}
         </div>
       )}
 
       {selectedTier && (
-        <div className="mx-auto mt-4 max-w-4xl rounded-lg border border-[#FF6600] bg-[#FFF4EC] px-4 py-3 text-sm text-gray-700">
+        <div className="mx-auto mt-4 max-w-4xl rounded-xl border border-colly/40 bg-colly-tint px-4 py-3 text-sm text-main shadow-sm">
           You picked the{" "}
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-main">
               {PLAN_META[selectedTier as PlanTier].name}
             </span>{" "}
             plan. Choose it below to activate it.
@@ -235,14 +235,14 @@ function PlansContent() {
       )}
 
       {/* FREE TIER — permanent, always on, no checkout */}
-      <div className="mt-8 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="surface-card mt-8 flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900">Free</h2>
-          <p className="mt-1 max-w-xl text-xs text-gray-500">
+          <h2 className="text-sm font-semibold text-main">Free</h2>
+          <p className="mt-1 max-w-xl text-xs text-muted">
             {FREE_PLAN_LIMITS.description}
           </p>
         </div>
-        <p className="shrink-0 text-lg font-bold text-gray-900">
+        <p className="shrink-0 text-lg font-bold text-main">
           {FREE_PLAN_LIMITS.credits} Credits / month
         </p>
       </div>
@@ -267,20 +267,20 @@ function PlansContent() {
                 ? tone.card
                 : isFeatured
                   ? "border-2 border-blue-600 bg-blue-50/50 shadow-lg"
-                  : "border border-gray-200 bg-white",
+                  : "border border-card-ring bg-card-surface shadow-card",
             isSelected ? "ring-2 ring-[#FF6600] ring-offset-2" : "",
           ]
             .filter(Boolean)
             .join(" ");
 
           return (
-            <div key={tier} className={`relative rounded-2xl p-6 ${cardClasses}`}>
+            <div key={tier} className={`relative rounded-2xl p-6 transition-all duration-250 hover:-translate-y-0.5 hover:shadow-card-hover ${cardClasses}`}>
               {/* The badge sits in the card's normal flow (not absolutely
                   positioned) so it can never overlap the plan name. */}
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div
                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
-                    isDark ? "border-gray-700 bg-gray-800 text-white" : "bg-white"
+                    isDark ? "border-gray-700 bg-gray-800 text-white" : "bg-card-surface"
                   }`}
                 >
                   <Icon className={`h-3.5 w-3.5 ${tone ? tone.check : ""}`} />
@@ -290,7 +290,7 @@ function PlansContent() {
                   <span
                     className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                       isDark
-                        ? "bg-white text-gray-900"
+                        ? "bg-card-surface text-main"
                         : "bg-[#FF6600] text-white"
                     }`}
                   >
@@ -299,10 +299,10 @@ function PlansContent() {
                 )}
               </div>
 
-              <h3 className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+              <h3 className={`text-sm font-semibold ${isDark ? "text-white" : "text-main"}`}>
                 {meta.name}
               </h3>
-              <p className={`mt-1 text-xs ${isDark ? "text-gray-300" : "text-gray-500"}`}>
+              <p className={`mt-1 text-xs ${isDark ? "text-muted" : "text-muted"}`}>
                 {meta.tagline}
               </p>
               {isSelected && (
@@ -312,35 +312,35 @@ function PlansContent() {
               )}
 
               <div className="mt-6">
-                <span className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                <span className={`text-3xl font-bold ${isDark ? "text-white" : "text-main"}`}>
                   {formatNaira(price)}
                 </span>
-                <span className={`ml-1 text-sm ${isDark ? "text-gray-300" : "text-gray-500"}`}>
+                <span className={`ml-1 text-sm ${isDark ? "text-muted" : "text-muted"}`}>
                   {interval === "monthly" ? "/month" : "/year"}
                 </span>
                 {interval === "yearly" ? (
-                  <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-400"}`}>
+                  <p className={`text-xs ${isDark ? "text-muted" : "text-muted"}`}>
                     <span className="line-through">{formatNaira(config.monthly * 12)}</span>{" "}
                     Save {formatNaira(yearlySaving)}
                   </p>
                 ) : (
-                  <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-400"}`}>
+                  <p className={`text-xs ${isDark ? "text-muted" : "text-muted"}`}>
                     {formatNaira(config.yearly)} if billed yearly
                   </p>
                 )}
                 <p
                   className={`mt-3 text-lg font-bold ${
-                    isDark ? "text-white" : tone ? tone.credit : "text-gray-900"
+                    isDark ? "text-white" : tone ? tone.credit : "text-main"
                   }`}
                 >
                   {config.credits.toLocaleString()} credits / month
                 </p>
-                <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                <p className={`text-xs ${isDark ? "text-muted" : "text-muted"}`}>
                   {creditReplyCalculator(config.credits)}
                 </p>
                 <p
                   className={`mt-1 text-[11px] leading-snug ${
-                    isDark ? "text-gray-400" : "text-gray-500"
+                    isDark ? "text-muted" : "text-muted"
                   }`}
                 >
                   {CREDITS_RESET_DISCLAIMER}
@@ -374,10 +374,10 @@ function PlansContent() {
                   <div key={feature} className="flex items-center gap-2">
                     <Check
                       className={`h-3.5 w-3.5 ${
-                        isDark ? "text-gray-400" : tone ? tone.check : "text-gray-400"
+                        isDark ? "text-muted" : tone ? tone.check : "text-muted"
                       }`}
                     />
-                    <span className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                    <span className={`text-xs ${isDark ? "text-muted" : "text-muted"}`}>
                       {feature}
                     </span>
                   </div>

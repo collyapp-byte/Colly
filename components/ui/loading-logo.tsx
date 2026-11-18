@@ -26,7 +26,7 @@ export function LoadingLogo({ size = "md", label }: LoadingLogoProps) {
           aria-hidden
         />
         <div
-          className="absolute -inset-2 animate-spin rounded-full border border-gray-200 border-t-[#FF6600]"
+          className="absolute -inset-2 animate-spin rounded-full border border-card-border border-t-[#FF6600]"
           aria-hidden
         />
         <div className="animate-colly-breathe relative">
@@ -35,7 +35,7 @@ export function LoadingLogo({ size = "md", label }: LoadingLogoProps) {
       </div>
       {label && (
         <p
-          className="animate-in mt-3 text-[13px] text-gray-500"
+          className="animate-in mt-3 text-[13px] text-muted"
           style={{ animationDelay: "300ms" }}
         >
           {label}

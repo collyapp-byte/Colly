@@ -12,7 +12,7 @@ import { CustomerNotes } from "@/components/customers/customer-notes";
 const SALE_STATUS_STYLES: Record<string, string> = {
   paid: "bg-green-100 text-green-700",
   pending: "bg-amber-100 text-amber-700",
-  cancelled: "bg-gray-100 text-gray-600",
+  cancelled: "bg-surface-muted text-muted",
 };
 
 export default async function CustomerDetailPage({
@@ -63,37 +63,37 @@ export default async function CustomerDetailPage({
     <div className="mx-auto w-full max-w-3xl">
       <Link
         href="/customers"
-        className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+        className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted transition-all duration-250 hover:text-main"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Back to Customers
       </Link>
 
-      <header className="overflow-hidden rounded-xl border border-gray-200 bg-surface">
+      <header className="surface-card overflow-hidden">
         <div className="bg-gradient-to-br from-[#FFF4EC] via-white to-white px-5 py-5 sm:px-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="truncate font-display text-2xl text-gray-900">
+              <h1 className="truncate font-display text-2xl text-main">
                 {customer.name}
               </h1>
-              <p className="mt-1 text-sm text-gray-500">{customer.phone}</p>
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-sm text-muted">{customer.phone}</p>
+              <p className="mt-1 text-xs text-muted">
                 Customer since {formatCustomerSince(customer.createdAt)}
               </p>
             </div>
 
-            <div className="rounded-lg border border-[#FF6600]/15 bg-white/80 px-4 py-2 text-right shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            <div className="rounded-lg border border-[#FF6600]/15 bg-card-surface/80 px-4 py-2 text-right shadow-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                 Total spent
               </p>
-              <p className="mt-0.5 font-display text-xl text-gray-900">
+              <p className="mt-0.5 font-display text-xl text-main">
                 {formatNaira(customer.totalSpent)}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-gray-100 px-5 py-4 sm:px-6">
+        <div className="border-t border-card-border px-5 py-4 sm:px-6">
           <CustomerTags
             customerId={customer.id}
             businessId={user.businessId}
@@ -103,12 +103,12 @@ export default async function CustomerDetailPage({
       </header>
 
       <section className="mt-6">
-        <h2 className="font-display text-lg text-gray-900">Notes</h2>
-        <p className="mt-0.5 text-xs text-gray-400">
+        <h2 className="font-display text-lg text-main">Notes</h2>
+        <p className="mt-0.5 text-xs text-muted">
           Private to your team. The AI only sees these as context, it never
           repeats them to the customer.
         </p>
-        <div className="mt-3 rounded-lg border border-gray-200 bg-surface p-4">
+        <div className="surface-panel mt-3 p-4">
           <CustomerNotes
             customerId={customer.id}
             businessId={user.businessId}
@@ -119,10 +119,10 @@ export default async function CustomerDetailPage({
 
       <section className="mt-6">
         <div className="mb-3 flex items-center gap-2">
-          <ReceiptText className="h-4 w-4 text-gray-400" aria-hidden />
-          <h2 className="font-display text-lg text-gray-900">Sales History</h2>
+          <ReceiptText className="h-4 w-4 text-muted" aria-hidden />
+          <h2 className="font-display text-lg text-main">Sales History</h2>
           {customer.sales.length > 0 && (
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-muted">
               {customer.sales.length}{" "}
               {customer.sales.length === 1 ? "sale" : "sales"}
             </span>
@@ -130,13 +130,13 @@ export default async function CustomerDetailPage({
         </div>
 
         {customer.sales.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-200 bg-surface p-8 text-center">
-            <p className="text-sm text-gray-500">
+          <div className="rounded-lg border border-dashed border-card-border bg-surface p-8 text-center">
+            <p className="text-sm text-muted">
               No sales recorded for this customer yet.
             </p>
           </div>
         ) : (
-          <ul className="overflow-hidden rounded-lg border border-gray-200 bg-surface">
+          <ul className="surface-card overflow-hidden">
             {customer.sales.map((sale) => {
               const title =
                 sale.product?.name ?? sale.customLabel ?? "Custom sale";
@@ -144,13 +144,13 @@ export default async function CustomerDetailPage({
               return (
                 <li
                   key={sale.id}
-                  className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-100 px-4 py-3 last:border-b-0 sm:px-6"
+                  className="flex flex-wrap items-start justify-between gap-3 border-b border-card-border px-4 py-3 last:border-b-0 sm:px-6"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-gray-900">
+                    <p className="truncate font-medium text-main">
                       {title}
                     </p>
-                    <p className="mt-0.5 text-xs text-gray-500">
+                    <p className="mt-0.5 text-xs text-muted">
                       {formatRelativeTime(sale.createdAt)} · Qty {sale.quantity}
                       {sale.paymentMethod
                         ? ` · ${paymentLabel(sale.paymentMethod)}`
@@ -172,13 +172,13 @@ export default async function CustomerDetailPage({
                   </div>
 
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-main">
                       {formatNaira(Number(sale.totalAmount))}
                     </p>
                     <span
                       className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                         SALE_STATUS_STYLES[sale.status] ??
-                        "bg-gray-100 text-gray-600"
+                        "bg-surface-muted text-muted"
                       }`}
                     >
                       {sale.status.charAt(0).toUpperCase() + sale.status.slice(1)}
@@ -192,39 +192,39 @@ export default async function CustomerDetailPage({
       </section>
 
       <section className="mt-6">
-        <h2 className="mb-3 font-display text-lg text-gray-900">
+        <h2 className="mb-3 font-display text-lg text-main">
           Conversations
         </h2>
 
         {customer.conversations.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-gray-200 bg-surface p-8 text-center">
-            <p className="text-sm text-gray-500">
+          <div className="rounded-lg border border-dashed border-card-border bg-surface p-8 text-center">
+            <p className="text-sm text-muted">
               No conversations yet for this customer.
             </p>
           </div>
         ) : (
-          <ul className="overflow-hidden rounded-lg border border-gray-200 bg-surface">
+          <ul className="surface-card overflow-hidden">
             {customer.conversations.map((conversation) => {
               const lastMessage = conversation.messages[0] ?? null;
 
               return (
                 <li
                   key={conversation.id}
-                  className="border-b border-gray-100 last:border-b-0"
+                  className="border-b border-card-border last:border-b-0"
                 >
                   <Link
                     href={`/conversations/${conversation.id}`}
-                    className="block px-4 py-4 transition-colors hover:bg-gray-50 sm:px-6"
+                    className="block px-4 py-4 transition-all duration-250 hover:bg-surface-muted sm:px-6"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <StatusBadge status={conversation.status} />
-                      <span className="shrink-0 text-xs text-gray-400">
+                      <span className="shrink-0 text-xs text-muted">
                         {formatRelativeTime(
                           lastMessage?.createdAt ?? conversation.createdAt,
                         )}
                       </span>
                     </div>
-                    <p className="mt-2 truncate text-sm text-gray-500">
+                    <p className="mt-2 truncate text-sm text-muted">
                       {lastMessage?.content ?? "No messages yet"}
                     </p>
                   </Link>

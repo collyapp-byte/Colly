@@ -79,7 +79,7 @@ function FooterColumn({
 }) {
   return (
     <nav aria-label={title}>
-      <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+      <p className="text-xs font-semibold uppercase tracking-wider text-main">
         {title}
       </p>
       <ul className="mt-3 space-y-2">
@@ -87,7 +87,7 @@ function FooterColumn({
           <li key={link.href}>
             <Link
               href={link.href}
-              className="transition-colors hover:text-gray-700"
+              className="transition-all duration-250 hover:text-main"
             >
               {link.label}
             </Link>
@@ -102,12 +102,12 @@ export function Footer() {
   return (
     <footer
       data-print-hide
-      className="border-t border-gray-100 px-4 py-10 text-xs text-gray-500"
+      className="border-t border-card-border bg-card-surface px-4 py-10 text-xs text-muted"
     >
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="font-display text-sm font-bold text-gray-900">
+            <p className="font-display text-sm font-bold text-main">
               Colly AI
             </p>
             {/* Entity declaration beside the brand: every page carrying the
@@ -124,13 +124,13 @@ export function Footer() {
           <FooterColumn title="Locations" links={LOCATION_LINKS} />
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-gray-100 pt-6">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-card-border pt-6">
           {LEGAL_LINKS.map((link, index) => (
             <span key={link.href} className="flex items-center gap-x-3">
               {index > 0 && <span aria-hidden="true">·</span>}
               <Link
                 href={link.href}
-                className="transition-colors hover:text-gray-700"
+                className="transition-all duration-250 hover:text-main"
               >
                 {link.label}
               </Link>

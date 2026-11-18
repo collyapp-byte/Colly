@@ -14,13 +14,13 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <h1 className="font-display text-2xl text-gray-900">Settings</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="font-display text-2xl text-main">Settings</h1>
+      <p className="mt-1 text-sm text-muted">
         Manage your business profile and how your AI assistant talks to customers.
       </p>
 
       {/* Tab Navigation */}
-      <div className="mt-6 flex gap-2 border-b border-gray-200 pb-2">
+      <div className="mt-6 flex gap-2 overflow-x-auto rounded-xl border border-card-ring bg-surface-muted/60 p-1 no-scrollbar">
         {TABS.map((tab) => {
           // Make "Business" active for /settings, /settings/team, and /settings/qr-code
           const isActive = 
@@ -32,10 +32,10 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
             <Link
               key={tab.href}
               href={tab.href}
-              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+              className={`rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition-all duration-250 ease-out active:scale-[0.98] ${
                 isActive
-                  ? "border-colly bg-[#FFF4EC] text-[#FF6600]"
-                  : "border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-card-surface text-[#FF6600] shadow-card"
+                  : "text-muted hover:-translate-y-px hover:bg-card-surface/70 hover:text-main hover:shadow-sm"
               }`}
             >
               {tab.label}

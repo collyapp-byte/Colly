@@ -22,11 +22,11 @@ type TeamManagerProps = {
   initialNextCursor: string | null;
 };
 
-const LABEL_CLASS = "mb-1 block text-sm font-medium text-gray-700";
+const LABEL_CLASS = "mb-1 block text-sm font-medium text-main";
 const INPUT_CLASS =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+  "w-full rounded-xl border border-card-ring bg-card-surface px-3 py-2 text-sm text-main outline-none transition-all duration-250 placeholder:text-muted focus:border-colly focus:ring-2 focus:ring-colly/20";
 const AVATAR_CLASS =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600";
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-semibold text-muted";
 
 /** Pulls a human error message out of an untrusted JSON body. */
 function errorMessage(payload: unknown): string | null {
@@ -129,7 +129,7 @@ function RoleBadge({ role }: { role: "OWNER" | "STAFF" }) {
   return (
     <span
       className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-        owner ? "bg-[#FFF4EC] text-[#FF6600]" : "bg-gray-100 text-gray-600"
+        owner ? "bg-colly-tint text-[#FF6600]" : "bg-surface-muted text-muted"
       }`}
     >
       {owner && <ShieldCheck className="h-3 w-3" aria-hidden />}
@@ -336,7 +336,7 @@ export function TeamManager({
           <div>
             <label htmlFor="team-name" className={LABEL_CLASS}>
               Name{" "}
-              <span className="font-normal text-gray-400">(optional)</span>
+              <span className="font-normal text-muted">(optional)</span>
             </label>
             <input
               id="team-name"
@@ -352,7 +352,7 @@ export function TeamManager({
             <Button type="submit" variant="primary" isLoading={inviting}>
               Send invite
             </Button>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted">
               We email them an invite link. They open it, set a password and land
               in your dashboard as staff — they must sign up with the address you
               type here.
@@ -363,10 +363,10 @@ export function TeamManager({
         {lastInvite && (
           <div
             role="status"
-            className={`mt-4 rounded-lg border p-4 text-sm ${
+            className={`mt-4 rounded-xl border p-4 text-sm ${
               lastInvite.emailed
-                ? "border-success/30 bg-success/5 text-gray-700"
-                : "border-amber-300 bg-amber-50 text-amber-900"
+                ? "border-success/30 bg-success/5 text-main"
+                : "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200"
             }`}
           >
             <p>
@@ -374,7 +374,7 @@ export function TeamManager({
                 ? "Invitation emailed. They open the link, choose a password and they are in."
                 : "The invitation was saved, but we could not send the email. Copy this link and send it to them yourself."}
             </p>
-            <p className="mt-2 break-all text-xs text-gray-600">
+            <p className="mt-2 break-all text-xs text-muted">
               {lastInvite.link}
             </p>
             {!lastInvite.emailed && (
@@ -397,25 +397,25 @@ export function TeamManager({
           title="Your team"
           subtitle="Everyone who can sign in to this workspace."
           action={
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500">
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted">
               <Users className="h-4 w-4" aria-hidden />
               {staffLabel}
             </span>
           }
         />
 
-        <ul className="mt-4 divide-y divide-gray-100">
+        <ul className="mt-4 divide-y divide-card-border">
           {/* The owner is a User row, never a TeamMember — it cannot be removed. */}
           <li className="flex items-center gap-3 py-3">
             <span className={AVATAR_CLASS} aria-hidden>
               {initials(ownerName, owner.email)}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-gray-900">
+              <p className="truncate text-sm font-medium text-main">
                 {ownerName}{" "}
-                <span className="font-normal text-gray-400">(you)</span>
+                <span className="font-normal text-muted">(you)</span>
               </p>
-              <p className="truncate text-xs text-gray-500">{owner.email}</p>
+              <p className="truncate text-xs text-muted">{owner.email}</p>
             </div>
             <RoleBadge role="OWNER" />
           </li>
@@ -426,13 +426,13 @@ export function TeamManager({
                 {initials(member.name, member.email)}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-gray-900">
+                <p className="truncate text-sm font-medium text-main">
                   {member.name || member.email}
                 </p>
-                <p className="truncate text-xs text-gray-500">
+                <p className="truncate text-xs text-muted">
                   {member.email}
                   {formatInvited(member.createdAt) && (
-                    <span className="text-gray-400">
+                    <span className="text-muted">
                       {" "}
                       · {formatInvited(member.createdAt)}
                     </span>
@@ -445,7 +445,7 @@ export function TeamManager({
                 onClick={() => setPendingRemoval(member)}
                 aria-label={`Remove ${member.name || member.email}`}
                 title="Remove access"
-                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-4 focus:ring-red-500/20"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-muted transition-all duration-250 hover:bg-red-50 hover:text-red-600 active:scale-[0.94] dark:hover:bg-red-950/40 focus:outline-none focus:ring-4 focus:ring-red-500/20"
               >
                 <Trash2 className="h-4 w-4" aria-hidden />
               </button>
@@ -454,7 +454,7 @@ export function TeamManager({
         </ul>
 
         {members.length === 0 && (
-          <p className="mt-2 rounded-lg bg-gray-50 p-4 text-sm text-gray-500">
+          <p className="surface-panel mt-2 p-4 text-sm text-muted">
             No one else is on your team yet. Invite a staff member above and
             they will appear here.
           </p>
@@ -502,14 +502,14 @@ export function TeamManager({
             </div>
           }
         >
-          <p className="text-sm text-gray-600">
-            <strong className="font-semibold text-gray-900">
+          <p className="text-sm text-muted">
+            <strong className="font-semibold text-main">
               {pendingRemoval.name || pendingRemoval.email}
             </strong>{" "}
             will lose access to your dashboard on their next request. Their
             account is not deleted — you can invite the same address again later.
           </p>
-          <p className="mt-3 text-xs text-gray-500">{pendingRemoval.email}</p>
+          <p className="mt-3 text-xs text-muted">{pendingRemoval.email}</p>
         </Modal>
       )}
     </div>

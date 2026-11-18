@@ -41,45 +41,46 @@ export function SetupChecklist({ hasProducts, hasFaqs, hasAiReply }: SetupCheckl
   ];
 
   return (
-    <div className="rounded-2xl bg-[#FFF4EC]/40 border border-[#FF6600]/20 p-6 sm:p-8 mb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+    <div className="relative overflow-hidden rounded-2xl border border-colly/20 bg-colly-tint/40 p-5 shadow-card sm:p-6">
+      <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Get started with Colly</h2>
-          <p className="text-sm text-gray-500 mt-1">Complete these steps to get the most out of your AI.</p>
+          <h2 className="text-lg font-semibold text-main">Get started with Colly</h2>
+          <p className="mt-1 text-sm text-muted">Complete these steps to get the most out of your AI.</p>
         </div>
-        <div className="hidden sm:block h-48 w-48 shrink-0 -my-6 -mr-4">
+        <div className="hidden h-40 w-40 shrink-0 sm:block -my-8 -mr-4">
           <Lottie src="/dashboard-rocket.json" />
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
         {steps.map((step, index) => {
           if (step.completed) return null;
           const Icon = step.icon;
-          
+
+          // The whole card is the target: a single anchor keeps the markup
+          // valid and gives the card one large, forgiving tap area on mobile.
           return (
-            <div 
-              key={index} 
-              className="group flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:border-[#FF6600]/50"
+            <Link
+              key={index}
+              href={step.href}
+              className="surface-card surface-card-interactive group flex flex-col gap-3 p-4.5 sm:p-5"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFF4EC] text-[#FF6600]">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-colly-tint text-colly ring-1 ring-colly/15 transition-transform duration-250 group-hover:scale-105">
                   <Icon className="h-4 w-4" />
                 </div>
-                <h3 className="font-semibold text-gray-900 text-sm">
+                <h3 className="text-sm font-semibold text-main">
                   {step.title}
                 </h3>
               </div>
-              <p className="text-xs text-gray-500 leading-relaxed flex-1">
+              <p className="flex-1 text-xs leading-relaxed text-muted">
                 {step.description}
               </p>
-              <Link 
-                href={step.href}
-                className="mt-2 inline-flex items-center text-xs font-bold text-[#FF6600] hover:text-[#E65C00]"
-              >
-                {step.actionText} <ArrowRight className="ml-1 h-3 w-3" />
-              </Link>
-            </div>
+              <span className="mt-1 inline-flex items-center text-xs font-bold text-colly">
+                {step.actionText}
+                <ArrowRight className="ml-1 h-3 w-3 transition-transform duration-250 group-hover:translate-x-1" />
+              </span>
+            </Link>
           );
         })}
       </div>

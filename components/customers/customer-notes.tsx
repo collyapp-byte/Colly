@@ -7,7 +7,7 @@ import { VoiceInput } from "@/components/ui/voice-input";
 import { updateCustomerDetails } from "@/app/api/customers/actions";
 
 const TEXTAREA_CLASS =
-  "w-full resize-y rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-[#FF6600] focus:ring-2 focus:ring-[#FF6600]/20 disabled:bg-gray-50";
+  "w-full resize-y rounded-lg border border-card-border px-3 py-2 text-sm text-main outline-none transition-all duration-250 focus:border-[#FF6600] focus:ring-2 focus:ring-[#FF6600]/20 disabled:bg-surface-muted";
 
 export function CustomerNotes({
   customerId,
@@ -41,7 +41,7 @@ export function CustomerNotes({
   return (
     <div>
       <div className="mb-1 flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-gray-500">Notes</span>
+        <span className="text-xs font-medium text-muted">Notes</span>
         <VoiceInput
           onTranscript={(transcript) =>
             setNotes((prev) => (prev ? `${prev}\n${transcript}` : transcript))

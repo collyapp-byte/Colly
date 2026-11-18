@@ -45,9 +45,9 @@ type SaleFormModalProps = {
   onSubmit: (values: SaleInput) => Promise<void>;
 };
 
-const LABEL_CLASS = "mb-1 block text-sm font-medium text-gray-700";
+const LABEL_CLASS = "mb-1 block text-sm font-medium text-main";
 const INPUT_CLASS =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+  "w-full rounded-lg border border-card-border bg-card-surface px-3 py-2 text-sm text-main outline-none transition-all duration-250 placeholder:text-muted focus:border-colly focus:ring-2 focus:ring-colly/20";
 
 const STATUS_LABELS: Record<SaleStatus, string> = {
   paid: "Paid",
@@ -196,7 +196,7 @@ export function SaleFormModal({
             </select>
             {customersState === "loading" && (
               <LoaderCircle
-                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400"
+                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted"
                 aria-hidden
               />
             )}
@@ -207,7 +207,7 @@ export function SaleFormModal({
               <button
                 type="button"
                 onClick={retryCustomers}
-                className="font-semibold underline transition-colors hover:text-danger/80"
+                className="font-semibold underline transition-all duration-250 hover:text-danger/80"
               >
                 Retry
               </button>
@@ -242,7 +242,7 @@ export function SaleFormModal({
             </select>
             {productsState === "loading" && (
               <LoaderCircle
-                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400"
+                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted"
                 aria-hidden
               />
             )}
@@ -253,7 +253,7 @@ export function SaleFormModal({
               <button
                 type="button"
                 onClick={retryProducts}
-                className="font-semibold underline transition-colors hover:text-danger/80"
+                className="font-semibold underline transition-all duration-250 hover:text-danger/80"
               >
                 Retry
               </button>
@@ -297,7 +297,7 @@ export function SaleFormModal({
           </div>
         </div>
 
-        <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700">
+        <p className="rounded-lg bg-surface-muted px-3 py-2 text-sm font-medium text-main">
           Total: {formatNaira(total)}
         </p>
 
@@ -308,7 +308,7 @@ export function SaleFormModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-muted transition-all duration-250 hover:bg-surface-muted disabled:opacity-50"
           >
             Cancel
           </button>

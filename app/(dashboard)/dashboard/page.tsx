@@ -1,4 +1,6 @@
 import { connection } from "next/server";
+import Link from "next/link";
+import { Plus, ShoppingCart } from "lucide-react";
 
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -61,29 +63,52 @@ export default async function OverviewPage({
     }),
   ]);
 
-  
-    const hasAiReply = (await prisma.message.count({
-    where: { businessId: user.businessId, sender: "ai" }
-  })) > 0;
+  const hasAiReply =
+    (await prisma.message.count({
+      where: { businessId: user.businessId, sender: "ai" },
+    })) > 0;
 
+  const hasFaqs =
+    (await prisma.faq.count({
+      where: { businessId: user.businessId },
+    })) > 0;
 
-      const hasFaqs = (await prisma.faq.count({
-    where: { businessId: user.businessId }
-  })) > 0;
-
-
-
-    return (
-    <div className="mx-auto w-full max-w-6xl space-y-8">
+  return (
+    <div className="mx-auto w-full max-w-6xl space-y-5 md:space-y-6">
       {denied && <StaffDeniedToast />}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+
+      {/* Greeting + the two actions an owner reaches for most. The card gives
+          the page a clear top edge instead of the bare heading floating in the
+          dashboard's own surface. */}
+      <header className="surface-card flex flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center md:p-6">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-colly">
+            Overview
+          </p>
+          <h1 className="mt-1.5 font-display text-2xl font-bold tracking-tight text-main sm:text-3xl">
             Hello {user.name ? user.name.split(" ")[0] : "there"} 👋
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Here is what is happening with your business today.</p>
+          <p className="mt-1.5 max-w-xl text-sm text-muted">
+            Here is what is happening with your business today.
+          </p>
         </div>
-      </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/products"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border border-card-ring bg-card-surface px-4 py-2 text-sm font-semibold text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            Add product
+          </Link>
+          <Link
+            href="/sales"
+            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-colly px-4 py-2 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
+          >
+            <ShoppingCart className="h-4 w-4" aria-hidden />
+            Record a sale
+          </Link>
+        </div>
+      </header>
 
       <SetupChecklist 
         hasProducts={productCount > 0} hasFaqs={hasFaqs} hasAiReply={hasAiReply} 

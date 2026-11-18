@@ -45,11 +45,11 @@ const STATUS_BADGE: Record<InvoiceStatus, string> = {
   sent: "bg-green-100 text-green-700",
   paid: "bg-emerald-600 text-white",
   failed: "bg-red-100 text-red-700",
-  cancelled: "bg-gray-100 text-gray-600",
+  cancelled: "bg-surface-muted text-muted",
 };
 
 const FILTER_CLASS =
-  "rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+  "rounded-lg border border-card-border px-3 py-2 text-sm text-main outline-none transition-all duration-250 focus:border-colly focus:ring-2 focus:ring-colly/20";
 
 function formatInvoiceDate(value: string): string {
   return new Date(value).toLocaleDateString([], {
@@ -220,17 +220,17 @@ export default function InvoicesPage() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <BackButton />
-          <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
+          <h1 className="font-display text-2xl text-main sm:text-3xl">
             Invoices
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted">
             NRS-ready invoices. Every paid sale creates one automatically.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-colly px-4 py-2.5 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
         >
           <Plus className="h-4 w-4" aria-hidden />
           Create Invoice
@@ -239,23 +239,23 @@ export default function InvoicesPage() {
 
       {/* Summary */}
       <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-gray-200 bg-surface p-5">
-          <p className="text-sm text-gray-500">Total invoiced this month</p>
-          <p className="mt-2 font-display text-2xl text-gray-900">
+        <div className="surface-card p-5">
+          <p className="text-sm text-muted">Total invoiced this month</p>
+          <p className="mt-2 font-display text-2xl text-main">
             {formatNaira(monthTotal)}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-surface p-5">
-          <p className="text-sm text-gray-500">Pending NRS transmission</p>
-          <p className="mt-2 font-display text-2xl text-gray-900">
+        <div className="surface-card p-5">
+          <p className="text-sm text-muted">Pending NRS transmission</p>
+          <p className="mt-2 font-display text-2xl text-main">
             {pendingCount}
           </p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-surface p-5">
-          <p className="text-sm text-gray-500">Failed transmission</p>
+        <div className="surface-card p-5">
+          <p className="text-sm text-muted">Failed transmission</p>
           <p
             className={`mt-2 font-display text-2xl ${
-              failedCount > 0 ? "text-danger" : "text-gray-900"
+              failedCount > 0 ? "text-danger" : "text-main"
             }`}
           >
             {failedCount}
@@ -328,9 +328,9 @@ export default function InvoicesPage() {
       )}
 
       {invoices && invoices.length === 0 && (
-        <div className="rounded-lg border border-dashed border-gray-200 bg-surface p-10 text-center">
-          <Receipt className="mx-auto h-8 w-8 text-gray-300" aria-hidden />
-          <p className="mx-auto mt-3 max-w-md text-sm text-gray-500">
+        <div className="rounded-xl border border-dashed border-card-ring bg-surface-muted/40 p-10 text-center">
+          <Receipt className="mx-auto h-8 w-8 text-muted" aria-hidden />
+          <p className="mx-auto mt-3 max-w-md text-sm text-muted">
             No invoices yet. Every paid sale creates one automatically.
           </p>
         </div>
@@ -339,10 +339,10 @@ export default function InvoicesPage() {
       {invoices && invoices.length > 0 && (
         <>
           {/* Desktop table */}
-          <div className="hidden overflow-hidden rounded-lg border border-gray-200 bg-surface md:block">
+          <div className="hidden surface-card overflow-hidden md:block">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr className="border-b border-card-border bg-surface-muted text-xs uppercase tracking-wide text-muted">
                   <th scope="col" className="px-6 py-3 font-medium">
                     Invoice #
                   </th>
@@ -363,25 +363,25 @@ export default function InvoicesPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-card-border">
                 {invoices.map((invoice) => (
-                  <tr key={invoice.id} className="transition-colors hover:bg-gray-50">
-                    <td className="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">
+                  <tr key={invoice.id} className="transition-all duration-250 hover:bg-surface-muted">
+                    <td className="whitespace-nowrap px-6 py-4 font-semibold text-main">
                       <Link
                         href={`/invoices/${invoice.id}`}
-                        className="transition-colors hover:text-colly"
+                        className="transition-all duration-250 hover:text-colly"
                       >
                         {invoice.invoiceNumber}
                       </Link>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-500">
+                    <td className="whitespace-nowrap px-6 py-4 text-muted">
                       {formatInvoiceDate(invoice.createdAt)}
                     </td>
-                    <td className="px-6 py-4 text-gray-700">
+                    <td className="px-6 py-4 text-main">
                       {invoice.customer?.name ?? "Walk-in Customer"}
                       <ReceiptLink invoice={invoice} />
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 font-medium text-gray-900">
+                    <td className="whitespace-nowrap px-6 py-4 font-medium text-main">
                       {formatNaira(invoice.total)}
                     </td>
                     <td className="px-6 py-4">
@@ -411,17 +411,17 @@ export default function InvoicesPage() {
             {invoices.map((invoice) => (
               <li
                 key={invoice.id}
-                className="rounded-lg border border-gray-200 bg-surface p-4"
+                className="surface-card p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <Link
                       href={`/invoices/${invoice.id}`}
-                      className="font-semibold text-gray-900 transition-colors hover:text-colly"
+                      className="font-semibold text-main transition-all duration-250 hover:text-colly"
                     >
                       {invoice.invoiceNumber}
                     </Link>
-                    <p className="mt-0.5 text-xs text-gray-500">
+                    <p className="mt-0.5 text-xs text-muted">
                       {invoice.customer?.name ?? "Walk-in Customer"} ·{" "}
                       {formatInvoiceDate(invoice.createdAt)}
                     </p>
@@ -430,7 +430,7 @@ export default function InvoicesPage() {
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-display text-lg text-gray-900">
+                    <p className="font-display text-lg text-main">
                       {formatNaira(invoice.total)}
                     </p>
                     <ReceiptLink invoice={invoice} />
@@ -463,9 +463,9 @@ export default function InvoicesPage() {
 
       {deleteTarget && (
         <Modal title="Delete invoice" onClose={() => setDeleteTarget(null)}>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             Are you sure you want to delete invoice{" "}
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-main">
               {deleteTarget.invoiceNumber}
             </span>
             ? This cannot be undone.
@@ -480,7 +480,7 @@ export default function InvoicesPage() {
               type="button"
               onClick={() => setDeleteTarget(null)}
               disabled={deleting}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-muted transition-all duration-250 hover:bg-surface-muted disabled:opacity-50"
             >
               Cancel
             </button>
@@ -488,7 +488,7 @@ export default function InvoicesPage() {
               type="button"
               onClick={() => handleDelete(deleteTarget)}
               disabled={deleting}
-              className="inline-flex items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-danger/90 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white transition-all duration-250 hover:bg-danger/90 disabled:opacity-60"
             >
               {deleting && (
                 <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -517,7 +517,7 @@ function ReceiptLink({ invoice }: { invoice: Invoice }) {
       href={invoice.receiptUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="mt-1 flex w-fit items-center gap-1 text-xs font-medium text-colly transition-colors hover:underline"
+      className="mt-1 flex w-fit items-center gap-1 text-xs font-medium text-colly transition-all duration-250 hover:underline"
     >
       <Receipt className="h-3.5 w-3.5" aria-hidden />
       View Receipt
@@ -549,7 +549,7 @@ function InvoiceActions({
           disabled={approving}
           aria-label={`Approve payment for invoice ${invoice.invoiceNumber}`}
           title="Approve Payment"
-          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-semibold whitespace-nowrap text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-semibold whitespace-nowrap text-white transition-all duration-250 hover:bg-emerald-700 disabled:opacity-60"
         >
           {approving ? (
             <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -563,7 +563,7 @@ function InvoiceActions({
         href={`/invoices/${invoice.id}`}
         aria-label={`View invoice ${invoice.invoiceNumber}`}
         title="View"
-        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-all duration-250 hover:bg-surface-muted hover:text-main"
       >
         <Eye className="h-4 w-4" aria-hidden />
       </Link>
@@ -573,7 +573,7 @@ function InvoiceActions({
           onClick={onDelete}
           aria-label={`Delete invoice ${invoice.invoiceNumber}`}
           title="Delete"
-          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
+          className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-all duration-250 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-danger"
         >
           <Trash className="h-4 w-4" aria-hidden />
         </button>
@@ -589,9 +589,9 @@ type LineItemInput = {
   unitPrice: string;
 };
 
-const CREATE_LABEL_CLASS = "mb-1 block text-sm font-medium text-gray-700";
+const CREATE_LABEL_CLASS = "mb-1 block text-sm font-medium text-main";
 const CREATE_INPUT_CLASS =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+  "w-full rounded-lg border border-card-border px-3 py-2 text-sm text-main outline-none transition-all duration-250 focus:border-colly focus:ring-2 focus:ring-colly/20";
 
 let nextLineKey = 1;
 
@@ -728,9 +728,9 @@ function CreateInvoiceModal({
         </div>
 
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-700">Line items</p>
+          <p className="text-sm font-medium text-main">Line items</p>
           {lines.map((line) => (
-            <div key={line.key} className="rounded-lg border border-gray-200 p-3">
+            <div key={line.key} className="surface-panel p-3">
               <input
                 type="text"
                 value={line.name}
@@ -773,7 +773,7 @@ function CreateInvoiceModal({
                     onClick={() => removeLine(line.key)}
                     aria-label="Remove line item"
                     title="Remove"
-                    className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
+                    className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-muted transition-all duration-250 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-danger"
                   >
                     <Trash className="h-4 w-4" aria-hidden />
                   </button>
@@ -784,14 +784,14 @@ function CreateInvoiceModal({
           <button
             type="button"
             onClick={addLine}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-card-ring bg-card-surface px-3 py-1.5 text-sm font-medium text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Add line
           </button>
         </div>
 
-        <div className="space-y-1 rounded-lg bg-gray-50 px-3 py-3 text-sm text-gray-700">
+        <div className="space-y-1 rounded-lg bg-surface-muted px-3 py-3 text-sm text-main">
           <div className="flex items-center justify-between">
             <span>Subtotal</span>
             <span>{formatNaira(subtotal)}</span>
@@ -800,7 +800,7 @@ function CreateInvoiceModal({
             <span>VAT (7.5%)</span>
             <span>{formatNaira(vat)}</span>
           </div>
-          <div className="flex items-center justify-between font-semibold text-gray-900">
+          <div className="flex items-center justify-between font-semibold text-main">
             <span>Total</span>
             <span>{formatNaira(subtotal + vat)}</span>
           </div>
@@ -813,14 +813,14 @@ function CreateInvoiceModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+            className="rounded-lg px-4 py-2 text-sm font-medium text-muted transition-all duration-250 hover:bg-surface-muted disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-colly px-4 py-2 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98] disabled:opacity-60"
           >
             {saving && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />}
             Create Invoice
@@ -833,18 +833,18 @@ function CreateInvoiceModal({
 
 function InvoicesSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-surface">
+    <div className="surface-card overflow-hidden">
       {[0, 1, 2, 3].map((row) => (
         <div
           key={row}
-          className="flex items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-b-0"
+          className="flex items-center gap-4 border-b border-card-border px-6 py-4 last:border-b-0"
         >
           <div className="flex-1 space-y-2">
-            <div className="h-3.5 w-40 animate-pulse rounded bg-gray-100" />
-            <div className="h-3 w-24 animate-pulse rounded bg-gray-100" />
+            <div className="h-3.5 w-40 animate-pulse rounded bg-surface-muted" />
+            <div className="h-3 w-24 animate-pulse rounded bg-surface-muted" />
           </div>
-          <div className="h-3.5 w-20 animate-pulse rounded bg-gray-100" />
-          <div className="h-6 w-14 animate-pulse rounded-full bg-gray-100" />
+          <div className="h-3.5 w-20 animate-pulse rounded bg-surface-muted" />
+          <div className="h-6 w-14 animate-pulse rounded-full bg-surface-muted" />
         </div>
       ))}
     </div>

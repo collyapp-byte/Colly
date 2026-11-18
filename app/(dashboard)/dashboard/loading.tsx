@@ -13,41 +13,36 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export default function DashboardOverviewLoading() {
   return (
-    <div className="mx-auto w-full max-w-6xl">
-      <div className="mb-6">
-        <Skeleton className="h-8 w-40" />
+    <div className="mx-auto w-full max-w-6xl space-y-5 md:space-y-6">
+      {/* Greeting card: eyebrow, name, one-line description. */}
+      <div className="surface-card p-5 md:p-6">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="mt-3 h-8 w-52 max-w-full" />
+        <Skeleton className="mt-2 h-4 w-72 max-w-full" />
       </div>
 
-      {/* Setup checklist: heading row, progress bar, three step rows. */}
-      <div className="mb-6 rounded-xl border border-[#FF6600]/30 bg-[#FFF4EC] p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="w-full">
-            <Skeleton className="h-4 w-36" />
-            <Skeleton className="mt-2 h-4 w-64 max-w-full" />
-          </div>
-          <Skeleton className="h-4 w-8 shrink-0" />
-        </div>
-        <Skeleton className="mt-3 h-2 w-full" />
-        <div className="mt-4 space-y-2">
-          <Skeleton className="h-[104px] w-full" />
-          <Skeleton className="h-[104px] w-full" />
-          <Skeleton className="h-[104px] w-full" />
+      {/* Setup checklist: heading row plus the three step cards. */}
+      <div className="rounded-2xl border border-colly/20 bg-colly-tint/40 p-5 shadow-card sm:p-6">
+        <Skeleton className="h-4 w-36" />
+        <Skeleton className="mt-2 h-4 w-64 max-w-full" />
+        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+          <Skeleton className="h-[132px] w-full" />
+          <Skeleton className="h-[132px] w-full" />
+          <Skeleton className="h-[132px] w-full" />
         </div>
       </div>
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-[104px] w-full" />
+        <Skeleton className="h-[104px] w-full" />
+        <Skeleton className="h-[104px] w-full" />
+        <Skeleton className="h-[104px] w-full" />
       </section>
 
-      <div className="mt-6">
-        <Skeleton className="h-64 w-full" />
-      </div>
-
-      <div className="mt-6">
-        <Skeleton className="h-52 w-full" />
+      {/* Two-up panels, matching the trend + WhatsApp row. */}
+      <div className="grid gap-5 lg:grid-cols-5">
+        <Skeleton className="h-72 w-full lg:col-span-3" />
+        <Skeleton className="h-72 w-full lg:col-span-2" />
       </div>
     </div>
   );

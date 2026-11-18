@@ -125,14 +125,14 @@ export default function QrCodePage() {
       <div data-print-hide>
         <Link
           href="/settings/web-chat"
-          className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-colly"
+          className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-all duration-250 hover:text-colly"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Back to Web Chat
         </Link>
 
-        <h1 className="font-display text-2xl text-gray-900">In-Store QR Code</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="font-display text-2xl text-main">In-Store QR Code</h1>
+        <p className="mt-1 text-sm text-muted">
           Print this card and keep it on your counter, so customers can scan it
           and chat with your AI assistant right away.
         </p>
@@ -152,6 +152,8 @@ export default function QrCodePage() {
       {business ? (
         <>
           <div data-print-flush className="mt-6 flex justify-center">
+            {/* Deliberately fixed white: this card is printed and taped to a
+                counter, so it must not follow the system colour scheme. */}
             <div
               data-print-card
               className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white px-8 py-10 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.25)]"
@@ -228,12 +230,12 @@ export default function QrCodePage() {
 function QrCardSkeleton() {
   return (
     <div className="mt-6 flex justify-center">
-      <div className="w-full max-w-sm animate-pulse rounded-2xl border border-gray-200 bg-white px-8 py-10">
-        <div className="mx-auto h-5 w-20 rounded bg-gray-100" />
-        <div className="mx-auto mt-5 h-7 w-44 rounded bg-gray-100" />
-        <div className="mx-auto mt-6 h-52 w-52 rounded-lg bg-gray-100" />
-        <div className="mx-auto mt-6 h-4 w-52 rounded bg-gray-100" />
-        <div className="mx-auto mt-2 h-3 w-40 rounded bg-gray-100" />
+      <div className="w-full max-w-sm animate-pulse rounded-2xl border border-card-border bg-card-surface px-8 py-10">
+        <div className="mx-auto h-5 w-20 rounded bg-surface-muted" />
+        <div className="mx-auto mt-5 h-7 w-44 rounded bg-surface-muted" />
+        <div className="mx-auto mt-6 h-52 w-52 rounded-lg bg-surface-muted" />
+        <div className="mx-auto mt-6 h-4 w-52 rounded bg-surface-muted" />
+        <div className="mx-auto mt-2 h-3 w-40 rounded bg-surface-muted" />
       </div>
     </div>
   );

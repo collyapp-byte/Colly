@@ -81,10 +81,10 @@ export default async function BookingsPage() {
   return (
     <div className="mx-auto w-full max-w-3xl">
       <BackButton />
-      <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
+      <h1 className="font-display text-2xl text-main sm:text-3xl">
         Bookings
       </h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="mt-1 text-sm text-muted">
         Appointments your AI booked in chat, in Africa/Lagos time. Confirm a slot
         or cancel it — the customer is not messaged automatically.
       </p>
@@ -94,7 +94,7 @@ export default async function BookingsPage() {
           <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
             {pendingCount} awaiting confirmation
           </span>
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+          <span className="rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-main">
             {bookings.length} booked
           </span>
         </div>
@@ -103,7 +103,7 @@ export default async function BookingsPage() {
       <BookingsList bookings={bookings} />
 
       {truncated && (
-        <p className="mt-4 text-xs text-gray-500">
+        <p className="mt-4 text-xs text-muted">
           Showing the first {MAX_BOOKINGS_SHOWN} appointments, soonest first.
         </p>
       )}

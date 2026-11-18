@@ -61,7 +61,7 @@ const EMPTY_STATE_TEXT =
   "No sales yet. Record your first sale or wait for the AI to close one.";
 
 const FILTER_CLASS =
-  "rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+  "rounded-lg border border-card-border px-3 py-2 text-sm text-main outline-none transition-all duration-250 focus:border-colly focus:ring-2 focus:ring-colly/20";
 
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[] | null>(null);
@@ -199,7 +199,7 @@ export default function SalesPage() {
     <div className="mx-auto w-full max-w-5xl">
       <Link
         href="/sales"
-        className="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-colly/30 bg-colly/5 px-3 py-1.5 text-sm font-semibold text-colly transition-colors hover:bg-colly/10"
+        className="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-colly/30 bg-colly/5 px-3 py-1.5 text-sm font-semibold text-colly transition-all duration-250 hover:bg-colly/10"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Sales
@@ -214,10 +214,10 @@ export default function SalesPage() {
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
+          <h1 className="font-display text-2xl text-main sm:text-3xl">
             Sales
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted">
             Every sale your business has recorded, with totals for the current
             filter.
           </p>
@@ -226,7 +226,7 @@ export default function SalesPage() {
           <button
             type="button"
             onClick={() => setModal({ kind: "create" })}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-all duration-250 hover:bg-colly-hover"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Record Sale
@@ -235,11 +235,11 @@ export default function SalesPage() {
       </div>
 
       {/* Total */}
-      <div className="mb-4 flex items-center justify-between rounded-lg border border-gray-200 bg-surface px-6 py-4">
-        <p className="text-sm text-gray-500">
+      <div className="surface-card mb-4 flex items-center justify-between px-6 py-4">
+        <p className="text-sm text-muted">
           Total{sales && sales.length > 0 ? ` (${sales.length} sale${sales.length === 1 ? "" : "s"})` : ""}
         </p>
-        <p className="font-display text-2xl text-gray-900">
+        <p className="font-display text-2xl text-main">
           {formatNaira(total)}
         </p>
       </div>
@@ -299,8 +299,8 @@ export default function SalesPage() {
       )}
 
       {sales && sales.length === 0 && (
-        <div className="rounded-lg border border-dashed border-gray-200 bg-surface p-10 text-center">
-          <p className="mx-auto max-w-md text-sm text-gray-500">
+        <div className="rounded-lg border border-dashed border-card-border bg-surface p-10 text-center">
+          <p className="mx-auto max-w-md text-sm text-muted">
             {EMPTY_STATE_TEXT}
           </p>
         </div>
@@ -309,10 +309,10 @@ export default function SalesPage() {
       {sales && sales.length > 0 && (
         <>
           {/* Desktop table */}
-          <div className="hidden overflow-hidden rounded-lg border border-gray-200 bg-surface md:block">
+          <div className="hidden surface-card overflow-hidden md:block">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr className="border-b border-card-border bg-surface-muted text-xs uppercase tracking-wide text-muted">
                   <th scope="col" className="px-6 py-3 font-medium">
                     Date
                   </th>
@@ -339,26 +339,26 @@ export default function SalesPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-card-border">
                 {sales.map((sale) => (
                   <tr
                     key={sale.id}
-                    className="transition-colors hover:bg-gray-50"
+                    className="transition-all duration-250 hover:bg-surface-muted"
                   >
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-500">
+                    <td className="whitespace-nowrap px-6 py-4 text-muted">
                       {formatSaleDate(sale.createdAt)}
                     </td>
-                    <td className="px-6 py-4 font-semibold text-gray-900">
+                    <td className="px-6 py-4 font-semibold text-main">
                       {sale.customer.name}
                     </td>
-                    <td className="px-6 py-4 text-gray-500">
+                    <td className="px-6 py-4 text-muted">
                       {saleItemName(sale)}
                     </td>
-                    <td className="px-6 py-4 text-gray-700">{sale.quantity}</td>
-                    <td className="px-6 py-4 text-gray-500">
+                    <td className="px-6 py-4 text-main">{sale.quantity}</td>
+                    <td className="px-6 py-4 text-muted">
                       {paymentLabel(sale.paymentMethod)}
                     </td>
-                    <td className="whitespace-nowrap px-6 py-4 font-medium text-gray-900">
+                    <td className="whitespace-nowrap px-6 py-4 font-medium text-main">
                       {formatNaira(sale.totalAmount)}
                     </td>
                     <td className="px-6 py-4">
@@ -385,14 +385,14 @@ export default function SalesPage() {
             {sales.map((sale) => (
               <li
                 key={sale.id}
-                className="rounded-lg border border-gray-200 bg-surface p-4"
+                className="surface-card p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-main">
                       {sale.customer.name}
                     </p>
-                    <p className="mt-0.5 text-xs text-gray-500">
+                    <p className="mt-0.5 text-xs text-muted">
                       {saleItemName(sale)} × {sale.quantity} ·{" "}
                       {formatSaleDate(sale.createdAt)}
                     </p>
@@ -400,7 +400,7 @@ export default function SalesPage() {
                   <SaleStatusBadge status={sale.status} />
                 </div>
                 <div className="mt-3 flex items-center justify-between">
-                  <p className="font-display text-lg text-gray-900">
+                  <p className="font-display text-lg text-main">
                     {formatNaira(sale.totalAmount)}
                   </p>
                   <ActionButtons
@@ -433,13 +433,13 @@ export default function SalesPage() {
 
       {modal.kind === "delete" && (
         <Modal title="Delete sale" onClose={closeModal}>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted">
             Are you sure you want to delete this sale by{" "}
-            <span className="font-semibold text-gray-900">
+            <span className="font-semibold text-main">
               {modal.sale.customer.name}
             </span>{" "}
             for{" "}
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-main">
               {formatNaira(modal.sale.totalAmount)}
             </span>
             ? This cannot be undone.
@@ -454,7 +454,7 @@ export default function SalesPage() {
               type="button"
               onClick={closeModal}
               disabled={deleting}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-muted transition-all duration-250 hover:bg-surface-muted disabled:opacity-50"
             >
               Cancel
             </button>
@@ -462,7 +462,7 @@ export default function SalesPage() {
               type="button"
               onClick={() => handleDelete(modal.sale)}
               disabled={deleting}
-              className="inline-flex items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-danger/90 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-semibold text-white transition-all duration-250 hover:bg-danger/90 disabled:opacity-60"
             >
               {deleting && (
                 <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -492,7 +492,7 @@ function SaleStatusBadge({ status }: { status: SaleStatus }) {
   const styles: Record<SaleStatus, string> = {
     paid: "bg-green-100 text-green-700",
     pending: "bg-amber-100 text-amber-700",
-    cancelled: "bg-gray-100 text-gray-600",
+    cancelled: "bg-surface-muted text-muted",
   };
 
   return (
@@ -517,7 +517,7 @@ function ActionButtons({ onEdit, onDelete }: ActionButtonsProps) {
         onClick={onEdit}
         aria-label="Edit sale"
         title="Edit"
-        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-all duration-250 hover:bg-surface-muted hover:text-main"
       >
         <Pencil className="h-4 w-4" aria-hidden />
       </button>
@@ -526,7 +526,7 @@ function ActionButtons({ onEdit, onDelete }: ActionButtonsProps) {
         onClick={onDelete}
         aria-label="Delete sale"
         title="Delete"
-        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-red-50 hover:text-danger"
+        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-all duration-250 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-danger"
       >
         <Trash className="h-4 w-4" aria-hidden />
       </button>
@@ -536,18 +536,18 @@ function ActionButtons({ onEdit, onDelete }: ActionButtonsProps) {
 
 function SalesSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-surface">
+    <div className="surface-card overflow-hidden">
       {[0, 1, 2, 3].map((row) => (
         <div
           key={row}
-          className="flex items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-b-0"
+          className="flex items-center gap-4 border-b border-card-border px-6 py-4 last:border-b-0"
         >
           <div className="flex-1 space-y-2">
-            <div className="h-3.5 w-40 animate-pulse rounded bg-gray-100" />
-            <div className="h-3 w-24 animate-pulse rounded bg-gray-100" />
+            <div className="h-3.5 w-40 animate-pulse rounded bg-surface-muted" />
+            <div className="h-3 w-24 animate-pulse rounded bg-surface-muted" />
           </div>
-          <div className="h-3.5 w-20 animate-pulse rounded bg-gray-100" />
-          <div className="h-6 w-14 animate-pulse rounded-full bg-gray-100" />
+          <div className="h-3.5 w-20 animate-pulse rounded bg-surface-muted" />
+          <div className="h-6 w-14 animate-pulse rounded-full bg-surface-muted" />
         </div>
       ))}
     </div>

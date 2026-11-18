@@ -36,10 +36,18 @@ const DEAL_COLUMNS: {
   label: string;
   background: string;
 }[] = [
-  { status: "INQUIRY", label: "Inquiry", background: "bg-blue-50" },
-  { status: "NEGOTIATING", label: "Negotiating", background: "bg-amber-50" },
-  { status: "PAID", label: "Paid", background: "bg-green-50" },
-  { status: "DELIVERED", label: "Delivered", background: "bg-gray-50" },
+  {
+    status: "INQUIRY",
+    label: "Inquiry",
+    background: "bg-blue-50 dark:bg-blue-950/30",
+  },
+  {
+    status: "NEGOTIATING",
+    label: "Negotiating",
+    background: "bg-amber-50 dark:bg-amber-950/30",
+  },
+  { status: "PAID", label: "Paid", background: "bg-green-50 dark:bg-green-950/30" },
+  { status: "DELIVERED", label: "Delivered", background: "bg-surface-muted" },
 ];
 
 function isDealStatus(value: string): value is DealStatus {
@@ -160,21 +168,21 @@ export default function CustomersPage() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <BackButton />
-          <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
+          <h1 className="font-display text-2xl text-main sm:text-3xl">
             Customers
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted">
             Everyone who has messaged your business, with their tags and spending.
           </p>
         </div>
-        <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+        <div className="inline-flex rounded-xl border border-card-ring bg-surface-muted/60 p-1 shadow-sm">
           <button
             type="button"
             onClick={() => setView("list")}
-            className={`rounded-md px-3 py-2 min-h-[44px] text-sm font-medium transition-colors ${
+            className={`rounded-lg px-3 py-2 min-h-[44px] text-sm font-medium transition-all duration-250 active:scale-[0.97] ${
               view === "list"
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-500 hover:text-gray-900"
+                ? "bg-card-surface text-main shadow-card"
+                : "text-muted hover:text-main"
             }`}
           >
             List View
@@ -182,10 +190,10 @@ export default function CustomersPage() {
           <button
             type="button"
             onClick={() => setView("kanban")}
-            className={`rounded-md px-3 py-2 min-h-[44px] text-sm font-medium transition-colors ${
+            className={`rounded-lg px-3 py-2 min-h-[44px] text-sm font-medium transition-all duration-250 active:scale-[0.97] ${
               view === "kanban"
-                ? "bg-gray-100 text-gray-900"
-                : "text-gray-500 hover:text-gray-900"
+                ? "bg-card-surface text-main shadow-card"
+                : "text-muted hover:text-main"
             }`}
           >
             Kanban View
@@ -206,8 +214,8 @@ export default function CustomersPage() {
       )}
 
       {customers && customers.length === 0 && (
-        <div className="rounded-lg border border-dashed border-gray-200 bg-surface p-10 text-center">
-          <p className="mx-auto max-w-md text-sm text-gray-500">
+        <div className="rounded-xl border border-dashed border-card-ring bg-surface-muted/40 p-10 text-center">
+          <p className="mx-auto max-w-md text-sm text-muted">
             {EMPTY_STATE_TEXT}
           </p>
         </div>
@@ -216,10 +224,10 @@ export default function CustomersPage() {
       {customers && customers.length > 0 && view === "list" && (
         <>
           {/* Desktop table */}
-          <div className="hidden overflow-hidden rounded-lg border border-gray-200 bg-surface md:block">
+          <div className="hidden surface-card overflow-hidden md:block">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr className="border-b border-card-border bg-surface-muted text-xs uppercase tracking-wide text-muted">
                   <th scope="col" className="px-4 py-3 font-medium">
                     Name
                   </th>
@@ -240,18 +248,18 @@ export default function CustomersPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-card-border">
                 {customers.map((customer) => (
                   <tr
                     key={customer.id}
-                    className="relative transition-colors hover:bg-gray-50"
+                    className="relative transition-all duration-250 hover:bg-surface-muted"
                   >
                     <td className="px-4 py-4">
                       {/* Stretches the link over the whole row so the entire
                           customer row is clickable. */}
                       <Link
                         href={`/customers/${customer.id}`}
-                        className="font-semibold text-gray-900 after:absolute after:inset-0"
+                        className="font-semibold text-main after:absolute after:inset-0"
                       >
                         {customer.name}
                       </Link>
@@ -261,19 +269,19 @@ export default function CustomersPage() {
                         </span>
                       )}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-4 text-gray-600">
+                    <td className="whitespace-nowrap px-4 py-4 text-muted">
                       {customer.phone}
                     </td>
                     <td className="px-4 py-4">
                       <TagPills tags={customer.tags} />
                     </td>
-                    <td className="whitespace-nowrap px-4 py-4 font-medium text-gray-900">
+                    <td className="whitespace-nowrap px-4 py-4 font-medium text-main">
                       {formatNaira(customer.totalSpent)}
                     </td>
-                    <td className="px-4 py-4 text-gray-600">
+                    <td className="px-4 py-4 text-muted">
                       {customer.conversationCount}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-4 text-gray-500">
+                    <td className="whitespace-nowrap px-4 py-4 text-muted">
                       {formatRelativeTime(
                         customer.lastMessageAt ?? customer.createdAt,
                       )}
@@ -290,19 +298,19 @@ export default function CustomersPage() {
               <li key={customer.id}>
                 <Link
                   href={`/customers/${customer.id}`}
-                  className="block rounded-lg border border-gray-200 bg-surface p-4 transition-colors hover:bg-gray-50"
+                  className="surface-card surface-card-interactive block p-4"
                 >
                   <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate font-semibold text-gray-900">
+                    <p className="truncate font-semibold text-main">
                       {customer.name}
                     </p>
-                    <span className="shrink-0 text-xs text-gray-400">
+                    <span className="shrink-0 text-xs text-muted">
                       {formatRelativeTime(
                         customer.lastMessageAt ?? customer.createdAt,
                       )}
                     </span>
                   </div>
-                  <p className="mt-0.5 text-xs text-gray-500">
+                  <p className="mt-0.5 text-xs text-muted">
                     {customer.phone}
                   </p>
                   {isAtRisk(customer) && (
@@ -316,13 +324,13 @@ export default function CustomersPage() {
                     </div>
                   )}
                   <div className="mt-2 flex items-center justify-between gap-2">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted">
                       {customer.conversationCount}{" "}
                       {customer.conversationCount === 1
                         ? "conversation"
                         : "conversations"}
                     </p>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-sm font-semibold text-main">
                       {formatNaira(customer.totalSpent)}
                     </p>
                   </div>
@@ -350,10 +358,10 @@ export default function CustomersPage() {
                       className={`min-h-[240px] rounded-lg p-3 ${column.background}`}
                     >
                       <div className="mb-3 flex items-center justify-between">
-                        <h2 className="text-sm font-semibold text-gray-900">
+                        <h2 className="text-sm font-semibold text-main">
                           {column.label}
                         </h2>
-                        <span className="rounded-full bg-white/80 px-2 py-0.5 text-xs font-semibold text-gray-600">
+                        <span className="rounded-full bg-card-surface/80 px-2 py-0.5 text-xs font-semibold text-muted">
                           {columnCustomers.length}
                         </span>
                       </div>
@@ -370,16 +378,16 @@ export default function CustomersPage() {
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 {...dragProvided.dragHandleProps}
-                                className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+                                className="surface-card p-4"
                               >
                                 <Link
                                   href={`/customers/${customer.id}`}
                                   className="block"
                                 >
-                                  <p className="truncate font-semibold text-gray-900">
+                                  <p className="truncate font-semibold text-main">
                                     {customer.name}
                                   </p>
-                                  <p className="mt-0.5 text-xs text-gray-500">
+                                  <p className="mt-0.5 text-xs text-muted">
                                     {customer.phone}
                                   </p>
                                   {isAtRisk(customer) && (
@@ -387,7 +395,7 @@ export default function CustomersPage() {
                                       <AtRiskBadge />
                                     </div>
                                   )}
-                                  <p className="mt-2 text-sm font-semibold text-gray-900">
+                                  <p className="mt-2 text-sm font-semibold text-main">
                                     {formatNaira(customer.totalSpent)}
                                   </p>
                                 </Link>
@@ -411,7 +419,7 @@ export default function CustomersPage() {
 
 function TagPills({ tags }: { tags: string[] }) {
   if (tags.length === 0) {
-    return <span className="text-gray-300">—</span>;
+    return <span className="text-muted">—</span>;
   }
 
   const visible = tags.slice(0, 3);
@@ -422,13 +430,13 @@ function TagPills({ tags }: { tags: string[] }) {
       {visible.map((tag) => (
         <span
           key={tag}
-          className="inline-flex items-center rounded-full bg-[#FFF4EC] px-2 py-0.5 text-[11px] font-semibold text-[#C2410C]"
+          className="inline-flex items-center rounded-full bg-colly-tint px-2 py-0.5 text-[11px] font-semibold text-colly"
         >
           {tag}
         </span>
       ))}
       {extra > 0 && (
-        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-500">
+        <span className="inline-flex items-center rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-semibold text-muted">
           +{extra}
         </span>
       )}
@@ -438,18 +446,18 @@ function TagPills({ tags }: { tags: string[] }) {
 
 function CustomersSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-surface">
+    <div className="surface-card overflow-hidden">
       {[0, 1, 2, 3].map((row) => (
         <div
           key={row}
-          className="flex items-center gap-4 border-b border-gray-100 px-6 py-4 last:border-b-0"
+          className="flex items-center gap-4 border-b border-card-border px-6 py-4 last:border-b-0"
         >
           <div className="flex-1 space-y-2">
-            <div className="h-3.5 w-32 animate-pulse rounded bg-gray-100" />
-            <div className="h-3 w-24 animate-pulse rounded bg-gray-100" />
+            <div className="h-3.5 w-32 animate-pulse rounded bg-surface-muted" />
+            <div className="h-3 w-24 animate-pulse rounded bg-surface-muted" />
           </div>
-          <div className="hidden h-3.5 w-24 animate-pulse rounded bg-gray-100 sm:block" />
-          <div className="h-3.5 w-16 animate-pulse rounded bg-gray-100" />
+          <div className="hidden h-3.5 w-24 animate-pulse rounded bg-surface-muted sm:block" />
+          <div className="h-3.5 w-16 animate-pulse rounded bg-surface-muted" />
         </div>
       ))}
     </div>

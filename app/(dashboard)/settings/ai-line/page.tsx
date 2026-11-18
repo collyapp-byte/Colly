@@ -19,10 +19,10 @@ import { saveDiscordBotToken } from "@/app/api/discord/actions";
 import { toast } from "sonner";
 import type { Business } from "@/lib/business";
 
-const SECTION_CLASS = "rounded-lg border border-gray-200 bg-surface p-5 sm:p-6";
-const HEADING_CLASS = "font-display text-base tracking-wide text-gray-900";
+const SECTION_CLASS = "surface-card p-5 sm:p-6";
+const HEADING_CLASS = "font-display text-base tracking-wide text-main";
 const INPUT_CLASS =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+  "w-full rounded-lg border border-card-border px-3 py-2 text-sm text-main outline-none transition-all duration-250 focus:border-colly focus:ring-2 focus:ring-colly/20";
 
 /** How the Telegram AI line works today. */
 const HOW_IT_WORKS = [
@@ -434,22 +434,22 @@ export default function AiLinePage() {
     <div className="mx-auto w-full max-w-3xl">
       <BackButton />
 
-      <h1 className="font-display text-2xl text-gray-900">AI Line</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="font-display text-2xl text-main">AI Line</h1>
+      <p className="mt-1 text-sm text-muted">
         Connect Telegram or Discord and the AI answers customers on every
         message.
       </p>
 
       {/* HOW IT WORKS - compact orientation box right under the header. */}
-      <section className="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
-        <h2 className="font-display text-base text-gray-900">
+      <section className="surface-panel mt-5 p-4 text-sm">
+        <h2 className="font-display text-base text-main">
           How Colly AI works across channels:
         </h2>
         <ul className="mt-3 space-y-2">
           {HOW_IT_WORKS.map((line) => (
             <li
               key={line}
-              className="flex items-start gap-2 text-gray-600"
+              className="flex items-start gap-2 text-muted"
             >
               <PhoneCall
                 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FF6600]"
@@ -483,10 +483,10 @@ export default function AiLinePage() {
 
               <a
                 href="#connect-telegram"
-                className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3 transition-colors hover:bg-gray-50"
+                className="surface-panel flex cursor-pointer flex-wrap items-center justify-between gap-3 p-3 transition-all duration-250 hover:-translate-y-px hover:shadow-sm"
               >
-                <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-900">
-                  <Send className="h-4 w-4 text-gray-500" aria-hidden />
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-main">
+                  <Send className="h-4 w-4 text-muted" aria-hidden />
                   Telegram
                 </span>
                 {telegramIsConnected ? (
@@ -504,10 +504,10 @@ export default function AiLinePage() {
 
               <a
                 href="#connect-discord"
-                className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3 transition-colors hover:bg-gray-50"
+                className="surface-panel flex cursor-pointer flex-wrap items-center justify-between gap-3 p-3 transition-all duration-250 hover:-translate-y-px hover:shadow-sm"
               >
-                <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-900">
-                  <MessageSquare className="h-4 w-4 text-gray-500" aria-hidden />
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-main">
+                  <MessageSquare className="h-4 w-4 text-muted" aria-hidden />
                   Discord
                 </span>
                 {discordIsConnected ? (
@@ -525,10 +525,10 @@ export default function AiLinePage() {
 
               <Link
                 href="/settings/web-chat"
-                className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3 transition-colors hover:bg-gray-50"
+                className="surface-panel flex cursor-pointer flex-wrap items-center justify-between gap-3 p-3 transition-all duration-250 hover:-translate-y-px hover:shadow-sm"
               >
-                <span className="inline-flex items-center gap-2 text-sm font-medium text-gray-900">
-                  <Globe className="h-4 w-4 text-gray-500" aria-hidden />
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-main">
+                  <Globe className="h-4 w-4 text-muted" aria-hidden />
                   Web Chat
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-100 px-2.5 py-0.5 text-[12px] font-medium text-green-700">
@@ -554,25 +554,25 @@ export default function AiLinePage() {
                   Both steps done
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#FF6600]/30 bg-[#FFF4EC] px-2.5 py-0.5 text-[12px] font-medium text-[#C2410C]">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#FF6600]/30 bg-colly-tint px-2.5 py-0.5 text-[12px] font-medium text-colly">
                   <Clock className="h-3.5 w-3.5" aria-hidden />
                   {telegramStepProgress}
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-muted">
               Two steps, both inside Telegram: connect the bot your customers
               chat with, then link your own chat so handoff alerts reach you.
             </p>
 
             {/* STEP 1: the customer-facing bot. */}
-            <div className="mt-5 rounded-lg border border-gray-200 p-4">
+            <div className="surface-panel mt-5 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-[#FFF4EC] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#C2410C]">
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-colly-tint px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-colly">
                     Step 1 of 2
                   </span>
-                  <h3 className="font-display text-sm font-semibold text-gray-900">
+                  <h3 className="font-display text-sm font-semibold text-main">
                     Connect your bot
                   </h3>
                 </div>
@@ -614,7 +614,7 @@ export default function AiLinePage() {
                         value={shareLink}
                         aria-label="Your bot link"
                         onFocus={(event) => event.target.select()}
-                        className={`${INPUT_CLASS} bg-white`}
+                        className={`${INPUT_CLASS} bg-card-surface`}
                       />
                       <Button
                         type="button"
@@ -639,7 +639,7 @@ export default function AiLinePage() {
                     <div className="mt-4 flex flex-wrap items-start gap-4">
                       {qrSvg && (
                         <div
-                          className="shrink-0 rounded-lg border border-green-200 bg-white p-2 [&>svg]:block"
+                          className="shrink-0 rounded-lg border border-green-200 bg-card-surface p-2 [&>svg]:block"
                           aria-hidden
                           dangerouslySetInnerHTML={{ __html: qrSvg }}
                         />
@@ -672,7 +672,7 @@ export default function AiLinePage() {
                     type="button"
                     onClick={handleTelegramDisconnect}
                     disabled={disconnecting}
-                    className="text-xs font-medium text-danger underline-offset-2 transition-colors hover:underline disabled:opacity-50"
+                    className="text-xs font-medium text-danger underline-offset-2 transition-all duration-250 hover:underline disabled:opacity-50"
                   >
                     {disconnecting
                       ? "Disconnecting..."
@@ -686,9 +686,9 @@ export default function AiLinePage() {
                   {TELEGRAM_STEPS.map((step) => (
                     <li
                       key={step}
-                      className="flex items-start gap-3 text-sm text-gray-600"
+                      className="flex items-start gap-3 text-sm text-muted"
                     >
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#FFF4EC] text-[#FF6600]">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-colly-tint text-[#FF6600]">
                         <Send className="h-3 w-3" aria-hidden />
                       </span>
                       <span>{step}</span>
@@ -700,7 +700,7 @@ export default function AiLinePage() {
                   <div>
                     <label
                       htmlFor="botToken"
-                      className="mb-1 block text-sm font-medium text-gray-700"
+                      className="mb-1 block text-sm font-medium text-main"
                     >
                       Bot Token
                     </label>
@@ -745,7 +745,7 @@ export default function AiLinePage() {
             <div
               id="owner-alerts"
               className={`mt-4 rounded-lg border p-4 ${
-                ownerLinked ? "border-gray-200" : "border-2 border-[#FF6600]"
+                ownerLinked ? "border-card-border" : "border-2 border-[#FF6600]"
               }`}
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -754,10 +754,10 @@ export default function AiLinePage() {
                     className="h-4 w-4 shrink-0 text-[#FF6600]"
                     aria-hidden
                   />
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-[#FFF4EC] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#C2410C]">
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-colly-tint px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-colly">
                     Step 2 of 2
                   </span>
-                  <h3 className="font-display text-sm font-semibold text-gray-900">
+                  <h3 className="font-display text-sm font-semibold text-main">
                     Get alerts on your phone
                   </h3>
                 </div>
@@ -769,30 +769,30 @@ export default function AiLinePage() {
                 ) : null}
               </div>
               {!ownerLinked && (
-                <p className="mt-3 rounded-lg border border-[#FF6600]/30 bg-[#FFF4EC] px-3 py-2 text-sm font-medium text-[#C2410C]">
+                <p className="mt-3 rounded-lg border border-[#FF6600]/30 bg-colly-tint px-3 py-2 text-sm font-medium text-colly">
                   Required for AI handoffs. If not set, you will not know when
                   the AI needs your help.
                 </p>
               )}
               {!telegramIsConnected && (
-                <p className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                <p className="mt-3 rounded-lg border border-card-border bg-surface-muted px-3 py-2 text-sm text-muted">
                   Do step 1 first. The{" "}
                   <span className="font-mono text-[13px]">/startowner</span>{" "}
                   command below only works once your bot is connected.
                 </p>
               )}
-            <p className="mt-3 text-sm text-gray-600">
+            <p className="mt-3 text-sm text-muted">
               Get alerts on your personal phone when the AI needs you to step
               in - for example a waybill question or a custom quote. Alerts go
               to your personal Telegram chat, never to your customer chats.
             </p>
 
-            <ol className="mt-3 space-y-2 text-sm text-gray-600">
+            <ol className="mt-3 space-y-2 text-sm text-muted">
               <li className="flex items-start gap-2">
-                <span className="font-semibold text-gray-700">1.</span>
+                <span className="font-semibold text-main">1.</span>
                 <span>
                   Open your Telegram bot:{" "}
-                  <span className="font-medium text-gray-700">
+                  <span className="font-medium text-main">
                     {business.telegramBotUsername
                       ? `@${business.telegramBotUsername}`
                       : "your bot"}
@@ -800,16 +800,16 @@ export default function AiLinePage() {
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="font-semibold text-gray-700">2.</span>
+                <span className="font-semibold text-main">2.</span>
                 <span>
                   Send this command:{" "}
-                  <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[13px] text-gray-800">
+                  <span className="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-[13px] text-main">
                     /startowner
                   </span>
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="font-semibold text-gray-700">3.</span>
+                <span className="font-semibold text-main">3.</span>
                 <span>Click Verify below.</span>
               </li>
             </ol>
@@ -858,10 +858,10 @@ export default function AiLinePage() {
               )}
             </div>
 
-            <p className="mt-3 text-sm text-gray-600">
+            <p className="mt-3 text-sm text-muted">
               Connect a Discord bot and your AI answers messages in your server.
               Create an application at{" "}
-              <span className="font-medium text-gray-700">
+              <span className="font-medium text-main">
                 discord.com/developers/applications
               </span>
               , add a Bot, then paste its token below.
@@ -887,13 +887,13 @@ export default function AiLinePage() {
               </div>
             )}
 
-            <details className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <summary className="cursor-pointer text-sm font-semibold text-gray-900">
+            <details className="surface-panel mt-4 p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-main">
                 How to connect Discord (Step-by-Step)
               </summary>
-              <div className="mt-3 space-y-3 text-sm text-gray-600">
+              <div className="mt-3 space-y-3 text-sm text-muted">
                 <p>
-                  <span className="font-semibold text-gray-700">Step 1:</span>{" "}
+                  <span className="font-semibold text-main">Step 1:</span>{" "}
                   Go to the{" "}
                   <a
                     href="https://discord.com/developers/applications"
@@ -906,16 +906,16 @@ export default function AiLinePage() {
                   and click &quot;New Application&quot;.
                 </p>
                 <p>
-                  <span className="font-semibold text-gray-700">Step 2:</span>{" "}
+                  <span className="font-semibold text-main">Step 2:</span>{" "}
                   Go to the &quot;Bot&quot; tab, click &quot;Reset Token&quot;,
                   and copy the token.
                 </p>
                 <p>
-                  <span className="font-semibold text-gray-700">Step 3:</span>{" "}
+                  <span className="font-semibold text-main">Step 3:</span>{" "}
                   Paste the token below and click &quot;Connect Discord&quot;.
                 </p>
                 <p>
-                  <span className="font-semibold text-gray-700">
+                  <span className="font-semibold text-main">
                     Step 4 (Important):
                   </span>{" "}
                   Go to the &quot;OAuth2&quot; tab, select &quot;bot&quot; in
@@ -924,11 +924,11 @@ export default function AiLinePage() {
                   to invite the bot to your server.
                 </p>
                 <p>
-                  <span className="font-semibold text-gray-700">Step 5:</span>{" "}
+                  <span className="font-semibold text-main">Step 5:</span>{" "}
                   Copy your Server ID (Right-click your server icon -&gt; Copy
                   Server ID) and paste it below.
                 </p>
-                <div className="relative w-full aspect-video rounded-xl overflow-hidden mt-4 border border-gray-200 shadow-sm">
+                <div className="relative w-full aspect-video rounded-xl overflow-hidden mt-4 border border-card-border shadow-sm">
                   <iframe
                     src="https://www.youtube.com/embed/e8io27VGaO8?si=WajNqDsSW6gumYj6"
                     title="How to connect Discord to Colly"
@@ -946,7 +946,7 @@ export default function AiLinePage() {
               <div>
                 <label
                   htmlFor="discordBotToken"
-                  className="mb-1 block text-sm font-medium text-gray-700"
+                  className="mb-1 block text-sm font-medium text-main"
                 >
                   Discord Bot Token
                 </label>
@@ -970,10 +970,10 @@ export default function AiLinePage() {
               <div>
                 <label
                   htmlFor="discordGuildId"
-                  className="mb-1 block text-sm font-medium text-gray-700"
+                  className="mb-1 block text-sm font-medium text-main"
                 >
                   Discord Server ID{" "}
-                  <span className="font-normal text-gray-400">(optional)</span>
+                  <span className="font-normal text-muted">(optional)</span>
                 </label>
                 <input
                   id="discordGuildId"
@@ -986,7 +986,7 @@ export default function AiLinePage() {
                   autoComplete="off"
                   className={INPUT_CLASS}
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-muted">
                   The server the bot should answer in. Enable Developer Mode in
                   Discord, right-click your server, and copy the server id.
                 </p>
@@ -1021,7 +1021,7 @@ export default function AiLinePage() {
               </span>
             </div>
 
-            <p className="mt-3 text-sm text-gray-600">
+            <p className="mt-3 text-sm text-muted">
               WhatsApp needs Meta&apos;s review, so we onboard businesses one at a
               time. Join the list with the number your customers should reach you
               on and we will contact you when it is your turn.
@@ -1043,7 +1043,7 @@ export default function AiLinePage() {
                 <div>
                   <label
                     htmlFor="waitlistNumber"
-                    className="mb-1 block text-sm font-medium text-gray-700"
+                    className="mb-1 block text-sm font-medium text-main"
                   >
                     WhatsApp number
                   </label>
@@ -1059,7 +1059,7 @@ export default function AiLinePage() {
                     autoComplete="tel"
                     className={INPUT_CLASS}
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-muted">
                     Use the number customers already message you on. You can
                     change it later by contacting support.
                   </p>
@@ -1094,7 +1094,7 @@ export default function AiLinePage() {
               </span>
             </div>
 
-            <p className="mt-3 text-sm text-gray-600">
+            <p className="mt-3 text-sm text-muted">
               Embed a chat widget on your website so visitors can talk to your
               AI instantly. No tokens or API keys required.
             </p>
@@ -1102,7 +1102,7 @@ export default function AiLinePage() {
             <div className="mt-4">
               <Link
                 href="/settings/web-chat"
-                className="inline-flex items-center justify-center rounded-lg bg-[#FF6600] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#E65C00]"
+                className="inline-flex items-center justify-center rounded-xl bg-colly px-4 py-2 text-sm font-medium text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
               >
                 Get Embed Code
               </Link>
@@ -1122,12 +1122,12 @@ function AiLineSkeleton() {
       {[0, 1, 2].map((card) => (
         <div
           key={card}
-          className="rounded-lg border border-gray-200 bg-surface p-5 sm:p-6"
+          className="surface-card p-5 sm:p-6"
         >
-          <div className="h-4 w-32 animate-pulse rounded bg-gray-100" />
+          <div className="h-4 w-32 animate-pulse rounded bg-surface-muted" />
           <div className="mt-4 space-y-3">
-            <div className="h-6 w-40 animate-pulse rounded-full bg-gray-100" />
-            <div className="h-4 w-full animate-pulse rounded bg-gray-100" />
+            <div className="h-6 w-40 animate-pulse rounded-full bg-surface-muted" />
+            <div className="h-4 w-full animate-pulse rounded bg-surface-muted" />
           </div>
         </div>
       ))}

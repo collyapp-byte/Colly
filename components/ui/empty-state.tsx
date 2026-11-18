@@ -21,8 +21,8 @@ export function EmptyState({
   children,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white py-16 px-4 text-center">
-      <div className="mb-6 h-48 w-48">
+    <div className="surface-card flex flex-col items-center justify-center px-4 py-14 text-center">
+      <div className="mb-4 h-40 w-40">
         <Player
           autoplay
           loop
@@ -30,13 +30,13 @@ export function EmptyState({
           style={{ height: '100%', width: '100%' }}
         />
       </div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-500 mb-6 max-w-sm">{description}</p>
-      
+      <h3 className="mb-2 text-xl font-semibold text-main">{title}</h3>
+      <p className="mb-6 max-w-sm text-muted">{description}</p>
+
       {actionLabel && onAction && (
         <button
           onClick={onAction}
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-[#FF6600] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#E65C00]"
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-[#FF6600] px-6 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-[#E65C00] hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
         >
           {actionLabel}
         </button>

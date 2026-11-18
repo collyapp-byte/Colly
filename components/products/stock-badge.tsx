@@ -8,7 +8,7 @@ const BASE =
  */
 export function StockBadge({ stock }: { stock: number | null }) {
   if (stock === null) {
-    return <span className={`${BASE} bg-gray-100 text-gray-600`}>Available</span>;
+    return <span className={`${BASE} bg-surface-muted text-muted`}>Available</span>;
   }
 
   if (stock === 0) {

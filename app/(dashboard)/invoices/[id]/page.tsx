@@ -21,7 +21,7 @@ const STATUS_BADGE: Record<InvoiceStatus, string> = {
   sent: "bg-green-100 text-green-700",
   paid: "bg-emerald-600 text-white",
   failed: "bg-red-100 text-red-700",
-  cancelled: "bg-gray-100 text-gray-600",
+  cancelled: "bg-surface-muted text-muted",
 };
 
 type InvoiceItem = {
@@ -121,7 +121,7 @@ function InvoiceDetail() {
     <div className="mx-auto w-full max-w-3xl">
       <Link
         href="/invoices"
-        className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+        className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted transition-all duration-250 hover:text-main"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Back to Invoices
@@ -139,13 +139,13 @@ function InvoiceDetail() {
       {invoice && (
         <>
           {/* Header */}
-          <div className="rounded-lg border border-gray-200 bg-surface px-4 py-5 sm:px-6">
+          <div className="surface-card px-4 py-5 sm:px-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h1 className="font-display text-xl text-gray-900">
+                <h1 className="font-display text-xl text-main">
                   {invoice.invoiceNumber}
                 </h1>
-                <p className="mt-0.5 text-sm text-gray-500">
+                <p className="mt-0.5 text-sm text-muted">
                   Issued {formatInvoiceDate(invoice.createdAt)}
                 </p>
               </div>
@@ -156,32 +156,32 @@ function InvoiceDetail() {
               </span>
             </div>
 
-            <div className="mt-4 border-t border-gray-100 pt-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+            <div className="mt-4 border-t border-card-border pt-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted">
                 Billed to
               </p>
-              <p className="mt-1 font-semibold text-gray-900">
+              <p className="mt-1 font-semibold text-main">
                 {invoice.customer?.name ?? "Walk-in Customer"}
               </p>
               {invoice.customer?.phone && (
-                <p className="text-sm text-gray-500">{invoice.customer.phone}</p>
+                <p className="text-sm text-muted">{invoice.customer.phone}</p>
               )}
             </div>
 
             {(invoice.receiptUrl || invoice.notes) && (
-              <div className="mt-4 border-t border-gray-100 pt-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+              <div className="mt-4 border-t border-card-border pt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted">
                   Payment proof
                 </p>
                 {invoice.notes && (
-                  <p className="mt-1 text-sm text-gray-700">{invoice.notes}</p>
+                  <p className="mt-1 text-sm text-main">{invoice.notes}</p>
                 )}
                 {invoice.receiptUrl && (
                   <a
                     href={invoice.receiptUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-colly transition-colors hover:underline"
+                    className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-colly transition-all duration-250 hover:underline"
                   >
                     <Receipt className="h-4 w-4" aria-hidden />
                     View customer receipt
@@ -192,10 +192,10 @@ function InvoiceDetail() {
           </div>
 
           {/* Line items */}
-          <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-surface">
+          <div className="mt-4 surface-card overflow-hidden">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                <tr className="border-b border-card-border bg-surface-muted text-xs uppercase tracking-wide text-muted">
                   <th scope="col" className="px-4 py-3 font-medium sm:px-6">
                     Item
                   </th>
@@ -213,19 +213,19 @@ function InvoiceDetail() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-card-border">
                 {invoice.items.map((item, index) => (
                   <tr key={index}>
-                    <td className="px-4 py-3 text-gray-700 sm:px-6">
+                    <td className="px-4 py-3 text-main sm:px-6">
                       {item.name}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-700">
+                    <td className="px-4 py-3 text-right text-main">
                       {item.quantity}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right text-gray-700">
+                    <td className="whitespace-nowrap px-4 py-3 text-right text-main">
                       {formatNaira(item.unitPrice)}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-gray-900 sm:px-6">
+                    <td className="whitespace-nowrap px-4 py-3 text-right font-medium text-main sm:px-6">
                       {formatNaira(item.total)}
                     </td>
                   </tr>
@@ -233,7 +233,7 @@ function InvoiceDetail() {
               </tbody>
             </table>
 
-            <div className="space-y-1 border-t border-gray-200 px-4 py-4 text-sm text-gray-700 sm:px-6">
+            <div className="space-y-1 border-t border-card-border px-4 py-4 text-sm text-main sm:px-6">
               <div className="flex items-center justify-between">
                 <span>Subtotal</span>
                 <span>{formatNaira(invoice.subtotal)}</span>
@@ -242,7 +242,7 @@ function InvoiceDetail() {
                 <span>VAT (7.5%)</span>
                 <span>{formatNaira(invoice.vat)}</span>
               </div>
-              <div className="flex items-center justify-between border-t border-gray-100 pt-1 font-display text-lg text-gray-900">
+              <div className="flex items-center justify-between border-t border-card-border pt-1 font-display text-lg text-main">
                 <span>Total</span>
                 <span>{formatNaira(invoice.total)}</span>
               </div>
@@ -250,23 +250,23 @@ function InvoiceDetail() {
           </div>
 
           {/* NRS */}
-          <div className="mt-4 rounded-lg border border-gray-200 bg-surface px-4 py-5 sm:px-6">
-            <h2 className="font-display text-lg text-gray-900">NRS e-invoicing</h2>
-            <p className="mt-1 text-sm text-gray-500">
+          <div className="mt-4 surface-card px-4 py-5 sm:px-6">
+            <h2 className="font-display text-lg text-main">NRS e-invoicing</h2>
+            <p className="mt-1 text-sm text-muted">
               Transmission to the National Revenue Service is not connected yet.
             </p>
 
             <dl className="mt-4 space-y-2 text-sm">
               <div className="flex items-center justify-between gap-4">
-                <dt className="text-gray-500">Status</dt>
-                <dd className="font-medium text-gray-900">
+                <dt className="text-muted">Status</dt>
+                <dd className="font-medium text-main">
                   {STATUS_LABELS[invoice.status]}
                 </dd>
               </div>
               {invoice.irn && (
                 <div className="flex items-center justify-between gap-4">
-                  <dt className="text-gray-500">IRN</dt>
-                  <dd className="break-all font-medium text-gray-900">
+                  <dt className="text-muted">IRN</dt>
+                  <dd className="break-all font-medium text-main">
                     {invoice.irn}
                   </dd>
                 </div>
@@ -281,7 +281,7 @@ function InvoiceDetail() {
 
             {invoice.qrCode && (
               <div className="mt-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
                   QR code
                 </p>
                 {isImageSource(invoice.qrCode) ? (
@@ -289,10 +289,10 @@ function InvoiceDetail() {
                   <img
                     src={invoice.qrCode}
                     alt="NRS invoice QR code"
-                    className="h-40 w-40 rounded-lg border border-gray-200"
+                    className="h-40 w-40 rounded-lg border border-card-border"
                   />
                 ) : (
-                  <code className="block break-all rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                  <code className="block break-all rounded-lg bg-surface-muted px-3 py-2 text-xs text-muted">
                     {invoice.qrCode}
                   </code>
                 )}
@@ -305,7 +305,7 @@ function InvoiceDetail() {
             <button
               type="button"
               onClick={() => setToast("Coming soon")}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2.5 text-sm font-semibold text-white transition-all duration-250 hover:bg-colly-hover"
             >
               <Send className="h-4 w-4" aria-hidden />
               Transmit to NRS
@@ -313,7 +313,7 @@ function InvoiceDetail() {
             <button
               type="button"
               onClick={() => window.print()}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-card-ring bg-card-surface px-4 py-2.5 text-sm font-medium text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
             >
               <Printer className="h-4 w-4" aria-hidden />
               Print
@@ -337,12 +337,12 @@ function InvoiceDetail() {
 function InvoiceDetailSkeleton() {
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <div className="rounded-lg border border-gray-200 bg-surface p-6">
-        <div className="h-5 w-40 animate-pulse rounded bg-gray-100" />
-        <div className="mt-3 h-3.5 w-32 animate-pulse rounded bg-gray-100" />
-        <div className="mt-4 h-16 animate-pulse rounded bg-gray-100" />
+      <div className="surface-card p-6">
+        <div className="h-5 w-40 animate-pulse rounded bg-surface-muted" />
+        <div className="mt-3 h-3.5 w-32 animate-pulse rounded bg-surface-muted" />
+        <div className="mt-4 h-16 animate-pulse rounded bg-surface-muted" />
       </div>
-      <div className="mt-4 h-64 animate-pulse rounded-lg bg-gray-100" />
+      <div className="mt-4 h-64 animate-pulse rounded-lg bg-surface-muted" />
     </div>
   );
 }
@@ -352,7 +352,7 @@ function InvoiceDetailFallback() {
     <div className="mx-auto w-full max-w-3xl">
       <Link
         href="/invoices"
-        className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+        className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted transition-all duration-250 hover:text-main"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Back to Invoices

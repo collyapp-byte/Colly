@@ -90,10 +90,10 @@ export default function CreditsPage() {
   return (
     <div className="mx-auto w-full max-w-2xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-2xl text-gray-900">Buy credits</h1>
+        <h1 className="font-display text-2xl text-main">Buy credits</h1>
         <Link
           href="/settings/billing"
-          className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900"
+          className="text-sm font-medium text-muted transition-all duration-250 hover:text-main"
         >
           ← Back to billing
         </Link>
@@ -102,34 +102,34 @@ export default function CreditsPage() {
       {error && (
         <div
           role="alert"
-          className="mt-4 flex items-start gap-3 rounded-lg border border-danger/30 bg-danger/5 p-4 text-sm text-danger"
+          className="mt-4 flex items-start gap-3 rounded-xl border border-danger/30 bg-danger/5 p-4 text-sm text-danger"
         >
           <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>{error}</p>
         </div>
       )}
 
-      <div className="mt-6 rounded-lg border border-gray-200 bg-surface p-6">
+      <div className="surface-card mt-6 p-6">
         <div className="flex items-center gap-2">
           <Coins className="h-5 w-5 text-colly" aria-hidden />
-          <h2 className="font-display text-base text-gray-900">
+          <h2 className="font-display text-base text-main">
             You have {balance === null ? "—" : `${balance.toLocaleString()} credits`}
           </h2>
         </div>
-        <p className="mt-1 text-sm text-gray-500">{CREDIT_ECONOMY_DESCRIPTION}</p>
+        <p className="mt-1 text-sm text-muted">{CREDIT_ECONOMY_DESCRIPTION}</p>
         {planCredits !== null && topUpCredits !== null && (
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-muted">
             {planCredits.toLocaleString()} plan credits (reset every month) +{" "}
             {topUpCredits.toLocaleString()} top-up credits (never expire)
           </p>
         )}
 
-        <div className="mt-6 rounded-lg border border-gray-200 bg-background p-5">
-          <p className="text-lg font-semibold text-gray-900">
+        <div className="surface-panel mt-6 p-5">
+          <p className="text-lg font-semibold text-main">
             {formatNaira(creditPackage.price)} for{" "}
             {creditPackage.credits.toLocaleString()} credits
           </p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted">
             Top-up credits never expire. They are spent automatically as the AI
             replies to your customers, after your monthly plan credits run out.
           </p>
@@ -137,7 +137,7 @@ export default function CreditsPage() {
             type="button"
             onClick={buy}
             disabled={busy}
-            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-colly px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-colly px-4 py-3 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98] disabled:opacity-60 disabled:hover:translate-y-0"
           >
             {busy && (
               <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -146,10 +146,10 @@ export default function CreditsPage() {
           </button>
         </div>
 
-        <div className="mt-6 flex items-start gap-3 border-t border-gray-100 pt-5">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" aria-hidden />
-          <div className="text-sm text-gray-600">
-            <p className="font-medium text-gray-900">What are credits?</p>
+        <div className="mt-6 flex items-start gap-3 border-t border-card-ring pt-5">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted" aria-hidden />
+          <div className="text-sm text-muted">
+            <p className="font-medium text-main">What are credits?</p>
             <p className="mt-1">
               Credits are the currency Colly uses to pay for AI replies. 1 credit
               = 1 Naira: a Telegram, Discord or Web Chat reply costs 5 credits

@@ -63,23 +63,24 @@ export function PlanChip() {
   const balanceTitle = `${balance.toLocaleString()} credits available (${planCredits.toLocaleString()} plan + ${topUpCredits.toLocaleString()} top-up)`;
 
   let label = PLAN_LABELS[plan] ?? plan;
-  let classes = "bg-gray-100 text-gray-700 border-gray-200";
+  let classes = "bg-surface-muted text-main border-card-border";
 
   if (planStatus === "past_due") {
     label = "Payment due";
-    classes = "bg-red-50 text-red-600 border-red-200";
+    classes =
+      "bg-red-50 text-red-600 border-red-200 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300";
   }
 
   const balanceClasses =
     balance > 0
-      ? "bg-gray-100 text-gray-600 border border-gray-200"
-      : "bg-red-50 text-red-600 border border-red-200";
+      ? "bg-surface-muted text-muted border border-card-border"
+      : "bg-red-50 text-red-600 border border-red-200 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300";
 
   return (
     <div className="flex items-center gap-2">
       <Link
         href="/settings/billing"
-        className={`inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors hover:opacity-80 ${classes}`}
+        className={`inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-medium whitespace-nowrap shadow-sm transition-all duration-250 ease-out hover:-translate-y-px hover:shadow-md active:translate-y-0 active:scale-[0.98] ${classes}`}
       >
         {label}
       </Link>
@@ -88,7 +89,7 @@ export function PlanChip() {
         <Link
           href="/settings/billing"
           title={balanceTitle}
-          className={`inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors hover:opacity-80 ${balanceClasses}`}
+          className={`inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-medium whitespace-nowrap shadow-sm transition-all duration-250 ease-out hover:-translate-y-px hover:shadow-md active:translate-y-0 active:scale-[0.98] ${balanceClasses}`}
         >
           <span className="hidden sm:inline">
             {balance.toLocaleString()} credits

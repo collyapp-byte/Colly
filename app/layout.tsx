@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import Script from "next/script";
@@ -119,6 +119,32 @@ export const metadata: Metadata = {
     shortcut: "/icon.png",
     apple: "/icon.png",
   },
+  // PWA: the file lives in `public/` (outside the proxy's matcher, which skips
+  // `*.json`), and this key is what makes Next render
+  // `<link rel="manifest" href="/manifest.json" />` in every page's <head>.
+  // `appleWebApp` is the iOS half of the same feature: without it a home-screen
+  // launch opens a Safari tab with the browser chrome instead of standalone.
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: SITE_BRAND,
+    statusBarStyle: "default",
+  },
+};
+
+/**
+ * Browser chrome colour, kept in the `viewport` export rather than `metadata`
+ * (Next moved `themeColor` there in 14). It paints the Android address bar and
+ * the status bar of an installed app, and matches the manifest's
+ * `theme_color` — the brand orange from `app/globals.css` (`--color-colly`).
+ * `colorScheme` mirrors `color-scheme: light dark` in `app/globals.css`: the
+ * dashboard tokens flip under a dark-mode OS, so the browser must paint native
+ * controls (date pickers, selects, scrollbars) to match instead of forcing the
+ * light palette onto them.
+ */
+export const viewport: Viewport = {
+  themeColor: "#ff6600",
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -144,6 +170,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-NG" className={`h-full scroll-smooth ${inter.variable}`}>
       <head>
+        {/* iOS keys standalone mode off the Apple-prefixed tag. `appleWebApp`
+            in the metadata above makes Next emit the standard
+            `mobile-web-app-capable`; this keeps older Safari versions working
+            too, so a home-screen launch opens without browser chrome. */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         {clarityId && (
           <Script id="microsoft-clarity" strategy="beforeInteractive">
             {`

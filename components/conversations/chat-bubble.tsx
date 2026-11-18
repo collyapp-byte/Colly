@@ -29,14 +29,14 @@ export function ChatBubble({ sender, content, createdAt }: ChatBubbleProps) {
       <div
         className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-sm ${
           isCustomer
-            ? "rounded-tl-sm bg-gray-100 text-gray-900"
+            ? "rounded-tl-sm bg-surface-muted text-main"
             : "rounded-tr-sm bg-[#FF6600] text-white"
         }`}
       >
         <p className="whitespace-pre-wrap break-words">{content}</p>
         <p
           className={`mt-1 text-right text-[10px] leading-none ${
-            isCustomer ? "text-gray-900/60" : "text-white/75"
+            isCustomer ? "text-main/60" : "text-white/75"
           }`}
         >
           <span className="sr-only">Sent by </span>

@@ -24,11 +24,11 @@ import {
 
 const WEB_CHAT_ORIGIN = "https://colly.com.ng";
 
-const SECTION_CLASS = "rounded-lg border border-gray-200 bg-surface p-5 sm:p-6";
-const HEADING_CLASS = "font-display text-base tracking-wide text-gray-900";
-const HINT_CLASS = "mt-1 text-xs text-gray-500";
+const SECTION_CLASS = "surface-card p-5 sm:p-6";
+const HEADING_CLASS = "font-display text-base tracking-wide text-main";
+const HINT_CLASS = "mt-1 text-xs text-muted";
 const INPUT_CLASS =
-  "w-full rounded-lg border border-gray-300 bg-background px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+  "w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-main outline-none transition-all duration-250 focus:border-colly focus:ring-2 focus:ring-colly/20";
 
 /** Copies text to the clipboard, with a fallback for older browsers. */
 async function copyToClipboard(value: string) {
@@ -196,14 +196,14 @@ export default function WebChatSettingsPage() {
     <div className="mx-auto w-full max-w-3xl">
       <Link
         href="/settings"
-        className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-colly"
+        className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-all duration-250 hover:text-colly"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Back to settings
       </Link>
 
-      <h1 className="font-display text-2xl text-gray-900">Web Chat</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="font-display text-2xl text-main">Web Chat</h1>
+      <p className="mt-1 text-sm text-muted">
         Add an AI chat widget to your website so customers can ask about your
         products without leaving the page.
       </p>
@@ -221,9 +221,9 @@ export default function WebChatSettingsPage() {
               key={card}
               className={`${SECTION_CLASS} animate-pulse space-y-3`}
             >
-              <div className="h-4 w-40 rounded bg-gray-100" />
-              <div className="h-10 w-full rounded-lg bg-gray-100" />
-              <div className="h-9 w-28 rounded-lg bg-gray-100" />
+              <div className="h-4 w-40 rounded bg-surface-muted" />
+              <div className="h-10 w-full rounded-lg bg-surface-muted" />
+              <div className="h-9 w-28 rounded-lg bg-surface-muted" />
             </div>
           ))}
         </div>
@@ -248,7 +248,7 @@ export default function WebChatSettingsPage() {
             <div className="mt-4">
               <label
                 htmlFor="web-chat-link"
-                className="mb-1 block text-sm font-medium text-gray-700"
+                className="mb-1 block text-sm font-medium text-main"
               >
                 Public link
               </label>
@@ -271,7 +271,7 @@ export default function WebChatSettingsPage() {
                 </Button>
                 <Link
                   href="/settings/qr-code"
-                  className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-gray-100 px-3 py-1.5 text-[13px] font-semibold text-gray-900 transition-colors hover:bg-gray-200"
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-xl border border-card-ring bg-card-surface px-3 py-1.5 text-[13px] font-semibold text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98]"
                 >
                   <QrCode className="h-4 w-4" aria-hidden />
                   Get In-Store QR Code
@@ -280,7 +280,7 @@ export default function WebChatSettingsPage() {
                   href={chatLink}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold text-colly transition-colors hover:text-colly-hover"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold text-colly transition-all duration-250 hover:text-colly-hover"
                 >
                   <ExternalLink className="h-4 w-4" aria-hidden />
                   Open chat
@@ -335,7 +335,7 @@ export default function WebChatSettingsPage() {
                 <label
                   htmlFor="web-chat-avatar"
                   aria-disabled={avatarBusy}
-                  className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-gray-100 px-3 py-1.5 text-[13px] font-semibold text-gray-900 transition-colors hover:bg-gray-200 ${
+                  className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-card-ring bg-card-surface px-3 py-1.5 text-[13px] font-semibold text-main shadow-sm transition-all duration-250 hover:-translate-y-0.5 hover:border-colly/40 hover:shadow-md active:translate-y-0 active:scale-[0.98] ${
                     avatarBusy ? "pointer-events-none opacity-60" : ""
                   }`}
                 >
@@ -362,7 +362,7 @@ export default function WebChatSettingsPage() {
               </div>
             </div>
 
-            <p className="mt-3 text-xs text-gray-500">
+            <p className="mt-3 text-xs text-muted">
               PNG, JPG, WEBP or GIF, up to 5 MB. Square pictures look best.
             </p>
             {avatarError ? (
@@ -387,7 +387,7 @@ export default function WebChatSettingsPage() {
             <div className="mt-4">
               <label
                 htmlFor="web-chat-embed"
-                className="mb-1 block text-sm font-medium text-gray-700"
+                className="mb-1 block text-sm font-medium text-main"
               >
                 Embed code
               </label>
@@ -415,7 +415,7 @@ export default function WebChatSettingsPage() {
 
           <section className={SECTION_CLASS}>
             <h2 className={HEADING_CLASS}>How it works</h2>
-            <ul className="mt-3 space-y-2 text-sm text-gray-600">
+            <ul className="mt-3 space-y-2 text-sm text-muted">
               <li className="flex gap-2">
                 <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-colly" />
                 Visitors get instant answers from your products, FAQs, and

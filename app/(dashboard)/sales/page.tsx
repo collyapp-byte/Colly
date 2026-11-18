@@ -43,7 +43,7 @@ const RECENT_LIMIT = 20;
 const STATUS_STYLES: Record<SaleStatus, string> = {
   paid: "bg-green-100 text-green-700",
   pending: "bg-amber-100 text-amber-700",
-  cancelled: "bg-gray-100 text-gray-600",
+  cancelled: "bg-surface-muted text-muted",
 };
 
 const STATUS_LABELS: Record<SaleStatus, string> = {
@@ -375,13 +375,13 @@ export default function SalesPage() {
     <div className="mx-auto w-full max-w-6xl pb-24 lg:pb-0">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
+        <h1 className="font-display text-2xl text-main sm:text-3xl">
           Sales
         </h1>
         <div className="flex items-center gap-3">
           <Link
             href="/sales/all"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-colly transition-colors hover:text-colly-hover"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-colly transition-all duration-250 hover:text-colly-hover"
           >
             View All Sales
             <ArrowRight className="h-4 w-4" aria-hidden />
@@ -392,14 +392,14 @@ export default function SalesPage() {
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         {/* Left — past sales */}
         <div className="min-w-0">
-          <div className="overflow-hidden rounded-lg border border-gray-200 bg-surface">
-            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
-              <h2 className="font-display text-lg text-gray-900">
+          <div className="surface-card overflow-hidden">
+            <div className="flex items-center justify-between border-b border-card-border px-5 py-4">
+              <h2 className="font-display text-lg text-main">
                 Recent sales
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted">
                 Today:{" "}
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-main">
                   {formatNaira(todayTotal)}
                 </span>
               </p>
@@ -408,7 +408,7 @@ export default function SalesPage() {
             {sales === null && salesError === null && <RecentSalesSkeleton />}
 
             {salesError && (
-              <div className="flex items-start gap-3 border-b border-gray-100 p-4 text-sm text-danger">
+              <div className="flex items-start gap-3 border-b border-card-border p-4 text-sm text-danger">
                 <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <div>
                   <p className="font-medium">Could not load sales</p>
@@ -420,22 +420,22 @@ export default function SalesPage() {
             {sales !== null && recentSales.length === 0 && !salesError && (
               <div className="flex flex-col items-center justify-center py-12">
         <div className="h-48 w-48 mb-4"><Lottie src="/empty-sales.json" /></div>
-        <p className="text-sm text-gray-500">No sales yet. Add products and complete a sale.</p>
+        <p className="text-sm text-muted">No sales yet. Add products and complete a sale.</p>
       </div>
             )}
 
             {recentSales.length > 0 && (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-card-border">
                 {recentSales.map((sale) => (
                   <li
                     key={sale.id}
                     className="flex items-center gap-3 px-5 py-3"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-gray-900">
+                      <p className="truncate text-sm font-medium text-main">
                         {saleName(sale)}
                       </p>
-                      <p className="mt-0.5 text-xs text-gray-500">
+                      <p className="mt-0.5 text-xs text-muted">
                         {formatSaleDate(sale.createdAt)}
                         {paymentLabel(sale.paymentMethod)
                           ? ` · ${paymentLabel(sale.paymentMethod)}`
@@ -448,7 +448,7 @@ export default function SalesPage() {
                         </span>
                       </p>
                     </div>
-                    <p className="shrink-0 text-sm font-semibold text-gray-900">
+                    <p className="shrink-0 text-sm font-semibold text-main">
                       {formatNaira(sale.totalAmount)}
                     </p>
                   </li>
@@ -460,7 +460,7 @@ export default function SalesPage() {
           {/* Add from catalog */}
           <Link
             href="/sales/quick"
-            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 bg-surface px-3 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-card-ring bg-surface-muted/40 px-3 py-3 text-sm font-medium text-muted transition-all duration-250 hover:-translate-y-px hover:border-colly/40 hover:text-main hover:shadow-sm active:translate-y-0 active:scale-[0.995]"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Add from catalog
@@ -468,7 +468,7 @@ export default function SalesPage() {
         </div>
 
         {/* Right — permanent cart: sticky on desktop */}
-        <aside className="hidden lg:block lg:sticky lg:top-4 lg:z-auto lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:rounded-lg lg:border lg:border-gray-200 lg:bg-surface lg:p-5">
+        <aside className="hidden lg:block lg:sticky lg:top-4 lg:z-auto lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:rounded-lg lg:border lg:border-card-border lg:bg-surface lg:p-5">
           {cartPanel}
         </aside>
       </div>
@@ -476,7 +476,7 @@ export default function SalesPage() {
       {/* Mobile — collapsed cart bar */}
       {!cartExpanded && (
         <div
-          className="fixed inset-x-0 bottom-0 z-30 h-16 border-t border-gray-200 bg-white shadow-[0_-4px_12px_rgba(0,0,0,0.08)] lg:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 h-16 border-t border-card-border bg-card-surface shadow-[0_-4px_12px_rgba(0,0,0,0.08)] lg:hidden"
           onClick={() => setCartExpanded(true)}
           role="button"
           tabIndex={0}
@@ -494,12 +494,12 @@ export default function SalesPage() {
         >
           <div className="flex h-full items-center justify-between px-4">
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-main">
                 {itemCount === 0
                   ? "0 items"
                   : `${itemCount} item${itemCount > 1 ? "s" : ""}`}
               </span>
-              <span className="text-lg font-semibold text-gray-900">
+              <span className="text-lg font-semibold text-main">
                 {formatNaira(total)}
               </span>
             </div>
@@ -530,13 +530,13 @@ export default function SalesPage() {
 
       {cartExpanded && (
         <aside
-          className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl bg-surface p-4 shadow-[0_-6px_24px_rgba(0,0,0,0.1)] lg:hidden"
+          className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-3xl border-t border-card-ring bg-card-surface p-4 shadow-card-hover backdrop-blur-xl lg:hidden"
           role="dialog"
           aria-label="Cart"
           aria-modal="true"
         >
           <div
-            className="mx-auto mt-2 mb-3 h-1 w-10 rounded-full bg-gray-300"
+            className="mx-auto mt-2 mb-3 h-1 w-10 rounded-full bg-card-border"
             aria-hidden="true"
           />
           {cartPanel}
@@ -615,14 +615,14 @@ function CartPanel({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-lg text-gray-900">
+        <h2 className="font-display text-lg text-main">
           Cart{itemCount > 0 ? ` (${itemCount})` : ""}
         </h2>
         {cart.length > 0 && (
           <button
             type="button"
             onClick={onClear}
-            className="text-xs font-medium text-gray-500 transition-colors hover:text-danger"
+            className="text-xs font-medium text-muted transition-all duration-250 hover:text-danger"
           >
             Clear
           </button>
@@ -635,16 +635,16 @@ function CartPanel({
           <Link
             href="/sales/quick"
             onClick={onCloseMobile}
-            className="flex w-full items-center justify-between rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 transition-colors hover:bg-gray-50"
+            className="flex w-full items-center justify-between rounded-lg border border-dashed border-card-border px-4 py-3 text-sm text-muted transition-all duration-250 hover:bg-surface-muted"
           >
             <span>Cart is empty — add from catalog</span>
-            <ChevronUp className="h-4 w-4 text-gray-400" aria-hidden="true" />
+            <ChevronUp className="h-4 w-4 text-muted" aria-hidden="true" />
           </Link>
         )}
 
         {cart.map((line) => (
           <div key={line.id} className="flex items-start gap-3">
-            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border border-gray-200 bg-gray-50">
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border border-card-border bg-surface-muted">
               {line.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -653,7 +653,7 @@ function CartPanel({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-gray-300">
+                <div className="flex h-full w-full items-center justify-center text-muted">
                   <ImageIcon className="h-4 w-4" aria-hidden />
                 </div>
               )}
@@ -661,19 +661,19 @@ function CartPanel({
 
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
-                <p className="truncate text-sm font-medium text-gray-900">
+                <p className="truncate text-sm font-medium text-main">
                   {line.name}
                 </p>
                 <button
                   type="button"
                   onClick={() => onRemoveLine(line.id)}
                   aria-label={`Remove ${line.name}`}
-                  className="-mr-1 -mt-1 inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-danger"
+                  className="-mr-1 -mt-1 inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-md text-muted transition-all duration-250 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-danger"
                 >
                   <X className="h-3.5 w-3.5" aria-hidden />
                 </button>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 {formatNaira(line.price)} each
               </p>
               <div className="mt-1 flex items-center justify-between gap-2">
@@ -685,7 +685,7 @@ function CartPanel({
                 ) : (
                   <span aria-hidden="true" />
                 )}
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-semibold text-main">
                   {formatNaira(line.price * line.quantity)}
                 </p>
               </div>
@@ -700,7 +700,7 @@ function CartPanel({
           type="button"
           onClick={() => onCustomOpenChange(!customOpen)}
           aria-expanded={customOpen}
-          className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-card-border px-3 py-2 text-sm font-medium text-muted transition-all duration-250 hover:bg-surface-muted"
         >
           <Plus
             className={`h-4 w-4 transition-transform ${customOpen ? "rotate-45" : ""}`}
@@ -710,14 +710,14 @@ function CartPanel({
         </button>
 
         {customOpen && (
-          <div className="mt-2 space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <div className="mt-2 space-y-2 surface-panel p-3">
             <input
               type="text"
               value={customLabel}
               onChange={(event) => onCustomLabelChange(event.target.value)}
               placeholder="Item name"
               aria-label="Custom item name"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-colly focus:ring-2 focus:ring-colly/20"
+              className="w-full rounded-lg border border-card-border px-3 py-2 text-sm text-main outline-none focus:border-colly focus:ring-2 focus:ring-colly/20"
             />
             <input
               type="number"
@@ -728,13 +728,13 @@ function CartPanel({
               onChange={(event) => onCustomAmountChange(event.target.value)}
               placeholder="Amount (₦)"
               aria-label="Custom amount"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-colly focus:ring-2 focus:ring-colly/20"
+              className="w-full rounded-lg border border-card-border px-3 py-2 text-sm text-main outline-none focus:border-colly focus:ring-2 focus:ring-colly/20"
             />
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={onAddCustomLine}
-                className="flex-1 rounded-lg bg-colly px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+                className="flex-1 rounded-xl bg-colly px-3 py-2 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
               >
                 Add
               </button>
@@ -745,7 +745,7 @@ function CartPanel({
                   onCustomLabelChange("");
                   onCustomAmountChange("");
                 }}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition-all duration-250 hover:bg-surface-muted"
               >
                 Cancel
               </button>
@@ -756,7 +756,7 @@ function CartPanel({
 
       {/* Payment mode */}
       <div className="mt-4">
-        <p className="mb-1 block text-sm font-medium text-gray-700">
+        <p className="mb-1 block text-sm font-medium text-main">
           Payment method
         </p>
         <div
@@ -773,10 +773,10 @@ function CartPanel({
                 role="radio"
                 aria-checked={active}
                 onClick={() => onChooseMode(value)}
-                className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-all duration-250 ${
                   active
                     ? "border-colly bg-colly text-white"
-                    : "border-gray-300 bg-surface text-gray-700 hover:bg-gray-50"
+                    : "border-card-border bg-surface text-main hover:bg-surface-muted"
                 }`}
               >
                 {PAYMENT_LABELS[value]}
@@ -793,7 +793,7 @@ function CartPanel({
           <button
             type="button"
             onClick={onRetryCustomers}
-            className="font-semibold underline transition-colors hover:text-warning/80"
+            className="font-semibold underline transition-all duration-250 hover:text-warning/80"
           >
             Retry
           </button>
@@ -804,20 +804,20 @@ function CartPanel({
       <div className="mt-4">
         <label
           htmlFor="sale-customer"
-          className="mb-1 block text-sm font-medium text-gray-700"
+          className="mb-1 block text-sm font-medium text-main"
         >
           Customer
           {mode === "credit" ? (
             <span className="text-danger"> (required for credit)</span>
           ) : (
-            <span className="text-gray-400"> (optional)</span>
+            <span className="text-muted"> (optional)</span>
           )}
         </label>
         <select
           id="sale-customer"
           value={customerId}
           onChange={(event) => onCustomerIdChange(event.target.value)}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20"
+          className="w-full rounded-lg border border-card-border px-3 py-2 text-sm text-main outline-none transition-all duration-250 focus:border-colly focus:ring-2 focus:ring-colly/20"
         >
           <option value="">Walk-in customer</option>
           {customers.map((customer) => (
@@ -829,9 +829,9 @@ function CartPanel({
       </div>
 
       {/* Total */}
-      <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3">
-        <span className="text-sm text-gray-500">Total</span>
-        <span className="font-display text-2xl text-gray-900">
+      <div className="mt-4 flex items-center justify-between border-t border-card-border pt-3">
+        <span className="text-sm text-muted">Total</span>
+        <span className="font-display text-2xl text-main">
           {formatNaira(total)}
         </span>
       </div>
@@ -863,13 +863,13 @@ function RecentSalesSkeleton() {
       {[0, 1, 2, 3].map((row) => (
         <div
           key={row}
-          className="flex items-center gap-4 border-b border-gray-100 px-5 py-3 last:border-b-0"
+          className="flex items-center gap-4 border-b border-card-border px-5 py-3 last:border-b-0"
         >
           <div className="flex-1 space-y-2">
-            <div className="h-3.5 w-40 animate-pulse rounded bg-gray-100" />
-            <div className="h-3 w-24 animate-pulse rounded bg-gray-100" />
+            <div className="h-3.5 w-40 animate-pulse rounded bg-surface-muted" />
+            <div className="h-3 w-24 animate-pulse rounded bg-surface-muted" />
           </div>
-          <div className="h-3.5 w-20 animate-pulse rounded bg-gray-100" />
+          <div className="h-3.5 w-20 animate-pulse rounded bg-surface-muted" />
         </div>
       ))}
     </div>

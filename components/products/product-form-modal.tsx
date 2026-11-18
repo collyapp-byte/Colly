@@ -22,9 +22,9 @@ type ProductFormModalProps = {
   onSubmit: (values: ProductInput) => Promise<void>;
 };
 
-const LABEL_CLASS = "mb-1 block text-sm font-medium text-gray-700";
+const LABEL_CLASS = "mb-1 block text-sm font-medium text-main";
 const INPUT_CLASS =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-colly focus:ring-2 focus:ring-colly/20";
+  "w-full rounded-lg border border-card-border bg-card-surface px-3 py-2 text-sm text-main outline-none transition-all duration-250 placeholder:text-muted focus:border-colly focus:ring-2 focus:ring-colly/20";
 
 function formatNairaInput(value: string): string {
   return value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -213,7 +213,7 @@ export function ProductFormModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-50"
+            className="flex-1 sm:flex-none inline-flex min-h-[44px] items-center justify-center rounded-lg px-4 py-2 text-sm font-medium text-muted transition-all duration-250 hover:bg-surface-muted disabled:opacity-50"
           >
             Cancel
           </button>
@@ -247,7 +247,7 @@ export function ProductFormModal({
             <button
               type="button"
               onClick={() => bumpPrice(-1000)}
-              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100"
+              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-card-border text-muted transition-all duration-250 hover:bg-surface-muted"
             >
               <Minus className="h-4 w-4" aria-hidden />
             </button>
@@ -265,7 +265,7 @@ export function ProductFormModal({
             <button
               type="button"
               onClick={() => bumpPrice(1000)}
-              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100"
+              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-card-border text-muted transition-all duration-250 hover:bg-surface-muted"
             >
               <Plus className="h-4 w-4" aria-hidden />
             </button>
@@ -274,8 +274,8 @@ export function ProductFormModal({
 
         <div>
           <div className="mb-1 flex items-center justify-between">
-            <label htmlFor="product-description" className="block text-sm font-medium text-gray-700">
-              Description <span className="text-gray-400 font-normal">(Optional)</span>
+            <label htmlFor="product-description" className="block text-sm font-medium text-main">
+              Description <span className="text-muted font-normal">(Optional)</span>
             </label>
             <VoiceInput
               onTranscript={(transcript) =>
@@ -296,7 +296,7 @@ export function ProductFormModal({
           <span className={LABEL_CLASS}>Images</span>
           <div className="flex flex-wrap gap-2">
             {images.map((url) => (
-              <div key={url} className="relative h-20 w-20 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+              <div key={url} className="relative h-20 w-20 overflow-hidden rounded-lg border border-card-border bg-surface-muted">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" width={80} height={80} loading="lazy" className="h-full w-full object-cover" />
                 <button
@@ -314,7 +314,7 @@ export function ProductFormModal({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 text-gray-400 transition-colors hover:border-colly hover:text-colly disabled:opacity-50"
+              className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-card-border text-muted transition-all duration-250 hover:border-colly hover:text-colly disabled:opacity-50"
             >
               {uploading ? <LoaderCircle className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
               <span className="text-[11px] font-medium">{uploading ? "Uploading" : "Upload"}</span>
@@ -325,13 +325,13 @@ export function ProductFormModal({
         </div>
 
         {/* PROGRESSIVE DISCLOSURE: ADVANCED SETTINGS */}
-        <details className="group border-t border-gray-200 pt-4">
-          <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-gray-700 hover:text-colly">
+        <details className="group border-t border-card-border pt-4">
+          <summary className="flex cursor-pointer items-center justify-between text-sm font-medium text-main hover:text-colly">
             Advanced Settings (Stock & Negotiation)
             <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
           </summary>
           
-          <div className="mt-4 space-y-4 rounded-lg bg-gray-50 p-4 border border-gray-100">
+          <div className="mt-4 space-y-4 rounded-lg bg-surface-muted p-4 border border-card-border">
             <div>
               <label htmlFor="product-stock" className={LABEL_CLASS}>
                 Stock Quantity
@@ -364,13 +364,13 @@ export function ProductFormModal({
               />
             </div>
 
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-main">
               <input
                 id="product-negotiable"
                 type="checkbox"
                 checked={negotiable}
                 onChange={(event) => setNegotiable(event.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-colly accent-[#FF6600] focus:ring-colly/20"
+                className="h-4 w-4 rounded border-card-border text-colly accent-[#FF6600] focus:ring-colly/20"
               />
               Allow AI to negotiate this price
             </label>

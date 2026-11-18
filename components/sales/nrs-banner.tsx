@@ -52,11 +52,11 @@ export function NrsBanner({ business, onOpen, onDismissed }: NrsBannerProps) {
   }
 
   return (
-    <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 py-2.5 pl-4 pr-2 text-sm text-amber-800">
+    <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 py-2.5 pl-4 pr-2 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200">
       <button
         type="button"
         onClick={onOpen}
-        className="flex min-h-[44px] min-w-0 flex-1 items-center gap-2 text-left font-medium transition-colors hover:text-amber-900"
+        className="flex min-h-[44px] min-w-0 flex-1 items-center gap-2 text-left font-medium transition-all duration-250 hover:text-amber-900"
       >
         <span aria-hidden>⚠️</span>
         <span className="truncate">NRS e-invoicing compliance is coming. Get ready →</span>
@@ -67,7 +67,7 @@ export function NrsBanner({ business, onOpen, onDismissed }: NrsBannerProps) {
         disabled={dismissing}
         aria-label="Dismiss"
         title="Dismiss"
-        className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-amber-500 transition-colors hover:bg-amber-100 hover:text-amber-800 disabled:opacity-50"
+        className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-amber-500 transition-all duration-250 hover:bg-amber-100 hover:text-amber-800 disabled:opacity-50 dark:hover:bg-amber-900/30 dark:hover:text-amber-100"
       >
         <X className="h-4 w-4" aria-hidden />
       </button>

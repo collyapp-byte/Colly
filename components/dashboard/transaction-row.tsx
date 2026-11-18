@@ -24,12 +24,12 @@ export function TransactionRow({
   }).format(new Date(date));
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-gray-100 p-3 text-sm">
+    <div className="surface-panel flex items-center justify-between p-3 text-sm">
       <div>
-        <p className="font-medium text-gray-900">{status}</p>
-        <p className="text-xs text-gray-500">{when}</p>
+        <p className="font-medium text-main">{status}</p>
+        <p className="text-xs text-muted">{when}</p>
       </div>
-      <span className="font-semibold text-gray-900">
+      <span className="font-semibold text-main">
         {formatNaira(Number(amount))}
       </span>
     </div>

@@ -56,16 +56,16 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="mx-4 flex max-h-[90vh] w-full max-w-lg flex-col overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-xl"
+        className="surface-card mx-4 flex max-h-[90vh] w-full max-w-lg flex-col overflow-y-auto shadow-card-hover"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="mb-4 flex flex-shrink-0 items-center justify-between gap-4 border-b border-gray-200 p-4 sm:p-5">
-          <h2 className="font-display text-lg text-gray-900">{title}</h2>
+        <div className="mb-4 flex flex-shrink-0 items-center justify-between gap-4 border-b border-card-border p-4 sm:p-5">
+          <h2 className="font-display text-lg text-main">{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="-mr-1 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            className="-mr-1 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted transition-all duration-250 hover:bg-surface-muted hover:text-muted"
           >
             <X className="h-5 w-5" aria-hidden />
           </button>
@@ -74,7 +74,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
           {children}
         </div>
         {footer && (
-          <div className="flex-shrink-0 border-t border-gray-200 bg-white p-4 sm:p-5">
+          <div className="flex-shrink-0 border-t border-card-border bg-card-surface p-4 sm:p-5">
             {footer}
           </div>
         )}

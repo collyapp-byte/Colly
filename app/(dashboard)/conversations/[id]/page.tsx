@@ -24,7 +24,7 @@ const POLL_INTERVAL_MS = 5000;
 // Pill-shaped composer input: a one-line field that grows with the draft, so
 // the reply bar reads like a chat app rather than a dashboard form.
 const COMPOSER_INPUT_CLASS =
-  "max-h-40 min-h-[44px] w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-colly focus:bg-white focus:ring-2 focus:ring-colly/20";
+  "max-h-40 min-h-[44px] w-full resize-none rounded-2xl border border-card-border bg-surface-muted px-4 py-3 text-sm text-main outline-none transition-all duration-250 placeholder:text-muted focus:border-colly focus:bg-card-surface focus:ring-2 focus:ring-colly/20";
 
 type Message = {
   id: string;
@@ -315,7 +315,7 @@ function ConversationDetail() {
       {!conversation && (
         <Link
           href="/conversations"
-          className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+          className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted transition-all duration-250 hover:text-main"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Back to Conversations
@@ -330,12 +330,12 @@ function ConversationDetail() {
       )}
 
       {loading && (
-        <div className="rounded-lg border border-gray-200 bg-surface p-6">
-          <div className="h-5 w-40 animate-pulse rounded bg-gray-100" />
+        <div className="surface-card p-6">
+          <div className="h-5 w-40 animate-pulse rounded bg-surface-muted" />
           <div className="mt-6 space-y-4">
-            <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-gray-100" />
-            <div className="ml-auto h-10 w-1/2 animate-pulse rounded-2xl bg-gray-100" />
-            <div className="h-10 w-3/5 animate-pulse rounded-2xl bg-gray-100" />
+            <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-surface-muted" />
+            <div className="ml-auto h-10 w-1/2 animate-pulse rounded-2xl bg-surface-muted" />
+            <div className="h-10 w-3/5 animate-pulse rounded-2xl bg-surface-muted" />
           </div>
         </div>
       )}
@@ -345,12 +345,12 @@ function ConversationDetail() {
           {/* Sticky chat header: back, the customer and the takeover control
               pinned to the top right, the way a native chat app arranges it.
               On mobile it parks under the dashboard top bar (h-14). */}
-          <div className="sticky top-14 z-20 -mx-4 -mt-4 flex items-center gap-2 border-b border-gray-200 bg-white px-3 py-2.5 shadow-sm md:top-0 md:-mx-6 md:-mt-6 md:gap-3 md:px-6 md:py-3">
+          <div className="sticky top-14 z-20 -mx-4 -mt-4 flex items-center gap-2 border-b border-card-ring bg-card-surface/85 px-3 py-2.5 shadow-sm backdrop-blur-xl md:top-0 md:-mx-6 md:-mt-6 md:gap-3 md:px-6 md:py-3">
             <Link
               href="/conversations"
               aria-label="Back to Conversations"
               title="Back to Conversations"
-              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+              className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-full text-muted transition-all duration-250 hover:bg-surface-muted hover:text-main"
             >
               <ArrowLeft className="h-5 w-5" aria-hidden />
             </Link>
@@ -364,12 +364,12 @@ function ConversationDetail() {
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h1 className="truncate font-display text-base font-semibold text-gray-900 sm:text-lg">
+                <h1 className="truncate font-display text-base font-semibold text-main sm:text-lg">
                   {conversation.customer.name}
                 </h1>
                 <StatusBadge status={conversation.status} />
               </div>
-              <p className="truncate text-xs text-gray-500 sm:text-sm">
+              <p className="truncate text-xs text-muted sm:text-sm">
                 {conversation.customer.phone}
               </p>
             </div>
@@ -380,7 +380,7 @@ function ConversationDetail() {
                 onClick={handleDownloadTranscript}
                 aria-label="Download transcript"
                 title="Download transcript"
-                className="inline-flex min-h-[44px] min-w-[40px] items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                className="inline-flex min-h-[44px] min-w-[40px] items-center justify-center rounded-full text-muted transition-all duration-250 hover:bg-surface-muted hover:text-main"
               >
                 <Download className="h-4 w-4" aria-hidden />
               </button>
@@ -390,7 +390,7 @@ function ConversationDetail() {
                   type="button"
                   onClick={handleResumeAi}
                   disabled={busy}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-green-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-green-700 disabled:opacity-60 sm:px-4 sm:text-sm"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-green-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-all duration-250 hover:bg-green-700 disabled:opacity-60 sm:px-4 sm:text-sm"
                 >
                   {busy ? (
                     <LoaderCircle
@@ -408,7 +408,7 @@ function ConversationDetail() {
                     type="button"
                     onClick={handleTakeOver}
                     disabled={busy}
-                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-colly px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-colly-hover disabled:opacity-60 sm:px-4 sm:text-sm"
+                    className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-colly px-3 py-2 text-xs font-semibold text-white shadow-sm transition-all duration-250 hover:bg-colly-hover disabled:opacity-60 sm:px-4 sm:text-sm"
                   >
                     {busy ? (
                       <LoaderCircle
@@ -436,7 +436,7 @@ function ConversationDetail() {
           {paused && conversation.pausedUntil && (
             <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-colly/30 bg-colly-light px-4 py-3 sm:px-6">
               <PauseCircle className="h-5 w-5 shrink-0 text-colly" aria-hidden />
-              <p className="min-w-0 flex-1 text-sm text-gray-900">
+              <p className="min-w-0 flex-1 text-sm text-main">
                 AI paused until{" "}
                 <span className="font-semibold">
                   {formatClockTime(conversation.pausedUntil)}
@@ -448,7 +448,7 @@ function ConversationDetail() {
                   type="button"
                   onClick={handleResumeAi}
                   disabled={busy}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover disabled:opacity-60"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-all duration-250 hover:bg-colly-hover disabled:opacity-60"
                 >
                   {busy && (
                     <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -463,14 +463,14 @@ function ConversationDetail() {
           {aiPaused && !paused && (
             <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 sm:px-6">
               <CircleAlert className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
-              <p className="min-w-0 flex-1 text-sm text-gray-900">
+              <p className="min-w-0 flex-1 text-sm text-main">
                 Your AI is paused. You have{" "}
                 <span className="font-semibold">{manualRemaining}</span> free
                 manual replies left this month. Upgrade to restore AI.
               </p>
               <Link
                 href="/billing"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-colly px-4 py-2 text-sm font-semibold text-white transition-all duration-250 hover:bg-colly-hover"
               >
                 Upgrade
               </Link>
@@ -478,7 +478,7 @@ function ConversationDetail() {
           )}
 
           {/* Messages: a light canvas with WhatsApp-style bubbles. */}
-          <div className="mt-3 rounded-2xl border border-gray-200 bg-white px-3 py-4 sm:px-4 sm:py-5">
+          <div className="surface-card mt-3 px-3 py-4 sm:px-4 sm:py-5">
             {messages && messages.length > 0 ? (
               <div className="flex flex-col gap-2.5">
                 {messages.map((message) => (
@@ -494,7 +494,7 @@ function ConversationDetail() {
                 <div ref={bottomRef} className="scroll-mb-28" />
               </div>
             ) : (
-              <p className="py-8 text-center text-sm text-gray-400">
+              <p className="py-8 text-center text-sm text-muted">
                 No messages in this conversation yet.
               </p>
             )}
@@ -517,7 +517,7 @@ function ConversationDetail() {
                   type="button"
                   onClick={handleTakeOver}
                   disabled={busy}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-60"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-250 hover:bg-amber-700 disabled:opacity-60"
                 >
                   {busy ? (
                     <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
@@ -537,7 +537,7 @@ function ConversationDetail() {
           {showComposer && (
             <form
               onSubmit={handleSend}
-              className="sticky bottom-16 z-10 -mx-4 mt-3 border-t border-gray-200 bg-white p-4 md:bottom-0 md:-mx-6"
+              className="sticky bottom-16 z-10 -mx-4 mt-3 border-t border-card-border bg-card-surface p-4 md:bottom-0 md:-mx-6"
             >
               <label htmlFor="agent-reply" className="sr-only">
                 Reply as an agent
@@ -564,7 +564,7 @@ function ConversationDetail() {
                   disabled={sending || draft.trim().length === 0}
                   aria-label="Send reply"
                   title="Send reply"
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FF6600] text-white shadow-sm transition-colors hover:bg-colly-hover disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#FF6600] text-white shadow-sm transition-all duration-250 hover:bg-colly-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {sending ? (
                     <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden />
@@ -587,18 +587,18 @@ function ConversationDetailFallback() {
     <div className="mx-auto w-full max-w-3xl">
       <Link
         href="/conversations"
-        className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+        className="mb-4 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted transition-all duration-250 hover:text-main"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
         Back to Conversations
       </Link>
 
-      <div className="rounded-lg border border-gray-200 bg-surface p-6">
-        <div className="h-5 w-40 animate-pulse rounded bg-gray-100" />
+      <div className="surface-card p-6">
+        <div className="h-5 w-40 animate-pulse rounded bg-surface-muted" />
         <div className="mt-6 space-y-4">
-          <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-gray-100" />
-          <div className="ml-auto h-10 w-1/2 animate-pulse rounded-2xl bg-gray-100" />
-          <div className="h-10 w-3/5 animate-pulse rounded-2xl bg-gray-100" />
+          <div className="h-10 w-2/3 animate-pulse rounded-2xl bg-surface-muted" />
+          <div className="ml-auto h-10 w-1/2 animate-pulse rounded-2xl bg-surface-muted" />
+          <div className="h-10 w-3/5 animate-pulse rounded-2xl bg-surface-muted" />
         </div>
       </div>
     </div>

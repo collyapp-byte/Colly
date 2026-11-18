@@ -45,20 +45,20 @@ export default async function NotificationsPage() {
     <div className="mx-auto w-full max-w-3xl">
       <RefreshOnMount />
       <BackButton />
-      <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
+      <h1 className="font-display text-2xl text-main sm:text-3xl">
         Notifications
       </h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <p className="mt-1 text-sm text-muted">
         Customers waiting for a human reply from your team.
       </p>
 
       {rows.length === 0 ? (
-        <div className="mt-6 rounded-lg border border-dashed border-gray-200 bg-surface p-10 text-center">
+        <div className="mt-6 rounded-xl border border-dashed border-card-ring bg-surface-muted/40 p-10 text-center">
           <BellRing
-            className="mx-auto h-6 w-6 text-gray-400"
+            className="mx-auto h-6 w-6 text-muted"
             aria-hidden
           />
-          <p className="mt-3 text-sm text-gray-500">
+          <p className="mt-3 text-sm text-muted">
             You are all caught up. New escalations will appear here.
           </p>
         </div>
@@ -69,19 +69,19 @@ export default async function NotificationsPage() {
             return (
               <li
                 key={row.id}
-                className="rounded-lg border border-gray-200 bg-surface p-4"
+                className="surface-card p-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-display font-semibold text-gray-900">
+                    <p className="font-display font-semibold text-main">
                       {row.customer.name || row.customer.phone}
                     </p>
                     {row.customer.name && (
-                      <p className="text-xs text-gray-500">{row.customer.phone}</p>
+                      <p className="text-xs text-muted">{row.customer.phone}</p>
                     )}
-                    <p className="mt-2 flex items-start gap-2 text-sm text-gray-700">
+                    <p className="mt-2 flex items-start gap-2 text-sm text-main">
                       <MessageSquare
-                        className="mt-0.5 h-4 w-4 shrink-0 text-gray-400"
+                        className="mt-0.5 h-4 w-4 shrink-0 text-muted"
                         aria-hidden
                       />
                       <span>
@@ -90,7 +90,7 @@ export default async function NotificationsPage() {
                       </span>
                     </p>
                     {row.escalatedAt && (
-                      <p className="mt-2 text-xs text-gray-400">
+                      <p className="mt-2 text-xs text-muted">
                         Escalated{" "}
                         {new Date(row.escalatedAt).toLocaleString("en-NG", {
                           dateStyle: "medium",
@@ -101,7 +101,7 @@ export default async function NotificationsPage() {
                   </div>
                   <Link
                     href={`/conversations/${row.id}`}
-                    className="shrink-0 rounded-lg bg-colly px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-colly-hover"
+                    className="shrink-0 rounded-xl bg-colly px-3 py-2 text-sm font-semibold text-white shadow-brand transition-all duration-250 hover:-translate-y-0.5 hover:bg-colly-hover hover:shadow-brand-hover active:translate-y-0 active:scale-[0.98]"
                   >
                     Go to Conversation
                   </Link>

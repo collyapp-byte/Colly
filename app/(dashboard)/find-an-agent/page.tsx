@@ -22,10 +22,10 @@ export const metadata: Metadata = {
 export default function FindAnAgentPage() {
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <h1 className="font-display text-2xl text-gray-900 sm:text-3xl">
+      <h1 className="font-display text-2xl text-main sm:text-3xl">
         Find a Colly Agent
       </h1>
-      <p className="mt-2 max-w-2xl text-sm text-gray-600">
+      <p className="mt-2 max-w-2xl text-sm text-muted">
         Connect with a certified expert in your state to set up your WhatsApp
         AI.
       </p>
@@ -57,12 +57,12 @@ async function CertifiedAgents() {
 function DirectoryFallback() {
   return (
     <div className="mt-8" aria-busy="true">
-      <div className="h-10 w-56 animate-pulse rounded-lg bg-gray-100" />
+      <div className="h-10 w-56 animate-pulse rounded-lg bg-surface-muted" />
       <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {[0, 1, 2].map((index) => (
           <div
             key={index}
-            className="h-44 animate-pulse rounded-xl border border-gray-100 bg-gray-100/60"
+            className="h-44 animate-pulse rounded-2xl border border-card-ring bg-surface-muted/60"
           />
         ))}
       </div>
