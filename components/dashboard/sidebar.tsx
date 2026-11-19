@@ -38,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
 { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
   { label: "Conversations", href: "/conversations", icon: MessageSquare },
   { label: "Sales & Invoices", href: "/sales", icon: ShoppingCart },
-  { label: "Business", title: "Business", href: "/business", icon: Package },
+  { label: "Business", href: "/business", icon: Package },
   { label: "Channels", href: "/channels", icon: Cable },
   { label: "Settings", href: "/settings", icon: Settings },
   { label: "Find an Agent", href: "/find-an-agent", icon: MapPin },
@@ -161,7 +161,7 @@ export function Sidebar({
 
   return (
     <div className="flex h-full w-full flex-col border-r border-card-ring bg-card-surface/75 shadow-card backdrop-blur-xl">
-      {/* Brand â€” always leads home, and dismisses the drawer on mobile. */}
+      {/* Brand -- always leads home, and dismisses the drawer on mobile. */}
       <div className="flex h-14 shrink-0 items-center border-b border-card-ring px-4">
         <Link
           href="/dashboard"
