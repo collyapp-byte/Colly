@@ -1,4 +1,4 @@
-import { connection } from "next/server";
+﻿import { connection } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAuth } from "@/lib/auth";
@@ -8,6 +8,8 @@ import type { Business } from "@/lib/business";
 import { formatNaira } from "@/lib/format";
 
 const HEADING_CLASS = "font-display text-base tracking-wide text-main";
+const CARD_CLASS =
+  "block surface-card surface-panel surface-card-interactive p-5 sm:p-6";
 
 export default async function BusinessPage() {
   await connection();
@@ -106,14 +108,14 @@ function BusinessHub({
 }: BusinessHubProps) {
   return (
     <div className="space-y-6">
-      <section className="surface-card p-5 sm:p-6">
+      <Link href="/settings" className={CARD_CLASS}>
         <h2 className={HEADING_CLASS}>Business Profile</h2>
         <p className="mt-2 text-sm text-main">
           {business.name} -- {business.phone}
         </p>
-      </section>
+      </Link>
 
-      <section className="surface-card p-5 sm:p-6">
+      <Link href="/products" className={CARD_CLASS}>
         <h2 className={HEADING_CLASS}>Products & Catalogue</h2>
         <div className="mt-3 space-y-1">
           {products.slice(0, 6).map((p) => (
@@ -122,9 +124,9 @@ function BusinessHub({
             </p>
           ))}
         </div>
-      </section>
+      </Link>
 
-      <section className="surface-card p-5 sm:p-6">
+      <Link href="/faqs" className={CARD_CLASS}>
         <h2 className={HEADING_CLASS}>FAQs & Policies</h2>
         <div className="mt-3 space-y-1">
           {faqs.slice(0, 5).map((f) => (
@@ -133,9 +135,9 @@ function BusinessHub({
             </p>
           ))}
         </div>
-      </section>
+      </Link>
 
-      <section className="surface-card p-5 sm:p-6">
+      <Link href="/customers" className={CARD_CLASS}>
         <h2 className={HEADING_CLASS}>Customer Directory</h2>
         <div className="mt-3 space-y-1">
           {customers.slice(0, 5).map((c) => (
@@ -144,23 +146,19 @@ function BusinessHub({
             </p>
           ))}
         </div>
-      </section>
+      </Link>
 
       {isOwner && (
-        <section className="surface-card p-5 sm:p-6">
+        <Link href="/settings/team" className={CARD_CLASS}>
           <h2 className={HEADING_CLASS}>Team & Roles</h2>
-          <Link href="/settings/team" className="mt-2 inline-block text-sm text-colly">
-            Invite team members
-          </Link>
-        </section>
+          <p className="mt-2 text-sm text-colly">Invite team members</p>
+        </Link>
       )}
 
-      <section className="surface-card p-5 sm:p-6">
+      <Link href="/settings/qr-code" className={CARD_CLASS}>
         <h2 className={HEADING_CLASS}>Business QR Code</h2>
-        <Link href="/settings/qr-code" className="mt-2 inline-block text-sm text-colly">
-          Open QR Code Generator
-        </Link>
-      </section>
+        <p className="mt-2 text-sm text-colly">Open QR Code Generator</p>
+      </Link>
     </div>
   );
 }
