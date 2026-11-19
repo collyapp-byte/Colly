@@ -4,7 +4,6 @@ import { PLANS, FREE_PLAN_LIMITS } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
 import { industrySlug, type Industry } from "@/lib/business";
 
-// Helper to calculate replies (5 credits = 1 reply)
 const calcReplies = (credits: number) => Math.floor(credits / 5).toLocaleString();
 
 type PlanCard = {
@@ -85,34 +84,31 @@ export function Pricing({
       cta: "Get Black",
       href: `${signupHref}&plan=black`,
       highlight: false,
-    }
+    },
   ];
 
   return (
     <section id="pricing" className="bg-background py-20 sm:py-28 md:py-32">
       <div className="mx-auto max-w-7xl px-4">
-        
-        {/* Header */}
-        <div className="text-center mb-16">
+        <div className="mb-16 text-center">
           <h2 className="font-display text-3xl font-bold text-main sm:text-4xl">
             Simple pricing. No hidden fees.
           </h2>
-          <p className="mt-4 mt-4 text-muted-foreground">
+          <p className="mt-4 text-muted-foreground">
             Billed monthly. Cancel anytime.
           </p>
-          <p className="mx-auto mt-2 max-w-xl mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
+          <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
             1 AI Reply = 5 Credits. Unused plan credits reset every month, but top-ups never expire.
           </p>
         </div>
 
-        {/* Pricing Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto items-stretch">
+        <div className="mx-auto grid max-w-6xl items-stretch gap-6 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
             <div
               key={plan.name}
               className={`relative flex flex-col rounded-2xl p-8 ${
                 plan.highlight
-                  ? "border-2 border-colly/40 bg-card-surface shadow-card"
+                  ? "border-2 border-colly bg-card-surface shadow-card"
                   : "border border-card-ring bg-card-surface shadow-card"
               }`}
             >
@@ -121,37 +117,43 @@ export function Pricing({
                   Most Popular
                 </span>
               )}
-              
+
               <div className="mb-6">
                 <h3 className="text-xl font-bold text-main">{plan.name}</h3>
-                <p className="mt-2 text-sm text-muted-foreground min-h-[40px]">{plan.desc}</p>
+                <p className="mt-2 min-h-[40px] text-sm text-muted-foreground">
+                  {plan.desc}
+                </p>
               </div>
-              
+
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-main">{plan.price}</span>
-                  <span className="text-sm font-medium text-gray-500">/mo</span>
+                  <span className="text-4xl font-extrabold text-main">
+                    {plan.price}
+                  </span>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    /mo
+                  </span>
                 </div>
                 <p className="mt-2 text-sm font-semibold text-[#FF6600]">
                   {plan.replies} AI Replies / month
                 </p>
               </div>
-              
+
               <ul className="mb-8 flex-1 space-y-4">
                 {plan.features.map((f, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-main">
-                    <Check className="h-4 w-4 shrink-0 text-[#FF6600] mt-0.5" /> 
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#FF6600]" />
                     <span>{f}</span>
                   </li>
                 ))}
               </ul>
-              
+
               <Link
                 href={plan.href}
                 className={`block w-full rounded-lg py-3 text-center text-sm font-semibold transition-all ${
                   plan.highlight
                     ? "bg-[#FF6600] text-white hover:bg-[#E65C00]"
-                    : "border border-gray-300 bg-background text-main hover:bg-gray-50"
+                    : "border border-card-ring bg-background text-main hover:bg-surface-muted/60"
                 }`}
               >
                 {plan.cta}
@@ -159,7 +161,6 @@ export function Pricing({
             </div>
           ))}
         </div>
-        
       </div>
     </section>
   );
