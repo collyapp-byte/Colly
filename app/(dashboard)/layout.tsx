@@ -1,4 +1,4 @@
-﻿export const instant = false;
+export const instant = false;
 import { connection } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -17,7 +17,7 @@ import { Footer } from "@/components/ui/footer";
  * The flags mirror what `GET /api/business` derives for `pendingTasks`: a
  * channel exists when a bot token is stored, owner alerts when the owner's
  * Telegram chat is linked, and the catalogue dots come from row counts.
- * `lastNotificationsReadAt` is what makes the bell "unread" â€” the Notifications
+ * `lastNotificationsReadAt` is what makes the bell "unread" -- the Notifications
  * page stamps it when opened (see the schema comment on the column).
  */
 
