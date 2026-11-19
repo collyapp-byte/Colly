@@ -196,7 +196,28 @@ async function shutdown(reason: string): Promise<void> {
   await prisma.$disconnect();
 }
 
+/** Fail fast and clearly at boot when the worker cannot talk to PostgreSQL. */
+async function validateRequiredEnv(): Promise<void> {
+  const missing: string[] = [];
+  if (!process.env.DATABASE_URL) missing.push("DATABASE_URL");
+  if (!process.env.DIRECT_URL) missing.push("DIRECT_URL");
+
+  // Only the AI provider chain is required for chat; the worker falls back
+  // gracefully if every provider is down, so we do not require a provider key.
+  // But PostgreSQL is mandatory for the session store and the telemetry polls.
+  if (missing.length > 0) {
+     
+    console.error(
+      `[whatsapp-worker] missing required environment variables: ${missing.join(", ")}\n` +
+        `[whatsapp-worker] copy .env.example to .env and fill in DATABASE_URL and DIRECT_URL, then restart.`,
+    );
+    process.exit(1);
+  }
+}
+
 async function main(): Promise<void> {
+  await validateRequiredEnv();
+
   const once = process.argv.includes("--once");
 
   if (once) {
