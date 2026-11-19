@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -63,7 +63,7 @@ type SidebarProps = {
   onClose?: () => void;
   hasNoProducts?: boolean;
   hasNoFaqs?: boolean;
-  hasPendingEscalations?: boolean;
+  hasUnreadEscalations?: boolean;
   hasNoChannels?: boolean;
   isOwner?: boolean;
 };
@@ -74,7 +74,7 @@ export function Sidebar({
   onClose,
   hasNoProducts = false,
   hasNoFaqs = false,
-  hasPendingEscalations = false,
+  hasUnreadEscalations = false,
   hasNoChannels = false,
   isOwner = true,
 }: SidebarProps) {
@@ -84,14 +84,16 @@ export function Sidebar({
   const [accountEmail, setAccountEmail] = useState(ownerEmail ?? "");
   const switcherRef = useRef<HTMLDivElement>(null);
 
-  function shouldShowDot(href: string): boolean {
+  function shouldShowDot(href: string, hasUnreadEscalations: boolean): boolean {
     return (
       (href === "/products" && hasNoProducts) ||
       (href === "/faqs" && hasNoFaqs) ||
       // The hub is where a missing channel is fixed, so that is the row that
       // carries the setup dot.
       (href === "/channels" && hasNoChannels) ||
-      (href === "/conversations" && hasPendingEscalations)
+      // Only show conversation dot when there are genuinely unread/pending escalations,
+      // not on stale/already-viewed conversations.
+      (href === "/conversations" && hasUnreadEscalations)
     );
   }
 
@@ -203,7 +205,7 @@ export function Sidebar({
                   aria-hidden
                 />
                 <span className="truncate">{item.label}</span>
-                {shouldShowDot(item.href) && (
+                {shouldShowDot(item.href, hasUnreadEscalations) && (
                   <>
                     <span
                       className="ml-auto h-2 w-2 shrink-0 rounded-full bg-colly"
@@ -300,3 +302,4 @@ export function Sidebar({
     </div>
   );
 }
+

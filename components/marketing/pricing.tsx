@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { Check } from "lucide-react";
 import { PLANS, FREE_PLAN_LIMITS } from "@/lib/plans";
 import { formatNaira } from "@/lib/format";
@@ -89,18 +89,18 @@ export function Pricing({
   ];
 
   return (
-    <section id="pricing" className="bg-white py-20 sm:py-28">
+    <section id="pricing" className="bg-background py-20 sm:py-28 md:py-32">
       <div className="mx-auto max-w-7xl px-4">
         
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="font-display text-3xl font-bold text-gray-900 sm:text-4xl">
+          <h2 className="font-display text-3xl font-bold text-main sm:text-4xl">
             Simple pricing. No hidden fees.
           </h2>
-          <p className="mt-4 text-lg text-gray-600">
+          <p className="mt-4 mt-4 text-muted-foreground">
             Billed monthly. Cancel anytime.
           </p>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-gray-500">
+          <p className="mx-auto mt-2 max-w-xl mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
             1 AI Reply = 5 Credits. Unused plan credits reset every month, but top-ups never expire.
           </p>
         </div>
@@ -112,8 +112,8 @@ export function Pricing({
               key={plan.name}
               className={`relative flex flex-col rounded-2xl p-8 ${
                 plan.highlight
-                  ? "border-2 border-[#FF6600] bg-[#FFF4EC] shadow-xl"
-                  : "border border-gray-200 bg-white shadow-sm"
+                  ? "border-2 border-colly/40 bg-card-surface shadow-card"
+                  : "border border-card-ring bg-card-surface shadow-card"
               }`}
             >
               {plan.highlight && (
@@ -123,13 +123,13 @@ export function Pricing({
               )}
               
               <div className="mb-6">
-                <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                <p className="mt-2 text-sm text-gray-600 min-h-[40px]">{plan.desc}</p>
+                <h3 className="text-xl font-bold text-main">{plan.name}</h3>
+                <p className="mt-2 text-sm text-muted-foreground min-h-[40px]">{plan.desc}</p>
               </div>
               
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-gray-900">{plan.price}</span>
+                  <span className="text-4xl font-extrabold text-main">{plan.price}</span>
                   <span className="text-sm font-medium text-gray-500">/mo</span>
                 </div>
                 <p className="mt-2 text-sm font-semibold text-[#FF6600]">
@@ -139,7 +139,7 @@ export function Pricing({
               
               <ul className="mb-8 flex-1 space-y-4">
                 {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
+                  <li key={i} className="flex items-start gap-3 text-sm text-main">
                     <Check className="h-4 w-4 shrink-0 text-[#FF6600] mt-0.5" /> 
                     <span>{f}</span>
                   </li>
@@ -151,7 +151,7 @@ export function Pricing({
                 className={`block w-full rounded-lg py-3 text-center text-sm font-semibold transition-all ${
                   plan.highlight
                     ? "bg-[#FF6600] text-white hover:bg-[#E65C00]"
-                    : "border border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
+                    : "border border-gray-300 bg-background text-main hover:bg-gray-50"
                 }`}
               >
                 {plan.cta}

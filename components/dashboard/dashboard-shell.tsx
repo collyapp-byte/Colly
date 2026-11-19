@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -16,10 +16,10 @@ type DashboardShellProps = {
   ownerEmail?: string;
   hasNoProducts?: boolean;
   hasNoFaqs?: boolean;
-  hasPendingEscalations?: boolean;
+  hasUnreadEscalations?: boolean;
   /**
-   * Unread escalations (raised since the owner last opened Notifications) —
-   * the bell badge. `hasPendingEscalations` is the wider "anything still
+   * Unread escalations (raised since the owner last opened Notifications) ”
+   * the bell badge. `hasUnreadEscalations` is the wider "anything still
    * waiting" flag the sidebar dot uses.
    */
   pendingEscalations?: number;
@@ -29,7 +29,7 @@ type DashboardShellProps = {
   /**
    * False for an invited staff account: owner-only settings links (and the
    * "complete setup" banner that points at one) are hidden instead of shown as
-   * dead ends. The server is still the gate — see `lib/team.ts`.
+   * dead ends. The server is still the gate ” see `lib/team.ts`.
    */
   isOwner?: boolean;
   children: ReactNode;
@@ -41,7 +41,7 @@ export function DashboardShell({
   ownerEmail,
   hasNoProducts = false,
   hasNoFaqs = false,
-  hasPendingEscalations = false,
+  hasUnreadEscalations = false,
   pendingEscalations = 0,
   telegramConnected = true,
   ownerAlertsLinked = true,
@@ -149,7 +149,7 @@ export function DashboardShell({
               onClose={() => setMobileNavOpen(false)}
               hasNoProducts={hasNoProducts}
               hasNoFaqs={hasNoFaqs}
-              hasPendingEscalations={hasPendingEscalations}
+              hasUnreadEscalations={hasUnreadEscalations}
               hasNoChannels={hasNoChannels}
               isOwner={isOwner}
             />
@@ -168,7 +168,7 @@ export function DashboardShell({
             ownerEmail={ownerEmail}
             hasNoProducts={hasNoProducts}
             hasNoFaqs={hasNoFaqs}
-            hasPendingEscalations={hasPendingEscalations}
+            hasUnreadEscalations={hasUnreadEscalations}
             hasNoChannels={hasNoChannels}
             isOwner={isOwner}
           />
@@ -188,7 +188,7 @@ export function DashboardShell({
                   aria-hidden
                 />
                 <span>
-                  ⚠️ ACTION REQUIRED: Connect your Telegram bot and verify
+                  š ï¸ ACTION REQUIRED: Connect your Telegram bot and verify
                   Owner Alerts to avoid missing sales.
                 </span>
               </span>
@@ -269,3 +269,4 @@ export function DashboardShell({
     </div>
   );
 }
+
