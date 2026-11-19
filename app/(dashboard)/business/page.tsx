@@ -1,4 +1,4 @@
-﻿import { connection } from "next/server";
+import { connection } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -269,7 +269,7 @@ export default async function BusinessPage() {
               ) : (
                 customers.slice(0, 4).map((c) => (
                   <p key={c.id} className="truncate text-xs text-main">
-                    {c.name || c.phone || c.email || "Customer"}
+                    {c.name || c.phone || "Customer"}
                   </p>
                 ))
               )}
