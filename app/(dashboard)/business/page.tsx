@@ -1,4 +1,4 @@
-import { connection } from "next/server";
+﻿import { connection } from "next/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -58,8 +58,7 @@ export default async function BusinessPage() {
             {business.name}
           </h1>
           <p className="mt-1 text-sm text-muted">
-            {business.phone}
-            {business.businessHours ? ` · ${business.businessHours}` : ""}
+            {business.description || `${business.phone}${business.businessHours ? ` · ${business.businessHours}` : ""}`}
           </p>
         </div>
 
@@ -74,10 +73,10 @@ export default async function BusinessPage() {
             </Link>
           )}
           <Link
-            href="/settings"
+            href="/business/profile"
             className="inline-flex min-h-[42px] items-center gap-1.5 rounded-xl border border-card-ring bg-card-surface px-4 py-2 text-sm font-semibold text-main transition-all duration-200 hover:border-colly/40"
           >
-            Edit Profile
+            View Profile
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
@@ -86,7 +85,7 @@ export default async function BusinessPage() {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:col-span-8">
           <Link
-            href="/settings"
+            href="/business/profile"
             className="surface-card surface-panel surface-card-interactive flex flex-col justify-between p-5"
           >
             <div>
@@ -97,14 +96,19 @@ export default async function BusinessPage() {
                 </span>
                 <ArrowUpRight className="h-4 w-4 text-muted" />
               </div>
-              <p className="mt-3 text-sm font-medium text-main">{business.name}</p>
-              <p className="mt-1 text-xs text-muted">{business.phone}</p>
+              <p className="mt-3 text-xs leading-relaxed text-muted">
+                {business.description ||
+                  "No business description added yet. Add what your business sells so your AI assistant has context."}
+              </p>
+              <p className="mt-2.5 text-xs font-medium text-main">
+                {business.phone}
+              </p>
               <p className="mt-1 text-xs text-muted">
                 Hours: {business.businessHours || "Not set"}
               </p>
             </div>
             <p className="mt-4 text-xs font-semibold text-colly">
-              Configure profile & tone →
+              Open business profile →
             </p>
           </Link>
 

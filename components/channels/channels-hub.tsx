@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Globe, MessageSquare, Send, Smartphone } from "lucide-react";
+import { Globe } from "lucide-react";
 
 import { ChannelCard } from "./channel-card";
 import { DiscordPanel } from "./discord-panel";
@@ -43,6 +43,28 @@ export type ChannelsHubProps = {
   /** Card to open on first paint (`/channels?channel=telegram`). */
   initialChannel?: ChannelKey | null;
 };
+
+function PublicSvgIcon({
+  src,
+  className = "h-5 w-5",
+}: {
+  src: string;
+  className?: string;
+}) {
+  return <img src={src} alt="" className={`${className} object-contain`} aria-hidden="true" />;
+}
+
+const WhatsAppIcon = ({ className }: { className?: string }) => (
+  <PublicSvgIcon src="/whatsapp.svg" className={className} />
+);
+
+const TelegramIcon = ({ className }: { className?: string }) => (
+  <PublicSvgIcon src="/telegram.svg" className={className} />
+);
+
+const DiscordIcon = ({ className }: { className?: string }) => (
+  <PublicSvgIcon src="/discord.svg" className={className} />
+);
 
 function formatPhone(value: string | null): string | null {
   if (!value) return null;
@@ -109,7 +131,7 @@ export function ChannelsHub({
         <ChannelCard
           id="whatsapp"
           title={getChannelDefinition("whatsapp").label}
-          icon={Smartphone}
+          icon={WhatsAppIcon}
           description={getChannelDefinition("whatsapp").description}
           statusLabel={whatsappStatusLabel(whatsappStatus, whatsappStalled)}
           statusTone={whatsappStatusTone(whatsappStatus, whatsappStalled)}
@@ -132,7 +154,7 @@ export function ChannelsHub({
         <ChannelCard
           id="telegram"
           title={getChannelDefinition("telegram").label}
-          icon={Send}
+          icon={TelegramIcon}
           description={getChannelDefinition("telegram").description}
           statusLabel={botChannelStatusLabel(telegramConnected)}
           statusTone={telegramConnected ? "positive" : "neutral"}
@@ -159,7 +181,7 @@ export function ChannelsHub({
         <ChannelCard
           id="discord"
           title={getChannelDefinition("discord").label}
-          icon={MessageSquare}
+          icon={DiscordIcon}
           description={getChannelDefinition("discord").description}
           statusLabel={botChannelStatusLabel(discordConnected)}
           statusTone={discordConnected ? "positive" : "neutral"}

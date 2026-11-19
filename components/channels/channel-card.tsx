@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { ChevronDown, type LucideIcon } from "lucide-react";
+import type { ComponentType, ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { ChannelStatusTone } from "@/lib/channels";
@@ -11,7 +11,7 @@ import type { ChannelStatusTone } from "@/lib/channels";
  *
  * At rest a card is one scannable row: icon, title, live status badge, a single
  * line of copy and the credit cost. The setup inputs live in `children`, which
- * only mounts while the card is expanded — that is the progressive disclosure
+ * only mounts while the card is expanded -- that is the progressive disclosure
  * the hub is built on, so no card opens with a wall of instructions.
  *
  * The header is a real button (`aria-expanded` + `aria-controls`), so the whole
@@ -47,7 +47,7 @@ export type ChannelCardProps = {
   /** Used for the panel's DOM id, so the toggle can point at it. */
   id: string;
   title: string;
-  icon: LucideIcon;
+  icon: ComponentType<{ className?: string }>;
   description: string;
   statusLabel: string;
   statusTone: ChannelStatusTone;
