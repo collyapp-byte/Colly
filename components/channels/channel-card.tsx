@@ -86,7 +86,7 @@ export function ChannelCard({
 
   return (
     <article
-      className={`surface-card flex flex-col overflow-hidden ${
+      className={`surface-card self-start flex flex-col overflow-hidden ${
         expanded ? "border-colly/35" : ""
       }`}
     >

@@ -330,7 +330,9 @@ function ViewMode() {
     icon: ReactNode;
   }) {
     return (
-      <div className="rounded-xl border border-card-ring bg-surface-muted/40 p-3 flex items-start gap-3">
+      <div
+        className="self-start rounded-xl border border-card-ring bg-surface-muted/40 p-3 flex items-start gap-3"
+      >
         <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-card-ring text-muted">
           {icon}
         </span>

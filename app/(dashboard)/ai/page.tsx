@@ -150,7 +150,9 @@ export default async function CollyAIPage() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* AI Persona */}
-        <section className="surface-card surface-card-interactive relative group p-5">
+        <section
+          className="self-start surface-card surface-card-interactive relative group p-5"
+        >
           {/* Stretched link: the whole card opens the tone settings. It sits at
               z-0 so the real buttons below (z-10) stay clickable on top of it. */}
           <Link href="/settings" className="absolute inset-0 z-0">
@@ -176,7 +178,9 @@ export default async function CollyAIPage() {
         </section>
 
         {/* Connected Apps */}
-        <section className="surface-card surface-card-interactive relative group p-5">
+        <section
+          className="self-start surface-card surface-card-interactive relative group p-5"
+        >
           {/* Stretched link: the whole card opens the AI Line settings. Each
               per-channel button below is z-10 so it keeps its own destination. */}
           <Link href="/channels" className="absolute inset-0 z-0">
@@ -265,7 +269,9 @@ export default async function CollyAIPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Credits & Usage */}
-        <section className="surface-card surface-card-interactive relative group p-5">
+        <section
+          className="self-start surface-card surface-card-interactive relative group p-5"
+        >
           {/* Stretched link: the whole card opens the credits page. "Top Up" and
               "Upgrade" below are z-10 so they keep their own destinations. */}
           <Link href="/settings/billing/credits" className="absolute inset-0 z-0">
@@ -344,7 +350,9 @@ export default async function CollyAIPage() {
         </section>
 
         {/* Past Transactions */}
-        <section className="surface-card surface-card-interactive relative group p-5">
+        <section
+          className="self-start surface-card surface-card-interactive relative group p-5"
+        >
           {/* Stretched link: the whole card opens the billing history. The
               "View All Transactions" button below is z-10 so it stays clickable. */}
           <Link href="/settings/billing" className="absolute inset-0 z-0">
