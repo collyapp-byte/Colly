@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// `/settings` is the single source for business profile edits: every field here
+// comes from `PATCH /api/business`, which validates and serializes on the way out.
+// Do not add a second edit path.
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";

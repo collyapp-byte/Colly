@@ -3,7 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { requireOwnerApi } from "@/lib/auth";
 import { isValidEmail } from "@/lib/validators";
 import { TEAM_MEMBER_NAME_MAX } from "@/lib/team";
+import { isTeamRole, type TeamMemberView } from "@/lib/team";
 import { sendTeamInviteEmail, teamInviteLink } from "@/lib/team-invite";
+import {
+  cursorDate,
+  decodeCursor,
+  encodeCursor,
+  readPageSize,
+} from "@/lib/pagination";
 
 function badRequest(error: string) {
   return Response.json({ error }, { status: 400 });
@@ -35,6 +42,58 @@ function nameFromEmail(email: string): string {
     .join(" ");
 
   return (name || "Team member").slice(0, TEAM_MEMBER_NAME_MAX);
+}
+
+function toTeamMemberView(row: Prisma.TeamMemberGetPayload<{ select: typeof TEAM_MEMBER_SELECT }>): TeamMemberView {
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    role: isTeamRole(row.role) ? row.role : "STAFF",
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+// GET /api/team?cursor=&limit=
+// Keyset-paginated list of the caller's team members (newest first).
+export async function GET(request: Request) {
+  const auth = await requireOwnerApi();
+  if (!auth.ok) return auth.response;
+
+  const businessId = auth.user.businessId;
+  const { searchParams } = new URL(request.url);
+  const limit = readPageSize(searchParams);
+  const cursor = decodeCursor(searchParams.get("cursor"));
+  const cursorCreatedAt = cursorDate(cursor, "createdAt");
+  const cursorId = cursor?.id ?? null;
+
+  const after =
+    cursorCreatedAt && cursorId
+      ? {
+          OR: [
+            { createdAt: { lt: cursorCreatedAt } },
+            { createdAt: cursorCreatedAt, id: { lt: cursorId } },
+          ],
+        }
+      : {};
+
+  const rows = await prisma.teamMember.findMany({
+    where: { businessId, ...after },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: limit,
+    select: TEAM_MEMBER_SELECT,
+  });
+
+  const last = rows.at(-1);
+  const nextCursor =
+    rows.length === limit && last
+      ? encodeCursor({ createdAt: last.createdAt, id: last.id })
+      : null;
+
+  return Response.json({
+    members: rows.map(toTeamMemberView),
+    nextCursor,
+  });
 }
 
 export async function POST(request: Request) {
@@ -119,6 +178,47 @@ export async function POST(request: Request) {
         detail: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const auth = await requireOwnerApi();
+    if (!auth.ok) return auth.response;
+
+    const businessId = auth.user.businessId;
+    const body = (await request.json().catch(() => null)) as {
+      id?: unknown;
+      role?: unknown;
+    } | null;
+
+    const id = typeof body?.id === "string" ? body.id.trim() : "";
+    const role = body?.role;
+    if (!id) return badRequest("id is required");
+    if (!isTeamRole(role)) return badRequest('Role must be "OWNER" or "STAFF"');
+
+    const existing = await prisma.teamMember.findFirst({
+      where: { id, businessId },
+      select: { id: true, email: true, role: true },
+    });
+    if (!existing) return notFound("Team member not found");
+
+    const updated = await prisma.teamMember.update({
+      where: { id },
+      data: { role },
+      select: TEAM_MEMBER_SELECT,
+    });
+
+    return Response.json({ member: toTeamMemberView(updated) });
+  } catch (error) {
+    console.error("[PATCH /api/team]", error);
+    return Response.json(
+      {
+        error: "Failed to change that role",
+        detail: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
     );
   }
 }

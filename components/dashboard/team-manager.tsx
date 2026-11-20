@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { ShieldCheck, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 
@@ -147,6 +147,23 @@ function RoleBadge({ role }: { role: "OWNER" | "STAFF" }) {
  * server-side: keeping these controls away from staff is convenience, not
  * security.
  */
+
+/**
+ * Status badge: ACTIVE for staff/owner, PENDING for pending invite. */
+function StatusBadge({
+  role,
+}: {
+  role: TeamMemberView["role"];
+}) {
+  const active = role === "OWNER" || role === "STAFF";
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${active ? "bg-colly/10 text-colly" : "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"}`}
+    >
+      {active ? "Active" : "Pending"}
+    </span>
+  );
+}
 export function TeamManager({
   owner,
   initialMembers,
@@ -167,6 +184,12 @@ export function TeamManager({
   const [pendingRemoval, setPendingRemoval] =
     useState<TeamMemberView | null>(null);
   const [removing, setRemoving] = useState(false);
+
+  /** A role dropdown is being submitted, to block double-clicks. */
+  const [roleUpdating, setRoleUpdating] = useState<{
+    id: string;
+    role: "OWNER" | "STAFF";
+  } | null>(null);
 
   /** Re-reads the first page; used after an invite or a removal. */
   async function refresh() {

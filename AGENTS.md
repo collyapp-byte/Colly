@@ -114,6 +114,8 @@ unknown stored value as `RETAIL`, so a hand-edited row can never switch on a per
   `INDUSTRIES` (labels from `INDUSTRY_LABELS`, guarded by `isIndustry()` on change), submitted with
   the rest of the form; `PATCH /api/business` validates it (`Industry must be one of: …`, 400) and
   stores it on the caller's own business. Like tone, it is a profile field, not an owner-only setting.
+Do not add a second edit path: `/settings` (`app/(dashboard)/settings/page.tsx`) is the single source for business profile edits - `name`, `phone`, `whatsappNumber`, `tone`, `industry`, `businessHours`, `address`, `description` and `avatarUrl`. Every client writes through `PATCH /api/business`, and `serializeBusiness()` re-validates on read so a hand-edited row cannot switch the persona.
+
 - **The persona.** `buildSystemPrompt()` in `lib/chat-engine.ts` appends `HOTEL_PERSONA` when
   `business.industry === "HOTEL"` — before the tone instruction, which stays last. The text is the
   contract: "HOTEL MODE: You are a hotel receptionist… you must ask for their Check-in Date and
