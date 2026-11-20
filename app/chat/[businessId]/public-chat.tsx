@@ -203,7 +203,7 @@ export default function PublicChat({ businessId }: { businessId: string }) {
 
         {businessState === "ready" && messages.length === 0 ? (
           <div className="flex justify-start">
-            <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-gray-200 bg-surface px-4 py-3 text-sm leading-relaxed text-gray-800 shadow-sm">
+            <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-gray-200 bg-surface px-4 py-3 text-sm leading-relaxed shadow-sm">
               {businessName ? `Hi! Welcome to ${businessName}.` : "Hi there!"}{" "}
               How can I help you today?
             </div>
@@ -220,8 +220,8 @@ export default function PublicChat({ businessId }: { businessId: string }) {
             <div
               className={
                 message.role === "user"
-                  ? "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-colly px-4 py-2.5 text-sm leading-relaxed text-white shadow-sm"
-                  : "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-bl-md border border-gray-200 bg-surface px-4 py-2.5 text-sm leading-relaxed text-gray-800 shadow-sm"
+                  ? "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-colly px-4 py-2.5 text-sm leading-relaxed dark:text-zinc-900 shadow-sm"
+                  : "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-bl-md border border-gray-200 bg-surface px-4 py-2.5 text-sm leading-relaxed dark:text-zinc-100 shadow-sm"
               }
             >
               {message.content}
@@ -259,7 +259,7 @@ export default function PublicChat({ businessId }: { businessId: string }) {
             maxLength={MAX_MESSAGE_LENGTH}
             disabled={businessState !== "ready" || sending}
             aria-label="Message"
-            className="h-11 flex-1 rounded-full border border-gray-300 bg-background px-4 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-colly focus:ring-2 focus:ring-colly/20 disabled:opacity-60"
+            className="h-11 flex-1 rounded-full border border-gray-300 bg-background px-4 text-sm text-foreground dark:text-white outline-none transition-colors placeholder:text-gray-400 focus:border-colly focus:ring-2 focus:ring-colly/20 disabled:opacity-60"
           />
           <button
             type="submit"
