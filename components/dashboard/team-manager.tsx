@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import { ShieldCheck, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 
@@ -321,6 +321,28 @@ export function TeamManager({
       setRemoving(false);
     }
   }
+async function handleRoleChange(
+     memberId: string,
+     newRole: "OWNER" | "STAFF",
+   ) {
+     setRoleUpdating({ id: memberId, role: newRole });
+     try {
+       const res = await fetch("/api/team", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({ role: newRole, memberId }),
+       });
+       const payload: unknown = await res.json().catch(() => null);
+       if (!res.ok) {
+         throw new Error(errorMessage(payload) ?? "Could not update role");
+       }
+       await refresh();
+     } catch (err) {
+       toast.error(err instanceof Error ? err.message : "Something went wrong");
+     } finally {
+       setRoleUpdating(null);
+     }
+   }
 
   const ownerName = owner.name?.trim() || "Business owner";
   const staffLabel =
@@ -462,7 +484,17 @@ export function TeamManager({
                   )}
                 </p>
               </div>
+              <StatusBadge role={member.role} />
               <RoleBadge role="STAFF" />
+              <select
+                defaultValue={member.role}
+                onChange={(e) => handleRoleChange(member.id, e.target.value as "OWNER" | "STAFF")}
+                disabled={roleUpdating?.id === member.id}
+                className="ml-2 rounded-xl border border-card-ring bg-card-surface px-2 py-1 text-sm text-main outline-none focus:border-colly focus:ring-2 focus:ring-colly/20"
+              >
+                <option value="STAFF">Staff</option>
+                <option value="OWNER">Owner</option>
+              </select>
               <button
                 type="button"
                 onClick={() => setPendingRemoval(member)}
