@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Globe } from "lucide-react";
+
 
 import { ChannelCard } from "./channel-card";
 import { DiscordPanel } from "./discord-panel";
@@ -64,6 +64,10 @@ const TelegramIcon = ({ className }: { className?: string }) => (
 
 const DiscordIcon = ({ className }: { className?: string }) => (
   <PublicSvgIcon src="/discord.svg" className={className} />
+);
+
+const WebChatIcon = ({ className }: { className?: string }) => (
+  <PublicSvgIcon src="/google.svg" className={className} />
 );
 
 function formatPhone(value: string | null): string | null {
@@ -208,7 +212,7 @@ export function ChannelsHub({
         <ChannelCard
           id="web-chat"
           title={getChannelDefinition("web_chat").label}
-          icon={Globe}
+          icon={WebChatIcon}
           description={getChannelDefinition("web_chat").description}
           statusLabel={WEB_CHAT_STATUS_LABEL}
           statusTone="positive"
