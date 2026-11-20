@@ -203,7 +203,7 @@ export default function PublicChat({ businessId }: { businessId: string }) {
 
         {businessState === "ready" && messages.length === 0 ? (
           <div className="flex justify-start">
-            <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-gray-200 bg-surface px-4 py-3 text-sm leading-relaxed shadow-sm">
+            <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-gray-200 bg-surface px-4 py-3 text-sm leading-relaxed text-foreground dark:text-white shadow-sm">
               {businessName ? `Hi! Welcome to ${businessName}.` : "Hi there!"}{" "}
               How can I help you today?
             </div>
