@@ -51,7 +51,7 @@ function PublicSvgIcon({
   src: string;
   className?: string;
 }) {
-  return <img src={src} alt="" className={`${className} object-contain`} aria-hidden="true" />;
+  return <img src={src} alt="" className={`${className} object-cover`} aria-hidden="true" />;
 }
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (

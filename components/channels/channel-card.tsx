@@ -97,8 +97,8 @@ export function ChannelCard({
         aria-controls={panelId}
         className="surface-card-interactive group flex w-full items-start gap-3 p-4 text-left duration-250 ease-out sm:p-5"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-colly-tint text-colly ring-1 ring-colly/15 transition-transform duration-250 group-hover:scale-105">
-          <Icon className="h-5 w-5" aria-hidden />
+        <span className="flex h-10 w-10 shrink-0 rounded-xl bg-colly-tint text-colly ring-1 ring-colly/15 transition-transform duration-250 group-hover:scale-105 overflow-hidden">
+          <Icon className="h-full w-full" aria-hidden />
         </span>
 
         <span className="min-w-0 flex-1">
