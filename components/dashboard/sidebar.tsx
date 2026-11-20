@@ -63,7 +63,6 @@ type SidebarProps = {
   onClose?: () => void;
   hasNoProducts?: boolean;
   hasNoFaqs?: boolean;
-  hasUnreadEscalations?: boolean;
   hasNoChannels?: boolean;
   isOwner?: boolean;
 };
@@ -74,7 +73,6 @@ export function Sidebar({
   onClose,
   hasNoProducts = false,
   hasNoFaqs = false,
-  hasUnreadEscalations = false,
   hasNoChannels = false,
   isOwner = true,
 }: SidebarProps) {
@@ -84,20 +82,7 @@ export function Sidebar({
   const [accountEmail, setAccountEmail] = useState(ownerEmail ?? "");
   const switcherRef = useRef<HTMLDivElement>(null);
 
-  function shouldShowDot(href: string, hasUnreadEscalations: boolean): boolean {
-    return (
-      (href === "/products" && hasNoProducts) ||
-      (href === "/faqs" && hasNoFaqs) ||
-      // The hub is where a missing channel is fixed, so that is the row that
-      // carries the setup dot.
-      (href === "/channels" && hasNoChannels) ||
-      // Only show conversation dot when there are genuinely unread/pending escalations,
-      // not on stale/already-viewed conversations.
-      (href === "/conversations" && hasUnreadEscalations)
-    );
-  }
-
-  /** Dismiss the mobile drawer and the account menu in one tap. */
+/** Dismiss the mobile drawer and the account menu in one tap. */
   function handleNavigate() {
     setSwitcherOpen(false);
     onClose?.();
@@ -205,14 +190,14 @@ export function Sidebar({
                   aria-hidden
                 />
                 <span className="truncate">{item.label}</span>
-                {shouldShowDot(item.href, hasUnreadEscalations) && (
+                {(item.href, hasUnreadEscalations) && (
                   <>
                     <span
-                      className="ml-auto h-2 w-2 shrink-0 rounded-full bg-colly"
+                      className="ml-auto h-2 w-2 shrink-0"
                       aria-hidden
                     />
-                    <span className="sr-only">Needs attention</span>
-                  </>
+                    <span className="sr-only">
+                  
                 )}
               </Link>
             );

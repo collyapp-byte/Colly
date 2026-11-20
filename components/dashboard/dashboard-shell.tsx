@@ -17,6 +17,7 @@ type DashboardShellProps = {
   hasNoProducts?: boolean;
   hasNoFaqs?: boolean;
   hasUnreadEscalations?: boolean;
+  /** Number of escalations newer than lastNotificationsReadAt */
   /**
    * Unread escalations (raised since the owner last opened Notifications) ”
    * the bell badge. `hasUnreadEscalations` is the wider "anything still
