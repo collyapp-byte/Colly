@@ -16,13 +16,6 @@ type DashboardShellProps = {
   ownerEmail?: string;
   hasNoProducts?: boolean;
   hasNoFaqs?: boolean;
-  hasUnreadEscalations?: boolean;
-  /** Number of escalations newer than lastNotificationsReadAt */
-  /**
-   * Unread escalations (raised since the owner last opened Notifications) ”
-   * the bell badge. `hasUnreadEscalations` is the wider "anything still
-   * waiting" flag the sidebar dot uses.
-   */
   pendingEscalations?: number;
   telegramConnected?: boolean;
   ownerAlertsLinked?: boolean;
@@ -42,7 +35,6 @@ export function DashboardShell({
   ownerEmail,
   hasNoProducts = false,
   hasNoFaqs = false,
-  hasUnreadEscalations = false,
   pendingEscalations = 0,
   telegramConnected = true,
   ownerAlertsLinked = true,
@@ -150,7 +142,6 @@ export function DashboardShell({
               onClose={() => setMobileNavOpen(false)}
               hasNoProducts={hasNoProducts}
               hasNoFaqs={hasNoFaqs}
-              hasUnreadEscalations={hasUnreadEscalations}
               hasNoChannels={hasNoChannels}
               isOwner={isOwner}
             />
@@ -169,7 +160,6 @@ export function DashboardShell({
             ownerEmail={ownerEmail}
             hasNoProducts={hasNoProducts}
             hasNoFaqs={hasNoFaqs}
-            hasUnreadEscalations={hasUnreadEscalations}
             hasNoChannels={hasNoChannels}
             isOwner={isOwner}
           />

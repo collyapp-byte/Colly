@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOwnerApi } from "@/lib/auth";
 import { isValidEmail } from "@/lib/validators";
 import { TEAM_MEMBER_NAME_MAX } from "@/lib/team";
-import { isTeamRole, type TeamMemberView } from "@/lib/team";
+import { isTeamRole, type TeamMemberView, type TeamRole } from "@/lib/team";
 import { sendTeamInviteEmail, teamInviteLink } from "@/lib/team-invite";
 import {
   cursorDate,
@@ -108,6 +108,7 @@ export async function POST(request: Request) {
 
     const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
     const name = typeof body?.name === "string" ? body.name.trim() : "";
+    const role = isTeamRole(body?.role) ? body.role : "STAFF";
 
     if (!email) return badRequest("An email address is required");
     if (!isValidEmail(email)) return badRequest("That does not look like an email address");
@@ -144,7 +145,7 @@ export async function POST(request: Request) {
         businessId,
         email,
         name: name || nameFromEmail(email),
-        role: "STAFF",
+        role,
       },
       select: TEAM_MEMBER_SELECT,
     });
@@ -191,31 +192,69 @@ export async function PATCH(request: Request) {
     const body = (await request.json().catch(() => null)) as {
       id?: unknown;
       role?: unknown;
+      name?: unknown;
+      email?: unknown;
     } | null;
 
     const id = typeof body?.id === "string" ? body.id.trim() : "";
-    const role = body?.role;
     if (!id) return badRequest("id is required");
-    if (!isTeamRole(role)) return badRequest('Role must be "OWNER" or "STAFF"');
 
     const existing = await prisma.teamMember.findFirst({
       where: { id, businessId },
-      select: { id: true, email: true, role: true },
+      select: { id: true },
     });
     if (!existing) return notFound("Team member not found");
 
+    const data: { role?: TeamRole; name?: string; email?: string } = {};
+
+    if (body?.role !== undefined) {
+      if (!isTeamRole(body.role)) {
+        return badRequest('Role must be "OWNER" or "STAFF"');
+      }
+      data.role = body.role;
+    }
+
+    if (body?.name !== undefined) {
+      if (typeof body.name !== "string") {
+        return badRequest("Name must be a string");
+      }
+      const name = body.name.trim();
+      if (name.length > TEAM_MEMBER_NAME_MAX) {
+        return badRequest(`Name must be ${TEAM_MEMBER_NAME_MAX} characters or less`);
+      }
+      data.name = name || undefined;
+    }
+
+    if (body?.email !== undefined) {
+      if (typeof body.email !== "string") {
+        return badRequest("Email must be a string");
+      }
+      const email = body.email.trim().toLowerCase();
+      if (!isValidEmail(email)) {
+        return badRequest("That does not look like an email address");
+      }
+      data.email = email;
+    }
+
+    if (Object.keys(data).length === 0) {
+      return badRequest("No fields to update");
+    }
+
     const updated = await prisma.teamMember.update({
       where: { id },
-      data: { role },
+      data,
       select: TEAM_MEMBER_SELECT,
     });
 
     return Response.json({ member: toTeamMemberView(updated) });
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return conflict("That address is already on another business's team");
+    }
     console.error("[PATCH /api/team]", error);
     return Response.json(
       {
-        error: "Failed to change that role",
+        error: "Failed to change that team member",
         detail: error instanceof Error ? error.message : String(error),
       },
       { status: 500 },

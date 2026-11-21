@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState, FormEvent } from "react";
-import { ShieldCheck, Trash2, Users } from "lucide-react";
+import { Pencil, ShieldCheck, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -176,6 +176,7 @@ export function TeamManager({
 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [inviteRole, setInviteRole] = useState<"OWNER" | "STAFF">("STAFF");
   const [inviting, setInviting] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   /** Result of the last invite, shown under the form (and its link copied). */
@@ -185,11 +186,16 @@ export function TeamManager({
     useState<TeamMemberView | null>(null);
   const [removing, setRemoving] = useState(false);
 
-  /** A role dropdown is being submitted, to block double-clicks. */
-  const [roleUpdating, setRoleUpdating] = useState<{
+
+  /** A row open in inline edit mode, seeded with the member's current values. */
+  const [editing, setEditing] = useState<{
     id: string;
+    name: string;
+    email: string;
     role: "OWNER" | "STAFF";
   } | null>(null);
+  /** An inline save is in flight, to block double-submits. */
+  const [saving, setSaving] = useState<string | null>(null);
 
   /** Re-reads the first page; used after an invite or a removal. */
   async function refresh() {
@@ -202,6 +208,65 @@ export function TeamManager({
 
     setMembers(readMembers(payload));
     setNextCursor(readNextCursor(payload));
+  }
+
+  /** Opens a row's inline edit controls, seeded with its current values. */
+  function startEdit(member: TeamMemberView) {
+    setEditing({
+      id: member.id,
+      name: member.name,
+      email: member.email,
+      role: member.role,
+    });
+  }
+
+  /** Closes the inline edit controls without saving. */
+  function cancelEdit() {
+    setEditing(null);
+  }
+
+  /** Saves a row's inline edits through PATCH /api/team. */
+  async function saveEdit() {
+    const target = editing;
+    if (!target || saving) return;
+
+    setSaving(target.id);
+    try {
+      const res = await fetch("/api/team", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: target.id,
+          name: target.name.trim(),
+          email: target.email.trim(),
+          role: target.role,
+        }),
+      });
+      const payload: unknown = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(errorMessage(payload) ?? "Could not save that member");
+      }
+
+      setMembers((current) =>
+        current.map((member) =>
+          member.id === target.id
+            ? {
+                ...member,
+                name: target.name.trim(),
+                email: target.email.trim(),
+                role: target.role,
+              }
+            : member,
+        ),
+      );
+      setEditing(null);
+      toast.success("Changes saved");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setSaving(null);
+    }
   }
 
   async function handleInvite(event: FormEvent<HTMLFormElement>) {
@@ -218,7 +283,7 @@ export function TeamManager({
       const res = await fetch("/api/team", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmedEmail, name: name.trim() }),
+        body: JSON.stringify({ email: trimmedEmail, name: name.trim(), role: inviteRole }),
       });
       const payload: unknown = await res.json().catch(() => null);
 
@@ -321,29 +386,6 @@ export function TeamManager({
       setRemoving(false);
     }
   }
-async function handleRoleChange(
-     memberId: string,
-     newRole: "OWNER" | "STAFF",
-   ) {
-     setRoleUpdating({ id: memberId, role: newRole });
-     try {
-       const res = await fetch("/api/team", {
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({ role: newRole, memberId }),
-       });
-       const payload: unknown = await res.json().catch(() => null);
-       if (!res.ok) {
-         throw new Error(errorMessage(payload) ?? "Could not update role");
-       }
-       await refresh();
-     } catch (err) {
-       toast.error(err instanceof Error ? err.message : "Something went wrong");
-     } finally {
-       setRoleUpdating(null);
-     }
-   }
-
   const ownerName = owner.name?.trim() || "Business owner";
   const staffLabel =
     members.length === 0
@@ -391,6 +433,23 @@ async function handleRoleChange(
               placeholder="Ada"
               className={INPUT_CLASS}
             />
+          </div>
+
+          <div>
+            <label htmlFor="team-role" className={LABEL_CLASS}>
+              Role
+            </label>
+            <select
+              id="team-role"
+              value={inviteRole}
+              onChange={(event) =>
+                setInviteRole(event.target.value as "OWNER" | "STAFF")
+              }
+              className={INPUT_CLASS}
+            >
+              <option value="STAFF">Staff</option>
+              <option value="OWNER">Owner</option>
+            </select>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -465,47 +524,131 @@ async function handleRoleChange(
             <RoleBadge role="OWNER" />
           </li>
 
-          {members.map((member) => (
-            <li key={member.id} className="flex items-center gap-3 py-3">
-              <span className={AVATAR_CLASS} aria-hidden>
-                {initials(member.name, member.email)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-main">
-                  {member.name || member.email}
-                </p>
-                <p className="truncate text-xs text-muted">
-                  {member.email}
-                  {formatInvited(member.createdAt) && (
-                    <span className="text-muted">
-                      {" "}
-                      · {formatInvited(member.createdAt)}
-                    </span>
+          {members.map((member) => {
+            const draft =
+              editing?.id === member.id ? editing : null;
+            return (
+              <li key={member.id} className="flex items-center gap-3 py-3">
+                <span className={AVATAR_CLASS} aria-hidden>
+                  {initials(member.name, member.email)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  {draft ? (
+                    <>
+                      <input
+                        value={draft.name}
+                        onChange={(event) =>
+                          setEditing((current) =>
+                            current
+                              ? { ...current, name: event.target.value }
+                              : null,
+                          )
+                        }
+                        maxLength={TEAM_MEMBER_NAME_MAX}
+                        className={INPUT_CLASS}
+                      />
+                      <input
+                        type="email"
+                        value={draft.email}
+                        onChange={(event) =>
+                          setEditing((current) =>
+                            current
+                              ? { ...current, email: event.target.value }
+                              : null,
+                          )
+                        }
+                        className={INPUT_CLASS}
+                      />
+                      <select
+                        value={draft.role}
+                        onChange={(event) =>
+                          setEditing((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  role: event.target.value as "OWNER" | "STAFF",
+                                }
+                              : null,
+                          )
+                        }
+                        className="rounded-xl border border-card-ring bg-card-surface px-2 py-1 text-sm text-main outline-none focus:border-colly focus:ring-2 focus:ring-colly/20"
+                      >
+                        <option value="STAFF">Staff</option>
+                        <option value="OWNER">Owner</option>
+                      </select>
+                    </>
+                  ) : (
+                    <>
+                      <p className="truncate text-sm font-medium text-main">
+                        {member.name || member.email}
+                      </p>
+                      <p className="truncate text-xs text-muted">
+                        {member.email}
+                        {formatInvited(member.createdAt) && (
+                          <span className="text-muted">
+                            {" "}
+                            · {formatInvited(member.createdAt)}
+                          </span>
+                        )}
+                      </p>
+                    </>
                   )}
-                </p>
-              </div>
-              <StatusBadge role={member.role} />
-              <RoleBadge role="STAFF" />
-              <select
-                defaultValue={member.role}
-                onChange={(e) => handleRoleChange(member.id, e.target.value as "OWNER" | "STAFF")}
-                disabled={roleUpdating?.id === member.id}
-                className="ml-2 rounded-xl border border-card-ring bg-card-surface px-2 py-1 text-sm text-main outline-none focus:border-colly focus:ring-2 focus:ring-colly/20"
-              >
-                <option value="STAFF">Staff</option>
-                <option value="OWNER">Owner</option>
-              </select>
-              <button
-                type="button"
-                onClick={() => setPendingRemoval(member)}
-                aria-label={`Remove ${member.name || member.email}`}
-                title="Remove access"
-                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-muted transition-all duration-250 hover:bg-red-50 hover:text-red-600 active:scale-[0.94] dark:hover:bg-red-950/40 focus:outline-none focus:ring-4 focus:ring-red-500/20"
-              >
-                <Trash2 className="h-4 w-4" aria-hidden />
-              </button>
-            </li>
-          ))}
+                </div>
+                {draft ? (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      type="button"
+                      onClick={saveEdit}
+                      disabled={!!saving}
+                      variant="primary"
+                      size="sm"
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={cancelEdit}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      Cancel
+                    </Button>
+                    <button
+                      type="button"
+                      onClick={() => setPendingRemoval(member)}
+                      aria-label={`Remove ${member.name || member.email}`}
+                      title="Remove access"
+                      className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-muted transition-all duration-250 hover:bg-red-50 hover:text-red-600 active:scale-[0.94] dark:hover:bg-red-950/40 focus:outline-none focus:ring-4 focus:ring-red-500/20"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <StatusBadge role={member.role} />
+                    <button
+                      type="button"
+                      onClick={() => startEdit(member)}
+                      aria-label={`Edit ${member.name || member.email}`}
+                      title="Edit"
+                      className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-muted transition-all duration-250 hover:bg-surface-muted active:scale-[0.94] focus:outline-none focus:ring-2 focus:ring-colly/40"
+                    >
+                      <Pencil className="h-4 w-4" aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPendingRemoval(member)}
+                      aria-label={`Remove ${member.name || member.email}`}
+                      title="Remove access"
+                      className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-muted transition-all duration-250 hover:bg-red-50 hover:text-red-600 active:scale-[0.94] dark:hover:bg-red-950/40 focus:outline-none focus:ring-4 focus:ring-red-500/20"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden />
+                    </button>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
 
         {members.length === 0 && (

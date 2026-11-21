@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { BackButton } from "@/components/ui/back-button";
 import { RefreshOnMount } from "@/components/dashboard/refresh-on-mount";
+import { MarkAllDoneButton } from "@/components/dashboard/mark-all-done-button";
 
 export const metadata = { title: "Notifications" };
 
@@ -51,6 +52,7 @@ export default async function NotificationsPage() {
       <p className="mt-1 text-sm text-muted">
         Customers waiting for a human reply from your team.
       </p>
+      <MarkAllDoneButton />
 
       {rows.length === 0 ? (
         <div className="mt-6 rounded-xl border border-dashed border-card-ring bg-surface-muted/40 p-10 text-center">

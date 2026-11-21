@@ -190,15 +190,6 @@ export function Sidebar({
                   aria-hidden
                 />
                 <span className="truncate">{item.label}</span>
-                {(item.href, hasUnreadEscalations) && (
-                  <>
-                    <span
-                      className="ml-auto h-2 w-2 shrink-0"
-                      aria-hidden
-                    />
-                    <span className="sr-only">
-                  
-                )}
               </Link>
             );
           })}

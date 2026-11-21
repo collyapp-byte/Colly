@@ -1,4 +1,4 @@
-export const instant = false;
+﻿export const instant = false;
 import { connection } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -43,27 +43,22 @@ export default async function DashboardLayout({ children }: LayoutProps) {
     },
   });
 
-  // An escalation stays pending until the conversation is handled (the sidebar
-  // dot), while the bell only counts the ones raised since the owner last
-  // opened Notifications. `CLOSED` is a legacy seed value; excluding it matches
-  // the Notifications page's own query.
-  const pendingEscalationWhere = {
-    businessId: user.businessId,
-    escalatedAt: { not: null },
-    status: { not: "CLOSED" as const },
-  };
-
-  const [pendingEscalations, unreadEscalations] = await Promise.all([
-    prisma.conversation.count({ where: pendingEscalationWhere }),
-    prisma.conversation.count({
-      where: business?.lastNotificationsReadAt
-        ? {
-            ...pendingEscalationWhere,
-            escalatedAt: { gt: business.lastNotificationsReadAt },
-          }
-        : pendingEscalationWhere,
-    }),
-  ]);
+  // The bell counts escalations raised since the owner last opened
+  // Notifications. `CLOSED` is a legacy seed value; excluding it matches the
+  // Notifications page's own query.
+  const unreadEscalations = await prisma.conversation.count({
+    where: business?.lastNotificationsReadAt
+      ? {
+          businessId: user.businessId,
+          escalatedAt: { not: null, gt: business.lastNotificationsReadAt },
+          status: { not: "CLOSED" as const },
+        }
+      : {
+          businessId: user.businessId,
+          escalatedAt: { not: null },
+          status: { not: "CLOSED" as const },
+        },
+  });
 
   const ownerEmail = user.email;
   const emailPrefix = ownerEmail.split("@")[0] || ownerEmail;
@@ -86,7 +81,6 @@ export default async function DashboardLayout({ children }: LayoutProps) {
       hasNoChannels={!telegramConnected && !discordConnected}
       telegramConnected={telegramConnected}
       ownerAlertsLinked={ownerAlertsLinked}
-      hasUnreadEscalations={pendingEscalations > 0}
       pendingEscalations={unreadEscalations}
     >
       {children}

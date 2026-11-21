@@ -51,6 +51,7 @@ export default async function DashboardPage({
         paymentInstructions: true,
         planStatus: true,
         paymentFailedAt: true,
+        lastNotificationsReadAt: true,
       },
     }),
     prisma.product.count({ where: { businessId: user.businessId } }),
@@ -60,6 +61,35 @@ export default async function DashboardPage({
     // index the usage queries already use.
     prisma.message.count({
       where: { businessId: user.businessId, sender: "customer" },
+    }),
+  ]);
+
+  // Unread notifications: escalations raised since the owner last opened
+  // Notifications. `lastNotificationsReadAt` is stamped by the Notifications
+  // page (and the "Mark all as done" button), so this is the source of truth
+  // for the home banner and the header bell.
+  const unreadWhere = {
+    businessId: user.businessId,
+    escalatedAt: { not: null },
+    status: { not: "CLOSED" },
+    ...(business?.lastNotificationsReadAt
+      ? { escalatedAt: { gt: business.lastNotificationsReadAt } }
+      : {}),
+  };
+
+  const [unreadCount, latestEscalation] = await Promise.all([
+    prisma.conversation.count({ where: unreadWhere }),
+    prisma.conversation.findFirst({
+      where: unreadWhere,
+      orderBy: { escalatedAt: "desc" },
+      include: {
+        customer: { select: { name: true, phone: true } },
+        messages: {
+          where: { sender: "customer" },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
     }),
   ]);
 
@@ -76,6 +106,36 @@ export default async function DashboardPage({
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5 md:space-y-6">
       {denied && <StaffDeniedToast />}
+
+      {/* Home notification banner: the single most recent unread escalation.
+           Stacks nothing; a +N pill (capped at +9) appears before the arrow
+           when there is more than one unread item. The whole bar links to
+           /notifications, which clears the unread state on load. */}
+      {unreadCount > 0 && latestEscalation && (
+        <Link
+          href="/notifications"
+          className="surface-card flex items-center justify-between gap-3 px-3 py-2 text-sm border-l-4 border-l-colly"
+        >
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-main truncate">
+              {latestEscalation.customer.name ||
+                latestEscalation.customer.phone}
+            </p>
+            <p className="text-xs text-muted truncate">
+              {latestEscalation.messages[0]?.content ??
+                "This customer needs your attention."}
+            </p>
+          </div>
+          {unreadCount > 1 && (
+            <span
+              className="shrink-0 inline-flex items-center rounded-full bg-colly/10 px-2 py-0.5 text-[10px] font-semibold text-colly"
+            >
+              +{Math.min(unreadCount - 1, 9)}
+            </span>
+          )}
+          <span className="shrink-0 text-muted">→</span>
+        </Link>
+      )}
 
       {/* Greeting + the two actions an owner reaches for most. The card gives
           the page a clear top edge instead of the bare heading floating in the
