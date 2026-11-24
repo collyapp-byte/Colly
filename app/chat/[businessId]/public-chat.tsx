@@ -175,7 +175,7 @@ export default function PublicChat({ businessId }: { businessId: string }) {
           </div>
         )}
         <div className="min-w-0">
-          <h1 className="truncate font-display text-sm tracking-wide text-gray-900">
+          <h1 className="truncate font-display text-sm tracking-wide text-foreground dark:text-white">
             {businessName ?? "Live chat"}
           </h1>
           <p className="flex items-center gap-1.5 text-xs text-gray-500">
