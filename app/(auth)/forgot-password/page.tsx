@@ -26,7 +26,9 @@ export default function ForgotPasswordPage() {
       const supabase = createClient();
       const trimmed = email.trim();
       const { error: resetError } =
-        await supabase.auth.resetPasswordForEmail(trimmed);
+        await supabase.auth.resetPasswordForEmail(trimmed, {
+          redirectTo: '/reset-password',
+        });
 
       if (resetError) {
         setError(resetError.message);
@@ -34,7 +36,7 @@ export default function ForgotPasswordPage() {
         return;
       }
 
-      toast.success("Check your email for the 6-digit reset code.");
+      toast.success("Check your email for the reset link.");
       router.push(`/reset-password?email=${encodeURIComponent(trimmed)}`);
     } catch (err) {
       const message =

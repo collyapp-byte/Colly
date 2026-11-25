@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useState, type FormEvent } from "react";
+import { Suspense, useState, useEffect, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -21,6 +21,30 @@ function ResetPasswordContent() {
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [alreadyVerified, setAlreadyVerified] = useState(false);
+
+  // Check if user already has a valid Supabase session (e.g., from clicking the
+  // recovery email link). If the OTP was already verified by Supabase before the
+  // redirect, skip the "verify" step and go straight to "reset".
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const supabase = createClient();
+        const { data: { user} } = await supabase.auth.getUser();
+        if (user) {
+          setAlreadyVerified(true);
+          const savedEmail = searchParams.get("email");
+          if (savedEmail) {
+            setEmail(savedEmail);
+          }
+          setStep("reset");
+        }
+      } catch {
+        // fall through to the "verify" step if session check fails
+      }
+    }
+    checkSession();
+  }, [searchParams]);
 
   async function handleVerify(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -91,7 +115,7 @@ function ResetPasswordContent() {
           : "Choose a new password for your account."}
       </p>
 
-      {step === "verify" ? (
+      {step === "verify" && !alreadyVerified ? (
         <form onSubmit={handleVerify} className="mt-6 flex flex-col gap-4">
           <div>
             <label htmlFor="reset-email" className={LABEL_CLASS}>
