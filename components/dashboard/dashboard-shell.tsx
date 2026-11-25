@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
@@ -23,7 +23,7 @@ type DashboardShellProps = {
   /**
    * False for an invited staff account: owner-only settings links (and the
    * "complete setup" banner that points at one) are hidden instead of shown as
-   * dead ends. The server is still the gate ” see `lib/team.ts`.
+   * dead ends. The server is still the gate � see `lib/team.ts`.
    */
   isOwner?: boolean;
   children: ReactNode;
@@ -43,6 +43,7 @@ export function DashboardShell({
   children,
 }: DashboardShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [pendingEscalations, setPendingEscalations] = useState(0);
   const drawerRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
@@ -58,6 +59,25 @@ export function DashboardShell({
     if (!mobileNavOpen) return;
 
     const previousOverflow = document.body.style.overflow;
+  }, [mobileNavOpen]);
+
+  // Live bell dot: poll the API for unread escalation count
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const res = await fetch("/api/notifications", { method: "GET", cache: "no-store" });
+        if (res.ok) {
+          const { unreadCount } = await res.json();
+          setPendingEscalations(unreadCount);
+        }
+      } catch (err) {
+        console.error("[dashboard-shell] bell poll failed:", err);
+      }
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 30_000); // 30s
+    return () => clearInterval(interval);
+  }, [setPendingEscalations]);
     const trigger = menuButtonRef.current;
     document.body.style.overflow = "hidden";
     drawerRef.current?.focus();
@@ -103,7 +123,6 @@ export function DashboardShell({
       document.body.style.overflow = previousOverflow;
       trigger?.focus();
     };
-  }, [mobileNavOpen]);
 
   /*
    * `overflow-x-clip`, never `overflow-x-hidden`: `hidden` turns these boxes
@@ -179,7 +198,7 @@ export function DashboardShell({
                   aria-hidden
                 />
                 <span>
-                  š ï¸ ACTION REQUIRED: Connect your Telegram bot and verify
+                  ��️ ACTION REQUIRED: Connect your Telegram bot and verify
                   Owner Alerts to avoid missing sales.
                 </span>
               </span>
@@ -260,4 +279,6 @@ export function DashboardShell({
     </div>
   );
 }
+
+
 
