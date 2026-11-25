@@ -160,6 +160,12 @@ export async function POST(request: Request) {
         );
       }
 
+      // Log the concrete reason the AI did not reply so the block is
+      // observable (cap_hit / no_credits / paused / ai_unavailable / plan_expired).
+      console.warn(
+        `[WEB CHAT] AI reply blocked for business ${business.id} (${result.reason}): ${result.reason === "ai_unavailable" ? "all LLM providers failed" : result.reason}`,
+      );
+
       return NextResponse.json({
         reply: FALLBACK_REPLY,
         blocked: true,

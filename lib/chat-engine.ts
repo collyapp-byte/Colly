@@ -39,6 +39,11 @@ import {
 } from "@/lib/language-detect";
 import { requireAiEnabled } from "@/lib/auth-guards";
 import {
+  translateFromEnglish,
+  translateToEnglish,
+  needsTranslation,
+} from "@/lib/translate";
+import {
   getAiReplyCreditCost,
   LOW_CREDIT_MESSAGE,
   splitCreditCost,
@@ -367,6 +372,10 @@ export async function handleIncomingMessage({
   channel?: string | null;
 }): Promise<EngineResult> {
   const incoming = message.trim();
+  // `messageForModel` is the English-translated version of the customer's
+  // message used for catalogue/FAQ lookup, negotiation and the model itself.
+  // The original `incoming` is what gets persisted and shown to the owner.
+  let messageForModel = incoming;
   if (!incoming) {
     return { reply: null, blocked: true, saved: false, replied: false, reason: "no_message" };
   }
@@ -461,7 +470,7 @@ export async function handleIncomingMessage({
     },
   });
 
-  const negotiation = await loadNegotiation(businessId, conversation.id, incoming);
+  const negotiation = await loadNegotiation(businessId, conversation.id, messageForModel);
 
   const history = await prisma.message.findMany({
     where: { businessId, conversationId: conversation.id },
@@ -491,6 +500,29 @@ export async function handleIncomingMessage({
   );
   const language = detectLanguage(incoming);
   systemPrompt += getLanguageInstruction(language);
+
+  // Translate a non-English customer message to English so catalogue/FAQ
+  // lookup and the model's reasoning run on text they can match against.
+  // The original `incoming` is still what gets persisted and escalated.
+  if (needsTranslation(language)) {
+    try {
+      const translated = await translateToEnglish(incoming, language);
+      if (translated && translated.trim().length > 0) {
+        messageForModel = translated;
+        debugLog(
+          "[chat-engine] translated customer message",
+          { from: language, original: incoming, english: messageForModel },
+        );
+      }
+    } catch (error) {
+      // Translation failure must not block the AI: fall back to the original.
+      console.error(
+        "[chat-engine] translation to English failed, using original message:",
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
   if (receiptImageUrl) {
     systemPrompt +=
       "\n\nRECEIPT IMAGE URL (the picture the customer just sent): " +
@@ -498,15 +530,28 @@ export async function handleIncomingMessage({
       "\nIf that picture is a payment receipt, pass this exact URL as `receiptUrl` to generate_invoice_from_receipt. Never use any other URL.";
   }
 
+  // The current turn's customer message was persisted in `incoming`; the model
+  // must see the English translation (`messageForModel`) so catalogue lookup
+  // and reasoning match against English text.
+  const lastCustomerIndex = history
+    .map((msg, i) => (msg.sender === "customer" ? i : -1))
+    .reduce((max, i) => (i > max ? i : max), -1);
+
   chatMessages.push({ role: "system", content: systemPrompt });
-  for (const msg of history) {
+  for (const [i, msg] of history.entries()) {
+    const isCurrentCustomerTurn = i === lastCustomerIndex;
+    let content: string;
     if (msg.audioUrl && msg.transcript) {
-      chatMessages.push({ role: msg.sender === "customer" ? "user" : "assistant", content: msg.transcript });
+      content = msg.transcript;
     } else if (msg.imageUrl && msg.imageDescription) {
-      chatMessages.push({ role: msg.sender === "customer" ? "user" : "assistant", content: msg.imageDescription });
+      content = msg.imageDescription;
     } else {
-      chatMessages.push({ role: msg.sender === "customer" ? "user" : "assistant", content: msg.content });
+      content = isCurrentCustomerTurn ? messageForModel : msg.content;
     }
+    chatMessages.push({
+      role: msg.sender === "customer" ? "user" : "assistant",
+      content,
+    });
   }
 
   // Human-looking pause before the model is asked (WhatsApp only, opt-in). It
@@ -574,6 +619,25 @@ export async function handleIncomingMessage({
     if (!reply) {
       result = await askAI(chatMessages);
       reply = result.reply.trim();
+    }
+
+    // Translate the reply back into the customer's exact language so a Yoruba,
+    // Igbo, Hausa, French or Spanish customer is answered in their own words.
+    // The system prompt already told the model to use that language, but the
+    // explicit pass guarantees it even when the model answered in English.
+    if (needsTranslation(language) && reply) {
+      try {
+        reply = await translateFromEnglish(reply, language);
+        debugLog(
+          "[chat-engine] translated reply back to customer language",
+          { to: language, reply },
+        );
+      } catch (error) {
+        console.error(
+          "[chat-engine] translation back to customer language failed, sending English:",
+          error instanceof Error ? error.message : String(error),
+        );
+      }
     }
   } catch (error) {
     // A provider/tool failure after the reservation: the customer never got a

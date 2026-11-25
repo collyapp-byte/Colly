@@ -6,7 +6,16 @@
 // standard English. The business owner's tone setting is only a fallback for the
 // cases this module cannot read confidently.
 
-export type DetectedLanguage = "english" | "pidgin" | "slang" | "mixed";
+export type DetectedLanguage =
+  | "english"
+  | "pidgin"
+  | "slang"
+  | "mixed"
+  | "yoruba"
+  | "igbo"
+  | "hausa"
+  | "french"
+  | "spanish";
 
 /**
  * Words that are strong Pidgin signals. They are not typos or misspellings, so
@@ -47,6 +56,73 @@ const ENGLISH_ONLY_WORDS = new Set([
   "afternoon", "evening", "business", "store", "shop",
 ]);
 
+/**
+ * Strong signals for each additional language we support. A message that
+ * contains enough of these markers is classified as that language (checked
+ * before the Pidgin/English heuristics, since a greeting like "Bawo ni" looks
+ * like English stop words otherwise).
+ */
+const YORUBA_MARKERS = new Set([
+  "bawo", "ni", "se", "o", "n", "wo", "lo", "wa", "ti", "mo", "re", "ki",
+  "pe", "sugbon", "kilo", "eleyi", "owo", "e", "ku", "ise", "da", "pele",
+]);
+
+const IGBO_MARKERS = new Set([
+  "ndeewo", "bia", "daalụ", "ebiela", "nke", "gini", "biko", "chukwu", "nwa",
+  "ụwa", "ọrụ", "akwụkwọ", "egwu", "ọgụ", "ịa", "ịhụ", "ịkpọ",
+]);
+
+const HAUSA_MARKERS = new Set([
+  "sannu", "ina", "kwana", "lafiya", "na", "gaskiya", "yawa", "wannan",
+  "tazo", "sabu", "ka", "ku", "shi", "su", "yaki", "aiki", "gida",
+]);
+
+const FRENCH_MARKERS = new Set([
+  "bonjour", "merci", "oui", "non", "le", "la", "les", "un", "une", "et", "ou",
+  "qu'est", "que", "comment", "pourquoi", "prix", "produit",
+]);
+
+const SPANISH_MARKERS = new Set([
+  "hola", "gracias", "sí", "no", "el", "la", "los", "las", "un", "una", "y",
+  "o", "qué", "por", "precio", "producto",
+]);
+
+/**
+ * Detect whether `text` is in one of the supported non-English languages.
+ * Returns null when none of the language-specific markers fire strongly enough.
+ */
+function detectExtendedLanguage(text: string): DetectedLanguage | null {
+  const tokens = tokenize(text);
+  if (tokens.length === 0) return null;
+
+  let yoruba = 0;
+  let igbo = 0;
+  let hausa = 0;
+  let french = 0;
+  let spanish = 0;
+
+  for (const token of tokens) {
+    if (YORUBA_MARKERS.has(token)) yoruba += 1;
+    else if (IGBO_MARKERS.has(token)) igbo += 1;
+    else if (HAUSA_MARKERS.has(token)) hausa += 1;
+    else if (FRENCH_MARKERS.has(token)) french += 1;
+    else if (SPANISH_MARKERS.has(token)) spanish += 1;
+  }
+
+  const total = tokens.length;
+  // Require at least two markers so a single ambiguous word (e.g. "ku", which
+  // is Hausa but also appears in Yoruba greetings) cannot misclassify a message.
+  const threshold = Math.max(2, Math.ceil(total * 0.25));
+
+  if (yoruba >= threshold) return "yoruba";
+  if (igbo >= threshold) return "igbo";
+  if (hausa >= threshold) return "hausa";
+  if (french >= threshold) return "french";
+  if (spanish >= threshold) return "spanish";
+
+  return null;
+}
+
 /** Lowercase and split on non-alphanumeric runs, dropping empty tokens. */
 function tokenize(text: string): string[] {
   return text
@@ -68,6 +144,11 @@ export function detectLanguage(text: string): DetectedLanguage {
   if (tokens.length === 0) {
     return "english";
   }
+
+  // Non-English languages first: their greetings look like English stop words
+  // to the Pidgin/English heuristics, so check them before anything else.
+  const extended = detectExtendedLanguage(text);
+  if (extended) return extended;
 
   let pidginTokenCount = 0;
   let slangTokenCount = 0;
@@ -126,6 +207,16 @@ export function getLanguageInstruction(lang: DetectedLanguage): string {
       return "The customer is writing in informal Nigerian slang. Reply in a relaxed, casual Nigerian tone that matches their energy. Do not open with corporate phrases like 'Welcome' or 'How may I assist you'. Keep it short and informal.";
     case "mixed":
       return "The customer is mixing English and Nigerian Pidgin. Reply in the same mixed style. Match their tone and vocabulary.";
+    case "yoruba":
+      return "The customer is writing in Yoruba. Reply in Yoruba, matching their dialect and tone. Do not switch to English unless they do.";
+    case "igbo":
+      return "The customer is writing in Igbo. Reply in Igbo, matching their dialect and tone. Do not switch to English unless they do.";
+    case "hausa":
+      return "The customer is writing in Hausa. Reply in Hausa, matching their dialect and tone. Do not switch to English unless they do.";
+    case "french":
+      return "The customer is writing in French. Reply in French. Do not switch to English unless they do.";
+    case "spanish":
+      return "The customer is writing in Spanish. Reply in Spanish. Do not switch to English unless they do.";
     case "english":
     default:
       return "The customer is writing in English. Reply in clear English.";
