@@ -138,8 +138,12 @@ export function ThemeCircleTransition({
 
 export function useTheme(): ThemeContextValue {
   const ctx = React.useContext(ThemeContext);
+  // Safe SSR fallback: if no provider is mounted (e.g., server-side or
+  // the component tree hasn't mounted yet), use the default light theme
+  // so the dashboard shell never crashes on `/dashboard` during initial
+  // render or when the provider is temporarily unmounted.
   if (!ctx) {
-    throw new Error("useTheme must be used within a ThemeCircleTransition provider");
+    return { isDark: false, toggleTheme: () => {}, setTheme: (dark: boolean) => {} };
   }
   return ctx;
 }
