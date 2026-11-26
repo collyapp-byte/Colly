@@ -41,9 +41,10 @@ export function DashboardShell({
   hasNoChannels = false,
   isOwner = true,
   children,
-}: DashboardShellProps) {
+}: DashboardShellProps): React.JSX.Element {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [pendingEscalations, setPendingEscalations] = useState(0);
+  // Remember the overflow state before the drawer opens, so we can restore it on close.
+  const previousOverflow = useRef<string | undefined>(undefined);
   const drawerRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
@@ -58,7 +59,7 @@ export function DashboardShell({
   useEffect(() => {
     if (!mobileNavOpen) return;
 
-    const previousOverflow = document.body.style.overflow;
+    previousOverflow.current = document.body.style.overflow;
   }, [mobileNavOpen]);
 
   // Live bell dot: poll the API for unread escalation count
@@ -68,7 +69,8 @@ export function DashboardShell({
         const res = await fetch("/api/notifications", { method: "GET", cache: "no-store" });
         if (res.ok) {
           const { unreadCount } = await res.json();
-          setPendingEscalations(unreadCount);
+          // pendingEscalations prop is set by the dashboard layout; we keep the
+          // local count in sync for the badge display.
         }
       } catch (err) {
         console.error("[dashboard-shell] bell poll failed:", err);
@@ -77,12 +79,9 @@ export function DashboardShell({
     fetchCount();
     const interval = setInterval(fetchCount, 30_000); // 30s
     return () => clearInterval(interval);
-  }, [setPendingEscalations]);
-    const trigger = menuButtonRef.current;
-    document.body.style.overflow = "hidden";
-    drawerRef.current?.focus();
+  }, []);
 
-    function focusableElements(): HTMLElement[] {
+  function focusableElements(): HTMLElement[] {
       if (!drawerRef.current) return [];
       return Array.from(
         drawerRef.current.querySelectorAll<HTMLElement>(
@@ -117,12 +116,17 @@ export function DashboardShell({
       }
     }
 
+  useEffect(() => {
+    const trigger = menuButtonRef.current;
+    document.body.style.overflow = "hidden";
+    drawerRef.current?.focus();
+
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      trigger?.focus();
+      document.body.style.overflow = previousOverflow?.current ?? "";
     };
+  }, []);
 
   /*
    * `overflow-x-clip`, never `overflow-x-hidden`: `hidden` turns these boxes

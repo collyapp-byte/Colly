@@ -25,9 +25,13 @@ export default function ForgotPasswordPage() {
     try {
       const supabase = createClient();
       const trimmed = email.trim();
+      // Use full origin URL so Supabase does not reject the relative path.
+      const redirectOrigin = typeof window !== "undefined"
+        ? window.location.origin
+        : `${process.env.NEXT_PUBLIC_APP_URL || "https://colly.com.ng"}`;
       const { error: resetError } =
         await supabase.auth.resetPasswordForEmail(trimmed, {
-          redirectTo: '/reset-password',
+          redirectTo: `${redirectOrigin}/reset-password`,
         });
 
       if (resetError) {

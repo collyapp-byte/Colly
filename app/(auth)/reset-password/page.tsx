@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useState, useEffect, type FormEvent } from "react";
+import { Suspense, useState, useEffect, useRef, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -22,6 +22,77 @@ function ResetPasswordContent() {
   const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [alreadyVerified, setAlreadyVerified] = useState(false);
+  const hasCodeParamRef = useRef(false);
+
+  // Determine if the URL carries a Supabase auth code (PKCE flow).
+  // We read it once so the cleanup below can react.
+  useEffect(() => {
+    const code = searchParams.get("code");
+    hasCodeParamRef.current = !!code;
+  }, [searchParams]);
+
+  // Derived value: if the URL carries a code param, try to exchange it for a session.
+  useEffect(() => {
+    if (!hasCodeParamRef.current) return;
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { error } = await supabase.auth.exchangeCodeForSession(
+          searchParams.get("code") ?? ""
+        );
+        if (!error) {
+          // A valid session now exists – the user came from a PKCE recovery link.
+          setAlreadyVerified(true);
+          setStep("reset");
+        }
+      } catch {
+        // ignore – fall through to the normal verify step
+      }
+    })();
+  }, []);
+
+  // On mount, try to exchange a ?code=… param for a session (PKCE/OAuth flow).
+  // If the exchange succeeds and we have a user session, treat the user as already
+  // verified and move to the "reset" step so the 6-digit code entry is skipped.
+  useEffect(() => {
+    async function handleCodeExchange() {
+      if (!hasCodeParamRef.current) return;
+      try {
+        const supabase = createClient();
+        const { error } = await supabase.auth.exchangeCodeForSession(
+          searchParams.get("code") ?? ""
+        );
+        if (!error) {
+          // A valid session now exists – the user came from a PKCE recovery link.
+          setAlreadyVerified(true);
+          setStep("reset");
+        }
+      } catch {
+        // ignore – fall through to the normal verify step
+      }
+    }
+    handleCodeExchange();
+  }, []);
+
+  // Also listen for onAuthStateChange to catch PASSWORD_RECOVERY events
+  // (e.g. if Supabase redirects and sets a session without a code param).
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (cancelled) return;
+        if (session?.user && step === "verify" && !alreadyVerified) {
+          setAlreadyVerified(true);
+          setStep("reset");
+        }
+      }
+    );
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [step, alreadyVerified]);
 
   // Check if user already has a valid Supabase session (e.g., from clicking the
   // recovery email link). If the OTP was already verified by Supabase before the
