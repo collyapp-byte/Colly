@@ -32,8 +32,12 @@ export function ThemeCircleTransition({
 }) {
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored !== null) return stored === "dark";
+    // Check localStorage first (persisted across sessions), then fall back to
+    // the OS-level prefers-color-scheme media query.
+    if (typeof localStorage !== "undefined") {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored !== null) return stored === "dark";
+    }
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
   const mountedRef = useRef(false);

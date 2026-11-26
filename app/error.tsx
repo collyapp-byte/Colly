@@ -37,7 +37,7 @@ export default function AppError({
       <div className="flex w-full max-w-md flex-col items-center text-center">
         <AlertTriangle className="h-9 w-9 text-[#FF6600]" aria-hidden />
 
-        <h1 className="mt-4 font-display text-2xl text-gray-900 sm:text-3xl">
+        <h1 className="mt-4 font-display text-2xl text-[var(--text-primary)]">
           Something went wrong
         </h1>
 
