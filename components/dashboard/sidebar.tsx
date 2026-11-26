@@ -48,7 +48,7 @@ const NAV_ITEMS: NavItem[] = [
 
 
 const MENU_ITEM_CLASS =
-  "flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] text-main transition-all duration-250 ease-out hover:-translate-y-px hover:bg-surface-muted active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-colly/40";
+  "flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-[20px] px-3 py-2 text-[13px] text-main transition-all duration-250 ease-out hover:-translate-y-px hover:bg-surface-muted active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-colly/40";
 
 
 
@@ -81,7 +81,6 @@ export function Sidebar({
   const [accountName, setAccountName] = useState(ownerName ?? "");
   const [accountEmail, setAccountEmail] = useState(ownerEmail ?? "");
   const switcherRef = useRef<HTMLDivElement>(null);
-
 /** Dismiss the mobile drawer and the account menu in one tap. */
   function handleNavigate() {
     setSwitcherOpen(false);
@@ -177,7 +176,7 @@ export function Sidebar({
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 onClick={handleNavigate}
-                className={`group flex min-h-[44px] items-center gap-3 rounded-lg px-3 text-[13.5px] font-medium transition-all duration-250 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-colly/40 ${
+                className={`group flex min-h-[44px] items-center gap-3 rounded-[20px] px-3 text-[13.5px] font-medium transition-all duration-250 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-colly/40 ${
                   active
                     ? "bg-colly-tint text-colly nav-active-texture shadow-[inset_0_0_0_1px_rgba(255,102,0,0.18),0_2px_6px_-2px_rgba(255,102,0,0.25)]"
                     : "text-main hover:-translate-y-px hover:bg-surface-muted hover:text-main hover:shadow-sm"

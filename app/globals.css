@@ -72,6 +72,19 @@
   --card-highlight: rgba(255, 255, 255, 0.9);
   --card-sheen-top: rgba(255, 255, 255, 0.75);
   --card-sheen-bottom: rgba(243, 244, 246, 0.4);
+  /* ── Colly Orange theme tokens (light) ── */
+  --bg-canvas: #FAF8FB;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #F2EFF5;
+  --bg-row: #F4F1F7;
+  --border-hairline: #E8E3ED;
+  --text-primary: #18141C;
+  --text-secondary: #6E6677;
+  --text-muted: #9A92A4;
+  --accent: #EA580C;
+  --accent-hover: #C2410C;
+  --accent-soft: #FFEDD5;
+  --accent-text: #9A3412;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -105,6 +118,19 @@
     --card-highlight: rgba(255, 255, 255, 0.05);
     --card-sheen-top: rgba(255, 255, 255, 0.035);
     --card-sheen-bottom: rgba(0, 0, 0, 0.22);
+    /* ── Colly Orange theme tokens (dark) ── */
+    --bg-canvas: #120E14;
+    --bg-surface: #1B1520;
+    --bg-subtle: #251D2B;
+    --bg-row: #1E1824;
+    --border-hairline: #32273A;
+    --text-primary: #F6F2F9;
+    --text-secondary: #A79EB2;
+    --text-muted: #746B80;
+    --accent: #F97316;
+    --accent-hover: #FB923C;
+    --accent-soft: #3B1D0E;
+    --accent-text: #FDBA74;
   }
 }
 
@@ -172,6 +198,20 @@
   --shadow-card: var(--card-shadow);
   --shadow-card-hover: var(--card-shadow-hover);
   --shadow-card-active: var(--card-shadow-active);
+
+  /* Colly Orange theme token utilities */
+  --color-bg-canvas: var(--bg-canvas);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-bg-row: var(--bg-row);
+  --color-border-hairline: var(--border-hairline);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
 }
 
 body {
@@ -786,4 +826,19 @@ button:active:not(:disabled) {
     width: 62mm !important;
     height: 62mm !important;
   }
+}
+
+/* ── View Transitions: circular screen-expanding theme switch ── */
+@keyframes colly-view-transition {
+  from {
+    clip-path: var(--vt-clip);
+  }
+  to {
+    clip-path: var(--vt-clip-to);
+  }
+}
+
+.vt-transitioning ::view-transition-new(root) {
+  animation: colly-view-transition var(--vt-duration, 520ms)
+    var(--vt-easing, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }

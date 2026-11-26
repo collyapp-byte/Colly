@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { AlertTriangle, Bell, Settings, PanelLeft } from "lucide-react";
+import { AlertTriangle, Bell, Settings, PanelLeft, Moon, Sun } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { MobileNav } from "./mobile-nav";
 import { usePathname } from "next/navigation";
 import { PlanChip } from "./plan-chip";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { ThemeCircleTransition, useTheme } from "@/components/theme/theme-circle-transition";
 
 type DashboardShellProps = {
   businessName?: string;
@@ -23,7 +24,7 @@ type DashboardShellProps = {
   /**
    * False for an invited staff account: owner-only settings links (and the
    * "complete setup" banner that points at one) are hidden instead of shown as
-   * dead ends. The server is still the gate � see `lib/team.ts`.
+   * dead ends. The server is still the gate  see `lib/team.ts`.
    */
   isOwner?: boolean;
   children: ReactNode;
@@ -51,6 +52,7 @@ export function DashboardShell({
   const segment = pathname === "/" ? "Dashboard" : (pathname.split("/")[1] || "Dashboard");
   const title = segment.charAt(0).toUpperCase() + segment.slice(1);
   const label = businessName?.trim() || title;
+  const { isDark, toggleTheme } = useTheme();
 
   // While the drawer is open it is a modal surface: Escape closes it, the page
   // behind stops scrolling, focus moves inside, Tab cycles within it and focus
@@ -136,7 +138,8 @@ export function DashboardShell({
    * gesture, so pinch-to-zoom stays optical.
    */
   return (
-    <div
+    <ThemeCircleTransition>
+      <div
       data-dashboard-shell
       className="min-h-screen w-full max-w-full overflow-x-clip bg-background bg-radial-[ellipse_at_top] from-orange-100/40 via-gray-50 to-blue-100/20 dark:from-orange-500/10 dark:via-background dark:to-blue-500/10"
     >
@@ -202,7 +205,7 @@ export function DashboardShell({
                   aria-hidden
                 />
                 <span>
-                  ��️ ACTION REQUIRED: Connect your Telegram bot and verify
+                  ️ ACTION REQUIRED: Connect your Telegram bot and verify
                   Owner Alerts to avoid missing sales.
                 </span>
               </span>
@@ -258,6 +261,20 @@ export function DashboardShell({
                   </span>
                 )}
               </Link>
+                <button
+                  type="button"
+                  aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                  onClick={(e) => {
+                    toggleTheme(e.currentTarget.getBoundingClientRect());
+                  }}
+                  className="relative flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl text-muted transition-all duration-250 hover:bg-surface-muted hover:text-main active:scale-[0.94]"
+                >
+                  {isDark ? (
+                    <Sun className="h-[18px] w-[18px]" />
+                  ) : (
+                    <Moon className="h-[18px] w-[18px]" />
+                  )}
+                </button>
               <Link
                 href="/settings"
                 aria-label="Settings"
@@ -270,7 +287,7 @@ export function DashboardShell({
 
           {/* Content card - frosted glass, rounded, below the top bar */}
           <main className="flex-1 rounded-none border-t border-card-ring/60 bg-card-surface/75 shadow-none backdrop-blur-xl md:mt-3 md:min-h-0 md:overflow-auto md:rounded-(--card-radius) md:border md:border-card-ring md:shadow-card">
-            <div className="mx-auto w-full p-4 pb-24 md:p-6 md:pb-8 lg:p-7 lg:pb-10">
+            <div className="mx-auto max-w-[1120px] w-full p-4 pb-24 md:p-6 md:pb-8 lg:p-7 lg:pb-10">
               {children}
             </div>
           </main>
@@ -280,7 +297,8 @@ export function DashboardShell({
       <div data-print-hide>
         <MobileNav />
       </div>
-    </div>
+      </div>
+    </ThemeCircleTransition>
   );
 }
 
